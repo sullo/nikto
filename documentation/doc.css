@@ -1,0 +1,77 @@
+body
+{
+   font-family: Tahoma, sans-serif;
+   font-size: 1em;
+   margin-left: 1em;
+   margin-right: 1em;
+}
+
+.screen
+{
+   font-family: monospace;
+   font-size: 1em;
+   display: block;
+   padding: 10px;
+   border: 1px solid #bbb;
+   background-color: #ddd;
+   color: #000;   
+   overflow: auto;
+   margin: 0.5em 2em;
+}
+
+.programlisting
+{
+   font-family: monospace;
+   font-size: 1em;
+   display: block;
+   padding: 10px;
+   border: 1px solid #bbb;
+   background-color: #ddd;
+   color: #000;   
+   overflow: auto;
+   margin: 0.5em 2em;
+}
+
+div.chapter div.titlepage h2
+{
+   font-size: 2em; 
+   font-weight: bold;
+   text-align: left;
+   border-bottom: 1px solid black;
+   padding-bottom: 5px;
+}
+
+div.section div.titlepage h2
+{
+   font-size: 1.5em; 
+   text-align: left;
+   background-color: beige;
+   border-bottom: 0px;
+   padding: 4px;
+}
+@media print
+{
+div.chapter div.titlepage h2 {page-break-before: always}
+div.section div.titlepage h2 {page-break-before: auto}
+.navheader {display: hidden}
+}
+
+div.section div.titlepage h3
+{
+   font-family: sans-serif;
+   font-size: 12pt; 
+   text-align: left;
+   background-color: beige;
+}
+
+.note
+{
+   border: 1px solid black;
+   float: right;
+   width: 20em;
+}
+
+h1
+{
+   text-align: center;
+}

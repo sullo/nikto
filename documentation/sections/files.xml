@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<variablelist>
+  <varlistentry>
+    <term>
+      <filename>nikto.conf</filename>
+    </term>
+    <listitem>
+      <para>The Nikto configuration file. This sets Nikto's global options. Several nikto.conf files may exist and are parsed
+      in the below order. As each configuration file is loaded is supersedes any previously set configuration:</para>
+      <itemizedlist>
+         <listitem><para>System wide (e.g. /etc/nikto.conf)</para></listitem>
+         <listitem><para>Home directory (e.g. $HOME/nikto.conf)</para></listitem>
+         <listitem><para>Current directory (e.g. ./nikto.conf)</para></listitem>
+      </itemizedlist>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>
+      <filename>${NIKTO_DIR}/plugins/db*</filename>
+    </term>
+    <listitem>
+      <para>db files are the databases that Nikto uses to check for vulnerabilities and issues within the web server.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>
+      <filename>${NIKTO_DIR}/plugins/*.plugin</filename>
+    </term>
+    <listitem>
+      <para>All Nikto's plugins exist here. Nikto itself is just a wrapper script to manage CLI and pass through to the plugins.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>
+      <filename>${NIKTO_DIR}/templates</filename>
+    </term>
+    <listitem>
+      <para>Contains the templates for some of Nikto's output formats.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+
