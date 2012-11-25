@@ -60,7 +60,7 @@ sub nikto_cgi {
             return if $mark->{'terminate'};
             ($res, $content) = nfetch($mark, $possiblecgidir, "GET", "", "", "", "cgi dir check");
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res", "d");
-            if (content_present($res) eq TRUE) {
+            if ((content_present($res) eq TRUE) || ($res eq 403)) {
                 $gotvalid++;
                 push(@POSSIBLECGI, $possiblecgidir);
             }

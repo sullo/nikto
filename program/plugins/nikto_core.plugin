@@ -1,5 +1,5 @@
 #VERSION,2.1.5
-# $Id$
+# $Id: nikto_core.plugin 870 2012-10-18 14:27:06Z sullo $
 ###############################################################################
 #  Copyright (C) 2006 CIRT, Inc.
 #
@@ -949,6 +949,7 @@ sub check_input {
         safe_quit($mark);
     }
     elsif ($key eq 'P') {
+        status_report();
         pause();
     }
     elsif ($key eq 'N') {

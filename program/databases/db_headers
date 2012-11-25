@@ -1,5 +1,5 @@
 #VERSION,2.008
-# $Id$ 
+# $Id: db_headers 858 2012-09-19 14:29:43Z sullo $ 
 #######################################################################
 # Source: http://cirt.net
 # This file may only be distributed and used with the full Nikto package.
@@ -73,3 +73,6 @@
 "status"
 "proxy-connection"
 "mime-version"
+"x-frame-options"
+"x-content-type-options"
+"x-cnection"

@@ -2,7 +2,7 @@
 use strict;
 
 #VERSION,2.1.5
-# $Id$
+# $Id: nikto.pl 845 2012-09-10 04:22:37Z sullo $
 use Getopt::Long;
 use Time::Local;
 Getopt::Long::Configure('no_ignore_case');

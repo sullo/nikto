@@ -1,5 +1,5 @@
-#VERSION,2.019
-# $Id$
+#VERSION,2.021
+# $Id: db_tests 877 2012-11-22 04:56:40Z sullo $
 #######################################################################
 # Source: http://cirt.net
 # This file may only be distributed and used with the full Nikto package.
@@ -6570,3 +6570,4 @@
 "006605","0","1b","/mobileadmin/logs/","GET","Directory\sListing","","","","","RoveIT Mobile logs accessible","",""
 "006606","0","1b","/mobileadmin/bin/","GET","Directory\sListing","","","","","RoveIT Mobile executable dir accessible","",""
 "006607","0","3","/mobileadmin/home.cs","GET","Server\sVersion","","","","","RoveIT Mobile gives a list of a server's Windows domains","",""
+"006608","0","8","@PHPMYADMINserver_sync.php?c=phpinfo()","GET","PHP\sVersion","","","","","phpMyAdmin contains a backdoor which allows remote PHP execution. http://www.phpmyadmin.net/home_page/security/PMASA-2012-5.php","",""

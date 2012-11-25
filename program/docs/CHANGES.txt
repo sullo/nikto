@@ -25,7 +25,6 @@
 	- Ticket 57: nfetch no longer uses global request/response hashes
 	- Ticket 1: Save full response on positive, plaintext & JSON
 	- Completely remove cache functionality as it was near worthless and added a lot of overhead
-	- Change cache to include full request and response
 	- Including JSON-PP source to not require JSON installation. http://search.cpan.org/~makamaka/JSON-2.53/lib/JSON/backportPP.pm
 	- Add IP address to CSV output. NOTE: this changes a parse-able report format!
 	- add_vulnerability now takes in %request and %response for saving of data
@@ -34,7 +33,6 @@
 	- Output file name now takes '.' which will auto-generate output filename like nikto_hostname_port.EXT
 	- Fix -root not appearing in report output, reported by Cédric Michel
 	- nikto_favicon.plugin checks for icons in <link> tags
-	- Add check for non-empty OPTIONS response body, which could be related to something like http://zacstewart.com/2012/04/14/http-options-method.html
 	- Add nikto_paths.plugin to look for things to add to db_variables values
 	- Items found in robots.txt are now added to values from db_variables
 	- Keep tokens from getting into %db_extensions, thanks to Erik Cabetas

@@ -1,5 +1,5 @@
-#VERSION,2.03
-# $Id$
+#VERSION,2.05
+# $Id: nikto_cookies.plugin 879 2012-11-23 04:17:12Z sullo $
 ###############################################################################
 #  Copyright (C) 2010 CIRT, Inc.
 #
@@ -47,11 +47,11 @@ sub nikto_cookies_postfetch {
 		$c =~ /^([^=]+)/;
 		my $cname = $1;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
-		if ($c !~ /secure/ && $mark->{ssl}) {
+		if ($c !~ /secure/i && $mark->{ssl}) {
 			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0,
 				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
-		if ($c !~ /httponly/) {
+		if ($c !~ /httponly/i) {
 			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999960, 0,
 				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
