@@ -1,0 +1,85 @@
+#VERSION,2.03
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Look for multiple unique index files
+###############################################################################
+sub nikto_multiple_index_init {
+    my $id = { name        => "mutiple_index",
+               full_name   => "Multiple Index",
+               author      => "deity",
+               description => "Checks for multiple index files",
+               hooks       => { scan => { method => \&nikto_multiple_index, }, },
+               copyright   => "2009 CIRT Inc"
+               };
+
+    return $id;
+}
+
+sub nikto_multiple_index {
+    my ($mark) = @_;
+    my $dbarray = init_db("db_multiple_index");
+    my ($found, $hashes);
+    foreach my $item (@$dbarray) {
+        return if $mark->{'terminate'};
+
+        # First we need to mangle the host.
+        my ($res, $content, $error, $request, $response) = nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
+
+        if ($res == 200) {
+            $content = rm_active_content($content, "/$item->{'index'}");
+            my $hash = LW2::md4($content);
+            $found{ $item->{'index'} } = $hash;
+            $hashes{$hash}++;
+        }
+
+    }    # End foreach
+
+    if (keys(%found) > 1) {
+
+        # make sure we have unique pages
+        $total_unique = 0;
+        foreach my $hash (keys %hashes) {
+            if ($hashes{$hash} eq 1) {
+                $total_unique++;
+            }
+        }
+
+        # one unique hash... bogus responses
+        if ($total_unique <= 1) {
+            return;
+        }
+
+        my $tempstring;
+        foreach my $f (keys %found) { $tempstring .= "$f, "; }
+        $tempstring =~ s/, ?$//;
+
+        # some unique... report slightly differently
+        if ($total_unique < keys(%found)) {
+            add_vulnerability($mark, "Multiple index files found (note, these may not all be unique): $tempstring", 740000, 0, "GET", "/", $request, $response);
+        }
+
+        # all unique... report
+        if ($total_unique eq keys(%found)) {
+            add_vulnerability($mark, "Multiple index files found: $tempstring", 740000, 0, "GET", "/", $request, $response);
+        }
+    }
+}
+
+1;

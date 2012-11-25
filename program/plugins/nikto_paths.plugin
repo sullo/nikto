@@ -1,0 +1,135 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2012 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Look at paths to help populate variables
+###############################################################################
+sub nikto_paths_init {
+    my $id = { name        => "paths",
+               full_name   => "Path Search",
+               author      => "Sullo",
+               description => "Look at link paths to help populate variables",
+               hooks       => {
+                          recon => { method => \&nikto_paths,
+                                     weight => 20,
+                                     },
+                            },
+               copyright => "2012 CIRT Inc."
+               };
+    return $id;
+}
+
+sub nikto_paths {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my (%DIRS, %FILES);
+    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "robots");
+
+    if ($res eq 200) {
+
+        # get links
+        my @links = LW2::html_link_extractor($content);
+        foreach my $link (@links) {
+
+            # if not relative
+            if ($link !~ /^\//) {
+
+                # check host
+                my @uri = LW2::uri_split($link);
+                if (   ($uri[2] eq $mark->{'hostname'})
+                    || ($uri[2] eq $mark->{'ip'})
+                    || ($uri[2] eq $mark->{'vhost'})
+                    || ($uri[2] eq $mark->{'ident'})) {
+                    $link = $uri[0];
+                }
+                else {
+                    next;
+                }
+            }
+
+            # normalize
+            $link = LW2::uri_normalize($link);
+
+            # split dirs / files
+            my $dir  = LW2::uri_get_dir($link);
+	    $dir = validate_and_fix_regex($dir);
+            my $file = $link;
+            $file =~ s/^$dir//;
+
+            if ($file ne '') {
+                $file =~ s/\\//g;
+                $FILES{$file} = 1;
+            }
+
+            if (($dir ne '') && ($dir ne '/')) {
+                $dir =~ s/\\//g;
+                $DIRS{$dir} = 1;
+            }
+        }
+
+        # Now actually check the unique dirs/files
+        foreach my $file (keys %FILES) {
+            $file = validate_and_fix_regex($file);
+            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
+                $VARIABLES{"\@MUTATEFILES"} .= " $file";
+            }
+
+            if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
+                $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
+            }
+        }
+
+        foreach my $dir (keys %DIRS) {
+            $dir = validate_and_fix_regex($dir);
+
+            # Mutate
+            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@MUTATEDIRS"} .= " $dir";
+            }
+
+            # Other vars
+            if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@CGIDIRS"} .= " $dir";
+            }
+            if ($dir =~ /forum/ && $VARIABLES{"\@NUKE"} !~ /$dir/) {
+                $VARIABLES{"\@NUKE"} .= " $dir";
+            }
+            if ($dir =~ /pass/ && $VARIABLES{"\@PASSWORDDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@PASSWORDDIRS"} .= " $dir";
+            }
+            if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
+                $VARIABLES{"\@NUKE"} .= " $dir";
+            }
+            if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
+                $VARIABLES{"\@ADMIN"} .= " $dir";
+            }
+            if ($dir =~ /phpmy/i && $VARIABLES{"\@PHPMYADMIN"} !~ /$dir/i) {
+                $VARIABLES{"\@PHPMYADMIN"} .= " $dir";
+            }
+            if ($dir =~ /fck/i && $VARIABLES{"\@FCKEDITOR"} !~ /$dir/i) {
+                $VARIABLES{"\@FCKEDITOR"} .= " $dir";
+            }
+            if ($dir =~ /crystal/i && $VARIABLES{"\@CRYSTALREPORTS"} !~ /$dir/i) {
+                $VARIABLES{"\@CRYSTALREPORTS"} .= " $dir";
+            }
+        }
+
+    }
+}
+
+1;

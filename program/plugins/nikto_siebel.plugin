@@ -1,0 +1,132 @@
+#VERSION,1.00
+# $Id: nikto_siebel.plugin 600 2011-01-03 05:06:27Z deity $
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# ASiebel specific checks
+###############################################################################
+
+sub nikto_siebel_init {
+    my $id = {
+            name        => "siebel",
+            full_name   => "Siebel Checks",
+            author      => "Deity",
+            description => "Performs a set of checks against an installed Siebel application",
+            hooks       => {
+                              scan => {
+                                 method => \&nikto_siebel,
+                              },
+                           },
+            copyright   => "2011 CIRT Inc.",
+            options     => {
+                              enumerate    => "Flag to indicate whether we shall attempt to enumerate known apps",
+                              applications => "List of applications",
+                              languages    => "List of Languages",
+                              application  => "Application to attack",
+                           }
+              };
+    return $id;
+}
+
+sub nikto_siebel {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters) = @_;
+    my $application;
+
+    # Check whether we have an application
+    if (defined $parameters->{'enumerate'}) {
+        my @apps=nikto_siebel_enumerate($mark, $parameters);
+        my $application=@apps[0];
+    }
+    
+    if ($application eq "" && defined $parameters->{'application'}) {
+        $application=$parameters->{'application'};
+    }
+    
+    if ($application eq "") {
+        nprint("No Siebel Application defined","v");
+        return;
+    }
+    
+    # Now we have an application time to perform some tests
+    my $path = $application . "/base.txt";
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+    if ($res eq "200") {
+        my ($siebelver, $appver, $hotfix);
+        $siebelver=$content;
+        $siebelver =~ s/([ \t]*)([0-9.]*)( .*\n.*)/$2/;
+        chomp($siebelver);
+        $appver = $content;
+        $appver =~ s/(.*\[)(.*)(\].*\n.*)/$2/;
+        chomp($appver);
+        $hotfix = $content;
+        $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
+        add_vulnerability($mark, "Siebel version $siebelver found, application version $appver, applied hostfixes are $hotfix", 999901, 0, "GET", $path, $request, $response);
+    }
+        
+    $path = $application . "/_stats.swe";
+    ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+    if ($res eq "200") {
+        add_vulnerability($mark, "Siebel stats page found at $path", 999902, 0, "GET", $path, $request, $response);
+    }
+    
+    foreach my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm")) {
+        $path = $application . "/$page";
+        ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+        if ($res eq "200") {
+            add_vulnerability($mark, "Siebel default file $path found", 999903, 0, "GET", $path, $request, $response);
+        }
+    }
+
+    return;
+}    
+
+sub nikto_siebel_enumerate {
+    my ($mark, $params) = @_;
+    
+    # Default apps and languages - allow parameters to over-ride them.
+    my $apps = "emarketing ecustomer pmmanager sales marketing wpeserv salesce econsumerpharma emedia epublicsector eaf echannelcme epharmace siaservicece finseenenrollment ecustomercme loyalty erm etraining esales callcenter wpsales eai smc eprofessionalpharma eenergy pseservice sismarketing econsumer medicalce epharma fins finesales finscustomer htim loyaltyscw ermadmin eevents eauctionswexml cra wpserv eai_anon edealer esitesclinical eautomotive econsumersector echannelaf eEnergyOilGasChemicals cgce eclinical finsconsole finsebanking finssalespam htimpim eloyalty ememb pimportal eservice service wppm servicece edealerscw ecommunications ehospitality eretail echannelcg eCommunicationsWireless siasalesce emedical finsechannel finsebrokerage esalescme";
+    my $langs = "enu euq cht dan fin deu hun kor ptb sky sve pse cat shl nld fra ell ita nor ptg slv tha psl chs csy frc heb jpn plk rus esn trk";
+    
+    my @foundapps;
+    
+    if ($params->{applications}) {
+        $apps=$params->{applications};
+    }
+
+    if ($params->{languages}) {
+        $langs=$params->{languages};
+    }   
+
+    foreach my $language (split(/ /,$langs)) {
+        foreach my $application (split(/ /,$apps)) {
+            my $appname = $application . "_" . $language;
+            my $startname = $appname . "/start.swe";
+            ($res, $content, $error, $request, $response) = nfetch( $mark, $startname, "GET", "", "", "", "siebel: enumerate application");
+            if ($res eq "200") {
+                # We've found an app
+                add_vulnerability($mark, "Enumerated Siebel application: " . $appname, 999900, 0, "GET", $startname, $request, $response);
+                push(@foundapps, $appname);
+            }
+        }
+    }
+    
+    return @foundapps;
+}
+
+1;

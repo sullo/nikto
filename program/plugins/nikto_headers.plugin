@@ -1,0 +1,265 @@
+#VERSION,2.10
+# $Id$
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# General HTTP headers checks
+###############################################################################
+use vars qw/$HEADERSDB/;
+
+sub nikto_headers_init {
+    my $id = {
+        name        => "headers",
+        full_name   => "HTTP Headers",
+        author      => "Sullo",
+        description => "Performs various checks against the headers returned from an HTTP request.",
+        hooks       => {
+                   scan      => { method => \&nikto_headers, },
+                   postfetch => { method => \&nikto_headers_postfetch, },
+                   start     => { method => \&nikto_headers_load, },
+                   },
+        copyright => "2008 CIRT Inc."
+        };
+
+    # some global variables
+    use vars qw/%HFOUND $ETAGS $XFRAME/;
+    $ETAGS=0;
+	$XFRAME=0;
+
+    return $id;
+}
+
+sub nikto_headers_load {
+    $HEADERSDB = init_db("db_headers");
+}
+
+sub nikto_headers_postfetch {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters, $request, $response) = @_;
+
+    # Check for known headers
+    my @interesting_headers =
+      qw /via x-served-by x-powered-by servlet-engine microsoftofficewebserver ms-author-via dasl dav daap-server x-aspnet-version commerce-server-software/;
+
+    foreach my $header (@interesting_headers) {
+        nikto_headers_check($mark, $response, $header, 'Retrieved ' . $header . ' header:', 999986, $request);
+    }
+
+    # look for internal IPs
+    foreach my $header (keys %$response) {
+        # skip some very unlikely headers
+        if    ($header eq 'whisker')        { next; }
+        elsif ($header eq 'date')           { next; }
+        elsif ($header eq 'content-type')   { next; }
+        elsif ($header eq 'content-length') { next; }
+        elsif ($header eq 'connection')     { next; }
+	elsif (defined $HFOUND{$header})    { next; }
+        foreach my $ip (get_ips($response->{$header})) {
+            my ($valid, $internal, $loopback) = is_ip($ip);
+            if ($valid && !$loopback) {
+                if ($ip ne $mark->{'ip'}) {
+
+                    # is it an internal, or just different?
+                    my $msg;
+                    if ($internal) { $msg .= "RFC-1918 "; }
+                    $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
+                    add_vulnerability($mark, $msg, 999979, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+	            $HFOUND{$header}=1;
+                }
+            }
+        }
+    }
+
+    # look for inode in etag header
+    if (!$ETAGS && defined $response->{'etag'}) { 
+        my $etag = $response->{'etag'};
+        $etag =~ s/"//g;
+        my @fields = split("-", $etag);
+        my $message = "Server leaks inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
+        if ($#fields == 2) {
+
+            # check for numbers that are too large
+            my $ishex = 1;
+            for (my $i = 0 ; $i < 3 ; $i++) {
+                if (length($fields[$i]) > 14) {
+                    $ishex = 0;
+                }
+            }
+            my $inode = "0x$fields[0]";
+            my $size  = "0x$fields[1]";
+            my $mtime = "0x$fields[2]";
+
+            # for some reason $mtime is mangled
+            $message .=
+              ($ishex == 1)
+              ? sprintf(", inode: %d, size: %d, mtime: %s", hex($inode), hex($size), $mtime)
+              : sprintf(", inode: %s, size: %s, mtime: %s", $inode,      $size,      $mtime);
+        }
+        else {
+            $message .= ", fields: ";
+            foreach my $field (@fields) {
+                $message .= "0x$field ";
+            }
+        }
+        add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+		$ETAGS=1;
+    }
+	
+	# Look for X-Frame-Options
+	if (!$XFRAME && defined $response)
+	{
+		if (defined $response->{'x-frame-options'}) {
+			if ($response->{'x-frame-options'} =~ /^ALLOW-FROM/) {
+				my $allowed = $response->{'x-frame-options'};
+				$allowed =~ s/^.* //g;
+				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. \
+					This is only supported in Internet Explorer and may lead to the header being ignored.",
+					999978,
+					0,
+					$request->{'whisker'}->{'method'},
+					$request->{'whisker'}->{'uri'},
+					$request,
+					$response);
+			}
+		}
+		else {
+			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.",
+				999976,
+				0,
+				$request->{'whisker'}->{'method'},
+				$request->{'whisker'}->{'uri'},
+				$request,
+				$reponse);
+		}
+		$XFRAME=1;
+	}
+
+    # Look for any uncommon headers
+
+    foreach my $header (keys %$response) {
+        my $found = 0;
+        foreach my $st_header (@$HEADERSDB) {
+            if ($header eq $st_header->{'header'}) {
+                $found = 1;
+            }
+	    elsif (defined $HFOUND{$header}{$mark->{'hostname'}})    { $found=1; }
+        }
+        if ($found == 0) {
+            my $x = $reponse->{$header};
+            $x =~ s/\s+.*$//;
+            $mark->{'components'}->{$x} = 1;
+            add_vulnerability($mark, "Uncommon header '$header' found, with contents: $response->{$header}", 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+            $reportnum++;
+	    $HFOUND{$header}{$mark->{'hostname'}}=1;
+        }
+    }
+
+    return $request, $response;
+}
+
+sub nikto_headers_check {
+    return if $mark->{'terminate'};
+    my ($mark, $response, $header, $message, $tid, $request) = @_;
+
+    if (exists $response->{$header}) {
+        my $key =
+          LW2::md4(  $mark->{'ip'}
+                   . $mark->{'hostname'}
+                   . $mark->{'port'}
+                   . $mark->{'ssl'}
+                   . $response->{'whisker'}->{'method'}
+                   . $header);
+
+        if (!exists $HFOUND{$key}) {
+            my $value = $response->{$header};
+            $HFOUND{$key} = $value;
+
+            add_vulnerability($mark, $message . " " . $value, $tid, "0", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+        }
+    }
+}
+
+sub nikto_headers {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+
+    #######################################################################
+    # look for to see whether its vulnerable to the Translate: f
+    my %transheaders;
+    $transheaders{'Translate'} = "f";
+    foreach
+      my $f (qw/\/index.asp \/junk999.asp \/index.aspx \/junk988.aspx \/login.asp \/login.aspx/) {
+        return if $mark->{'terminate'};
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $f, "GET", "", "", "", "headers: Translate-f #1");
+        if ($res eq "200") {
+            ($res, $content, $error, $request, $response) = nfetch($mark, $f . "\\", "GET", "", \%transheaders, "", "headers: Translate-f #2");
+            if ($res eq "200") {
+                if ($content =~ /<asp:/ || $content =~ /<\/asp:/) {
+                    add_vulnerability($mark, "Host may be vulnerable to a source disclosure using the Translate: header", 999983, 390, "GET", $f, $request, $response);
+                    last;
+                }
+            }
+        }
+    }
+
+    #######################################################################
+    # Content-Location header in IIS
+    my %locheaders, %locflags; 
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/; 
+    $locflags{'noclean'} = 1; 
+
+     ($res, $content, $errors, $request, $response, $headers_recv) =  
+     nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
+                 
+     if (   ($headers_recv->{'content-location'} ne "") 
+         && ($headers_recv->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+         && ($headers_recv->{'content-location'} !~ /$mark->{'ip'}/)) { 
+        	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$headers_recv->{'content-location'}\".", 999989, 630, "GET", "/", $request, $response);
+    }
+
+	undef %headers_recv;
+	my $headers_recv;
+         ($res, $content, $errors, $request, $response, $headers_recv) =  nfetch($mark, '/images', "GET", "", \locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
+  
+     if (   ($headers_recv->{'location'} ne "") 
+         && ($headers_recv->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+         && ($headers_recv->{'location'} !~ /$mark->{'ip'}/)) { 
+        add_vulnerability($mark, "IIS may reveal its internal or real IP in the Location header via a request to the /images directory. The value is \"$headers_recv->{'location'}\".", 999988, 630, "GET", "/images", $request, $response);
+    }
+
+    #######################################################################
+    # Location header in WebLogic
+    # Clear out locheaders 
+    for (keys %locheaders) { 
+        delete $locheaders{$_}; 
+    } 
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ WebLogic\ internal\ IP/; 
+
+    undef %headers_recv;
+    my $headers_recv;
+    ($res, $content, $errors, $request, $response, $headers_recv) =  
+            nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0"); 
+ 
+    if (($headers_recv->{'location'} ne "") && ($headers_recv->{'location'} =~ /http:\/\//)) { 
+        add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$headers_recv->{'location'}\".", 999987, 5737, "GET", ".", $request, $response);
+    }
+}
+
+1;

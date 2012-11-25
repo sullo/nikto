@@ -1,0 +1,26 @@
+#VERSION,2.000
+# $Id$
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2010 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+# These can be regular expressions, but will be eval'd case insensitive.
+# Since these are run after every page retrieved, we should try to keep these as fast 
+# regular expressions as possible, and limited to only critical findings.
+#######################################################################
+"nikto_id","osvdb","matchstring","message"
+"750000","3268","[iI]ndex [oO]f \/","Directory indexing found."
+"750001","0","Warning(?:<\/b>)?:\s+(?:include|require)(?:_once)?\(","PHP include error may indicate local or remote file inclusion is possible."
+"750002","0","failed to open stream: No such file or directory in (?:<b>)?(?:[a-zA-Z]:\\|\/)","PHP include error reveals the full path to the web root."
+"750003","0","mysql_p?connect\(","Potential PHP MySQL database connection string found."
+"750004","0","pgp_p?connect\(","Potential PHP PostgreSQL database connection string found."
+"750005","0","sqlite_p?open\(","Potential PHP SQLite database connection string found."
+"750006","0","mssql_p?connect\(","Potential PHP MSSQL database connection string found."
+"750007","0","Call to undefined function.*\(\) in \/","PHP error reveals file system path."
+"750008","36099","FrameworkLog.xsl\"\\?>.*<version>(?:[0-2]|3\.(?:[0-5]|6\.0\.(?:[0-4]|5(?:[0-3]|4[0-5]))))","McAfee Common Management Agent 3.6.0.546 and below contain multiple overflows."

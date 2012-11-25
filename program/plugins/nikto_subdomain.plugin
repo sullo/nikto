@@ -1,0 +1,73 @@
+#VERSION,2.01
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Look for subdomains
+###############################################################################
+sub nikto_subdomain_init {
+    my $id = { name        => "subdomain",
+               full_name   => "Sub-domain forcer",
+               author      => "Ryan Dewhurst",
+               description => "Attempts to bruteforce commonly known sub-domains",
+               hooks       => {
+                          scan => { method => \&nikto_subdomain,
+                                    weight => 20,
+                                    },
+                            },
+               copyright => "2009 Ryan Dewhurst"
+               };
+
+    return $id;
+}
+
+sub nikto_subdomain {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my $dbarray = init_db("db_subdomains");
+
+    # Record the host for future use
+    my $host = $mark->{'hostname'};
+
+    # Check whether the host is an IP address
+    if (index($host, '.') < 0 || $host =~ /^[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*$/) {
+
+        # Host is an IP address, don't bother!
+        nprint("Host given to subdomain is an IP address or an unqualified hostname; skipping",
+               "v");
+        return;
+    }
+
+    # Check if the start of the domain is "www"
+    $host =~ s/^www\.//;
+
+    foreach my $item (@$dbarray) {
+        return if $mark->{'terminate'};
+
+        # First we need to mangle the host.
+        $mark->{'hostname'} = $item->{'subdomain'} . "." . $host;
+        my ($response, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "subdomain");
+
+        if ($error eq "") {
+            add_vulnerability($mark, "Subdomain $item->{'subdomain'} found", $item->{'nikto_id'}, 0, "GET", "/", $request, $response);
+        }
+
+    }    # End foreach
+}    # End sub
+
+1;

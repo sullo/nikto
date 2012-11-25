@@ -1,0 +1,212 @@
+#VERSION,2.06
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Apache user enumeration
+###############################################################################
+
+sub nikto_apacheusers_init {
+    my $id = {
+            name        => "apacheusers",
+            full_name   => "Apache Users",
+            author      => "Javier Fernandez-Sanguinoi Pena",
+            description => "Checks whether we can enumerate usernames directly from the web server",
+            hooks       => { scan => { method => \&nikto_apacheusers, }, },
+            copyright   => "2008 CIRT Inc.",
+            options     => {
+                         enumerate  => "Flag to indicate whether to attempt to enumerate users",
+                         dictionary => "Filename for a dictionary file of users",
+                         size       => "Maximum size of username if bruteforcing",
+                         home       => "Look for ~user to enumerate",
+                         cgiwrap    => "User cgi-bin/cgiwrap to enumerate"
+                         }
+              };
+    return $id;
+}
+
+sub nikto_apacheusers {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters) = @_;
+    my $apacheusers = 0;
+
+    # First ensure that the server is vulnerable
+    my ($result, $content) = nfetch($mark, "/~root", "GET", "", "", "", "apacheusers: known user");
+
+    $content = quotemeta($content);
+    if ($content =~ /forbidden/i)    # good on "root"
+    {
+        my ($result, $content, $errors, $request, $response) = nfetch($mark, "/~" . LW2::utils_randstr(8), "GET", "", "", "", "apacheusers: invalid user");
+
+        $content = quotemeta($content);
+        if ($content !~ /forbidden/i)    # Good, it gave an error instead of forbidden
+        {
+            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).", 999999, 637, "GET", "/~root", $request, $response);
+        }
+        $apacheusers = 1;
+    }
+
+    # If we can't enumerate users then return
+    return unless ($apacheusers == 1);
+
+    # If we haven't been asked to enumerate users then return
+    return unless (defined $parameters->{'enumerate'}
+                   && $parameters->{'enumerate'} == 1);
+
+    # Now we can attempt to enumerate the users
+    my ($url, $dictfile, $size);
+    my @cgiwraps;
+    my @cfgcgi = split(/ /, $VARIABLES{"\@CGIDIRS"});
+
+    if (defined $parameters->{'dictionary'}) {
+        $dictfile = $parameters->{'dictionary'};
+    }
+    if (defined $parameters->{'size'}) {
+        $size = $parameters->{'size'};
+    }
+
+    # Set the URL according to the parameters
+    if (defined $parameters->{'cgiwrap'}) {
+
+        # Check for existence of cgiwrap
+        foreach my $cgidir (@CFGCGI) {
+            my $curl = "$cgidir" . "cgiwrap";
+            my ($result, $content) = nfetch($mark, $curl, "GET", "", "", "", "user_enum_apache: cgiwrap");
+            if ($content =~ /check your URL/i) {
+                push(@cgiwraps, "$curl");
+            }
+        }
+
+        foreach my $cgiwrap (@cgiwraps) {
+            $url = "$cgiwrap/~";
+
+            # First check whether we use a dictionary attack of brute force it
+            if (defined $dictfile) {
+
+                # We have options - assume it is a dictionary attack
+                nikto_user_enum_apache_dictionary($url, $mark, $dictfile);
+            }
+            else {
+                nikto_user_enum_apache_brute($url, $mark, $size);
+            }
+        }
+    }
+    if (defined $parameters->{'home'}) {
+        $url = "/~";
+
+        # First check whether we use a dictionary attack of brute force it
+        if (defined $dictfile) {
+
+            # We have options - assume it is a dictionary attack
+            nikto_user_enum_apache_dictionary($url, $mark, $dictfile);
+        }
+        else {
+            nikto_user_enum_apache_brute($url, $mark, $size);
+        }
+    }
+}
+
+sub nikto_user_enum_apache_brute {
+
+    # Note1: This script only generates names with letters A-Z (no numbers)
+    #
+    # Note2: this script will generate SUM(26^n)(n=$min to $max)
+    # it's probably faster to write this to a file than to generate it
+    # on the fly BTW.
+    #
+    # Of course, it could be optimized to skip some "strange"
+    # combinations of usernames, but hey, then it wouldn't
+    # be 'brute force' would it? (jfs)
+
+    my ($url, $mark, $size) = @_;
+    $size = 5 if ($size eq "");
+    nprint("- Enumerating Apache users (1 to $size characters).", "v");
+
+    my $text    = "a";
+    my $ctr     = 0;
+    my $message = "Valid users found via Apache enumeration: ";
+    my ($result, $content);
+    my @foundusers = ();
+    while (length($text) <= $size) {
+        return if $mark->{'terminate'};
+        if (($ctr % 500) eq 0) { nprint("- User enumeration guess $ctr ($text)", "v"); }
+        ($result, $content, $errors, $request, $response) = nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
+        my $user = nikto_user_enum_apache_check($result, $text);
+        if (defined $user && $user ne "") {
+            push(@foundusers, $user);
+        }
+        $text++;
+        $ctr++;
+    }
+    if (scalar(@foundusers)) {
+        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "637", "HEAD", "/", $request, $response);
+    }
+
+}
+
+sub nikto_user_enum_apache_dictionary {
+    my ($url, $mark, $filename) = @_;
+    my $message    = "Valid users found via Apache enumeration: ";
+    my @foundusers = ();
+    my ($result, $content);
+    my $ctr = 0;
+
+    nprint("- Enumerating Apache users (using dictionary $filename).", "v");
+    unless (open(IN, "<$filename")) {
+        nprint("+ ERROR: Unable to open dictionary file $filename: $!.");
+    }
+
+    # Now attempt on each entry
+    while (<IN>) {
+        return if $mark->{'terminate'};
+        chomp;
+        s/\#.*$//;
+
+        # remove preceding ~ just in case
+        s/^~//;
+        if ($_ eq "") { next }
+        if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v"); }
+        ($result, $content, $errors, $request, $response) = nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
+        my $user = nikto_user_enum_apache_check($result, $_);
+        if ($user) {
+            push(@foundusers, $user);
+        }
+        $ctr++;
+    }
+    close(IN);
+    if (scalar(@foundusers)) {
+        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "637", "HEAD", "/", $request, $response);
+    }
+}
+
+sub nikto_user_enum_apache_check {
+    (my $code, $user) = @_;
+    my $result = "";
+
+    foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
+        if ($code eq $found) {
+            $result = $user;
+            last;
+        }
+    }
+
+    return $result;
+}
+
+1;
+

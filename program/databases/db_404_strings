@@ -1,0 +1,47 @@
+#VERSION,2.003
+# $Id$
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2007 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+# Strings to be used for 404 content match
+#######################################################################
+Access Failed
+an error
+Bad Request
+Client Authentication Remote Service
+could not find
+error has occurred
+Error 404
+Error Occurred While Processing Request
+Error processing SSI file
+ExtendNet DX Configuration
+FireWall-1 message
+forcelogon.htm
+IMail Server Web Messaging
+Management Console	
+name=qt id="search" size=40 value=" "
+No web site is configured at this address
+not found
+parameter is incorrect                                   # IIS 5.0 500 error
+Please identify yourself:
+Reload acp_userinfo database
+RSA SecurID User Name Request
+The userid or password that was specified is not valid.  # Tivoli server administrator   
+TYPE=password	                                         # As in "<input type=password>"
+Unable to complete your request
+unable to open
+Web access denied
+Hack Attempts
+does not exist                                           # SAP NetWeaver
+<b>Wrong URL.                                            # Cisco SSL VPN
+page may no longer exist
+page no longer exist
+Your session has expired				# cPanel webmail
+no longer available

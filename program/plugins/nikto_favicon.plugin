@@ -1,0 +1,98 @@
+#VERSION,2.09
+# $Id$
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Get a favicon.ico file & MD5 fingerprint
+###############################################################################
+use vars qw/$FAVICONDB $ICON/;
+
+sub nikto_favicon_init {
+    my $id = { name        => "favicon",
+               full_name   => "Favicon",
+               author      => "Sullo",
+               description => "Checks the web server's favicon against known favicons.",
+               copyright   => "2008 CIRT Inc.",
+               hooks       => {
+                          scan  => { method => \&nikto_favicon, },
+                          start => { method => \&nikto_favicon_load, }
+                          },
+                 };
+    return $id;
+}
+
+sub nikto_favicon_load {
+    $FAVICONDB = init_db("db_favicon");
+}
+
+sub nikto_favicon {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+
+    # Check /favicon.ico
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/favicon.ico", "GET", "", "", "", "favicon");
+
+    if (($res eq "200") && ($content ne "")) {
+        my $hash = LW2::md5($content);
+        $hash =~ s/^.*://;
+        nprint("Got favicon.ico hash:$hash", "d", "");
+        favicon_matchhash($hash);
+    }
+
+    # Check for a <link> favicon
+    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "favicon");
+    if (($res eq "200") && ($content ne "") && ($content =~ /\.ico/i)) {
+        my %tags;
+        $tags{'link'} = 1;
+        LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);
+        if ($ICON ne '') {
+            ($res, $content, $error, $request, $response) = nfetch($mark, $ICON, "GET", "", "", "", "favicon");
+            if (($res eq "200") && ($content ne "")) {
+                my $hash = LW2::md5($content);
+                $hash =~ s/^.*://;
+                nprint("Got $ICON hash:$hash", "d", "");
+                favicon_matchhash($hash, $ICON);
+            }
+        }
+    }
+}
+
+sub favicon_checkhash {
+    my ($tag, $elements) = @_;
+    while ((my ($e, $v)) = each(%{$elements})) {
+        if ($e ne 'href') { next; }
+        if ($v =~ /\.ico$/) {
+            my @url = LW2::uri_split($v);
+            $ICON = $url[0];
+            return;
+        }
+    }
+}
+
+sub favicon_matchhash {
+    my $hash = $_[0] || return;
+    my $icon = $_[1] || "/favicon.ico";
+    my $request = $_[2];
+    my $response = $_[2];
+    foreach my $item (@$FAVICONDB) {
+        if ($item->{'md5hash'} eq $hash) {
+            add_vulnerability($mark, "favicon.ico file identifies this server as: $item->{'description'}", $item->{'nikto_id'}, 39272, "GET", $icon, $request, $response);
+        }
+    }
+}
+1;

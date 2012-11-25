@@ -1,0 +1,77 @@
+#VERSION,2.05
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Search content for known bad strings
+###############################################################################
+use vars qw/$CONTENTSEARCH %CSMATCHED/;
+
+sub nikto_content_search_init {
+    my $id = { name        => "content_search",
+               full_name   => "Content Search",
+               author      => "Sullo",
+               description => "Search resultant content for interesting strings",
+               hooks       => {
+                          start => { method => \&nikto_content_search_load,
+                                     weight => 1,
+                                     },
+                          postfetch => { method => \&nikto_content_search,
+                                         weight => 20,
+                                         },
+                            },
+               copyright => "2010 CIRT Inc"
+               };
+
+    return $id;
+}
+
+sub nikto_content_search_load {
+
+    # Load up the database as soon as we can
+
+    $CONTENTSEARCH = init_db("db_content_search");
+    %CSMATCHED     = ();
+
+    # to try and speed it up - precompile the regular expressions
+    foreach my $testid (@$CONTENTSEARCH) {
+        $testid->{'compiled'} = qr/$testid->{'matchstring'}/;
+    }
+}
+
+sub nikto_content_search {
+    my ($mark, $parameters, $request, $response) = @_;
+
+    my $body   = $response->{'whisker'}->{'data'};
+    my $file   = $response->{'whisker'}->{'uri'};
+    my $method = $response->{'whisker'}->{'method'} || "GET";
+
+    foreach my $testid (@$CONTENTSEARCH) {
+        if ($body =~ $testid->{'compiled'}
+            && !exists $CSMATCHED{ $mark->{'hostname'} }{$file}) {
+
+            # Check whether we've already matched it
+            my $outmessage = "$file: $testid->{'message'}";
+            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'osvdb'}, $method, $file, $request, $response);
+            $CSMATCHED{ $mark->{'hostname'} }{$file} = 1;
+        }
+    }
+    return $request, $response;
+}
+
+1;

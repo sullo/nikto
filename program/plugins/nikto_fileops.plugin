@@ -1,0 +1,220 @@
+#VERSION,1.00
+# $Id$
+###############################################################################
+#  Copyright (C) 2012 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+###############################################################################
+# PURPOSE:
+# Various file operations
+###############################################################################
+sub nikto_fileops_init {
+    my $id = { name        => "fileops",
+               full_name   => "File Operations",
+               author      => "Sullo",
+               description => "Saves results to a text file.",
+               copyright   => "2012 CIRT Inc.",
+                 };
+    return $id;
+}
+
+###############################################################################
+# save a result to text file
+sub save_item {
+    my ($resulthash, $message, $request, $response) = @_;
+    return if $resulthash->{'mark'}->{'save_prefix'} eq '';
+    my $fn =
+        $resulthash->{'mark'}->{'save_dir'} . "/"
+      . $resulthash->{'mark'}->{'save_prefix'}
+      . $resulthash->{'nikto_id'} . ".txt";
+    my $json_request = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($request);
+    my $json_response = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
+
+    open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $!\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE "			  Information\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
+    print SAVEFILE "OSVDB ID: \t" . $resulthash->{'osvdb'} . "\n";
+    print SAVEFILE "Message:  \t" . $message . "\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE "			  Request\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    if ($request->{'whisker'}{'method'} eq '') { 
+	print SAVEFILE "Not Applicable\n";
+	}
+    else { 
+    print SAVEFILE $request->{'whisker'}{'method'} . " "
+      . $request->{'whisker'}{'uri'} . " "
+      . $request->{'whisker'}{'protocol'} . "/"
+      . $request->{'whisker'}{'version'} . "\n";
+
+    foreach my $header (keys %{$request}) {
+        next if $header eq 'whisker';
+        print SAVEFILE $header . ": " . $request->{$header} . "\n";
+    }
+	}
+    print SAVEFILE "\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE "			  Response\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    if ($response->{'whisker'}{'protocol'} eq '') { 
+	print SAVEFILE "Not Applicable\n";
+	}
+    else { 
+    print SAVEFILE $response->{'whisker'}{'protocol'} . "/"
+      . $response->{'whisker'}{'version'} . " "
+      . $response->{'whisker'}{'code'} . " "
+      . $response->{'whisker'}{'message'} . "\n";
+    foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
+        print SAVEFILE $header . ": " . $response->{$header} . "\n";
+    }
+    print SAVEFILE "\n" . $response->{'whisker'}{'data'} . "\n";
+    }
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE "			  Data Objects\n";
+    print SAVEFILE "-----------------------------------------------------------------------\n";
+    if ($request->{'whisker'}{'method'} ne '') { 
+    	print SAVEFILE "REQUEST:$json_request\n";
+	}
+    if ($response->{'whisker'}{'protocol'} ne '') { 
+    	print SAVEFILE "RESPONSE:$json_response\n";
+	}
+    close(SAVEFILE);
+}
+
+###############################################################################
+# get the prefix for all current host's save files
+sub save_getprefix {
+    my ($mark) = @_;
+    my $prefix = $mark->{'display_name'} . '_' . $mark->{'port'};
+    $prefix =~ s/,/\-/g;
+    $prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+    $prefix =~ s/_+/_/g;
+    my $now = date_disp(time());
+    $now =~ s/\s.*$//;
+    $prefix .= "_" . $now . "_";
+    return $prefix;
+}
+
+###############################################################################
+# get mark's save file name
+# Note: this is unused right now but keeping for next release
+sub get_report_filename { 
+	my ($in_file, $in_format, $mark) = @_;
+	if ($in_file eq '.') {
+    		my $prefix = "nikto_http";
+		$prefix .= "s" if ($mark->{'ssl'});
+		$prefix .= "_" . $mark->{'display_name'} . '_' . $mark->{'port'};
+    		$prefix =~ s/,/\-/g;
+    		$prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+    		$prefix =~ s/_+/_/g;
+    		my $now = date_disp(time());
+    		$now =~ s/\s.*$//;
+    		$prefix .= "_" . $now . "." . $in_format;
+		}
+	else { 
+		$prefix = $in_file;
+		if ($in_format eq '') { 
+			$in_format = lc($in_file);
+			$in_format =~ s/(^.*\.)([^.]*$)/$2/g;
+			}
+		}
+
+	return $prefix, $in_format;
+	}
+
+###############################################################################
+# Define/create the save directory
+sub save_createdir {
+    my ($savedir, $mark) = @_;
+    if ($savedir eq '.') {
+        $savedir = 'savedir_' . $mark->{'display_name'} . '_' . $mark->{'port'};
+        $savedir =~ s/,/\-/g;
+        $savedir =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+        $savedir =~ s/_+/_/g;
+        my $now = date_disp(time());
+        $now =~ s/[^0-9-]/-/g;
+        $savedir .= "_" . $now;
+    }
+    elsif (-f $savedir) {
+        nprint("+ERROR: Directory from -Savedir is a file.");
+        exit;
+    }
+
+    # create?
+    if (!-d $savedir) {
+        mkdir($savedir);
+        if (!-d $savedir) {
+            nprint("+ERROR: Unable to create -Save directory '$savedir'");
+            exit;
+        }
+    }
+    return $savedir;
+}
+
+###############################################################################
+# Parse input host files
+sub parse_hostfile {
+    my ($file) = @_;
+    my (@results, $hostdesc);
+    my $nmap = 0;
+
+    open(IN, $file) || die print STDERR "+ ERROR: Cannot open '$file':$@\n";
+    while (<IN>) {
+        my $found = 0;
+
+        # Check whether this is a greppable nmap file
+        chomp;
+        $nmap = 1 if (/^# Nmap/);
+        s/\#.*$//;
+        if ($_ eq "") { next; }
+
+        # Parse for nmap files
+        if ($nmap) {
+            if (($_ !~ /Host/) || ($_ !~ /Ports/) || ($_ !~ /open/) || ($_ !~ /(?:http|ssl)/i)) {
+                next;
+            }
+
+            # parse out the line
+            my @fields = split("\t", $_);
+
+            # Get the host name
+            $fields[0] =~ /Host:\s+([\d\.]+)\s+\(([^\)]+)?\)/;
+            $hostdesc = ($2 ne "") ? $2 : $1;
+
+            # Parse the ports list from:
+            # Host: 1.0.0.0 ()  Ports: 80/open/tcp//http///, 8000/open/tcp//http-alt///
+            $fields[1] =~ s/^Ports: //;
+            my @ports = parse_csv($fields[1]);
+            foreach my $nmp (@ports) {
+                if (($nmp !~ /(?:80|443)?\/open\/tcp/) || ($nmp !~ /(?:http|ssl)/i)) {
+                    nprint("\tNon web port identified: $hostdesc:$nmp", "d");
+                    next;
+                }
+                $nmp =~ /^(?:\s+)?(\d+)\//;
+                nprint("+ nmap Input Queued: $hostdesc:$1");
+                push(@results, $hostdesc . ":" . $1);
+            }
+        }
+        else {
+            # just add it to the list
+            push(@results, $_);
+        }
+    }
+    close(IN);
+    return (@results);
+}
+1;

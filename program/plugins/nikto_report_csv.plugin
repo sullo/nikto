@@ -1,0 +1,90 @@
+#VERSION,2.06
+# $Id: nikto_report_csv.plugin 87 2008-11-11 19:13:19Z deity $
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# CSV Reporting
+###############################################################################
+sub nikto_report_csv_init {
+    my $id = { name              => "report_csv",
+               full_name         => "CSV reports",
+               author            => "Deity",
+               description       => "Produces a CSV report.",
+               report_head       => \&csv_open,
+               report_host_start => \&csv_host_start,
+               report_item       => \&csv_item,
+               report_format     => 'csv',
+               copyright         => "2008 CIRT Inc."
+               };
+    return $id;
+}
+
+###############################################################################
+# open output file
+sub csv_open {
+    my ($file) = @_;
+
+    # Open file and produce header
+    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Write header
+    print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";
+    return OUT;
+}
+
+###############################################################################
+# start output
+sub csv_host_start {
+    my ($handle, $mark) = @_;
+    $mark->{'banner'} =~ s/"/\\"/g;
+    print OUT "\"$mark->{'hostname'}\","
+      . "\"$mark->{'ip'}\","
+      . "\"$mark->{'port'}\"," . "\"\"," . "\"\"," . "\"\","
+      . "\"$mark->{'banner'}\"\n";
+    return;
+}
+
+###############################################################################
+# print an item
+sub csv_item {
+    my ($handle, $mark, $item) = @_;
+    foreach my $uri (split(' ', $item->{'uri'})) {
+        my $line = '';
+        $line .= "\"$item->{'mark'}->{'hostname'}\",";
+        $line .= "\"$item->{'mark'}->{'ip'}\",";
+        $line .= "\"$item->{'mark'}->{'port'}\",";
+
+        $line .= "\"";
+        if ($item->{'osvdb'} ne '') { $line .= "OSVDB-" . $item->{'osvdb'}; }
+        $line .= "\",";
+
+        $line .= "\"";
+        if ($item->{'method'} ne '') { $line .= $item->{'method'}; }
+        $line .= "\",";
+
+        $line .= "\"";
+        if ($uri ne '') { $line .= $mark->{'root'} . $uri; }
+        $line .= "\",";
+
+        $item->{'message'} =~ s/"/\\"/g;
+        $line .= "\"$item->{'message'}\"";
+        print $handle "$line\n";
+    }
+}
+
+1;

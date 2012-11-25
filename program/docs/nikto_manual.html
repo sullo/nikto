@@ -1,0 +1,714 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Nikto v2.1.0 - The Manual</title><link rel="stylesheet" href="doc.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="id186254"></a>Nikto v2.1.0 - The Manual</h1></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id264630">Overview</a></span></dt><dt><span class="section"><a href="#id272958">Description</a></span></dt><dt><span class="section"><a href="#id276660">Advanced Error Detection Logic</a></span></dt><dt><span class="section"><a href="#id238011">History</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id238042">Requirements</a></span></dt><dt><span class="section"><a href="#id238232">Install</a></span></dt></dl></dd><dt><span class="chapter"><a href="#usage">3. Usage</a></span></dt><dd><dl><dt><span class="section"><a href="#id238272">Basic Testing</a></span></dt><dt><span class="section"><a href="#id238384">Multiple Port Testing</a></span></dt><dt><span class="section"><a href="#id238405">Multiple Host Testing</a></span></dt><dt><span class="section"><a href="#id238466">Using a Proxy</a></span></dt><dt><span class="section"><a href="#id238782">Updating</a></span></dt><dt><span class="section"><a href="#id238829">Integration with Nessus</a></span></dt></dl></dd><dt><span class="chapter"><a href="#options">4. Command Line Options</a></span></dt><dd><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt><dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></dd><dt><span class="chapter"><a href="#configuration">5. Configuration Files</a></span></dt><dd><dl><dt><span class="section"><a href="#id287336">Location</a></span></dt><dt><span class="section"><a href="#id237396">Format</a></span></dt><dt><span class="section"><a href="#id237410">Variables</a></span></dt></dl></dd><dt><span class="chapter"><a href="#reports">6. Output and Reports</a></span></dt><dd><dl><dt><span class="section"><a href="#id288190">Export Formats</a></span></dt><dt><span class="section"><a href="#id288220">HTML and XML Customisation</a></span></dt></dl></dd><dt><span class="chapter"><a href="#expanding">7. Test and Code Writing</a></span></dt><dd><dl><dt><span class="section"><a href="#id288304">Scan Database Field Values</a></span></dt><dt><span class="section"><a href="#id288472">User-Defined Tests</a></span></dt><dt><span class="section"><a href="#id288536">Scan Database Syntax</a></span></dt><dt><span class="section"><a href="#id288564">Plugins</a></span></dt><dd><dl><dt><span class="section"><a href="#id288684">Initialisation Phase</a></span></dt><dt><span class="section"><a href="#id289066">Reconnaisance Phase</a></span></dt><dt><span class="section"><a href="#id289135">Scan Phase</a></span></dt><dt><span class="section"><a href="#id289174">Reporting Phase</a></span></dt><dt><span class="section"><a href="#id289499">Data Structures</a></span></dt><dt><span class="section"><a href="#id289774">Standard Methods</a></span></dt><dt><span class="section"><a href="#id290403">Global Variables</a></span></dt></dl></dd><dt><span class="section"><a href="#id290916">Test Identifiers</a></span></dt><dt><span class="section"><a href="#id291044">Code Copyrights</a></span></dt></dl></dd><dt><span class="chapter"><a href="#troubleshooting">8. Troubleshooting</a></span></dt><dd><dl><dt><span class="section"><a href="#id291068">SOCKS Proxies</a></span></dt><dt><span class="section"><a href="#id291078">Debugging</a></span></dt></dl></dd><dt><span class="chapter"><a href="#licences">9. Licences</a></span></dt><dd><dl><dt><span class="section"><a href="#id291106">Nikto</a></span></dt><dt><span class="section"><a href="#id291117">LibWhisker</a></span></dt><dt><span class="section"><a href="#id291129">Tests</a></span></dt></dl></dd><dt><span class="chapter"><a href="#credits">10. Credits</a></span></dt><dd><dl><dt><span class="section"><a href="#id291149">Nikto</a></span></dt><dt><span class="section"><a href="#id291161">Thanks</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>7.1. <a href="#id288321">Scan Database Fields</a></dt><dt>7.2. <a href="#id289525">Members of the <span class="structname">Mark</span>
+               structure</a></dt><dt>7.3. <a href="#id289678">Members of the <span class="structname">Vulnerability</span>
+               structure</a></dt><dt>7.4. <a href="#id290838">Members of the <span class="structname">cache</span>
+                  structure</a></dt><dt>7.5. <a href="#id290930">TID Scheme</a></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>3.1. <a href="#id238425">Valid Hosts File</a></dt><dt>7.1. <a href="#id289053">Example initialisation function</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id264630">Overview</a></span></dt><dt><span class="section"><a href="#id272958">Description</a></span></dt><dt><span class="section"><a href="#id276660">Advanced Error Detection Logic</a></span></dt><dt><span class="section"><a href="#id238011">History</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id264630"></a>Overview</h2></div></div></div><p>Nikto is a web server assessment tool. It is designed to find
+      various default and insecure files, configurations and programs on any
+      type of web server.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id272958"></a>Description</h2></div></div></div><p>Examine a web server to find potential problems and security vulnerabilities, including:
+</p><div class="itemizedlist"><ul type="disc"><li><p>Server and software misconfigurations</p></li><li><p>Default files and programs</p></li><li><p>Insecure files and programs</p></li><li><p>Outdated servers and programs</p></li></ul></div><p>
+</p><p>Nikto is built on LibWhisker (by RFP) and can run on any platform
+which has a PERL environment. It supports SSL, proxies, host
+authentication, IDS evasion and more. It can be updated automatically
+from the command-line, and supports the optional submission of updated
+version data back to the maintainers.</p><p>The name "Nikto" is taken from the movie "The Day the Earth Stood
+      Still", and of course subsequent abuse by Bruce Campbell in "Army of
+      Darkness". More information on the pop-culture popularity of Nikto can
+      be found at
+      <a class="ulink" href="http://www.blather.net/blather/2005/10/klaatu_barada_nikto_the_day_th.html" target="_top">http://www.blather.net/blather/2005/10/klaatu_barada_nikto_the_day_th.html</a></p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id276660"></a>Advanced Error Detection Logic</h2></div></div></div><p>Most web security tools, (including Nikto 1.32 and below), rely
+      heavily on the HTTP response to determine if a page or script exists on
+      the target. Because many servers do not properly adhere to RFC standards
+      and return a 200 "OK" response for requests which are not found or
+      forbidden, this can lead to many false-positives. In addition, error
+      responses for various file extensions can differ--the "not found"
+      response for a .html file is often different than a .cgi.</p><p>Some testing tools, such as Nessus, also look at the content of
+      the response to help eliminate these false positives. While often
+      effective, this method relies on pre-defined strings to help eliminate
+      false positives.</p><p>As of version 2.0 Nikto no longer assumes the error pages for
+      different file types will be the same. A list of unique file extensions
+      is generated at run-time (from the test database), and each of those
+      extensions is tested against the target. For every file type, the "best
+      method" of determining errors is found: standard RFC response, content
+      match or MD4 hash (in decreasing order of preference). This allows Nikto
+      to use the fastest and most accurate method for each individual file
+      type, and therefore help eliminate the false positives seen for some
+      servers in version 1.32 and below.</p><p>For example, if a server responds with a 404 "not found" error for
+      a non-existent .txt file, Nikto will match the HTTP response of "404" on
+      tests. If the server responds with a 200 "OK" response, it will try to
+      match on the content, and assuming it finds a match (for example, the
+      words "could not be found"), it will use this method for determining
+      missing .txt files. If the other methods fail, Nikto will attempt to
+      remove date and time strings (which can constantly change) from the
+      returned page's content, generate an MD5 hash of the content, and then
+      match that hash value against future .txt tests. The latter is by far
+      the slowest type of match, but in many cases will provide valid results
+      for a particular file type.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238011"></a>History</h2></div></div></div><p>The Nikto 1.00 Beta was released on December 27, 2001, (followed
+      almost immediately by the 1.01 release). Over the course of two years
+      Nikto's code evolved into the most popular freely available web
+      vulnerability scanner. The 2.0 release, in November, 2007 represents
+      several years of improvements.</p><p>In 2008, due to other commitments, Sullo, the original author
+      couldn't continue to support Nikto and the code was released under the
+      GPL and passed to the community for support.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238042">Requirements</a></span></dt><dt><span class="section"><a href="#id238232">Install</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238042"></a>Requirements</h2></div></div></div><p>Any system which supports a basic PERL installation should allow
+      Nikto to run. It has been extensively tested on:</p><div class="itemizedlist"><ul type="disc"><li><p>Windows (using ActiveState Perl)</p></li><li><p>Mac OSX</p></li><li><p>Various Linux and Unix installations (including RedHat,
+            Solaris, Debian, Knoppix, etc.)</p></li></ul></div><p>The only required PERL module that does not come standard is
+      LibWhisker. Nikto comes with and is configured to use a local LW.pm file
+      (in the plugins directory), but users may wish to change Nikto to use a
+      version installed on the system. See Section 2 for further
+      information.</p><p>For SSL support the Net::SSLeay PERL module must be installed
+      (which in turn requires OpenSSL on the Unix platform). Windows support
+      for SSL is dependent on the installation package, but is rumored to
+      exist for ActiveState's Perl.</p><p>The nmap scanner can also be used, if desired. In some cases using
+      nmap will slow down Nikto execution, as it must call an external
+      program. For scanning many ports across one or more servers, using nmap
+      will be faster than using Nikto's internal PERL scanning.</p><div class="itemizedlist"><ul type="disc"><li><p>PERL: <a class="ulink" href="http://www.cpan.org/" target="_top">http://www.cpan.org/</a></p></li><li><p>LibWhisker: <a class="ulink" href="http://www.wiretrip.net/" target="_top">http://www.wiretrip.net/</a></p></li><li><p>ActiveState Perl: <a class="ulink" href="http://www.activestate.com/" target="_top">http://www.activestate.com/</a></p></li><li><p>OpenSSL: <a class="ulink" href="http://www.openssl.org/" target="_top">http://www.openssl.org/</a></p></li><li><p>nmap: <a class="ulink" href="http://www.insecure.org/" target="_top">http://insecure.org/</a></p></li></ul></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238232"></a>Install</h2></div></div></div><p>These instructions do not include information on installing PERL,
+      PERL Modules, OpenSSL, LibWhisker or any of the utilities that may be
+      needed during installation (such as gzip, tar, etc.). Please see the
+      distributor's documentation for information on how to install and
+      configure those software packages.</p><p>Unpack the download file:</p><pre class="screen">tar -xvfz nikto-current.tar.gz</pre><p>Assuming a standard OS/PERL installation, Nikto should now be
+      usable. See Chapter 4 (Options) or Chapter 8 (Troubleshooting) for
+      further configuration information.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="usage"></a>Chapter 3. Usage</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238272">Basic Testing</a></span></dt><dt><span class="section"><a href="#id238384">Multiple Port Testing</a></span></dt><dt><span class="section"><a href="#id238405">Multiple Host Testing</a></span></dt><dt><span class="section"><a href="#id238466">Using a Proxy</a></span></dt><dt><span class="section"><a href="#id238782">Updating</a></span></dt><dt><span class="section"><a href="#id238829">Integration with Nessus</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238272"></a>Basic Testing</h2></div></div></div><p>The most basic Nikto scan requires simply a host to target, since
+      port 80 is assumed if none is specified. The host can either be an IP or
+      a hostname of a machine, and is specified using the -h (-host) option.
+      This will scan the IP 192.168.0.1 on TCP port 80:</p><pre class="screen">perl nikto.pl -h 192.168.0.1</pre><p>To check on a different port, specify the port number with the -p
+      (-port) option. This will scan the IP 192.168.0.1 on TCP port
+      443:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443</pre><p>Hosts, ports and protocols may also be specified by using a full
+      URL syntax, and it will be scanned:</p><pre class="screen">perl nikto.pl -h https://192.168.0.1:443/</pre><p>There is no need to specify that port 443 may be SSL, as Nikto
+      will first test regular HTTP and if that fails, HTTPS. If you are sure
+      it is an SSL server, specifying -s (-ssl) will speed up the test.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p><em class="parameter"><code>-mutate</code></em> 1 increases the number of tests so
+      that all filenames are tested against all databases inc 
+      <code class="filename">db_tests</code>. This will produce over 2,000,000 extra
+      tests, which will use up a massive amount of resource.</p></td></tr></table></div><p>More complex tests can be performed using the
+      <em class="parameter"><code>-mutate</code></em> parameter, as detailed later. This can
+      produce extra tests, some of which may be provided with extra parameters
+      through the <em class="parameter"><code>-mutate-options</code></em> parameter. For example,
+      using <em class="parameter"><code>-mutate</code></em> 3, with or without a file attempts
+      to brute force usernames if the web server allows
+      ~<em class="replaceable"><code>user</code></em> URIs:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -mutate 3 -mutate-options user-list.txt</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238384"></a>Multiple Port Testing</h2></div></div></div><p>Nikto can scan multiple ports in the same scanning session. To
+      test more than one port on the same host, specify the list of ports in
+      the -p (-port) option. Ports can be specified as a range (i.e., 80-90),
+      or as a comma-delimited list, (i.e., 80,88,90). This will scan the host
+      on ports 80, 88 and 443.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80,88,443</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238405"></a>Multiple Host Testing</h2></div></div></div><p>Nikto support scanning multiple hosts in the same session via a
+      text file of host names or IPs. Instead of giving a host name or IP for
+      the -h (-host) option, a file name can be given. A file of hosts must be
+      formatted as one host per line, with the port number(s) at the end of
+      each line. Ports can be separated from the host and other ports via a
+      colon or a comma. If no port is specified, port 80 is assumed.</p><p>This is an example of a valid hosts file:</p><div class="example"><a name="id238425"></a><p class="title"><b>Example 3.1. Valid Hosts File</b></p><div class="example-contents"><pre class="programlisting">192.168.0.1:80
+http://192.168.0.1:8080/
+192.168.0.3</pre></div></div><br class="example-break"><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p>For win32 users: due to peculiaries in the way that cmd.exe
+         works with pipes, the above example may not work for you. In this case
+         a temporary file will have to be used to store the output from
+         nmap</p></td></tr></table></div><p>A host file may also be an nmap output in "greppable" format (i.e.
+      from the output from -oG).</p><p>A file may be passed to Nikto through stdout/stdin using a "-" as
+      the filename. For example:</p><pre class="screen">nmap -p80 192.168.0.0/24 -oG - | nikto.pl -h -</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238466"></a>Using a Proxy</h2></div></div></div><p>If the machine running Nikto only has access to the target host
+      (or update server) via an HTTP proxy, the test can still be performed.
+      Set the <code class="varname">PROXY*</code> variables (as described in section
+      4), then execute Nikto with the -u (-useproxy) command. All connections
+      will be relayed through the HTTP proxy specified in the configuration
+      file.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80 -u</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238782"></a>Updating</h2></div></div></div><p>Nikto can be automatically updated, assuming you have Internet
+      connectivity from the host Nikto is installed on. To update to the
+      latest plugins and databases, simply run Nikto with the -update
+      command.</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p>The -update option cannot be abbreviated.</p></td></tr></table></div><pre class="screen">perl nikto.pl -update</pre><p>If updates are required, you will see a list of the files
+      downloaded:</p><pre class="screen">
+ perl nikto.pl -update
+ + Retrieving 'nikto_core.plugin'
+ + Retrieving 'CHANGES.txt'
+      </pre><p>Updates may also be manually downloaded from <a class="ulink" href="http://www.cirt.net/" target="_top">http://www.cirt.net/</a></p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238829"></a>Integration with Nessus</h2></div></div></div><p>Nessus (<a class="ulink" href="http://www.nessus.org/" target="_top">http://www.nessus.org/nessus/</a>) can
+      be configured to automatically launch Nikto when it finds a web server.
+      Ensure Nikto works properly, then place the directory containing
+      nikto.pl in root's PATH environment variable. When nessusd starts, it
+      should see the nikto.pl program and enable usage through the
+      GUI.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="options"></a>Chapter 4. Command Line Options</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt><dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238858"></a>All Options</h2></div></div></div><p>Below are all of the Nikto command line options and explanations. A
+brief version of this text is available by running Nikto with the -h
+(-help) option.</p><div class="variablelist"><dl><dt><span class="term"><code class="option">-Cgidirs</code></span></dt><dd><p>Scan these CGI directories. Special words "none" or "all" may
+be used to scan all CGI directories or none, (respectively). A
+literal value for a CGI directory such as "/cgi-test/" may be
+specified (must include trailing slash). If this is option is not
+specified, all CGI directories listed in config.txt will be
+tested.</p></dd><dt><span class="term"><code class="option">-config</code></span></dt><dd><p>Specify an alternative config file to use instead of the
+config.txt located in the install directory.</p></dd><dt><span class="term"><code class="option">-dbcheck</code></span></dt><dd><p>Check the scan databases for syntax errors.</p></dd><dt><span class="term"><code class="option">-Display</code></span></dt><dd><p>Control the output that Nikto shows. See Chapter 5 for
+detailed information on these options. Use the reference number or
+letter to specify the type, multiple may be used:</p><p>1 - Show redirects</p><p>2 - Show cookies received</p><p>3 - Show all 200/OK responses</p><p>4 - Show URLs which require authentication</p><p>D - Debug Output</p><p>V - Verbose Output</p></dd><dt><span class="term"><code class="option">-evasion</code></span></dt><dd><p>Specify the LibWhisker IDS evasion technique to use (see the
+LibWhisker docs for detailed information on these). Use the
+reference number to specify the type, multiple may be used:</p><p>1 - Random URI encoding (non-UTF8)</p><p>2 - Directory self-reference (/./)</p><p>3 - Premature URL ending</p><p>4 - Prepend long random string</p><p>5 - Fake parameter</p><p>6 - TAB as request spacer</p><p>7 - Change the case of the URL</p><p>8 - Use Windows directory separator (\)</p></dd><dt><span class="term"><code class="option">-findonly</code></span></dt><dd><p>Only discover the HTTP(S) ports, do not perform a security scan.
+This will attempt to connect with HTTP or HTTPS, and report the
+Server header.</p></dd><dt><span class="term"><code class="option">-Format</code></span></dt><dd><p>Save the output file specified with -o (-output) option in
+this format. If not specified, the default will be taken from the file
+extension specified in the -output option. Valid formats are:</p><p>csv - a comma-seperated list</p><p>htm - an HTML report</p><p>txt - a text report</p><p>xml - an XML report</p></dd><dt><span class="term"><code class="option">-host</code></span></dt><dd><p>Host(s) to target. Can be an IP address, hostname or text file
+of hosts. A single dash (-) maybe used for stdout. Can also parse nmap -oG
+style output</p></dd><dt><span class="term"><code class="option">-Help</code></span></dt><dd><p>Display extended help information.</p></dd><dt><span class="term"><code class="option">-id</code></span></dt><dd><p>ID and password to use for host Basic host authentication.
+Format is "id:password".</p></dd><dt><span class="term"><code class="option">-list-plugins</code></span></dt><dd><p>Will list all plugins that Nikto can run against targets and
+		then will exit without performing a scan. These can be tuned for a
+		session using the -plugins option.</p><p>The output format is:</p><p>Plugin <code class="varname">name</code></p><p> <code class="varname">full name</code> - <code class="varname">description</code>
+		</p><p> Written by <code class="varname">author</code>, Copyright (C)
+		<code class="varname">copyright</code></p></dd><dt><span class="term"><code class="option">-mutate</code></span></dt><dd><p>Specify mutation technique. A mutation will cause Nikto to
+combine tests or attempt to guess values. These techniques may cause
+a tremendous amount of tests to be launched against the target. Use
+the reference number to specify the type, multiple may be
+used:</p><p>1 - Test all files with all root directories</p><p>2 - Guess for password file names</p><p>3 - Enumerate user names via Apache (/~user type
+requests)</p><p>4 - Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user
+type requests)</p><p>5 - Attempt to brute force sub-domain names, assume that
+        the host name is the parent domain</p><p>6 - Attempt to guess directory names from the supplied
+        dictionary file</p></dd><dt><span class="term"><code class="option">-mutate-options</code></span></dt><dd><p>Provide extra information for mutates, e.g. a dictionary
+        file</p></dd><dt><span class="term"><code class="option">-nolookup</code></span></dt><dd><p>Do not perform name lookups on IP addresses.</p></dd><dt><span class="term"><code class="option">-nossl</code></span></dt><dd><p>Do not use SSL to connect to the server.</p></dd><dt><span class="term"><code class="option">-no404</code></span></dt><dd><p>Disable 404 (file not found) checking. This will reduce
+        the total number of requests made to the webserver and may be
+        preferable when checking a server over a slow link, or an embedded
+        device. This will generally lead to more false positives being
+        discovered.</p></dd><dt><span class="term"><code class="option">-output</code></span></dt><dd><p>Write output to the file specified. The format used will be
+		taken from the file extension. This can be over-riden by using the
+		-Format option (e.g. to write text files with a different extenstion.
+		Existing files will have new information appended.</p></dd><dt><span class="term"><code class="option">-plugins</code></span></dt><dd><p>Select which plugins will be run on the specified targets. A
+		comma separated list should be provided which lists the names of the
+		plugins. The names can be found by using -list-plugins.</p><p>There are two special entries: ALL, which specifies all plugins
+		shall be run and NONE, which specifies no plugins shall be run. The
+		default is ALL</p></dd><dt><span class="term"><code class="option">-port</code></span></dt><dd><p>TCP port(s) to target. To test more than one port on the same
+host, specify the list of ports in the -p (-port) option. Ports can
+be specified as a range (i.e., 80-90), or as a comma-delimited list,
+(i.e., 80,88,90). If not specified, port 80 is used.</p></dd><dt><span class="term"><code class="option">-Pause</code></span></dt><dd><p>Seconds to delay between each test.</p></dd><dt><span class="term"><code class="option">-root</code></span></dt><dd><p>Prepend the value specified to the beginning of every request.
+This is useful to test applications or web servers which have all of
+their files under a certain directory.</p></dd><dt><span class="term"><code class="option">-ssl</code></span></dt><dd><p>Only test SSL on the ports specified. Using this option will
+dramatically speed up requests to HTTPS ports, since otherwise the
+HTTP request will have to timeout first.</p></dd><dt><span class="term"><code class="option">-Single</code></span></dt><dd><p>Perform a single request to a target server. Nikto will prompt
+for all options which can be specified, and then report the detailed
+output. See Chapter 5 for detailed information.</p></dd><dt><span class="term"><code class="option">-timeout</code></span></dt><dd><p>Seconds to wait before timing out a request. Default timeout
+is 10 seconds.</p></dd><dt><span class="term"><code class="option">-Tuning</code></span></dt><dd><p>Tuning options will control the test that Nikto will use
+against a target. By default, if any options are specified, only
+those tests will be performed. If the "x" option is used, it will
+reverse the logic and exclude only those tests. Use the reference
+number or letter to specify the type, multiple may be used:</p><p>0 - File Upload</p><p>1 - Interesting File / Seen in logs</p><p>2 - Misconfiguration / Default File</p><p>3 - Information Disclosure</p><p>4 - Injection (XSS/Script/HTML)</p><p>5 - Remote File Retrieval - Inside Web Root</p><p>6 - Denial of Service</p><p>7 - Remote File Retrieval - Server Wide</p><p>8 - Command Execution / Remote Shell</p><p>9 - SQL Injection</p><p>a - Authentication Bypass</p><p>b - Software Identification</p><p>c - Remote Source Inclusion</p><p>x - Reverse Tuning Options (i.e., include all except
+specified)</p><p>The given string will be parsed from left to right, any x
+        characters will apply to all characters to the right of the
+        character.</p></dd><dt><span class="term"><code class="option">-useproxy</code></span></dt><dd><p>Use the HTTP proxy defined in the configuration file.</p></dd><dt><span class="term"><code class="option">-update</code></span></dt><dd><p>Update the plugins and databases directly from
+cirt.net.</p></dd><dt><span class="term"><code class="option">-Version</code></span></dt><dd><p>Display the Nikto software, plugin and database
+versions.</p></dd><dt><span class="term"><code class="option">-vhost</code></span></dt><dd><p>Specify the Host header to be sent to the target.</p></dd></dl></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id286918"></a>Mutation Techniques</h2></div></div></div><p>A mutation will cause Nikto to combine tests or attempt to guess
+      values. These techniques may cause a tremendous amount of tests to be
+      launched against the target. Use the reference number to specify the
+      type, multiple may be combined.</p><div class="orderedlist"><ol type="1"><li><p>Test all files with all root directories. This takes each test
+            and splits it into a list of files and directories. A scan list is
+            then created by combining each file with each directory.</p></li><li><p>Guess for password file names. Takes a list of common password
+            file names (such as "passwd", "pass", "password") and file
+            extensions ("txt", "pwd", "bak", etc.) and builds a list of files
+            to check for.</p></li><li><p>Enumerate user names via Apache (/~user type requests).
+            Exploit a misconfiguration with Apache UserDir setups which allows
+            valid user names to be discovered. This will attempt to brute-force
+            guess user names. A file of known users can also be supplied by
+            supplying the file name in the
+            <em class="parameter"><code>-mutate-options</code></em> parameter.</p></li><li><p>Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user
+            type requests). Exploit a flaw in cgiwrap which allows valid user
+            names to be discovered. This will attempt to brute-force guess user
+            names. A file of known users can also be supplied by supplying the
+            file name in the <em class="parameter"><code>-mutate-options</code></em>
+            parameter.</p></li><li><p>Attempt to brute force sub-domain names. This will
+            attempt to brute force know domain names, it will assume the given
+            host (without a www) is the parent domain.</p></li><li><p>Attempt to brute directory names. This is the only mutate
+            option that requires a file to be passed in the
+            <em class="parameter"><code>-mutate-options</code></em> parameter. It will use the
+            given file to attempt to guess directory names. Lists of common
+            directories may be found in the OWASP DirBuster project.</p></li></ol></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287020"></a>Display</h2></div></div></div><p>By default only some basic information about the target and
+      vulnerabilities is shown. Using the <em class="parameter"><code>-Display</code></em>
+      parameter can produce more information for debugging issues.</p><div class="itemizedlist"><ul type="disc"><li><p>1 - Show redirects. This will display all requests which
+            elicit a "redirect" response from the server.</p></li><li><p>2 - Show cookies received. This will display all cookies that
+            were sent by the remote host.</p></li><li><p>3 - Show all 200/OK responses. This will show all responses
+            which elicit an "okay" (200) response from the server. This could be
+            useful for debugging.</p></li><li><p>4 - Show URLs which require authentication. This will show all
+            responses which elicit an "authorization required" header.</p></li><li><p>D - Debug Output. Show debug output, which shows the verbose
+            output and extra information such as variable content.</p></li><li><p>V - Verbose Output. Show verbose output, which typically shows
+            where Nikto is during program execution.</p></li></ul></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287094"></a>Scan Tuning</h2></div></div></div><p>Scan tuning can be used to decrease the number of tests performed
+      against a target. By specifying the type of test to include or exclude,
+      faster, focused testing can be completed. This is useful in situations
+      where the presence of certain file types are undesired -- such as XSS or
+      simply "interesting" files.</p><p>Test types can be controlled at an individual level by specifying
+      their identifier to the <em class="parameter"><code>-T</code></em>
+      (<em class="parameter"><code>-Tuning</code></em>) option. In the default mode, if
+      <em class="parameter"><code>-T</code></em> is invoked only the test type(s) specified
+      will be executed. For example, only the tests for "Remote file
+      retrieval" and "Command execution" can performed against the
+      target:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -T 58</pre><p>If an "x" is passed to <em class="parameter"><code>-T</code></em> then this will
+      negate all tests of types following the x. This is useful where a test
+      may check several different types of exploit. For example:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -T 58xb</pre><p>The valid tuning options are:</p><div class="itemizedlist"><ul type="disc"><li><p>0 - File Upload. Exploits which allow a file to be
+            uploaded to the target server.</p></li><li><p>1 - Interesting File / Seen in logs. An unknown but suspicious
+            file or attack that has been seen in web server logs (note: if you
+            have information regarding any of these attacks, please contact
+            CIRT, Inc.).</p></li><li><p>2 - Misconfiguration / Default File. Default files or files
+            which have been misconfigured in some manner. This could be
+            documentation, or a resource which should be password
+            protected.</p></li><li><p>3 - Information Disclosure. A resource which reveals
+            information about the target. This could be a file system path or
+            account name.</p></li><li><p>4 - Injection (XSS/Script/HTML). Any manner of injection,
+            including cross site scripting (XSS) or content (HTML). This does
+            not include command injection.</p></li><li><p>5 - Remote File Retrieval - Inside Web Root. Resource allows
+            remote users to retrieve unauthorized files from within the web
+            server's root directory.</p></li><li><p>6 - Denial of Service. Resource allows a denial of service
+            against the target application, web server or host (note: no
+            intentional DoS attacks are attempted).</p></li><li><p>7 - Remote File Retrieval - Server Wide. Resource allows
+            remote users to retrieve unauthorized files from anywhere on the
+            target.</p></li><li><p>8 - Command Execution / Remote Shell. Resource allows the user
+            to execute a system command or spawn a remote shell.</p></li><li><p>9 - SQL Injection. Any type of attack which allows SQL to be
+            executed against a database.</p></li><li><p>a - Authentication Bypass. Allows client to access a
+            resource it should not be allowed to access.</p></li><li><p>b - Software Identification. Installed software or program
+            could be positively identified.</p></li><li><p>c - Remote source inclusion. Software allows remote inclusion
+            of source code.</p></li><li><p>x - Reverse Tuning Options. Perform exclusion of the specified
+            tuning type instead of inclusion of the specified tuning
+            type.</p></li></ul></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287290"></a>Single Request Mode</h2></div></div></div><p>Single request mode is designed to preform a solitary request
+      against the target. This is useful to confirm a test result using the
+      same resources Nikto used during a scan. The single option allows manual
+      setting of most variables used by Nikto and LibWhisker, and upon
+      completion will display both the request and the result of the
+      operation.</p><p>Most options have a default value or can be left blank. The most
+      common and required values are at the beginning of the "questions"
+      section for slightly easier use. True and false are specified by numeric
+      equivalents, 1 and 0 respectively. Please note that Single mode is not
+      very user-friendly. Here is an example Nikto run with the
+      <em class="parameter"><code>-Single</code></em> option.</p><pre class="screen">
+
+[dave@yggdrasil nikto-2.03]$ ./nikto.pl -Single
+--------------------------------------------  Nikto 2.1.0
+--------------------------------------------  Single Request Mode
+                              Hostname or IP: localhost
+                                   Port (80):
+                                     URI (/): /test.html
+                                     SSL (0):
+                                  Proxy host:
+                                  Proxy port:
+                      Show HTML Response (1):
+                          HTTP Version (1.1):
+                           HTTP Method (GET):
+      User-Agent (Mozilla/4.75 (Nikto/2.1.0):
+                     Connection (Keep-Alive):
+                                        Data:
+                        force_bodysnatch (0):
+                             force_close (1):
+                             http_space1 ( ):
+                             http_space2 ( ):
+                     include_host_in_uri (0):
+           invalid_protocol_return_value (1):
+                                max_size (0):
+                             protocol (HTTP):
+           require_newline_after_headers (0):
+                                   retry (0):
+                           ssl_save_info (0):
+                                timeout (10):
+                             uri_password ():
+                              uri_postfix ():
+                               uri_prefix ():
+                                 uri_user ():
+                         Enable Anti-IDS (0):
+--------------------------------------------  Done with questions
+        Host Name: localhost
+        Host IP: 127.0.0.1
+        HTTP Response Code: 404
+--------------------------------------------  Connection Details
+        Connection: Keep-Alive
+        Host: localhost
+        User-Agent: Mozilla/4.75 (Nikto/2.1.0
+        data:
+        force_bodysnatch: 0
+        force_close: 1
+        force_open: 0
+        host: localhost
+        http_space1:
+        http_space2:
+        ignore_duplicate_headers: 1
+        include_host_in_uri: 0
+        invalid_protocol_return_value: 1
+        max_size: 0
+        method: GET
+        port: 80
+        protocol: HTTP
+        require_newline_after_headers: 0
+        retry: 0
+        ssl: 0
+        ssl_save_info: 0
+        timeout: 10
+        trailing_slurp: 0
+        uri: /test.html
+        uri_param_sep: ?
+        uri_postfix:
+        uri_prefix:
+        version: 1.1
+--------------------------------------------  Response Headers
+        Connection: close
+        Content-Length: 268
+        Content-Type: text/html; charset=iso-8859-1
+        Date: Tue, 18 Aug 2009 10:13:57 GMT
+        Server: Apache/2
+        code: 404
+        http_data_sent: 1
+        http_eol:
+
+        http_space1:
+        http_space2:
+        message: Not Found
+        protocol: HTTP
+        uri: /test.html
+        version: 1.1
+--------------------------------------------  Response Content
+&lt;!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"&gt;
+&lt;html&gt;&lt;head&gt;
+&lt;title&gt;404 Not Found&lt;/title&gt;
+&lt;/head&gt;&lt;body&gt;
+&lt;h1&gt;Not Found&lt;/h1&gt;
+&lt;p&gt;The requested URL /test.html was not found on this server.&lt;/p&gt;
+&lt;hr&gt;
+&lt;address&gt;Apache/2 Server at localhost Port 80&lt;/address&gt;
+&lt;/body&gt;&lt;/html&gt;
+
+</pre></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="configuration"></a>Chapter 5. Configuration Files</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id287336">Location</a></span></dt><dt><span class="section"><a href="#id237396">Format</a></span></dt><dt><span class="section"><a href="#id237410">Variables</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287336"></a>Location</h2></div></div></div><p>Nikto, like any non-trivial program needs to know a few things
+      about how to work with the current environment. For most situations the
+      default configuration file will work. Sometimes, tuning may be required,
+      or some things may need to be changes.</p><p>Nikto will look for a configuration file in three places and if it
+      finds one, will apply it in the strict order, listed below. A later found
+      configuration file will overwrite any variables set in an earlier
+      configuration file. The locations are:</p><div class="orderedlist"><ol type="1"><li><p>/etc/nikto.conf (this may be altered depending on
+            platform)</p></li><li><p>$HOME/nikto.conf</p></li><li><p>nikto.conf</p></li></ol></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id237396"></a>Format</h2></div></div></div><p>The configuration files are formated like a standard Unix
+      configuration file: blank lines are ignored, any line starting with a #
+      is ignored, variables are set with VariableName=Value line.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id237410"></a>Variables</h2></div></div></div><p>The following variables may be set within the configuration
+      file:</p><div class="variablelist"><dl><dt><span class="term"><code class="varname">CLIOPTS</code></span></dt><dd><p>Default options that should always be passed to the
+               command line. For example:</p><pre class="screen">CLIOPTS=-output results.txt -Format text</pre><p>Default Setting</p><pre class="screen">CLIOPTS=</pre></dd><dt><span class="term"><code class="varname">NIKTODTD</code></span></dt><dd><p>Path to the location of the DTD used for XML output. If the
+               path is not absolute then it will be relative to the directory
+               where Nikto is executed.</p><p>Default Setting</p><pre class="screen">NIKTODTD=docs/nikto.dtd</pre></dd><dt><span class="term"><code class="varname">NMAP</code>, </span><span class="term"><code class="varname">NMAPOPTS</code></span></dt><dd><p><span class="emphasis"><em>Deprecated</em></span></p><p>Location of nmap and the default nmap options. Nikto used
+               to use nmap to aid in checking for valid HTTP ports on any
+               targets. From Nikto 2.10, nmap is no longer used from within
+               Nikto and this variable will do nothing. This variable may be
+               removed in a later version.</p><p>Default Setting</p><pre class="screen">NMAP=/usr/local/bin/nmap
+NMPOPTS=-P0</pre></dd><dt><span class="term"><code class="varname">SKIPPORTS</code></span></dt><dd><p><span class="emphasis"><em>Deprecated</em></span></p><p>This configuration item originally defined ports that
+               would never be scanned by Nikto. This is currently unused and
+               deprecated.</p><p>Default Setting</p><pre class="screen">SKIPPORTS=21 111</pre></dd><dt><span class="term"><code class="varname">SKIPIDS</code></span></dt><dd><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p>Note, this filter only applies to tests in the
+               <code class="filename">db_tests</code> database</p></td></tr></table></div><p>Contains a space separated list of Test IDs (tids) that
+               Nikto will not run on the system, for example:</p><pre class="screen">SKIPIDS=000045 000345</pre><p>Default Setting</p><pre class="screen">SKIPIDS=</pre></dd><dt><span class="term"><code class="varname">DEFAULTHTTPVER</code></span></dt><dd><p>Defines the default version of HTTP that Nikto will use,
+               unless superceded by a specific test. Usually keeping this to
+               the default will suffice, though some web servers may only work
+               with later versions of the HTTP protocol.</p><p>Default Setting</p><pre class="screen">DEFAULTHTTPVER=1.0</pre></dd><dt><span class="term"><code class="varname">UPDATES</code></span></dt><dd><p>If the outdated Nikto plugin sees a web server it doesn't
+               know of, or a version that is later than that defined in
+               <code class="filename">db_outdated</code>, then it will send this
+               information back to cirt.net for inclusion in future versions of
+               Nikto. Server specific information (e.g. IP addresses or
+               hostnames) are not sent.</p><p>This item can be set to one of the below values:</p><div class="blockquote"><blockquote class="blockquote"><div class="variablelist"><dl><dt><span class="term"><code class="varname">UPDATES=yes</code></span></dt><dd><p>Display each submission and ask for permission
+                        before it is sent</p></dd><dt><span class="term"><code class="varname">UPDATES=no</code></span></dt><dd><p>Do not send any data back to cirt.net</p></dd><dt><span class="term"><code class="varname">UPDATES=auto</code></span></dt><dd><p>Send data back to cirt.net with no
+                        prompting</p></dd></dl></div></blockquote></div><p>Default Setting</p><pre class="screen">UPDATES=yes</pre></dd><dt><span class="term"><code class="varname">MAX_WARN</code></span></dt><dd><p><span class="emphasis"><em>Unused</em></span></p><p>Produces a warning of a number of MOVED responses are
+               retrieved. This is currently unused.</p><p>Default Setting</p><pre class="screen">MAX_WARN=20</pre></dd><dt><span class="term"><code class="varname">PROMPTS</code></span></dt><dd><p><span class="emphasis"><em>Deprecated</em></span></p><p>Disables Nikto prompts if set to "no". This is currently
+               unused and has been deprecated by the UPDATES item.</p><p>Default Setting</p><pre class="screen">PROMPTS=</pre></dd><dt><span class="term"><code class="varname">CIRT</code></span></dt><dd><p>The IP address that Nikto will use to update the databases
+               and plugins, or will send version information back to (as
+               described in the <code class="varname">UPDATES</code> item).</p><p>Default Setting</p><pre class="screen">CIRT=209.172.49.178</pre></dd><dt><span class="term"><code class="varname">PROXYHOST</code>, </span><span class="term"><code class="varname">PROXYPORT</code>, </span><span class="term"><code class="varname">PROXYUSER</code>, </span><span class="term"><code class="varname">PROXYPASS</code></span></dt><dd><p>Address, port and username password of a proxy to relay all
+               requests through. Note, to use a proxy, you must set the
+               configuration items in the configuration file and supply the
+               <em class="parameter"><code>-useproxy</code></em> switch to the command
+               line.</p><p>Default Setting</p><pre class="screen">PROXYHOST=
+PROXYPORT=
+PROXYUSER=
+PROXYPASS=</pre></dd><dt><span class="term"><code class="varname">STATIC-COOKIE</code></span></dt><dd><p>Adds the supplied cookie to all requests made via Nikto,
+               this is generally useful is an authentication cookie is required
+               for a website. For example:</p><pre class="screen">STATIC-COOKIE=userid=0</pre><p>Default Setting</p><pre class="screen">STATIC-COOKIE=</pre></dd><dt><span class="term"><code class="varname">CHECKMETHODS</code></span></dt><dd><p>Nikto will attempt to identify targets as webservers by
+               sending a request to fetch the / URI via certain HTTP methods.
+               Some web servers do not implement all HTTP methods and may cause
+               Nikto to fail to identify the web server correctly if it doesn't
+               support the method being used.</p><p>If this setting is missing from the configuration file,
+               then Nikto will default back to the Nikto 2.02 default of
+               HEAD.</p><p>Default Setting</p><pre class="screen">CHECKMETHODS=HEAD GET</pre></dd><dt><span class="term"><code class="varname">EXECDIR</code>, </span><span class="term"><code class="varname">PLUGINDIR</code>, </span><span class="term"><code class="varname">TEMPLATEDIR</code>, </span><span class="term"><code class="varname">DOCDIR</code></span></dt><dd><p>Defines where to find the location of Nikto, its plugins,
+               XML/HTML templates and documents. This should only normally be
+               changed if repackaging Nikto to work with different file system
+               standards. Nikto will use the EXECDIR item to guess the other
+               directories.</p><p>Default Setting</p><pre class="screen">EXECDIR=.
+PLUGINDIR=EXECDIR/plugins
+TEMPLATEDIR=EXECDIR/templates
+DOCDIR=EXECDIR/docs</pre></dd></dl></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="reports"></a>Chapter 6. Output and Reports</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id288190">Export Formats</a></span></dt><dt><span class="section"><a href="#id288220">HTML and XML Customisation</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288190"></a>Export Formats</h2></div></div></div><p>Nikto saved output comes in four flavours: text, CSV, XML or HTML.
+      When using <em class="parameter"><code>-output</code></em>, an output format may be
+      specified with <em class="parameter"><code>-Format</code></em>. Text format is assumed if
+      nothing is specified with <em class="parameter"><code>-Format</code></em>. The DTD for the
+      Nikto XML format can be found in the 'docs' directory (nikto.dtd).</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288220"></a>HTML and XML Customisation</h2></div></div></div><p>HTML reports are generated from template files located in the
+      <code class="filename">templates</code> directory. Variables are defined as
+      <code class="varname">#variable-name</code>, and are replaced when the report is
+      generated. The files <code class="filename">htm_start.tmpl</code> and
+      <code class="filename">htm_end.tmpl</code> are included at the beginning and end
+      of the report (respectively). The <code class="filename">htm_summary.tmpl</code>
+      also appears at the beginning of the report. The
+      <code class="filename">htm_host_head</code> appears once for every host, and the
+      <code class="filename">htm_host_item.tmpl</code> and
+      <code class="filename">htm_host_im.tmpl</code> appear once for each item
+      found on a host and each "informational message" per host
+      (respectively).</p><p>All valid variables are used in these templates. Future versions
+      of this documentation will include a list of variables and their
+      meaning.</p><p>The copyright statements must not be removed from the
+      <code class="filename">htm_end.tmpl</code> without placing them in another of the
+      templates. It is a violation of the Nikto licence to remove these
+      notices.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="expanding"></a>Chapter 7. Test and Code Writing</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id288304">Scan Database Field Values</a></span></dt><dt><span class="section"><a href="#id288472">User-Defined Tests</a></span></dt><dt><span class="section"><a href="#id288536">Scan Database Syntax</a></span></dt><dt><span class="section"><a href="#id288564">Plugins</a></span></dt><dd><dl><dt><span class="section"><a href="#id288684">Initialisation Phase</a></span></dt><dt><span class="section"><a href="#id289066">Reconnaisance Phase</a></span></dt><dt><span class="section"><a href="#id289135">Scan Phase</a></span></dt><dt><span class="section"><a href="#id289174">Reporting Phase</a></span></dt><dt><span class="section"><a href="#id289499">Data Structures</a></span></dt><dt><span class="section"><a href="#id289774">Standard Methods</a></span></dt><dt><span class="section"><a href="#id290403">Global Variables</a></span></dt></dl></dd><dt><span class="section"><a href="#id290916">Test Identifiers</a></span></dt><dt><span class="section"><a href="#id291044">Code Copyrights</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288304"></a>Scan Database Field Values</h2></div></div></div><p>Though some checks can be found in other plugins, the
+      <code class="filename">scan_database.db</code> contains the bulk of the web test
+      information. Here is a description of the field values:</p><div class="table"><a name="id288321"></a><p class="title"><b>Table 7.1. Scan Database Fields</b></p><div class="table-contents"><table summary="Scan Database Fields" border="1"><colgroup><col><col></colgroup><tbody><tr><td>Test ID</td><td>Nikto test ID</td></tr><tr><td>OSVDB-ID</td><td>Corresponding vulnerability entry number for
+            osvdb.org</td></tr><tr><td>Server Type</td><td>Generic server matching type</td></tr><tr><td>URI</td><td>URI to retrieve</td></tr><tr><td>HTTP Method</td><td>HTTP method to use for URI</td></tr><tr><td>Match 1</td><td>String or code to match for successful test</td></tr><tr><td>Match 1 (Or)</td><td>String or code to alternatively match for successful
+            test</td></tr><tr><td>Match1 (And)</td><td>String or code to also match for successful
+            test</td></tr><tr><td>Fail 1</td><td>String or code to match for test failure</td></tr><tr><td>Fail 2</td><td>String or code to match for test failure
+            (alternative)</td></tr><tr><td>Summary</td><td>Summary message to report for successful test</td></tr><tr><td>HTTP Data</td><td>HTTP data to be sent during POST tests</td></tr><tr><td>Headers</td><td>Additional headers to send during test</td></tr></tbody></table></div></div><br class="table-break"></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288472"></a>User-Defined Tests</h2></div></div></div><p>Users can create their own, private tests for any of the
+      databases. By placing a syntactically correct database file in the
+      <code class="filename">plugins</code> directory, with a file name prefaced with a
+      "u", the data will be loaded along with the built-in checks.</p><p>For example, create the file
+      <code class="filename">plugins/udb_tests</code> and it will be loaded at the
+      same time <code class="filename">plugins/db_tests</code> is loaded. These files
+      will also be checked for syntax when <em class="parameter"><code>-dbcheck</code></em> is
+      used.</p><p>For tests which require a "private" OSVDB ID, use the OSVDB ID 0
+      (zero). This should be used for all vulnerabilities that do not (or
+      should not) exist in OSVDB, as ID 0 is for testing only. You are
+      encouraged to send missing information to OSVDB at
+      moderators@osvdb.org.</p><p>For the "Test ID", it is recommended you use unique numbers
+      between 400000 and 499999 to allow for growth of the Nikto database
+      without interfering with your own tests (note: numbers above 500000 are
+      reserved for other tests).</p><p>Please help Nikto's continued success by sending test updates to
+      <code class="email">&lt;<a class="email" href="mailto:sullo@cirt.net">sullo@cirt.net</a>&gt;</code>.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288536"></a>Scan Database Syntax</h2></div></div></div><p>The scan database is a CSV delimited file which contains most of
+      the tests. Fields are enclosed by quotes and separated by commas. The
+      field order is:</p><p>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
+      Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</p><p>Here is an example test:</p><pre class="screen">"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288564"></a>Plugins</h2></div></div></div><p>To allow a bit more flexibility, Nikto allows plugins so that there
+      is easy expansion of existing capabilities and some future 
+      proofing.</p><p>Plugins are run in four different phases, these are:</p><div class="blockquote"><blockquote class="blockquote"><div class="variablelist"><dl><dt><span class="term">Initialisation (mandatory)</span></dt><dd><p>Plugin initialisation is performed before targets are 
+               assigned. During this phase, the plugin should tell Nikto
+               about its existence and capabilities. It may optionally
+               set up any later required variables.</p></dd><dt><span class="term">Reconnaisance (optional)</span></dt><dd><p>During the reconnaisance phase, the plugin should look
+               for interesting information that may be of use during the scan
+               phase. It may report vulnerablities, though this is
+               discouraged.</p></dd><dt><span class="term">Scan (optional)</span></dt><dd><p>The scan phase should perform the meat of the plugin - this
+               is where it should look at the web server and return any 
+               potential vulnerabilities.</p></dd><dt><span class="term">Reporting (optional)</span></dt><dd><p>The reporting phase is used to export any found
+               vulnerabilities into a format that they can be used later, for
+               example written as a file report, or imported into a database.
+               No testing of the web server, or reporting of new vulnerbilies
+               should be performed in this phase.</p><p>This phase is slightly more complex than the others and may
+               be called at several points during Nikto's execution, as detailed
+               later</p></dd></dl></div></blockquote></div><p>Plugins are written in standard perl in the current context. They
+      should be placed within the <code class="varname">PLUGINDIR</code> defined in the
+      Nikto configuration file and must have a filename ending in
+      <code class="filename">.plugin</code>.</p><p>An important concept to grasp about plugins and the order that are
+      executed in is plugin weight: each phase will execute all defined
+      plugins in the order defined by the weight. A plugin's weight is defined
+      as a number between 1 and 100, where 1 is high priority and 100 is low
+      priority. Plugins of equal weight will be executed in an undefined
+      order.</p><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id288684"></a>Initialisation Phase</h3></div></div></div><p>As described above, all plugins must be able to execute in the
+         initialisation phase or they will be ignored.</p><p>A perl sub must exist called
+         <code class="function"><em class="replaceable"><code>filename</code></em>_init</code>. The
+         sub is passed no parameters and should return a hash reference to a
+         hash that should contain the following entries:</p><div class="variablelist"><dl><dt><span class="term"><em class="structfield"><code>name</code></em> (mandatory)</span></dt><dd><p>The short name of the plugin. This is used to identify
+                  the plugin during verbose logging and will, in future
+                  versions, be used to select plugin execution. The name
+                  should be one word and, ideally, lower case.</p></dd><dt><span class="term"><em class="structfield"><code>full_name</code></em> (mandatory)</span></dt><dd><p>The full name of the plugin. This is used to identify
+                  the plugin during verbose logging and may be used in
+                  reporting modules to identify tests run against the web
+                  server.</p></dd><dt><span class="term"><em class="structfield"><code>author</code></em> (mandatory)</span></dt><dd><p>The name or handle of the author of the plugin. This
+                  may be used during reporting to identify ownerships of
+                  copyright of tests run against the web server.</p></dd><dt><span class="term"><em class="structfield"><code>description</code></em> (mandatory)</span></dt><dd><p>A short sentence to describe the purpose of the plugin.
+               This may be used during reporting, or by a front end to describe
+               the purpose of the plugin.</p></dd><dt><span class="term"><em class="structfield"><code>copyright</code></em> (mandatory)</span></dt><dd><p>The copyright string (or lack of it) of the plugin. This
+                  may be used during reporting to ensure that appropriate
+                  copyright is assigned to reports.</p></dd><dt><span class="term"><em class="structfield"><code>recon_method</code></em> (optional)</span></dt><dd><p>This should be a reference to a function used during the
+                  reconnaisance phase of the plugin's execution. If this is left
+                  undefined then the plugin will not execute during the
+                  reconnaisance phase.</p></dd><dt><span class="term"><em class="structfield"><code>recon_cond</code></em> (optional)</span></dt><dd><p>This is an expression to be evaluated before the plugin
+                  is executed; if true, the plugins is executed, if false, the
+                  plugin is skipped. This can be used to minimise plugin
+                  execution.</p></dd><dt><span class="term"><em class="structfield"><code>recon_weight</code></em> (optional)</span></dt><dd><p>This is the weight used to schedule the running of the
+                  plugin during the reconnaisance phase. If this is left
+                  undefined it will default to 50.</p></dd><dt><span class="term"><em class="structfield"><code>scan_method</code></em> (optional)</span></dt><dd><p>This should be a reference to a function used during the
+                  scan phase of the plugin's execution. If this is left
+                  undefined then the plugin will not execute during the
+                  scan phase.</p></dd><dt><span class="term"><em class="structfield"><code>scan_cond</code></em> (optional)</span></dt><dd><p>This is an expression to be evaluated before the plugin
+                  is executed; if true, the plugins is executed, if false, the
+                  plugin is skipped. This can be used to minimise plugin
+                  execution.</p></dd><dt><span class="term"><em class="structfield"><code>scan_weight</code></em> (optional)</span></dt><dd><p>This is the weight used to schedule the running of the
+                  plugin during the scan phase. If this is left undefined it
+                  will default to 50.</p></dd><dt><span class="term"><em class="structfield"><code>report_head</code></em> (optional)</span></dt><dd><p>This should be a reference to a function executed
+                  before any testing commences. If this is left undefined then
+                  the plugin will not be called to produce a report
+                  header.</p></dd><dt><span class="term"><em class="structfield"><code>report_host_start</code></em>
+               (optional)</span></dt><dd><p>This should be a reference to a function executed before
+                  the reconnaisance phase of each host. If this is left
+                  undefined then the plugin will not be called to produce a host
+                  header.</p></dd><dt><span class="term"><em class="structfield"><code>report_host_end</code></em>
+               (optional)</span></dt><dd><p>This should be a reference to a function executed after
+                  the scan phase of each host. If this is left undefined then
+                  the plugin will not be called to produce a host footer.</p></dd><dt><span class="term"><em class="structfield"><code>report_item</code></em> (optional)</span></dt><dd><p>This should be a reference to a function executed after
+                  each found vulnerability. If this is left undefined then
+                  the plugin will not be called to produce an item
+                  record.</p></dd><dt><span class="term"><em class="structfield"><code>report_close</code></em> (optional)</span></dt><dd><p>This should be a reference to a function executed after
+                  testing of all hosts has been finished. If this is left
+                  undefined then the plugin will not be called to close the
+                  report.</p></dd><dt><span class="term"><em class="structfield"><code>report_format</code></em> (optional)</span></dt><dd><p>This should describe the file format that the plugin
+                  handles. This is internally matched with the contents of the
+                  <em class="parameter"><code>-output</code></em> switch to reduce excessive
+                  calls to plugins.</p></dd><dt><span class="term"><em class="structfield"><code>report_weight</code></em> (optional)</span></dt><dd><p>This is the weight used to schedule the running of the
+                  plugin during the reporting phase. If this is left undefined
+                  it will default to 50.</p></dd></dl></div><div class="example"><a name="id289053"></a><p class="title"><b>Example 7.1. Example initialisation function</b></p><div class="example-contents"><pre class="programlisting"> sub nikto_dictionary_attack_init
+{
+   my $id =
+   {
+      name         =&gt; "dictionary",
+      full_name    =&gt; "Dictionary attack",
+      author       =&gt; "Deity",
+      description  =&gt; "Attempts to dictionary attack commonly known directories/files",
+      recon_method =&gt; \&amp;nikto_dictionary_attack,
+      recon_cond   =&gt; '$CLI{mutate} =~ /6/',
+      recon_weight =&gt; 20,
+      copyright    =&gt; "2009 CIRT Inc"
+   };
+
+   return $id;
+}  </pre></div></div><br class="example-break"></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289066"></a>Reconnaisance Phase</h3></div></div></div><p>The reconnaisance phase is executed for each target at the start
+         of each scan.</p><p>Each reconnaisance method such expect to take a
+         <code class="varname">mark</code> hash ref. It should return nothing.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">recon_method</b>(</code></td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div><p>The reconnaisance phase is intended to be used to pull
+         information about the web server for later use by the plugin, or by
+         other plugins. Reporting vulnerabilities in this phase is
+         discouraged.</p><p>Example uses of the reconnaisance phase are to spider a site,
+         check for known applications etc.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289135"></a>Scan Phase</h3></div></div></div><p>The scan phase is the meat of the plugin's life, this is run,
+         for each target, immediately after the reconnaisance phase.</p><p>Each scan should check for vulnerabilities it knows about and
+         report on them as it finds one.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">scan_method</b>(</code></td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289174"></a>Reporting Phase</h3></div></div></div><p>This is potentially the most convoluted phase as it has several
+         hooks that may be used for each section in the scan's lifetime.</p><p>The hooks are:</p><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289188"></a>Report Head</h4></div></div></div><p>This hook is called immediately after target acquisition and
+            before the reconnaisance phase. It is designed to allow the
+            reporting plugin to open the report and ensure that any headers
+            are appropiately written.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">handle <b class="fsfunc">report_head</b>(</code></td><td><var class="pdparam">filename</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">filename</var>;</code></td></tr></table></div><p>The <em class="parameter"><code>filename</code></em> parameter is a bit of a
+            misnomer; it will be a copy of the string passed to the
+            <em class="parameter"><code>-output</code></em> switch and may indicate, for
+            example, a database name.</p><p>The <em class="parameter"><code>handle</code></em> is a handle that will be
+            passed to other reporting functions for this plugin so should be
+            internally consistent.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289251"></a>Report Host Start</h4></div></div></div><p>This hook is called immediately before the reconnaisance
+            phase for each target. It is designed to allow the reporting plugin
+            to write any host specfic information.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">report_host_start</b>(</code></td><td><var class="pdparam">rhandle</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>handle </code> </td><td><code><var class="pdparam">rhandle</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div><p>The <em class="parameter"><code>rhandle</code></em> parameter is the output
+            of the plugin's Report Head function.</p><p>The <em class="parameter"><code>mark</code></em> parameter is a hashref for the
+            target information (described below).</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289313"></a>Report Host End</h4></div></div></div><p>This hook is called immediately after the scan phase for
+            each target. It is designed to allow the reporting plugin to close
+            any host specfic information.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">report_host_end</b>(</code></td><td><var class="pdparam">rhandle</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>handle </code> </td><td><code><var class="pdparam">rhandle</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div><p>The <em class="parameter"><code>rhandle</code></em> parameter is the output
+            of the plugin's Report Head function.</p><p>The <em class="parameter"><code>mark</code></em> parameter is a hashref for the
+            target information (described below).</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289375"></a>Report Item</h4></div></div></div><p>This hook is called once for each vulnerability found on the
+            target This should report details about the vulnerability.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">report_item</b>(</code></td><td><var class="pdparam">rhandle</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">mark</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">vulnerbility</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>handle </code> </td><td><code><var class="pdparam">rhandle</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">vulnerbility</var>;</code></td></tr></table></div><p>The <em class="parameter"><code>rhandle</code></em> parameter is the output of
+            the plugin's Report Head function.</p><p>The <em class="parameter"><code>mark</code></em> parameter is a hashref for
+            the target information (described below).</p><p>The <em class="parameter"><code>vulnerability</code></em> parameter is a
+            hashref for the vulnerability information (described below).</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289453"></a>Report Close</h4></div></div></div><p>This hook is called immediately after all targets have been
+            scanned. It is designed to allow the reporting plugin to elegantly
+            close the report.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">report_close</b>(</code></td><td><var class="pdparam">rhandle</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>handle </code> </td><td><code><var class="pdparam">rhandle</var>;</code></td></tr></table></div><p>The <em class="parameter"><code>rhandle</code></em> parameter is the output of
+            the plugin's Report Head function.</p></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289499"></a>Data Structures</h3></div></div></div><p>The below data structures are used to communicate between the
+         various plugin methods. Unless otherwise mentioned, they are all
+         standard perl hash references with the detailed members.</p><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289511"></a><span class="structname">Mark</span></h4></div></div></div><p>The mark hash contains all information about a target. It
+            contains the below members. It should be read-only.</p><div class="blockquote"><blockquote class="blockquote"><div class="table"><a name="id289525"></a><p class="title"><b>Table 7.2. Members of the <span class="structname">Mark</span>
+               structure</b></p><div class="table-contents"><table summary="Members of the Mark
+               structure" border="1"><colgroup><col><col></colgroup><tbody><tr><td><em class="structfield"><code>ident</code></em></td><td>
+                     Host identifier, usually equivalent to what was
+                     passed on the command line.
+                  </td></tr><tr><td><em class="structfield"><code>hostname</code></em></td><td>
+                     Host name of the target.
+                  </td></tr><tr><td><em class="structfield"><code>ip</code></em></td><td>
+                     IP address of the target.
+                  </td></tr><tr><td><em class="structfield"><code>port</code></em></td><td>
+                     TCP port of the target.
+                  </td></tr><tr><td><em class="structfield"><code>display_name</code></em></td><td>
+                     Either the hostname, or the IP address of the
+                     target, dependant on whether a hostname has been
+                     discovered.
+                  </td></tr><tr><td><em class="structfield"><code>ssl</code></em></td><td>
+                     Flag to indicate whether the target runs over SSL.
+                     If it is set to 0, then the plugin should not use SSL. Any
+                     other value indicates SSL should be used.
+                  </td></tr><tr><td><em class="structfield"><code>vhost</code></em></td><td>
+                     Virtual hostname to use for the target.
+                  </td></tr><tr><td><em class="structfield"><code>root</code></em></td><td>
+                     Root URI to use for the target.
+                  </td></tr><tr><td><em class="structfield"><code>banner</code></em></td><td>
+                     Banner of the target's web server.
+                  </td></tr></tbody></table></div></div><br class="table-break"></blockquote></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id289658"></a>Vulnerability</h4></div></div></div><p>The vulnerability hash contains all information about a
+            vulnerability. It contains the below members. It should be
+            read-only and should only be written using the
+            <code class="function">add_vulnerability</code> method.</p><div class="blockquote"><blockquote class="blockquote"><div class="table"><a name="id289678"></a><p class="title"><b>Table 7.3. Members of the <span class="structname">Vulnerability</span>
+               structure</b></p><div class="table-contents"><table summary="Members of the Vulnerability
+               structure" border="1"><colgroup><col><col></colgroup><tbody><tr><td>mark</td><td>Hash ref to a mark data structure.</td></tr><tr><td>message</td><td>Message for the vulnerability.</td></tr><tr><td>nikto_id</td><td>Test ID (tid) of the vulnerability, this should be
+                  a unique number which'll identify the vulnerability.</td></tr><tr><td>osvdb</td><td>OSVDB reference to the vulnerability in the Open
+                  Source Vulnerability Database. This may be 0 if an OSVDB
+                  reference is not relevant or doesn't exist.</td></tr><tr><td>method</td><td>HTTP method used to find the vulnerability.</td></tr><tr><td>uri</td><td>URI for the result.</td></tr><tr><td>result</td><td>Any HTTP data, excluding headers.</td></tr></tbody></table></div></div><br class="table-break"></blockquote></div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289774"></a>Standard Methods</h3></div></div></div><p>Several standard methods are defined in
+         <code class="filename">nikto_core.plugin</code> that can be used for all
+         plugins. It is strongly advised that these should be used where 
+         possible instead of writing new methods.</p><p>For some methods, such as <code class="function">add_vulnerability</code>
+         which write to global variables, these <span class="emphasis"><em>must</em></span> be
+         the only interface to those global variables.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">array <b class="fsfunc">change_variables</b>(</code></td><td><var class="pdparam">line</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">line</var>;</code></td></tr></table></div><p>Expands any variables in the line parameter. The expansions are
+         variables defined in the global array <code class="varname">@VARIABLES</code>,
+         which may be read from <code class="filename">db_variables</code>, or added by
+         reconnaisance plugin methods.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">is_404</b>(</code></td><td><var class="pdparam">uri</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">content</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">HTTPcode</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">uri</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">content</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">HTTPcode</var>;</code></td></tr></table></div><p>Makes a guess whether the result is a real web page or an error
+         page. As several web servers are badly configured and don't return
+         HTTP 404 codes when a page isn't found, Nikto attempts to look for
+         common error pages. Returns 1 if the page looks like an error.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string <b class="fsfunc">get_ext</b>(</code></td><td><var class="pdparam">uri</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">uri</var>;</code></td></tr></table></div><p>Attempts to work out the extension of the uri. Will return the
+         extension or the special cases: DIRECTORY, DOTFILE, NONE.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string <b class="fsfunc">date_disp</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code></code> </td><td><code>;</code></td></tr></table></div><p>Returns the current time in a human readable format
+         (YYYY-mm-dd hh:mm:ss)</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string <b class="fsfunc">rm_active</b>(</code></td><td><var class="pdparam">content</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">content</var>;</code></td></tr></table></div><p>Attempts to remove active content (e.g. dates, adverts etc.)
+         from a page. Returns a filtered version of the content.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string <b class="fsfunc">get_banner</b>(</code></td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div><p>Pulls the web servers banner. This is automatically performed
+         for all targets before a mark is passed to the plugin.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">boolean <b class="fsfunc">content_present</b>(</code></td><td><var class="pdparam">HTTPcode</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">HTTPcode</var>;</code></td></tr></table></div><p>Checks the HTTPresponse against known "found" responses. TRUE
+         indicates that the request was probably successful.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string HTTPCode, string content <b class="fsfunc">fetch</b>(</code></td><td><var class="pdparam">uri</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">method</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">content</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">headers</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">noclean</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">uri</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">method</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">content</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">headers</var>;</code></td></tr><tr><td><code>boolean </code> </td><td><code><var class="pdparam">noclean</var>;</code></td></tr></table></div><p><span class="emphasis"><em>Deprecated</em></span></p><p>Performs a simple HTTP request to URI using the HTTP method,
+         <em class="parameter"><code>method</code></em>. <em class="parameter"><code>content</code></em> supplies
+         any data to pass in the HTTP body. <em class="parameter"><code>headers</code></em>
+         allows any custom headers to be placed in the request.
+         <em class="parameter"><code>noclean</code></em> is a flag specifying that the request
+         shouldn't be cleaned up before being sent (e.g. if the Host: header
+         is blank).</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string HTTPCode, string content <b class="fsfunc">nfetch</b>(</code></td><td><var class="pdparam">uri</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">method</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">content</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">headers</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">noclean</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">uri</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">method</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">content</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">headers</var>;</code></td></tr><tr><td><code>boolean </code> </td><td><code><var class="pdparam">noclean</var>;</code></td></tr></table></div><p>An updated version of fetch that uses a local, rather than a
+         global request/result structure. This should be used in preference to
+         fetch.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">hashref <b class="fsfunc">setup_hash</b>(</code></td><td><var class="pdparam">requesthash</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">mark</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>hashref </code> </td><td><code><var class="pdparam">requesthash</var>;</code></td></tr><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr></table></div><p>Sets up up a libwhisker hash with the normal Nikto variables.
+         This should be used if any custom calls to libwhisker are used.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">string <b class="fsfunc">char_escape</b>(</code></td><td><var class="pdparam">line</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">line</var>;</code></td></tr></table></div><p>Escapes any characters within line.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">array <b class="fsfunc">parse_csv</b>(</code></td><td><var class="pdparam">text</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">text</var>;</code></td></tr></table></div><p>Breaks a line of CSV text into an array of items.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">arrayref <b class="fsfunc">init_db</b>(</code></td><td><var class="pdparam">dbname</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">dbname</var>;</code></td></tr></table></div><p>Initialises a database that is in <code class="varname">PLUGINDIR</code>
+         and returns an arrayref. The arrayref is to an array of hashrefs, each
+         hash member is configured by the first line in the database file, for
+         example:</p><pre class="screen">"nikto_id","md5hash","description"</pre><p>This will result in an array of hashrefs with parameters:</p><pre class="screen">array[0]-&gt;{nikto_id}
+array[0]-&gt;{md5hash}
+array[0]-&gt;{description}</pre><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">add_vulnerability</b>(</code></td><td><var class="pdparam">mark</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">message</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">nikto_id</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">osvdb</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">method</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">uri</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">data</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>hashref </code> </td><td><code><var class="pdparam">mark</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">message</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">nikto_id</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">osvdb</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">method</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">uri</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">data</var>;</code></td></tr></table></div><p>Adds a vulnerability for the mark, displays it to standard out
+         and sends it to any reporting plugins.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">nprint</b>(</code></td><td><var class="pdparam">message</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">display</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">message</var>;</code></td></tr><tr><td><code>string </code> </td><td><code><var class="pdparam">display</var>;</code></td></tr></table></div><p>Prints <em class="parameter"><code>message</code></em> to standard out.
+         <em class="parameter"><code>Display</code></em> specifies a filter for the message,
+         currently this can be "v" for verbose and "d" for debug
+         output.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id290403"></a>Global Variables</h3></div></div></div><p>The following global variables exist within Nikto, most of
+         them are defined for internal use and their use by plugins is not
+         advised. Several have been deprecated, these should not be used by
+         plugins.</p><div class="variablelist"><dl><dt><span class="term"><code class="varname">%TEMPLATES</code> (read/write)</span></dt><dd><p>Hash to store the HTML and XML report templates.</p></dd><dt><span class="term"><code class="varname">%ERRSTRINGS</code> (read)</span></dt><dd><p>Hash to contain all the entries in db_404 - a list of
+                  strings that may indicate a 404.</p></dd><dt><span class="term"><code class="varname">%CLI</code> (read)</span></dt><dd><p>Hash of passed CLI parameters</p></dd><dt><span class="term"><code class="varname">%VARIABLES</code> (read) (write)</span></dt><dd><p>Hash of contents of the entries in db_variables. Plugins
+                  should only write to this hash in the reconnaisance
+                  phase.</p></dd><dt><span class="term"><code class="varname">%TESTS</code> (read) (write)</span></dt><dd><p>Hash of the db_tests database. This is only intended
+                  to be used by the tests plugin, though it could be used by a
+                  reconnaisance plugin to add tests on the fly.</p></dd><dt><span class="term"><code class="varname">$CONTENT</code> (read) (write)
+               (deprecated)</span></dt><dd><p>Global variable to store data from a fetch or nfetch. A
+                  local variable should be used instead</p></dd><dt><span class="term"><code class="varname">%NIKTO</code> (read)</span></dt><dd><p>Hash which contains internal Nikto data, such as help
+                  for the command line parameters.</p></dd><dt><span class="term"><code class="varname">%REALMS</code> (read)</span></dt><dd><p>Hash of data from db_realms.</p></dd><dt><span class="term"><code class="varname">%NIKTOCONFIG</code> (read)</span></dt><dd><p>Hash containing the data read from the configuration
+                  files.</p></dd><dt><span class="term"><code class="varname">%request</code> (read) (write)
+               (deprecated), </span><span class="term"><code class="varname">%result</code> (read) (write)
+               (deprecated)</span></dt><dd><p>Global libwhisker hash. This should not be used; nfetch
+                  or a local hash should be used.</p></dd><dt><span class="term"><code class="varname">%COUNTERS</code> (read) (write)</span></dt><dd><p>Hash containing various global counters (e.g. number of
+                  requests)</p></dd><dt><span class="term"><code class="varname">%db_extensions</code> (read)
+               (deprecated)</span></dt><dd><p>Hash containing a list of common extensions</p></dd><dt><span class="term"><code class="varname">%FoF</code> (read) (write)</span></dt><dd><p>Hash containing data for each extension and what the
+                  server produces if a request for a non-existent file is
+                  requested.</p></dd><dt><span class="term"><code class="varname">%UPDATES</code> (read) (write)</span></dt><dd><p>Hash containing any updates that need to be sent back
+                  to cirt.net</p></dd><dt><span class="term"><code class="varname">$DIV</code> (read)</span></dt><dd><p>Divider mark for the items sent to standard out.</p></dd><dt><span class="term"><code class="varname">@DBFILE</code> (read)</span></dt><dd><p>Placeholder used to hold the contents of
+                  <code class="filename">db_tests</code>.</p></dd><dt><span class="term"><code class="varname">@BUILDITEMS</code> (read) (write)
+               (deprecated)</span></dt><dd><p>Array to hold information for tests to act on later.
+                  Use should be avoided, a local variable should be used
+                  instead.</p></dd><dt><span class="term"><code class="varname">$PROXYCHECKED</code> (read)</span></dt><dd><p>Flag to see whether connection through the proxy has
+                  been checked.</p></dd><dt><span class="term"><code class="varname">$http_eol</code> (read) (deprecated)</span></dt><dd><p>Contains the http end of line pattern.</p></dd><dt><span class="term"><code class="varname">@RESULTS</code> (read)</span></dt><dd><p>Array of reported vulnerabilities, should only be
+                  written to through
+                  <code class="function">add_vulnerability.</code></p></dd><dt><span class="term"><code class="varname">@PLUGINS</code> (read)</span></dt><dd><p>Array of hashrefs for each plugin. Used internally to
+                  run plugins.</p></dd><dt><span class="term"><code class="varname">@MARKS</code> (read)</span></dt><dd><p>Array of marks to indicate each target.</p></dd><dt><span class="term"><code class="varname">@REPORTS</code> (read)</span></dt><dd><p>Ordered array that reporting plugins should be run in.
+                  Used for efficency on calling reporting plugins.</p></dd><dt><span class="term"><code class="varname">%CACHE</code> (read) (write)</span></dt><dd><p>Containing the URI cache, should only be read/written
+                  through <code class="function">nfetch</code>. Members:</p><div class="blockquote"><blockquote class="blockquote"><div class="table"><a name="id290838"></a><p class="title"><b>Table 7.4. Members of the <span class="structname">cache</span>
+                  structure</b></p><div class="table-contents"><table summary="Members of the cache
+                  structure" border="1"><colgroup><col><col></colgroup><tbody><tr><td><em class="structfield"><code>{uri}</code></em></td><td>URI for the cache</td></tr><tr><td><em class="structfield"><code>{uri}{method}</code></em></td><td>HTTP method used</td></tr><tr><td><em class="structfield"><code>{uri}{res}</code></em></td><td>HTTP result for URI</td></tr><tr><td><em class="structfield"><code>{uri}{content}</code></em></td><td>data for URI</td></tr><tr><td><em class="structfield"><code>{uri}{mark}</code></em></td><td>mark hashref for URI</td></tr></tbody></table></div></div><br class="table-break"></blockquote></div></dd></dl></div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id290916"></a>Test Identifiers</h2></div></div></div><p>Each test, whether it comes from one of the databases or in code,
+      must have a unique identifier. The numbering scheme for writing tests is
+      as follows:</p><div class="blockquote"><blockquote class="blockquote"><div class="table"><a name="id290930"></a><p class="title"><b>Table 7.5. TID Scheme</b></p><div class="table-contents"><table summary="TID Scheme" border="1"><colgroup><col><col></colgroup><tbody><tr><td>000000</td><td>db_tests</td></tr><tr><td>400000</td><td>user defined tests (<code class="filename">udb*</code>
+            files)</td></tr><tr><td>500000</td><td>db_favicon</td></tr><tr><td>600000</td><td>db_outdated</td></tr><tr><td>700000</td><td>db_realms</td></tr><tr><td>800000</td><td>db_server_msgs</td></tr><tr><td>900000</td><td>tests defined in code</td></tr></tbody></table></div></div><br class="table-break"></blockquote></div><p>As much data as possible in the <code class="varname">%TESTS</code> hash
+      should be populated for each new test that is defined in code (plugins).
+      These fields include URI for the test, message to print on success,
+      HTTP method and OSVDB ID. Without a 'message' value in
+      <code class="varname">%TESTS</code> output will not be saved in HTML or XML
+      reports. Not all tests are expected to have a uri, method or OSVDB ID.
+      Here is an example of setting those fields:</p><pre class="screen">$TESTS{999999}{uri}="/~root";
+$TESTS{999999}{message}="Enumeration of users is possible by requesting ~username";
+$TESTS{999999}{method}="GET";
+$TESTS{999999}{osvdb}=637;</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291044"></a>Code Copyrights</h2></div></div></div><p>Any new or updated code, tests or information sent to the author
+      is assumed to free of copyrights. By sending new or updated code, tests
+      or information to the author you relinquish all claims of copyright on
+      the material, and agree that this code can be claimed under the same
+      copyright as Nikto.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="troubleshooting"></a>Chapter 8. Troubleshooting</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291068">SOCKS Proxies</a></span></dt><dt><span class="section"><a href="#id291078">Debugging</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291068"></a>SOCKS Proxies</h2></div></div></div><p>Nikto does not currently support SOCKS proxies.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291078"></a>Debugging</h2></div></div></div><p>The major route to debugging Nikto requests is to use the
+      <em class="parameter"><code>-Display</code></em> with v (verbose) or d (debug). This
+      will output a vast amount of extra information to the screen, so
+      it is advised to redirect output to a file when using them.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="licences"></a>Chapter 9. Licences</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291106">Nikto</a></span></dt><dt><span class="section"><a href="#id291117">LibWhisker</a></span></dt><dt><span class="section"><a href="#id291129">Tests</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291106"></a>Nikto</h2></div></div></div><p>Nikto is licensed under the GNU General Public License (GPL), and
+      copyrighted by CIRT, Inc.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291117"></a>LibWhisker</h2></div></div></div><p>LibWhisker is licensed under the GNU General Public License (GPL),
+      and copyrighted by Rain Forrest Puppy.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291129"></a>Tests</h2></div></div></div><p>The web tests are licensed for use with Nikto only, and may not be
+      reused without written consent from CIRT, Inc.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="credits"></a>Chapter 10. Credits</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291149">Nikto</a></span></dt><dt><span class="section"><a href="#id291161">Thanks</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291149"></a>Nikto</h2></div></div></div><p>Nikto was originally written and maintained by Sullo, CIRT, Inc.
+      It is currently maintained by David Lodge. LibWhisker was written
+      by Rain Forrest Puppy</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291161"></a>Thanks</h2></div></div></div><p>Many people have provided feedback, fixes, and suggestions. This
+      list attempts to make note of those people, though not all contributors
+      are listed. In no particular order:</p><div class="itemizedlist"><ul type="disc"><li><p>Nikto 2 Testing: Paul Woroshow, Mark G. Spencer, Michel
+            Arboi, Jericho, rfp</p></li><li><p>Jericho (attrition.org/OSVDB/OSF).
+            Support/ideas/tests/corrections/spam and help matching OSVDB IDs
+            to tests.</p></li><li><p>rfp (wiretrip.net). LibWhisker and continuing
+            support.</p></li><li><p>Erik Cabetas for many updates and fixes.</p></li><li><p>Jake Kouns (OSVDB/OSF).</p></li><li><p>Jabra (spl0it.org) for XML DTD, XML templates and supporting
+            code.</p></li><li><p>Stephen Valdez. Extensive testing. We all miss you.</p></li><li><p>S Saady. Extensive testing.</p></li><li><p>Zeno (cgisecurity.com). Nikto mirroring.</p></li><li><p>P Eronen (nixu.com). Provided many code fixes.</p></li><li><p>M Arboi. Great support by writing the code to make Nikto
+            work within Nessus, as well as bug reports.</p></li><li><p>T Seyrat. Maintains Nikto for the Debian releases.</p></li><li><p>J DePriest. Ideas/fixes.</p></li><li><p>P Woroshow. Ideas/fixes.</p></li><li><p>fr0stman. Tests.</p></li><li><p>H Heimann. Tests.</p></li><li><p>Xiola (xiola.net). Web design and more.</p></li><li><p>Ryan Dewhurst. Domain guessing code.</p></li></ul></div><p>This document is © 2009 CIRT, Inc. and may not be reused without
+      permission.</p></div></div></div></body></html>

@@ -1,0 +1,186 @@
+#VERSION,2.10
+# $Id$
+###############################################################################
+#  Copyright (C) 2006 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# HTTP options check
+###############################################################################
+sub nikto_httpoptions_init {
+    my $id = { name      => "httpoptions",
+               full_name => "HTTP Options",
+               author    => "Sullo",
+               description =>
+                 "Performs a variety of checks against the HTTP options returned from the server.",
+               hooks => { scan => { method => \&nikto_httpoptions,
+                                    weight => 20,
+                                    },
+                            },
+               copyright => "2008 CIRT Inc."
+               };
+    return $id;
+}
+
+# This just gets the HTTP options & checks 'em out.
+# See RFC 2626 for more info...
+
+sub nikto_httpoptions {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my (%headers_recv, %request, %response, $res, $dbarray, $txt, $allow_methods, $public_methods);
+    $txt = "";
+
+    # test for both OPTIONS / and OPTIONS * as they may give different results
+    my ($res, $content, $errors, $request, $resonse, $headers_recv) = nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
+    my $aoptions = "$headers_recv->{'allow'}, ";
+    my $poptions = "$headers_recv->{'public'}, ";
+    $dbarray = init_db("db_httpoptions");
+    %headers_recv=();
+
+    ($res, $content, $errors, $request, $response, $headers_recv) = nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
+    $aoptions .= $headers_recv->{'allow'};
+    $poptions .= $headers_recv->{'public'};
+
+    # Odd case here, but maybe... http://zacstewart.com/2012/04/14/http-options-method.html
+    # lots of FP on this one; disabling for now
+    #if (($content ne '') && ($res !~ /^3\d\d$/)) { 
+    #    add_vulnerability($mark, "Response body of OPTIONS / request is not empty--this may describe additonal REST/API services", 999980, 0, "OPTIONS", "/", $request, $response);
+#	}
+
+    foreach my $o (split(/,[ ]?/, $aoptions)) {
+        $allow_methods .= ", $o" unless ($allow_methods =~ /\b$o\b/ || $o eq '');
+    }
+    $allow_methods =~ s/^[ ]?, //;
+    foreach my $o (split(/,[ ]?/, $poptions)) {
+        $public_methods .= ", $o" unless ($public_methods =~ /\b$o\b/ || $o eq '');
+    }
+    $public_methods =~ s/^[ ]?, //;
+
+    # proxy can impose its methods... should actually check this not just warn
+    if ($CLI{'useproxy'} ne "") { $txt = "(May be proxy's methods, not server's)"; }
+
+    %davmethods = ();
+    if ($allow_methods ne "") {
+        add_vulnerability($mark, "Allowed HTTP Methods: $allow_methods $txt", 999990, 0, "OPTIONS", "/", $request, $response);
+        foreach my $m (split /,? /, $allow_methods) {
+            my $method = eval_methods($m, "Allow", $dbarray, $mark);
+            if ($method ne "") { $davmethods{$method} = 1 }
+        }
+    }
+
+    if ($public_methods ne "") {
+        add_vulnerability($mark, "Public HTTP Methods: $public_methods $txt", 999985, 0, "OPTIONS", "/", $request, $response);
+        foreach my $m (split /,? /, $public_methods) {
+            my $method = eval_methods($m, "Public", $dbarray, $mark);
+            if ($method ne "") { $davmethods{$method} = 1 }
+        }
+    }
+
+    if (scalar(keys(%davmethods)) > 0) {
+        $message = "WebDAV enabled (";
+        for my $key (keys %davmethods) {
+            $message .= "$key ";
+        }
+        $message .= "listed as allowed)";
+        add_vulnerability($mark, $message, 999977, 0, "OPTIONS", "/", $request, $response);
+    }
+
+    # Check for other weirdness
+    # IIS Debug
+    return if $mark->{'terminate'};
+    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
+    if ($res == 200) {
+        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information. See http://msdn.microsoft.com/en-us/library/e8z01xdh%28VS.80%29.aspx for details.", 999972, 0, "DEBUG", $request, $response);
+    }
+
+    # IIS PROPFIND HEADER
+    return if $mark->{'terminate'};
+    my %headers = ("Host"           => "",
+                "Content-Length" => "0",);
+    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
+    if ($res == 207) {
+        if ($content =~ "<a:href>http://") {
+            my $ipfound = $content;
+            $ipfound =~ s/^.*<a:href>//g;
+            $ipfound =~ s/<\/a:href>.*$//g;
+            add_vulnerability($mark, "PROPFIND HTTP verb may show the server's internal IP address: $ipfound", 999973, 13431, "PROPFIND", "/", $request, $response);
+        }
+    }
+
+    # Special checks for TRACE/TRACK to see whether its vulnerable
+    %headers = ("Host" => "Nikto",);
+    foreach my $method (split(/ /, "TRACE TRACK")) {
+
+        # Check for all flavours of HTTP
+        foreach my $version (split(/ /, "1.0 1.1")) {
+            return if $mark->{'terminate'};
+            ($res, $content, $error, $request, $response) = nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", "1.0");
+            if ($res == 200) {
+                if ($content =~ "Nikto") {
+                    add_vulnerability($mark, "HTTP $method method is active, suggesting the host is vulnerable to XST", 999971, 877, $method, "/", $request, $response);
+
+                    # now we know its vulnerable stop testing
+                    last;
+                }
+            }
+        }
+    }
+
+    $request{'whisker'}->{'version'} = $NIKTOCONFIG{'DEFAULTHTTPVER'};
+
+    # Now release memory for the dbarray
+    undef @$dbarray;
+    return;
+}
+
+sub eval_methods {
+    my $method  = $_[0] || return;
+    my $type    = $_[1];
+    my $dbarray = $_[2];
+    my $mark    = $_[3];
+    my $message;
+    $method = uc($method);
+
+    # Now search database for the method.
+    foreach my $item (@$dbarray) {
+        if (   $method eq "PROPPATCH"
+            || $method eq "SEARCH"
+            || $method eq "PROPFIND"
+            || $method eq "COPY"
+            || $method eq "LOCK"
+            || $method eq "UNLOCK") {
+            return $method;
+        }
+
+        if ($item->{'method'} eq $method) {
+            if ($item->{'nikto_id'} eq "0") {
+
+                # is webdav
+                return $method;
+            }
+            else {
+                $message = $item->{'message'};
+                $message =~ s/\@TYPE\@/$type/;
+                add_vulnerability($mark, "$message", $item->{'nikto_id'}, $item->{'osvdb'});
+            }
+        }
+    }
+
+    return "";
+}
+
+1;

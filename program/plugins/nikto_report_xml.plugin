@@ -1,0 +1,236 @@
+#VERSION,2.05
+# $Id: nikto_reports.plugin 125 2009-07-20 21:59:00Z deity $
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# XML Reporting
+###############################################################################
+sub nikto_report_xml_init {
+    my $id = { name              => "report_xml",
+               full_name         => "Report as XML",
+               author            => "Sullo/Jabra",
+               description       => "Produces an XML report.",
+               report_head       => \&xml_head,
+               report_host_start => \&xml_host_start,
+               report_host_end   => \&xml_host_end,
+               report_item       => \&xml_item,
+               report_summary    => \&xml_summary,
+               report_close      => \&xml_close,
+               report_format     => 'xml',
+               copyright         => "2008 CIRT Inc."
+               };
+
+    # load up the templates now
+    xml_open_templates();
+    return $id;
+}
+
+sub xml_head {
+    my ($file) = @_;
+
+    # check for xml headers
+    $header_present = 0;
+
+    if (-e $file) {
+        open(IN, "<$file") || die print STDERR "+ ERROR: Unable to open '$file' for read: $@\n";
+        my $linectr = 0;
+        while (<IN>) {
+            $linectr++;
+            if ($_ =~ /DOCTYPE niktoscan/) { $header_present = 1; last; }
+            if ($linectr > 10) { last; }
+        }
+        close(IN);
+    }
+
+    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # If file doesn't contain a header, write it
+    if (!$header_present) {
+        my $xml = xml_change_vars($TEMPLATES{xml_start});
+        $xml =~ s/\#NIKTODTD#/$CONFIGFILE{NIKTODTD}/;
+        print OUT "$xml";
+    }
+
+    # Return file handle
+    return OUT;
+}
+###############################################################################
+sub xml_summary {
+    my ($handle, $mark) = @_;
+    my $xml = xml_change_vars($TEMPLATES{'xml_summary'}, $mark);
+    print $handle "$xml\n";
+
+    return;
+}
+###############################################################################
+sub xml_close {
+    my ($handle, $mark) = @_;
+    my $xml = xml_change_vars($TEMPLATES{xml_close}, $mark);
+    print $handle $xml;
+
+    close($handle);
+    return;
+}
+###############################################################################
+sub xml_host_start {
+    my ($handle, $mark) = @_;
+    my $xml = xml_change_vars($TEMPLATES{xml_host_head}, $mark);
+    print $handle "$xml\n";
+
+    return;
+}
+###############################################################################
+sub xml_host_end {
+    my ($handle, $mark) = @_;
+    my $xml = xml_change_vars($TEMPLATES{xml_end}, $mark);
+    print $handle "$xml\n";
+
+    return;
+}
+###############################################################################
+sub xml_item {
+    my ($handle, $mark, $item) = @_;
+    my $xml = xml_change_vars($TEMPLATES{xml_host_item}, $mark, $item);
+    print $handle "$xml\n";
+
+    return;
+}
+###############################################################################
+sub xml_open_templates {
+    foreach my $t (dirlist($CONFIGFILE{TEMPLATEDIR}, "xml.*")) {
+        open(T, "<$CONFIGFILE{TEMPLATEDIR}/$t");
+        my @TEMPLATE = <T>;
+        close(T);
+        my $T = join("", @TEMPLATE);
+        $t =~ s/\..*$//;
+        $TEMPLATES{$t} = $T;
+    }
+
+    return;
+}
+###############################################################################
+sub xml_change_vars {
+    my ($template, $mark, $item) = @_;
+    my %variables;
+    my $protocol = "http";
+    if ($mark->{ssl}) { $protocol .= "s"; }
+
+    $variables{"#TEMPL_HCTR#"}        = $VARIABLES{'TEMPL_HCTR'};
+    $variables{"#TEMPL_END#"}         = date_disp($mark->{'end_time'});
+    $variables{"#TEMPL_HOSTNAME#"}    = hex_enc($mark->{'hostname'});
+    $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($mark->{'hostname'});
+    if (defined $mark->{vhost}) {
+        $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($mark->{'vhost'});
+    }
+
+    $variables{"#TEMPL_SSL_INFO#"} = "";
+    if (defined $mark->{'ssl_cipher'}) {
+        $variables{"#TEMPL_SSL_INFO#"} = 
+          "<ssl ciphers=\"" . hex_enc($mark->{ssl_cipher}) . "\" issuers=\"" . 
+		  hex_enc($mark->{ssl_cert_issuer}) . "\" info=\"" . 
+		  hex_enc($mark->{ssl_cert_subject}) . "\" />";
+    }
+
+    $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
+    $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{total_checks};
+    $variables{"#TEMPL_PORT#"}               = $mark->{'port'};
+    $variables{"#TEMPL_START#"}              = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'});
+    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'};
+    $variables{"#TEMPL_BANNER#"}             = hex_enc($mark->{'banner'});
+    $variables{"#TEMPL_NIKTO_CLI#"}          = hex_enc($CLI{'all_options'});
+    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'};
+    $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'};
+    $variables{"#TEMPL_ELAPSED#"}            = $mark->{'end_time'} - $mark->{'start_time'};
+    $variables{"#TEMPL_LINK_IP#"} =
+      $protocol . "://" . $mark->{'ip'} . ":" . $mark->{'port'} . $mark->{'root'};
+    $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
+    $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
+    $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
+    $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
+    $variables{"#TEMPL_ERRORS#"}       = $mark->{'total_errors'};
+
+    $variables{"#TEMPL_LINK_NAME#"} = "N/A";
+    if ($mark->{hostname} ne "") {
+        $variables{"#TEMPL_LINK_NAME#"} =
+          $protocol . "://" . $mark->{'hostname'} . ":" . $mark->{'port'} . $mark->{'root'};
+    }
+
+    # do now in case we return early
+    foreach my $var (keys %variables) {
+        $template =~ s/$var/$variables{$var}/g;
+    }
+
+    if ($item->{'uri'} eq '') { return $template; }
+
+    $variables{"#ID#"} = $item->{'nikto_id'};
+
+    # OSVDB info
+    my $OSVDB = $item->{'osvdb'};
+    if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
+    $OSVDB_LINK                      = "http://osvdb.org/$OSVDB";
+    $variables{"#TEMPL_OSVDB_LINK#"} = $OSVDB_LINK;
+    $variables{"#TEMPL_OSVDB#"}      = $OSVDB;
+
+    # Scanner Messages Handling
+    $variables{"#TEMPL_SMMSG#"} = $item->{'message'};
+
+    # Positives Handling
+    if ($template =~ /\#TEMPL_MSG#/) {
+        $variables{"#TEMPL_URI#"}         = simple_enc($mark->{'root'} . $item->{'uri'});
+        $variables{"#TEMPL_MSG#"}         = $item->{'message'};
+        $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
+
+        $variables{"#TEMPL_ITEM_IP_LINK#"} =
+          "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
+        $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
+        if ($mark->{'hostname'} ne "") {
+            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
+              "$protocol://$variables{\"#TEMPL_HOSTNAME#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
+        }
+    }
+
+    foreach my $var (keys %variables) { $template =~ s/$var/$variables{$var}/g; }
+
+    return $template;
+}
+###############################################################################
+sub hex_enc {
+    my $invar = $_[0] || return;
+    my $outvar;
+    foreach my $c (split(//, $invar)) {
+        my $n = ord($c);
+        if (($n > 127) || ($n < 32) || ($n == 38) || ($n == 60) || ($n == 62) | ($n == 34)) {
+            $outvar .= sprintf '%#x', $n;
+        }
+        else { $outvar .= $c; }
+    }
+    return $outvar;
+}
+###############################################################################
+sub simple_enc {
+    my $var = $_[0] || return;
+    $var =~ s/</&lt;/g;
+    $var =~ s/>/&gt;/g;
+    $var =~ s/"/&quot;/g;
+    return $var;
+}
+
+sub nikto_reports { }    # so core doesn't freak
+
+1;

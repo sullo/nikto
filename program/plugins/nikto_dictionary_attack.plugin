@@ -1,0 +1,90 @@
+#VERSION,2.04
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Run dictionary tests
+###############################################################################
+sub nikto_dictionary_attack_init {
+    my $id = { name        => "dictionary",
+               full_name   => "Dictionary attack",
+               author      => "Deity",
+               description => "Attempts to dictionary attack commonly known directories/files",
+               hooks       => {
+                          recon => { method => \&nikto_dictionary_attack,
+                                     weight => 20,
+                                     },
+                            },
+               copyright => "2009 CIRT Inc"
+               };
+
+    return $id;
+}
+
+sub nikto_dictionary_attack {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters) = @_;
+
+    my $dictfile = "";
+    if (   defined $parameters
+        && defined $parameters->{'dictionary'}) {
+        $dictfile = $parameters->{'dictionary'};
+    }
+    elsif (defined($CLI{'mutate-options'})) {
+        $dictfile = $CLI{'mutate-options'};
+    }
+    else {
+        nprint("- No dictionary file given in plugin options, skipping check", "v");
+        return;
+    }
+    my $ctr = 0;
+
+    if (!defined $dictfile) {
+        nprint("- No dictionary file given in mutate-options, skipping check");
+        return;
+    }
+
+    # Record the host for future use
+    my $host = $mark->{'hostname'};
+
+    nprint("- Guessing directories/files (using dictionary $dictfile).", "v");
+    unless (open(IN, "<$dictfile")) {
+        nprint("+ ERROR: Unable to open dictionary file $dictfile: $!.");
+    }
+
+    # Now attempt on each entry
+    while (<IN>) {
+        return if $mark->{'terminate'};
+        chomp;
+        s/\#.*$//;
+        next if ($_ eq "");
+        my $dir = $_;
+        if (($ctr % 100) == 0) { nprint("- Directory enumeration guess $ctr ($dir): /$dir/", "v"); }
+        my ($code, $content, $error, $request, $response) = nfetch($mark, "/$dir/", "HEAD", "", "", "", "dictionary_attack");
+        foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
+
+            if ($code eq $found) {
+                add_vulnerability($mark, "Found directory /$dir/", 999969, "0", "HEAD", "/$dir/", $request, $response);
+            }
+        }
+        $ctr++;
+    }
+    close(IN);
+}    # End sub
+
+1;

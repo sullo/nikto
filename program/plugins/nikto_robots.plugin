@@ -1,0 +1,149 @@
+#VERSION,2.06
+# $Id$
+###############################################################################
+#  Copyright (C) 2004 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Check out the robots.txt file
+###############################################################################
+sub nikto_robots_init {
+    my $id = {
+        name      => "robots",
+        full_name => "Robots",
+        author    => "Sullo",
+        description =>
+          "Checks whether there's anything within the robots.txt file and analyses it for other paths to pass to other scripts.",
+        hooks => { recon => { method => \&nikto_robots,
+                              weight => 49,
+                              },
+                     },
+        copyright => "2008 CIRT Inc.",
+		options     => {
+					 nocheck => "Flag to disable checking entries in robots file.",
+					 }		
+        };
+    return $id;
+}
+
+sub nikto_robots {
+    my ($mark, $parameters) = @_;
+    return if $mark->{'terminate'};
+    my ($code, $content, $errors, $request, $response, $headers_recv) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
+
+    if (($code eq 200) || ($code eq $FoF{'okay'}{'response'})) {
+        if (is_404("robots.txt", $content, $code, $headers_recv->{'location'})) { return; }
+
+        my ($DIRS, $RFILES) = "";
+        my $DISCTR = 0;
+        my @DOC = split(/\n/, $content);
+        foreach my $line (@DOC) {
+            $line =~ s/(?:^\s+|\s+$)//g;
+            $line = quotemeta($line);
+            if ($line =~ /allow/i) {
+                chomp($line);
+                $line =~ s/\#.*$//;
+                $line =~ s/\s+/ /g;
+                $line =~ s/\t/ /g;
+                $line =~ s/(?:dis)?allow(?:\\:)?(?:\\\s+)?//i;
+                $line =~ s/\/+/\//g;
+		$line =~ s/\\//g;
+
+                if ($line eq "") { next; }
+
+                # try to figure out file vs dir... just guess...
+                if (($line !~ /\./) && ($line !~ /\/$/)) { $line .= "/"; }
+
+                $line = LW2::uri_normalize($line);
+
+                # figure out dirs/files...
+                my $realdir  = validate_and_fix_regex(LW2::uri_get_dir($line));
+                my $realfile = validate_and_fix_regex($line);
+                $realfile =~ s/^$realdir//;
+
+                nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d");
+                if (($realdir  ne "") && ($realdir  ne "/")) { $DIRS{$realdir}++; }
+                if (($realfile ne "") && ($realfile ne "/")) { $RFILES{$realfile}++; }
+				if (!defined($parameters->{'nocheck'})) {
+					my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
+					if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
+						add_vulnerability($mark, "File/dir '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999996, 0, "GET", "/$line", $request, $response);
+					}
+				}
+                $DISCTR++;
+            }    # end if $line =~ allow
+        }    # end foreach my $line (@DOC)
+
+        # add them  to mutate dir/file
+        foreach my $dir (sort keys %DIRS) {
+	    my $raw  = $dir;
+            $raw =~ s/\\//g;
+	    $dir = validate_and_fix_regex($dir);
+            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@MUTATEDIRS"} .= " $raw";
+            }
+            
+            # Add to variables
+            if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@CGIDIRS"} .= " $raw";
+            }
+            if ($dir =~ /forum/ && $VARIABLES{"\@NUKE"} !~ /$dir/) {
+                $VARIABLES{"\@NUKE"} .= " $raw";
+            }
+            if ($dir =~ /pass/ && $VARIABLES{"\@PASSWORDDIRS"} !~ /$dir/) {
+                $VARIABLES{"\@PASSWORDDIRS"} .= " $raw";
+            }
+            if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
+                $VARIABLES{"\@NUKE"} .= " $raw";
+            }           
+        	if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
+                $VARIABLES{"\@ADMIN"} .= " $raw";
+            }              
+            if ($dir =~ /phpmy/i && $VARIABLES{"\@PHPMYADMIN"} !~ /$dir/i) {
+                $VARIABLES{"\@PHPMYADMIN"} .= " $raw";
+            } 
+            if ($dir =~ /fck/i && $VARIABLES{"\@FCKEDITOR"} !~ /$dir/i) {
+                $VARIABLES{"\@FCKEDITOR"} .= " $raw";
+            } 
+            if ($dir =~ /crystal/i && $VARIABLES{"\@CRYSTALREPORTS"} !~ /$dir/i) {
+                $VARIABLES{"\@CRYSTALREPORTS"} .= " $raw";
+            } 
+        }
+
+        foreach my $file (sort keys %RFILES) {
+            my $raw = $file;
+            $raw =~ s/\\//g;
+	    $file = validate_and_fix_regex($file);
+            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
+                $VARIABLES{"\@MUTATEFILES"} .= " $raw";
+            }
+            
+            # Add to variables
+            if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
+                $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
+            }
+        }
+
+        my $msg;
+        if ($DISCTR eq 1) { $msg = "contains $DISCTR entry which should be manually viewed."; }
+        elsif ($DISCTR > 1) { $msg = "contains $DISCTR entries which should be manually viewed."; }
+        else { $msg = "retrieved but it does not contain any 'disallow' entries (which is odd)."; }
+
+        add_vulnerability($mark, "\"robots.txt\" $msg", 999996, 0, "GET", "/robots.txt", $request, $response);
+    }
+}
+
+1;

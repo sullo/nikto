@@ -1,0 +1,29 @@
+#VERSION,2.005
+# $Id$ 
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2009 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+#######################################################################
+"index"
+"index.php"
+"index.php3"
+"index.html"
+"index.htm"
+"index.shtml"
+"index.cfm"
+"index.cgi"
+"index.pl"
+"index.asp"
+"index.aspx"
+"default.asp"
+"default.aspx"
+"default.htm"
+"index.do"
+"index.jhtml"

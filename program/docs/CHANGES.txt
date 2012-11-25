@@ -1,0 +1,703 @@
+2012-09-16 Nikto 2.1.5 release
+	- Ticket 261: Update CSV report to include banner info and put data into proper columns
+	- Ticket 247: Move etag header check to postfetch so no additional requests are made
+	- Ticket 245: Liberal use of CDATA in XML report to prevent problems. Thanks to Peter Wang for reporting.
+	- Ticket 242: nikto_headers.plugin now uses nfetch instead of direct LW calls
+	- Ticket 234: Add plugin for crossdomain.xml (and clientaccesspolicy.xml) to look for wildcards and warn about entries
+	- Ticket 233: Fix bad values in robots.txt from causing crashes
+	- Ticket 229: Don't repeat XML headers if appending to an existing report file, thanks to digininja for idea
+	- Ticket 228: Add client SSL certificate support. Thanks to monnerat for code submission!
+	- Ticket 226: Add GMT offset to time outputs
+	- Ticket 225: Template variables now have terminating hash to prevent collisions
+	- Ticket 224: Space in robots.txt kills scanner
+	- Ticket 222: Fix problems with banner parsing related to spaces, should result in fewer missed matches which should be hits.
+	- Ticket 220: Certificate wildcard matching incorrect
+	- Ticket 217: Add -IgnoreCode option to allow db_404_strings' @CODE at the command line
+	- Ticket 214: Relocate databases to 'databases/' directory from 'plugins/'
+	- Ticket 211: Shuffled some information in HTML report and added more summary data. Added error count and total check count to XML (note: DTD change).
+	- Ticket 209: Find IPs in HTTP headers
+	- Ticket 202: -maxtime maximum execution time per host (seconds)
+	- Ticket 175: -until run until specified time or duration
+	- Ticket 174: Checked for sites parked at hosting providers or advertising pages
+	- Ticket 161: robots.txt now checks for listed files (content search, etc.)
+	- Ticket 91: Identification of WEBrick fails. Updates made to handle banners with multiple items but no spaces
+	- Ticket 74: Removed 'single' mode code from nikto. There are better tools for this nowadays.
+	- Ticket 57: nfetch no longer uses global request/response hashes
+	- Ticket 1: Save full response on positive, plaintext & JSON
+	- Completely remove cache functionality as it was near worthless and added a lot of overhead
+	- Change cache to include full request and response
+	- Including JSON-PP source to not require JSON installation. http://search.cpan.org/~makamaka/JSON-2.53/lib/JSON/backportPP.pm
+	- Add IP address to CSV output. NOTE: this changes a parse-able report format!
+	- add_vulnerability now takes in %request and %response for saving of data
+	- nfetch() now returns headers received as argument 6--no more hash reference over-writing headers to send
+	- Added sub get_ips() to centralize IP extraction from strings
+	- Output file name now takes '.' which will auto-generate output filename like nikto_hostname_port.EXT
+	- Fix -root not appearing in report output, reported by Cédric Michel
+	- nikto_favicon.plugin checks for icons in <link> tags
+	- Add check for non-empty OPTIONS response body, which could be related to something like http://zacstewart.com/2012/04/14/http-options-method.html
+	- Add nikto_paths.plugin to look for things to add to db_variables values
+	- Items found in robots.txt are now added to values from db_variables
+	- Keep tokens from getting into %db_extensions, thanks to Erik Cabetas
+	- Fix vhost not being set properly, thanks to Brian Poole
+	- Fix crash on invalid regex chars in robots.txt (dis)allow lines
+	- Default to use Net::SSL instead of Net::SSLeay as a result of too many memory issues in SSLeay
+2011-06-14
+	- Fix condition where match_1 or match_1_or are 4xx response code
+	- Fix condition where blank prefix added via change_variables
+	- Fix some cases where root dir not showing up in screen/report output
+2011-03-30
+	- Ticket 208: Strengthen IP matching in cookies (nikto_cookies.plugin)
+	- Ticket 207: -findonly emulation now enables reporting plugins and screen output mimics versions < 2.1.4
+	- Ticket 199: Allow user to specify SSL library to be used by LW2
+	- Ticket 198: Add -Userdbs to run only user databases. 'all' loads all user databases and no standard. 'tests' or nothing only loads udb_tests instead of db_tests
+	- Fix date_disp for incorrect mday increment, thanks noop.0352.ja for notification
+	- Print web ports found in gnmap input files, thanks @mubix
+2011-02-20 Nikto 2.1.4 release
+        - Tickets 148, 160, 188: XML CHANGES: 
+                - Removed 'cyphers' from DTD (was never populated via the code)
+                - The 'niktoscan' element is now included (was in schema, but unused)
+                - 'niktoscan' new variables: scanstart, scanend, scanelapsed
+                - <statistics hoststotal="#TEMPL_NIKTO_HOSTS_TESTED" /> removed from templates (duplicate of hoststest)
+                - <!ATTLIST statistics hoststotal CDATA #IMPLIED> removed from DTD
+                - Removed duplicate <niktoscan> element from xml_summary.tpl
+                - Properly close <niktoscan>
+                - Incremented nxmlversion to 1.1
+	- Tickets 202, 203: Rewrote set_targets to not accidentally collapse targets, which fixed terminate signal issues
+	- Ticket 201: Rewritten & fixed authorization code work better and make fewer requests
+	- Ticket 195: Update interactive status counts if mutate options are used
+	- Ticket 194: Look for internal IPs in cookies
+	- Ticket 192: Relabel IDS evasion as 'encoding techniques'
+	- Ticket 186: Enable sleep for fractions of seconds
+        - Ticket 185: Make multiple index file output links in html reports
+	- Ticket 184: Fix -root option
+	- Ticket 181: Fix COOKIE set via nikto.conf. Also allow multiple cookies.
+	- Ticket 179: Update docs for -useproxy
+	- Ticket 178: Add -Interactive-off to disable interactivity
+	- Ticket 177: Enable http keep-alive
+	- Ticket 173: Skip current host with 'N' in interactive mode
+	- Ticket 169: Allow regular expressions in db_tests
+	- Ticket 155: -findonly is deprecated in favor of -Plugins "@@NONE" (-f will replicate this functionality)
+	- Ticket 82: Auth is now checked per realm, not per resource
+	- Fix parsing of nmap greppable output so that any port descr matching http is checked. Thanks Moses Hernandez & @mubix for
+		reporting & testing.
+	- Fix a potential div by zero error
+	- Fix a potential for false positives or negatives with version matches
+        - Various cleanups in nikto_report_xml.plugin and nikto_report_html.plugin
+	- Not all udb* files were loaded properly
+	- Server name not properly printed in update/submission output
+	- Created $mark->{'components'} to store server build items instead of @BUILDITEMS
+	- Variable consolidation & memory usage cleanup
+	- Move message on -root from notices to target host info (suggestion from YGN)
+	- Automatically escape invalid regexes in databases at run-time, so no dying
+	- Validate regex field syntax on -dbcheck
+	- Move -root option to %mark so it works on a per-host level if passed via URI
+        - Added nikto_ssl.plugin to check cert's CN vs hostname
+	- Add basic retry on error in nfetch()
+	- Change how db_404_strings are used by moving where they are checked--should reduce FP
+	- Fix missing url sent to rm_active_content during error mapping--should prevent many FPs
+	- Actually check for code-based nocache flag in cache_add and cache_fetch
+	- Make nikto_multiple_index.plugin only look at 200 responses
+2010-09-06 Nikto 2.1.3 release
+	- Ticket 164: Error when proxy starts to give 502
+	- Ticket 165: Don't show incorrect # of items checked in -findonly
+	- Ticket 166: Allow interactive pause
+	- Ticket 167: Update manual
+	- Ticket 168: Fix scan not working behind proxy when domain can't resolve
+	- Ticket 170: Implemented MSF output
+	- Ticket 171: Allow proxy to be specified on command line
+	- Fix incorrect running of some plugins
+	- Interactive status report gives guess of time remaining
+	- Don't print duplicate findings (such as indexing)
+	- Minor standardization stuff
+	- Documentation updates
+	- Fixed broken cache
+	- Cleaned up status report code
+	- Version output now shows status of SSL and XMLRPC availability
+2010-07-07 Nikto 2.1.2 release
+	- Ticket 8: Interactive scan status.
+	- Ticket 122: Cleanup db_404_strings to prevent over-matching.
+	- Ticket 122: Use db_404_strings as a higher priority.
+	- Ticket 125: fetch is dead, long live nfetch!
+	- Ticket 126: subdomain plugin tries to guess domain on unqualified hostname. 
+	- Ticket 127: dav methods are treated specially and reported all at once.
+	- Ticket 129: Change references for config.txt to nikto.conf. 
+	- Ticket 130: Added -D E to show HTTP errors, otherwise suppress. 
+	- Ticket 132: Properly check for HTTP and HTTPS ports in cache.
+	- Ticket 133: Regular expression matching causes errors. Removed char_escape and some other
+		regexs in favor of the faster quotemeta(). Also set many regexs to non-capturing for speed.
+	- Ticket 134: Added documentation of -config to usage_short.
+	- Ticket 136: Moved set_scan_items to only run once, should speed things up with multiple targets.
+	- Ticket 137: Added -ask to override nikto.conf's UPDATES value (same options).
+	- Ticket 139: Partial fix: Moved URI error handling and reporting result to nfetch, rather than being in nikto_tests.
+	- Ticket 141: pre-compile RE in content_search to give some speed-up.
+	- Ticket 142: Enhancement to allow easier addition of hooks.
+	- Ticket 144: Cleaned up map_codes to use general rules, still needs some for redirection.
+	- Ticket 145: Added OSVDB 0 to orphan items in db_tests.
+	- Ticket 146: Paritial fix: with new "start" hook which is run at the start after target enumeration.
+	- Ticket 147: Grab HTTP information on the fly, deprecate get_banner.
+	- Ticket 150: Special characters in XML output.
+	- Ticket 152: HTTP Version set in nikto.conf over-ridden.
+	- Ticket 153: Properly check for HTTP and HTTPS ports in cache.
+	- Ticket 156: Update system couldn't update nikto_core.plugin.
+	- Ticket 163: Scan details not appearing in XML reports.
+	- Allow changing certain config settings during scans.
+	- Optimized rm_active_content() a little by shuffling code and reducing some mem copies/regexs. Needs more work.
+	- Update nikto.conf to switch tests to always have the (report:500) parameter.
+	- Updates to read known headers on the fly, rather than make requests for them.
+	- Fixed a bug with the order of parameters in hooks (broke parameters being passed to some plugins).
+	- Added the parameter "report" to tests plugin to report when completed x number of tests.
+	- Stop LibWhisker producing an error when talking HTTP to HTTPS during port_check.
+	- Merged apacheusers and apache_enum_users.
+	- Add facillity for a plugin to inform which options it can take.
+	- Added nbe output plugin which written by Frank Breedijk of the Seccubus project.
+	- Moved do_auth to a postfetch plugin. 
+	- Removed dead code from fetch().
+	- Optimizations in nfetch(), nikto.pl, & elsewhere.
+	- Added support for prefetch and postfetch hooks.
+	- Moved content_search to a plugin.
+	- Some tuning around plugin execution.
+	- Updated user_enum_apache to use Plugins instead of mutate.
+	- Rewrote the macro expanding bit to make it more efficient.
+	- Mutate 1 now wrapped into nikto_tests and doesn't take up anywhere near the amount of memory!
+	- Starting to deprecate mutate by replacing with plugin options. -mutate 2 (passfiles) is now implemented within tests and uses less memory.
+	- Updated -check_updates to use nfetch instead of fetch.
+	- Updated -Plugins support.
+	- Add filename support to rm_active_content.
+	- Added basic support for -D s (scrub, removes some information from the log).
+	- Match plugin names case-insensitive.
+	- Warn if RFIURL is undefined.
+2010-01-20 Nikto 2.1.1
+	- Ticket 117: Fixed SKIPPORTS
+	- Ticket 116: Moved User-Agent string to nikto.conf
+	- Ticket 116: Added dynamic variables to User-Agent (Testid, Evasion methods)
+	- Ticket 95: Added support for OSVDB, now the fun bit of filling it in
+	- Ticket 111: Basic syntax checks for all databases
+	- Ticket 109: Added an extra optional <ssl /> element to xml output to contain the SSL date. Need to do similar for html, txt and csv
+	- Ticket 106: Shorts authentication being successful if an error is returned
+	- Ticket 107: Support for short reads in LW2.5
+	- Ticket 98: If -Format is missed guess the format based on file extension in -output. Default is none if -output is omitted.
+	- Ticket 96: Multiple index file enhancements for groups and better unique file identification
+	- Ticket 103: <description> content in xml report is now wrapped in CDATA 
+	- Ticket 110: Mutate now respects db variables
+	- Ticket 97: Fix for response caching
+	- Ticket 99: Spelling disagreements between Brits and Americans
+	- Added @RFIURL to nikto.conf for a remote file include location, and supporting code.
+	- Added ~2300 RFI tests from the combined RSnake/OSVDB list
+	- Removed NMAP and NMAPOPTS from nikto.conf as it is no longer used/supported
+	- Reporting: simplify xml/html code, fix a bug when a space is in the uri, and load ony needed templates
+	- Enable 2 new LW evasion tacticts (carriage return or binary value as request spacer)
+	- Added support to select plugins via -Plugins and -list-plugins option to list current plugins
+	- Major bug fix for proxy usage
+	- Don't report p3p header as unusual
+	- Various changes to aid future binary db usage for mutates
+	- Various changes to aid future multi-threading
+	- Fix for multiple index files
+2009-12-21 nikto.pl
+	- Ticket 100: Fix for reading home directory on Windows
+	- Some new additions to db_realms and db_embedded
+2009-08-29 templates/xml* docs/nikto.dtd
+	- Added <statistics /> tag for scan/host statistics
+2009-08-25 plugins/db_httpoptions
+	- Ticket 89: - remove TRACE and TRACK from the db
+2009-08-19 plugins/nikto_headers
+	- Added test for asp source code disclosure through the Translate header
+2009-08-13 plugins/* plugins/nikto_embedded plugins/db_embedded
+	- Various fixes to use nfetch and fix proxy use
+	- New plugin added to identify embedded devices
+2009-08-12 plugins/nikto_core
+	- New fetch (nfetch) sub added which uses a local request/result hash. All requests should use this instead of fetch.
+	- Patch to add a URI cache within fetch, can be disabled with -nocache
+2009-08-04 plugins/nikto_core
+	- Patch to actually report the URI when it works out a password
+	- Added test for DEBUG HTTP verb
+2009-08-03 plugins/nikto.pl
+	- Put in a quick catch for port ranges (e.g. 80-90) if people use the old style of port entries
+	- Put in a simple signal handler to close reporting if a sigint is caught
+2009-08-02 plugins/nikto_multiple_index db_multiple_index
+	- Added check for multiple index files for request #16
+	- Turned standard headers into a database file to close off #22
+2009-08-01 plugins/* nikto.pl
+	- Fixes for xml reporter to allow multiple hosts
+	- Fixes for html, txt and csv exporters
+	- Tickets 80 and 85
+2009-07-31 plugins/* nikto.pl
+	- Fix for ePO agent/HP iLO to not report for each known type of webserver
+	- Big changes to the way nikto assigns targets to remove globals, have deliberately broken nmap scanning and allowing port ranges.
+2009-07-20 plugins/nikto_core plugins/nikto_outdated db_tests db_outdated
+	- Fix to ensure that -Tuning works as expected, fixes ticket #84
+	- Fix to add a warning if a web server has been configured to restrict information on its server banner, fixes ticket #66
+	- Minor amendment to lightttpd version to fix ticket #67
+	- Fix to nikto_core to make dbcheck work!
+	- New item for ticket #75
+2009-06-30 plugins/nikto_dictionary_attack
+	- Add plugin to use dirbuster lists with mutate 6 and mutate-options
+	- couple of minor fixes to prevent errors on Windows and exporting as text
+2009-06-27 plugins/nikto_user_enum_cgiwrap.plugin
+	- Managled cgiwrap and apache plugins together and allow use of a dictionary (to speed things up). Also made it work with new reporting style
+	- Added -mutate-options switch
+2009-06-15 plugins/nikto_reports.plugin templates/xml_end
+	- Fixed bug with xml not terminating correctly
+2009-05-11 plugins/nikto_core.plugin plugins/nikto_subdomain.plugin
+	- Added subdomain buteforcer as mutate option 5, thanks to Ryan DewHurst
+	- Added extra tests to pull information if scanning ePO agent or HP WBEM
+	- Added test to recognise a Dell Remote Access Console
+	- Added -no404 switch to disable 404 checking. Warning, this produces a lot of false positives at the moment
+2009-01-10 plugins/nikto_core.plugin
+	- Added fix for #73 to apply multiple variables for tests, supplied by Laurent Licour
+	- Removed test_target function as now done in the nikto_test plugin
+	- Added support for Allow directive in robots.txt
+	- Added exit if cannot connect to a defined proxy
+2008-11-11 plugins/nikto_core.plugin nikto.pl plugins/nikto_reports.plugin
+	- Added report phase to plugin runner
+2008-10-09 plugins/nikto_core.plugin nikto.pl
+	- Further tunings to authentication code to simplify it.
+2008-10-02 plugins/nikto_core.plugin nikto.pl
+	- Altered authentication code to make it simpler.
+	- Now supports NTLM authentication.
+2008-09-24 plugins/nikto_core.plugin db_tets
+	- Fixed problem with nikto using authentication provided from the command line. It now adds it to the list of realms.
+	- Added extra test to highlight localstart.asp if it is the default page.
+	- Added tests to identify Ampache.
+2008-09-23 plugins/*.plugin
+	- Added support for conditional recon and scan plugins.
+2008-09-21 plugins/*.plugin
+	- Changes for new plugin running structure; it needs to be finished (conditional plugins and report methods) but it is good enough to release now.
+2008-09-20 plugins/nikto_core.plugin plugins/nikto_cgi.plugin nikto.pl plugins/nikto_reports.plugin templates/xml_host_head.tmpl docs/nikto.dtd
+	- Fixes to ensure nikto produces less perl warnings
+	- Fix for ticket #59: add vhost to xml output
+2008-09-16 plugins/nikto_core.plugin plugins/nikto_httpoptions.plugin
+	- Fix for ticket #37
+	- Allow fetch to optionally call LW2::http_fixup_request
+	- Better handling of extra headers within fetch
+2008-09-14 plugins/db_server_msgs plugins/nikto_*.plugin
+	- Update server messages to dynamic database format
+	- Altered all plugins to use a separate RESULTS array for storing results; meaning that it is easier to abstract
+	- Added add_vulnerability method to nikto_core to report vulnerabilities and reduce code size.
+	- Added ability to add an extra hash to fetch() to allow extra headers to be added.
+2008-09-12 plugins/nikto_core.plugin plugins/nikto_httpoptions.plugin plugins/db_httpoptions plugins/nikto_favicon plugins/db_favicon
+	- Fix for ticket #38: httpoptions are drawn from a database
+	- Now setup to allow dynamic databases, rather than all being imported by nikto_core at start time
+	- Altered favicon database to use dynamic database
+2008-09-06 plugins/nikto_core.plugin tmpl/htm_close.tmpl
+	- Fix for ticket #53: all plugins now show last mod date
+	- Fix for ticket #51: updated copyright date in HTML
+2008-09-04 plugins/nikto_core.plugin
+	- Ticket 55: introduced by the solution for ticket #44
+	- Ticket 53
+2008-08-12 plugins/db_outdated -- Nikto 2.03
+	- Fix for Jetty to latest version, fixes ticket #49
+2008-08-07 docs/nikto_manual.html
+	- New export of the manual from the docbook
+	- Updated versions in nikto.pl
+2008-08-06 plugins/db_outdated
+	- Added various new versions
+2008-08-05 plugins/db_favicon
+	- Fix for ticket #45
+	- Added favicons for Roku Soundbridge and Ampache
+2008-07-14 plugins/nikto_headers.plugin
+	- Changes to look at non-standard headers
+	- Changes to examine Apache's ETag header
+2008-07-07 nikto.pl plugins/nikto_core.plugin plugins/nikto_reports.plugin
+	- Fix for ticket #41 - a rather nasty bug that's been in nikto 2 since its inception; where variables weren't fully expanded.
+2008-07-02 plugins/nikto_core.plugin
+	- Fix for ticket #11 - change CGIDIRS test so that they're not hardcoded. The reponse codes are now kept in a variable in db_variables
+	- Applied same to enumerating apache users plugin
+	- Fix for ticket #39 - we now check whether getoptions failed, show usage and exit with a code of one. This also means that it will exit gracefully if a parameter is missed out when one is required.
+2008-06-24 plugins/nikto_core.plugin
+	- Fix for ticket #35 - allow multiple HTTP methods to identify an HTTP server, these are set with the variable CHECKMETHODS in config.txt
+	- Fix for a bug in the nmap reader where it would ignore the IP address if it nmap didn't return a hostname.
+2008-06-22 plugins/db_tests
+	- Fix for ticket #26 - stop domino tests producing false positives
+2008-06-20 plugins/nikto_httpoptions.plugin
+	- Fix for ticket #30 - ensure that propfind has the right OSVDB tag
+2008-04-22 plugins/nikto_outdated.plugin
+	- Change to allow stop duplication of items when scanning more than one host. Fix for bug 28
+2008-04-16 plugins/nikto_core.plugin
+	- Change to allow reading of a host list from stdin
+	- Fix for enhancement 10: read from nmap output (only -oG)
+2008-04-15 plugins/nikto_core.plugin
+	- Fixes for bug 25: Unopen ports are now reported
+2008-04-14 templates/htm*
+	- Fixes for bug 24: HTML output is now valid HTML 4.01 Strict
+2008-04-11 nikto.pl
+	- Started using international dates instead of the weird US format
+	- Added a fix for bug id 23: allow a range of ports instead of a comma separated list
+2008-04-11 db_outdated
+	- Updated current version of Apache to 2.2.8
+01.06.2008 2.02
+	- Added XML output thanks to the work of Jabra. XML format comes from templates (same as HTML). See the 'templates' dir for more info.
+	- HTML reports changed by Jabra to remove some oddities and remove HTML from items
+	- Fixed non-reporting of non-HTTP ports (or closed ports) when at least one port was HTTP.
+	- Removed experimental knowledge base (KB) code, as XML output is more flexible for long-term scan tracking
+	- Added unique identifiers to all tests from databases, and all tests created in code
+	- Updated documentation
+01.02.2008 nikto_core
+	- Fixed improper parsing of long options (-update, etc.). Thanks to Frank Breedijk for figuring this out.
+12.30.2007 db_servers
+	- Removed as it is not used
+12.19.2007 nikto_msgs.plugin
+	- Add a boundary for regex on versions to cut down false positives
+12.19.2007 niko_favicon.plugin
+	- Added OSVDB ID
+12.18.2007 niko_favicon.plugin
+	- Fix false positive when favicon.ico doesn't exist
+11.22.2007 Nikto 2.01 release
+	- Fix anti ids encoding use. thanks to Francisco Amato
+	- Fix virtual host usage if set via CLI. thanks Jon Hart
+	- Fix Host header restoration when testing for IIS IP leak
+	- Fix for plugindir & templatedir if EXECDIR is set in config.txt, thanks Shiraishi.M and Will Andrews for pointing it out.
+	- Fix count of items--count now accurately reflects the number of items, not just number of vulns. thanks Frank Breedijk
+	- Kick a few more things to KB that should be saved
+	- Added SKIPIDS to config.txt to completely ignore some tests loaded from db_tests. Suggested by Christian Folini.
+	- Enhanced rm_active_content to try to exclude the file/QUERYSTRING requested
+	- Unset the auth header after guessing at it. Thanks Paul Woroshow for reporting the bug.
+11.12.2007 nikto_headers.plugin
+	 - Fix internal IP address snarfing for IIS, thanks Frank Breedijk for pointing it out
+11.10.2007 Nikto 2.00 release
+	 - Rewrite of nikto_httpoptions.plugin to read the Public header
+	 - Fixups to prevent namespace violations in nikto.pl and nikto_core.plugin
+	 - Add some normalizations to the -root option variable, suggested by Erik Cabetas
+	 - Added -Display with options for suppressing redirects & cookies from being included in output
+	 - Added -Tuning options to let users specify what they would like to test, or exclude certain categories
+	 - Added config.txt's NMAPOPTS, thanks Sean Lewis for the suggestion
+	 - All new HTML report
+	 - Bugfix: a found cookie would report for every port/server after it was found
+	 - Bugfix: all hosts scanned with all ports if hosts file used
+	 - Bugfix: all hosts scanned with port 80 despite what the user wanted
+	 - Bugfix: Reverse DNS inet_aton error fix, pointed out by Jason Peel @ Foundstone
+	 - Changed auth checking so it will test any directory found, not just /, and removed nikto_realms.plugin as a consequence
+	 - Changed scan_database.db format significantly (and name), (and all the code to deal with tests)
+	 - Completely new 404 engine which causes less false-positives (see docs)
+	 - Created dump_lw_hash instead of dump_request_hash & dump_result_hash
+	 - Implemented a knowledge base which (should) store all the gory details of scans... probably use this later ;)
+	 - Moved pre-defined variables from config.txt to variables.db so they can be automagically updated. Entries in config.txt are still read.
+	 - Removed %CFG, storing vars in %NIKTO instead
+	 - Removed -generic
+	 - Removed extraneous global vars
+	 - Removed load_realms, combined with load_variables
+	 - Replaced %CONFIG with %NIKTOCONFIG
+	 - Set MAX_WARN to trigger on any response code, skipping 404|403|401|400 to avoid common ones
+	 - Added -Single single request mode
+	 - Updates to use the RFP's LibWhisker 2.0
+	 - Added -Help to show extended help ouput, changed default help screen to be shorter. Suggested by Jericho.
+	 - Additional error checking on invalid reverse-dns (Paul Woroshow)
+	 - Cleaned up comment/line parsing routines in multiple places, from Erik Cabetas
+	 - Tightened some for loops with real values instead of guessing, from Erik Cabetas
+	 - Addded error message if no host is specified, from Erik Cabetas
+	 - Added more robust output file type checking (txt/htm/cvs), from Erik Cabetas
+	 - Added more debug statements regarding which CGI directories will be scanned, from Erik Cabatas
+	 - Bugfix: more 'half dead host' scanning issues resolved with Jericho. LW is much pickier now about calling http_close
+	 - Added error if -F specified without -o, from Erik Cabetas
+	 - Bugfix: server category match no longer matches partial strings, from Erik Cabetas
+	 - Bugfix: mis-pasted line, pointed to by Erik Cabetas
+	 - Send all errors to STDERR
+	 - Added -config option to specify a config file, thanks to Pavel Kankovsky
+	 - fixed regex issue on banner. thanks Alexander Ehlert for pointing it out
+	 - All other plugins updated for v2 changes
+	 - Added favicon.ico hash checking
+	 - ... gobs more
+02.06.2004 nikto_core.plugin 1.21
+	- Cleaned up comment/line parsing routines in multiple places, from Erik Cabetas
+	- Tightened some for loops with real values instead of guessing, from from Erik Cabetas
+	- Removed duplicate bit of code, from Erik Cabetas
+	- Addded error message if no host is specified, from Erik Cabetas
+	- Added more robust output file type checking (txt/htm/cvs), from Erik Cabetas
+	- Added more debug statements regarding which CGI directories will be scanned, from Erik Cabatas
+12.17.2003 
+	nikto_core.plugin 1.20
+	 - Fixed BID links, thanks Richard Tortorella for the report.
+10.27.2003 Nikto 1.32 release
+	nikto_core.plugin 1.19
+	 - Removed unecessary 'use IO::Socket' call from resolve()
+	 - Removed unecessary counters
+	 - Replaced some slow foreach counters
+	 - Moved proxy_check earlier, before port_scan, so it will be set first
+	 - Removed -allcgi option in favor of -CGIdir, which can specify to test 'all', 'none' or a specific directory.
+	 - Bugfix: testing through proxy by making sure host name is set instead of ip, thanks to Fabrice Annic for the catch
+	 - Bugfix: a regex/logic/if error in test_target, thanks Pavel Kankovsky for the bug report. 401/302 messages will now report regardless of test/pass fail.
+	 - Bugfix: -dbcheck now identifies duplicates without relying on message text, thanks Jericho / Attrition.org for pointing this out
+	nikto.pl	1.12
+	 - Rearranged order of get_banner & setup so that it would be called right
+	nikto_headers.plugin	1.08
+	 - Added DAAP header check
+10.02.2003
+	nikto_core.plugin 1.18
+	 - Fixed get_banner to properly handle multi host/port scans
+10.01.2003
+	nikto_outdated.plugin 1.12
+	 - Fixed improper matching in version evals, reported by Paul Bakker
+
+09.30.2003
+	nikto_core.plugin 1.17
+	 - Reordered loop code to make -f scans faster.
+	 - Added a skip for "(Win32)" in the version updates back to cirt.net
+	nikto_outdated.plugin	1.11
+	 - Stripping () from version strings
+09.24.2003  Nikto 1.31 release
+	nikto_core.plugin 1.16
+	 - Fixed a bug in resolve() that may prevent name lookups when host files used
+	 - Fixed a bug in resolve() where scan would exit if 1 name resolution from host file failed
+	 - Changed set_targets so that if the -h value exists as a file it reads that instead of resolving it as a name. This eliminates need for .csv or .txt file name endings.
+	 - Added auto or semi-auto update of version strings to CIRT.net. This is done through a simple GET request. Controlled via config.txt's UPDATES variable.
+	   *ABSOLUTELY NO* server info is sent... only versions from HTTP headers, i.e. "Apache/4.0". Thanks to Jericho for feedback/ideas.
+	 - Added a host counter output at end & for every 10 hosts
+	 - Set CHANGES.txt download only on *code* updates, not DBs
+	 - Added MAX_WARN to config.txt for warning level on OK/Moved messages, thanks Jericho for the suggestion.
+	 - Added PROMPTS to config.txt to allow user control of prompting--good for unattended scans
+	 - Added a regex test to dbcheck() better catch errors in server_msgs.db
+	 - Thanks again to Jericho for many updated tests/information.
+	 - Cleaned up port scan code
+	 - Fixed/improved scanning through proxies
+	nikto_outdated.plugin 1.09
+	 - Added support for sending updates of version strings to CIRT.net. See nikto_core.plugin version 1.15 notes.
+    LW.pm - 1.8
+	 - Updated to LW.pm v1.8, see the change log included with it (www.wiretrip.net/rfp/).
+    nikto.pl - 1.10
+	 - Implemented versioning on nikto.pl (!), many changes to support core 1.15
+	 - Put 'require LW.pm' down *after* we know where it is.. duh. Thanks J Barber (ussysadmin.com) for the suggestion. Also changed it 'require' vs 'use' so in the future I can update it, if necessary.
+	 - Hosts are now tested in the same order as the appear in an input file
+08.18.2003
+	nikto_outdated.plugin 1.08
+	 - Fixed nasty regex bug in the version eval, and made more efficient. Pointed out by fr0stman, thx Zeno for assistance
+07.22.2003
+	nikto_headers.plugin 1.07
+	 - Added Host header back after delete in IIS Content-Location check. Thanks to Abdi Ponce for the bug report & debug.
+	nikto_httpoptions.plugin	1.04
+	 - Changed PROPPATCH, TRACK, TRACE messages. Changed PROPFIND message, thanks to Jericho for tracking down some good info on it.  Added SEARCH message.
+	nikto_core.plugin 1.14
+	 - Added <title> tags to the HTML output for browser-neatness
+	 - Removed a stray debug print
+07.03.2003
+	 - Thanks to Jeremy Bae for many Jeus Webserver tests.
+06.29.2003
+	nikto_core.plugin 1.13
+	 - changed some &function calls to function() to keep $_ from being passed down another level..  thanks to zeno for the heads-up.
+	nikto_headers.plugin 1.05
+	 - fixed the IIS4 content-location check as it had a tendency to fail miserably...
+06.29.2003
+	nikto_core.plugin 1.12
+	 - changed output of dump_request to be more like normal request text
+06.29.2003
+	nikto_core.plugin 1.11
+	 - bug fix for scanning through proxies
+06.19.2003
+	nikto_core.plugin 1.10
+	 - added 'csv' to file formats in -help output (doh!)
+	 - minor speedups
+06.17.2003
+	nikto_user_enum_apache.plugin	1.02
+	 - Bugfix: some user names not tested (zz, zzz, etc.)
+	 - Major rewrite for speed improvements
+	nikto_user_enum_cgiwrap.plugin	1.01
+	 - Bugfix: some user names not tested (zz, zzz, etc.)
+	 - Major rewrite for speed improvements
+06.16.2003
+	nikto_core.plugin 1.09
+	 - dbcheck option enhanced: check that all plugins are in the order file
+	 - dbcheck option enhanced: check that all plugins have properly named sub calls
+	 - update option enhanced: retrieves updated CHANGES.txt file with code updates
+	 - Bugfix: resolve() did not properly catch invalid IP addresses. Reported by Rick Tortorella.
+06.12.2003
+	nikto_core.plugin 1.08
+	 - Removed iprint() entirely (finally)
+	 - Made "Needs Auth" links active in HTML output
+05.30.2003
+	nikto_core.plugin 1.07
+	 - Bugfix: 
+05.30.2003 
+	nikto_core.plugin 1.06
+	 - Added number of elapsed seconds to final host/port output
+	 - Bugfix: Changed CAN/CVE link to point to cve.mitre.org instead of ICAT
+	 - Bugfix: Duplicate port 80 in nmap options if -p not specified but 80 specified in hosts file
+05.28.2003
+	nikto_core.plugin 1.05
+	 - Bugfix: -update code prevented automatic updates. Found & fixed by Keith Young. Also reported by Paul Worshaw.
+05.27.2003
+	Nikto 1.30 release
+    General changes
+	  - removed nikto_google.plugin entirely (may add better plugin later)
+	  - major "under the hood" changes to make things easier to maintain, read & modify
+	  - killed as many global vars as I could stand in favor of a few global hashes (CLI input, etc.)
+	  - added $CURRENT_HOST_ID and $CURRENT_PORT as globals--these are the pointers to "where you are" (mostly as in $TARGETS)
+	  - added the ability to have basic conditional items for tests, i.e. "200!index" to designate a response of "200" but the 
+	    content does not contain "index" (suggested by Paul Woroshow).
+	  - added -V option, which displays versions of all code files & databases (suggested by Jericho)
+	  - specifying -ssl now forces *all ports* on *all servers* to use ssl.  best that can be done for now. 
+	  - added multi-host support via a text file with port specification in the file or via CLI
+	  - all new save file routines
+	  - unbuffered file output to keep partial/cancelled run data
+	  - removed the -w option in favor of -F with multiple formats
+	  - added support for NTLM authentication
+	  - added cgiwrap plugin
+	nikto_core.plugin 1.05
+	- Many updates to support multiple host scans
+	- Added UA for update agents
+	- Changed all %SERVER hash refs to either %CLI or %TARGETS
+	- Removed %BANNERS (now in %TARGETS)
+	- Added set_targets() to handle various target input methods
+	- Bugfix: non-SSL ports not found after first SSL port found on a host
+	- Bugfix: authentication realms were not checked with the proper root if -r was specified on the CLI
+	- Bugfix: can't call 'fprint' if core plugin is not found (duh!). Found by Erwin Paternotte.
+	nikto_user_enum_cgiwrap.plugin 1.00
+	- added
+	nikto_mutate.plugin	1.05
+	- change for using %CLI
+	nikto_passfiles.plugin	1.01
+	- change for using %CLI
+	nikto_user_enum_apache.plugin	1.01
+	- change for using %CLI
+	- renamed from 'nikto_userenum.plugin'
+	nikto_msgs.plugin	1.03
+	- minor changes for multi-host support
+	plugins_order.txt	1.03
+	- removed nikto_google.plugin
+02.23.2003 	
+	nikto_core.plugin	1.04
+	- Added a work around for servers that answer with blank www-authenticate headers with invalid id/pass combos
+	nikto_realms.plugin 1.00
+	- Added to distro
+	realms.db 1.00
+	- Added to distro
+	plugins_order.txt 	1.02
+	- Added nikto_realms.plugin
+01.22.2003
+	nikto_httpoptions.plugin 1.03	
+	- standardized wording, added TRACE option, added more description to WebDAV msgs (thanks Jericho at attrition.org).
+01.22.2003
+	nikto_core.plugin 1.03	
+	- fixed a bug with matching proper server categories, thanks to Paul Woroshow.
+01.17.2003
+	nikto_core.plugin 1.02	
+	- fixed the GetOptions only looking for "-gener" instead of "-generic", thanks to Michel Arboi
+01.02.2003
+	nikto_core.plugin 1.01	
+	- fixed proxy authentication not prompting for -update option
+01.01.2003 
+	Nikto 1.23
+	- added nikto_plugin_order.txt to force plugin order to something we want rather than alpha
+	- added nikto_core.plugin & removed most functions from nikto.pl
+	- added -cookies option
+	- enhanced db syntax error checking (spurred by syntax problems Thomas Reinke found)
+	- started using the LW 1.6 libraries
+	- fixed infinite loop output problem (no longer wrapping long lines)
+	- removed usage from saved output (too long)
+	- remove nikto_frontpage.plugin and put checks in scan_database.db
+	- moved server categories from scan_database.db to servers.db
+	- got rid of the leading "c," requirement from scan_database.db
+	- added STATIC-COOKIE config item as suggested by Eyal Udassin
+	- made CLI options case sensitive (to support more options, hosts files, etc)
+	- added Javier Fernandez-Sanguino Pen~a's Apache user enumeration plugin
+	- added -r (-root) file prepend as suggested by Eyal Udassin
+	- many DB typo fixes from Jay Swofford
+	- fixed a regex bug in nikto_robots.plugin and nikto_apacheusers.plugin
+	- new update location (path) to better support upgrades that don't effect db syntax
+08.21.2002
+	Nikto 1.21	
+	- Fixed all the proxy code--none of it was working due to where it was set in the initialization.
+	- Added -update to the help output. Not sure why it wasn't there.
+08.12.2002
+	Nikto 1.20
+	- Re-packaged to take out a testing line from LW.pm. Thanks to D Rhoades for the catch
+08.11.2002
+	Nikto 1.20	
+	- Moved all mutate options to plugins
+	- Added password file mutate plugin
+	- Added better error messages if problems arise
+	- Test for false-positives on all CGI directories
+	- Added -useproxy CLI
+	- Printing SSL certs the server accepts
+	- Fixed port sorting if -f is used
+	- Forked 1.20DCX edition for DefCon 10 CD: difference is only output
+	- Fixed a bug where "findonly" was referenced as "findports" (thanks J DePriest)
+	- Added properly wrapped text output in saved files
+05.25.2002	
+	Nikto 1.100	
+	- stopped nikto from dying if no config.txt file found	
+	- added Apache user enumeration plugin
+	- added robots.txt plugin
+	- set false-positive message to display at end of run as well as during
+04.23.2002	
+	Nikto 1.10BETA_3	
+	- fixed CAN/CVE links, added BID/CA/MS links (suggested by Jericho).
+	- prints total number of 'issues' found (suggested by Jericho).
+	- fixed proxy usage in the cirt.net update function.
+	- updated to use LW 1.4, which fixes an SSL infinite loop problem.
+	- fixed 401 auth suppression (broken in beta 2).
+	- added robots plugin to examine robots.txt & add items found to the mutate check
+03.31.2002 
+	Nikto 1.10BETA_2	
+	- fixed the config.txt DEFAULTHTTPVER variable setting so it really works
+	- made proxy_check run only once per session
+	- removed all reference to "nikto" in the scan_database.db
+03.23.2002	
+	Nikto 1.10BETA_1
+	- renamed plugins from .pl to .plugin, just for clarity. but they're still perl files
+	- allowed nikto.pl to update plugins the same as .db files
+	- usage of LW 1.2
+	- countless "under the hood" type things
+	- lowercase-incoming-headers to more easily handle case sensitive nonsense
+	- compartmentalized a LOT more code to make things easier to read
+	- created config.txt file configuration w/o midifying nikto.pl itself
+	- added user_scan_database.db so that it won't get ovwr-written if the user adds checks
+	- enabled RFP's LibWhisker anti-ids options
+	- change "check," to "c," in scan_database, just to save a little bandwidth on cirt.net :)
+	- added plugin to check HTTP methods
+	- created a 'mutate' mode for really brute force finding stuff on servers
+	- added the ability to set default CLI options via config file
+	- added PLUGINDIR config variable
+	- added plugin to check other HTTP headers (just x-powered-by for now)
+	- added ability for nikto to auto-determine ssl v non-ssl on a port
+	- added port scanning ability (with or without nmap)
+	- added ability to send message via the update script's versions.txt file. I don't know why, but it may  be handy to let folks know if a new beta is out, or something.
+	- implemented the virtual host headers as patched by Pasi Eronen
+01.17.2002 
+	Nikto 1.018 
+	- Added /mpcgi/ to the @CGIDIRS array based on some suggestions.
+	- Fixed a bug in the auth_check function (thanks RFP), and cleaned up error reporting on failed auths
+01.12.2002	
+	Nikto 1.017
+	- Fixed a bug where the data portion of a request did not reset to null after some checks (thanks to Phil Brass for pointing me at it & letting me test against his server). 
+01.10.2002
+	Nikto 1.016
+	- Add dump_*hash functions
+	- Added pause (-x) in scan loop
+	- Fixed a bug which caused a major slowdown
+	- Added load_conf for setup for configuration files (future)
+	- Fixed http vs. https links in output files
+01.08.2002
+	Nikto 1.015 
+	- Fixed a bug (?) in Libwhisker PR4 (will check v1 code...)
+	- Corrected an error which caused a few false-positives (404 really IS not found :)
+01.07.2002	
+	Nikto 1.014
+	- Removed comment filtering from lines in scan_database.db to accommodate SSI includes
+	- Fixed quoting removal for data portions in checks (so " is valid).
+01.06.2002
+	Nikto 1.013	
+	- Made major globabl variable changes, moved tons of them to hashes
+	- Wrote some basic plugin writing documentation & added 'docs' directory
+01.03.2002
+	Nikto 1.012
+	- Added extended output for scan archival reasons (suggested by Steve Saady)
+	- Changed host auth failure to a warning, not stoppage
+	- Added "data" portion to scan_database.db
+	- Added @IP and @HOSTNAME substitutions for scan_database.db checks (will be replaced by actual IP/hostname)
+	- in case they are needed in the future.
+	- Added JUNK() to scan_database.db checks to facilitate future buffer-overflows (non-DoS), and future DoS plugins
+	- Added Proxy-agent as valid the same as Server result strings
+	- Changed -l to -n ("nolookup") to be more accurate
+01.02.2002
+	Nikto 1.011
+	- Added proxy auth for db update requests (oops).
+	- Started .xxx version numbering scheme to make life easier
+	- Fixed href tags in HTM output (< and > encoding and target host/ip)
+	- Added "caseless" WWW-Authenticate finding (for iPlanet Proxy)
+12.31.2001
+	Nikto 1.01
+	- Added regex to remove comments from scan_database.db in case they ever exist
+	- Fixed extra 'Host:' line being sent to server (duh).
+	- Fixed non 'GET' request data posting (duh).
+	- Added -timeout option
+12.27.2001	
+	Nikto 1.00
+	- Finalized beta version for release

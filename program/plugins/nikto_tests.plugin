@@ -1,0 +1,277 @@
+#VERSION,2.04
+# $Id: nikto_tests.plugin 79 2008-09-21 15:34:39Z deity $
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Perform the full database of nikto tests against a target
+###############################################################################
+sub nikto_tests_init {
+    my $id = { name        => "tests",
+               full_name   => "Nikto Tests",
+               author      => "Sullo, Deity",
+               description => "Test host with the standard Nikto tests",
+               copyright   => "2008 CIRT Inc.",
+               hooks       => {
+                          scan => { method => \&nikto_tests,
+                                    weight => 99,
+                                    },
+                            },
+               options => {
+                         passfiles => "Flag to indicate whether to check for common password files",
+                         all => "Flag to indicate whether to check all files with all directories",
+                         report => "Report a status after the passed number of tests",
+                         }
+                 };
+    return $id;
+}
+
+sub nikto_tests {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters) = @_;
+
+    # this is the actual the looped code for all the checks
+    foreach my $checkid (sort keys %TESTS) {
+        return if $mark->{'terminate'};
+        if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
+                                             # replace variables in the uri
+        my @urilist = change_variables($TESTS{$checkid}{'uri'});
+
+        # Now repeat for each uri
+        foreach my $uri (@urilist) {
+            return if $mark->{'terminate'};
+            my ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $TESTS{$checkid}{'data'}, "", "", $checkid);
+
+            # auth is now done in nfetch
+            if ($res eq 200) {
+                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
+                  if $OUTPUT{'show_ok'};
+            }
+            elsif ($res =~ /30(?:[0-3]|7)/) {
+                nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
+                       . $headers_recv->{'location'}
+                       . " , $TESTS{$checkid}{'message'}")
+                  if $OUTPUT{'show_redirects'};
+            }
+
+	   # If user puts a @CODE= string in db_404_strings, let it take precedence
+	   foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
+        	if ($res =~ /$code/) {
+			return;
+        		}
+    		}
+
+            my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
+              "content";
+            my $positive = 0;
+
+            # how to check each conditional
+            if ($TESTS{$checkid}{'match_1'}     =~ /^[0-9]{3}$/) { $m1_method  = "code"; }
+            if ($TESTS{$checkid}{'match_1_or'}  =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
+            if ($TESTS{$checkid}{'match_1_and'} =~ /^[0-9]{3}$/) { $m1a_method = "code"; }
+            if ($TESTS{$checkid}{'fail_1'}      =~ /^[0-9]{3}$/) { $f1_method  = "code"; }
+            if ($TESTS{$checkid}{'fail_2'}      =~ /^[0-9]{3}$/) { $f2_method  = "code"; }
+
+            # basic match for positive response
+            if ($m1_method eq "content") {
+                if ($content =~ /$TESTS{$checkid}{'match_1'}/) {
+                    $positive = 1;
+                }
+            }
+            else {
+                if (($res eq $TESTS{$checkid}{'match_1'}) || ($res eq $FoF{'okay'}{'response'})) {
+                    $positive = 1;
+                }
+            }
+
+            # no match, check optional match
+            if ((!$positive) && ($TESTS{$checkid}{'match_1_or'} ne "")) {
+                if ($m1o_method eq "content") {
+                    if ($content =~ /$TESTS{$checkid}{'match_1_or'}/) {
+                        $positive = 1;
+                    }
+                }
+                else {
+                    if (($res eq $TESTS{$checkid}{'match_1_or'}) || ($res eq $FoF{'okay'}{'response'})) {
+                        $positive = 1;
+                    }
+                }
+            }
+
+            # matched on something, check fails/ands
+            if ($positive) {
+                if ($TESTS{$checkid}{'fail_1'} ne "") {
+                    if ($f1_method eq "content") {
+                        if ($content =~ /$TESTS{$checkid}{'fail_1'}/) { next; }
+                    }
+                    else {
+                        if ($res eq $TESTS{$checkid}{'fail_1'}) { next; }
+                    }
+                }
+                if ($TESTS{$checkid}{'fail_2'} ne "") {
+                    if ($f2_method eq "content") {
+                        if ($content =~ /$TESTS{$checkid}{'fail_2'}/) { next; }
+                    }
+                    else {
+                        if ($res eq $TESTS{$checkid}{'fail_2'}) { next; }
+                    }
+                }
+                if ($TESTS{$checkid}{'match_1_and'} ne "") {
+                    if ($m1a_method eq "content") {
+                        if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
+                    }
+                    else {
+                        if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
+                    }
+                }
+
+                # if it's an index.php, check for normal /index.php to see if it's a FP
+                if ($uri =~ /^\/index.php\?/) {
+                    my $content = rm_active_content($content, $mark->{'root'} . $uri);
+                    if (LW2::md4($content) eq $FoF{'index.php'}{'match'}) { next; }
+                }
+
+                # lastly check for a false positive based on file extension or type
+                if (($m1_method eq "code") || ($m1o_method eq "code")) {
+                    	if (is_404($mark->{'root'} . $uri, $content, $res, $headers_recv->{'location'})) { next; }
+                	}
+
+                $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
+                add_vulnerability($mark, "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}", $checkid, $TESTS{$checkid}{'osvdb'}, $TESTS{$checkid}{'method'}, $mark->{'root'} . $uri, $request, $response);
+            }
+        }
+
+        # Percentages
+        if (($OUTPUT{'progress'}) && ($parameters->{'report'})) {
+            if (($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
+                status_report();
+            }
+        }
+    }    # end check loop
+
+    # Perform mutation tests
+    if ($parameters->{'passfiles'}) {
+        passchecks($mark);
+    }
+    if ($parameters->{'all'}) {
+        allchecks($mark);
+    }
+
+    return;
+}
+
+sub passchecks {
+    my ($mark) = @_;
+    my @DIRS   = (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
+    my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
+    my @EXTS = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3 phtml);
+
+    nprint("- Performing passfiles mutation", "v");
+
+    # Update total requests for status reports
+    my @CGIS = split(/ /, $VARIABLES{'@CGIDIRS'});
+    $COUNTERS{'total_checks'} =
+      $COUNTERS{'total_checks'} +
+      (scalar(@DIRS) * scalar(@PFILES)) +
+      (scalar(@DIRS) * scalar(@PFILES) * scalar(@EXTS)) +
+      ((scalar(@DIRS) * scalar(@PFILES) * scalar(@EXTS) * scalar(@CGIS)) * 2);
+
+    foreach my $dir (@DIRS) {
+        return if $mark->{'terminate'};
+        foreach my $file (@PFILES) {
+            next if ($file eq "");
+
+            # dir/file
+            testfile($mark, "$dir$file", "passfiles", "299998");
+
+            foreach my $ext (@EXTS) {
+                return if $mark->{'terminate'};
+
+                # dir/file.ext
+                testfile($mark, "$dir$file.$ext", "passfiles", "299998");
+
+                foreach my $cgi (@CGIS) {
+                    $cgi =~ s/\/$//;
+
+                    # dir/file.ext
+                    testfile($mark, "$cgi$dir$file.$ext", "passfiles", "299998");
+
+                    # dir/file
+                    testfile($mark, "$cgi$dir$file", "passfiles", "299998");
+                }
+            }
+        }
+    }
+}
+
+sub allchecks {
+    my ($mark) = @_;
+
+    # Hashes to temporarily store files/dirs in
+    # We're using hashes to ensure that duplicates are removed
+    my (%FILES, %DIRS);
+
+    # build the arrays
+    nprint("- Loading root level files", "v");
+    foreach my $checkid (keys %TESTS) {
+
+        # Expand out vars so we get full matches
+        my @uris = change_variables($TESTS{$checkid}{'uri'});
+
+        foreach my $uri (@uris) {
+            my $dir  = LW2::uri_get_dir($uri);
+            my $file = $uri;
+
+            if ($dir ne "") {
+                $DIRS{$dir} = "";
+                $dir  =~ s/([^a-zA-Z0-9])/\\$1/g;
+                $file =~ s/$dir//;
+            }
+            if (($file ne "") && ($file !~ /^\?/)) {
+                $FILES{$file} = "";
+            }
+        }
+    }
+
+    # Update total requests for status reports
+    $COUNTERS{'total_checks'} = $COUNTERS{'total_checks'} + (keys(%DIRS) * keys(%FILES));
+
+    # Now do a check for each item - just check the return status, nothing else
+    foreach my $dir (keys %DIRS) {
+        foreach my $file (keys %FILES) {
+            return if $mark->{'terminate'};
+            testfile($mark, "$dir$file", "all checks", 299999);
+        }
+    }
+}
+
+sub testfile {
+    return if $mark->{'terminate'};
+    my ($mark, $uri, $name, $tid) = @_;
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
+    nprint("- $res for $uri (error: $error)", "v");
+    if ($error) {
+        $mark->{'total_errors'}++;
+        nprint("+ ERROR: $uri returned an error: $error", "e");
+        return;
+    }
+    if ($res == 200) {
+        add_vulnerability($mark, "$uri: file found during $name mutation", "$tid", "0", "GET", $uri, $request, $response);
+    }
+}
+
+1;

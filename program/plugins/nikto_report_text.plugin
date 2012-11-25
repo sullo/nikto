@@ -1,0 +1,69 @@
+#VERSION,2.05
+# $Id: nikto_reports.plugin 87 2008-11-11 19:13:19Z deity $
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Text Reporting
+###############################################################################
+sub nikto_report_text_init {
+    my $id = { name              => "report_text",
+               full_name         => "Text reports",
+               author            => "Deity",
+               description       => "Produces a text report.",
+               report_head       => \&text_open,
+               report_host_start => \&text_host,
+               report_item       => \&text_item,
+               report_format     => 'txt',
+               copyright         => "2008 CIRT Inc."
+               };
+    return $id;
+}
+
+sub text_open {
+    my ($file) = @_;
+
+    # Open file and produce header
+    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Write header
+    print OUT "- $VARIABLES{'name'} v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
+
+    return OUT;
+}
+
+sub text_host {
+    my ($handle, $mark) = @_;
+    my ($curr_host, $curr_port);
+    print $handle "+ Target Host: $mark->{hostname}\n";
+    print $handle "+ Target Port: $mark->{port}\n";
+}
+
+sub text_item {
+    my ($handle, $mark, $item) = @_;
+
+    foreach my $uri (split(' ', $item->{uri})) {
+        my $line = "+ ";
+        if ($item->{osvdb})  { $line .= OSVDB-$item->{osvdb} . ": " }
+        if ($item->{method}) { $line .= $item->{method} . " " }
+        if ($uri)            { $line .= $mark->{'root'} . ${uri} . ": " }
+        $line .= $item->{message};
+        print $handle "$line\n";
+    }
+}
+
+1;

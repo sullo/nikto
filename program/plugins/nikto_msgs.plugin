@@ -1,0 +1,101 @@
+#VERSION,2.07
+# $Id$
+###############################################################################
+#  Copyright (C) 2006 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Various messages relating to the server banner
+###############################################################################
+# NOTES:
+# versions are loaded from the "db_server_msgs" file, which should be in the
+# plugins directory this plugin checks the server version to see if there are
+# any version specific items in the db_server_msgs this differs from
+# nikto_outdated because that is ONLY checking to see if it is an old version,
+# whereas this checks to see if the versions match
+###############################################################################
+sub nikto_msgs_init {
+    my $id = { name        => "msgs",
+               full_name   => "Server Messages",
+               author      => "Sullo",
+               description => "Checks the server version against known issues.",
+               hooks       => {
+                          scan => { method => \&nikto_msgs,
+                                    weight => 20,
+                                    },
+                            },
+               copyright => "2008 CIRT Inc."
+               };
+    return $id;
+}
+
+sub nikto_msgs {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my $dbarray;
+    $dbarray = init_db("db_server_msgs");
+
+    foreach my $item (@$dbarray) {
+        $item->{'server'} = validate_and_fix_regex($item->{'server'});
+        if ($mark->{'banner'} =~ /($item->{'server'})\b/i) {
+            add_vulnerability($mark, "$1 - $item->{'message'}", $item->{'nikto_id'}, $item->{'osvdb'});
+        }
+    }
+
+    # Special stuff to pull information from results
+    # McAfee ePO
+    if ($mark->{'banner'} =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
+        my ($res, $content, $error, $request, $response) = nfetch($mark, "/_LOGFILENAME_", "GET", "", "", "", "msgs: Agent-ListenServer-HttpSvr");
+        next unless ($res== 200);
+
+        # Computer name
+        return if $mark->{'terminate'};
+	if ($content=~ /ComputerName/) { 
+        	my $name = $content;
+        	$name =~ s#(^.*<ComputerName>)([^<]+)(</ComputerName>.*$)#$2#;
+        	my $eposerver = $content;
+        	$eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
+        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 80100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+		}
+ 	else { 
+        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 80100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+		}
+    }
+
+    # HP WBEM
+    if ($mark->{'banner'} =~ /CompaqHTTPServer/i) {
+        ($res, $content, $error, $request, $response) = nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
+        next unless ($res == 200);
+        return if $mark->{'terminate'};
+        my $ipaddrs = "";
+        my $name;
+        foreach my $line (split(/\n/, $content)) {
+            if ($line =~ "System Management Homepage for ") {
+                $name = $line;
+                $name =~ s#(^.*System Management Homepage for )([a-zA-Z0-9]*)(</font>.*$)#$2#;
+            }
+            if ($line =~ "new ObjectIpAddresses") {
+                my $ipaddr = $line;
+                $ipaddr =~ s#(^.*new ObjectIpAddresses\(")([\d\.]+)("\);.*$)#$2#;
+                nprint("$ipaddr");
+                $ipaddrs .= " $ipaddr";
+            }
+        }
+        add_vulnerability($mark, "Web server is an HP WBEM agent, showing the hostname is $name and the IP addresses are$ipaddrs.", 80101, 0, "GET", "/cpqlogin.htm", $request, $response);
+    }
+}
+
+1;

@@ -1,0 +1,31 @@
+#VERSION,2.004
+# $Id$
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2007 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+# NiktoDB 1.00
+#######################################################################
+"nikto_id","uri","match","model","message"
+"300000","/","^(.*office.xerox.com.*Model=)([A-Za-z0-9+]+)(&.*)$","$2","Host seems to be a Xerox printer, model:"
+"300001","/","^(.*HEAD_NODE.*)([Xx][Ee][Rr][Oo][Xx][ A-Z0-9a-z]+)(['\"]\);)","$2","Host seems to be a Xerox printer, model:"
+"300002","/","^([Pp][Hh][Aa][Ss][Ee][Rr][ A-Z0-9a-z]+)(<\/title>)","$1","Host seems to be a Xerox printer, model:"
+"300003","/","^(var prd=['\"])([XxWw][EeOo][Rr][OoKk][XxCc][ A-Z0-9a-z]+)(['\"];)","$2","Host seems to be a Xerox printer, model:"
+"300004","/hp/device/this.LCDispatcher","^(.*<title>)([Hh][Pp] [Ll][Aa][Ss][Ee][Rr][Jj][Ee][Tt][ A-Z0-9a-z]+)(<\/title>.*)$","$2","Host seems to be an HP Laserjet printer, model:"
+"300005","/hp/device/this.LCDispatcher","^(.*<title>)([Hh][Pp] [Cc][Oo][Ll][Oo][Rr] [Ll][Aa][Ss][Ee][Rr][Jj][Ee][Tt][ A-Z0-9a-z]+)(<\/title>.*)$","$2","Host seems to be an HP Laserjet printer, model:"
+"300006","/hp/device/this.LCDispatcher","^([Hh][Pp] [Cc][Oo][Ll][Oo][Rr] [Ll][Aa][Ss][Ee][Rr][Jj][Ee][Tt][ A-Z0-9a-z]+)(<\/title>.*)$","$1","Host seems to be an HP Laserjet printer, model:"
+"300007","/hp/device/this.LCDispatcher","^([Hh][Pp] [Ll][Aa][Ss][Ee][Rr][Jj][Ee][Tt][ A-Z0-9a-z]+)(<\/title>.*)$","$1","Host seems to be an HP Laserjet printer, model:"
+"300008","/hmstat.htm","^(var spcs=\[['\"])([Ww][Oo][Rr][Kk][Cc][ A-Z0-9a-z]+)(['\"].*)$","$2","Host seems to be a Xerox printer, model:"
+"300009","/SoundBridgeStatus.html","(SoundBridge is running software version )([0-9.]*)$","$2","Host seems to be a Roku SoundBridge media device version:"
+"300010","/eng/start/StatPtrGen.htm","(^.*PrinterGen\[0\]; sData\[count\+\+\] \= \")([\S]*)(\";)","$2","Host seems to be a Kyocera printer, model:"
+"300011","/cab/top.shtml","(^.*<span class=\"product_name\">)([A-Z0-9]*)(<\/span><\/td>)","$2","Host seems to be a Canon printer, model:"
+"300012","/home.asp","(^.*<td><b class=\"is\"><center>)([\._\-A-Z0-9a-z\(\)\/ ]*)(<\/center><\/td><\/tr>)","$2","Host seems to be a Cyclades terminal server, version:"
+"300013","/","(^serverName=\")([A-Za-z0-9\-\.]+)(\";$)","$2","Host seems to be an HP iLO device, hostname:"
+"300014","/","(^<html><head><title>)(Remote Access Controller)(</title>$)","$2","Host seems to be a Dell"
+"300015","/","(<title>)(Sunny WebBox)(</title>)","$2","Host seems to be an SMA America "

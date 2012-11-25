@@ -1,0 +1,57 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2006 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Determine if a domain is parked at a registrar or advertising location
+###############################################################################
+sub nikto_parked_init {
+    my $id = {
+           name        => "parked",
+           full_name   => "Parked Detection",
+           author      => "Sullo",
+           description => "Checks to see whether the host is parked at a registrar or ad location.",
+           hooks       => {
+                      scan   => { method => \&nikto_parked, },
+                      weight => 18,
+                      },
+           copyright => "2011 CIRT Inc."
+           };
+    return $id;
+}
+
+sub nikto_parked {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $item->{'uri'}, "GET", "", "", "", "parked detection");
+
+    foreach my $string (keys %{ $VARIABLES->{'PARKEDSTRINGS'} }) {
+        return if $mark->{'terminate'};
+        $string = validate_and_fix_regex($string);
+        my @lines = split(/\n/, $content);
+        foreach my $line (@lines) {
+
+            # Check for the matches and pull out information
+            if ($line =~ /$string/) {
+                add_vulnerability($mark, "This domain appears to be parked", 999968, 0, "GET", $item->{'uri'}, $request, $response);
+            }
+        }
+    }
+}
+
+1;

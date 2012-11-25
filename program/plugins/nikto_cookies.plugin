@@ -1,0 +1,86 @@
+#VERSION,2.03
+# $Id$
+###############################################################################
+#  Copyright (C) 2010 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# General HTTP cookie checks
+###############################################################################
+sub nikto_cookies_init {
+    my $id = {
+         name        => "cookies",
+         full_name   => "HTTP Cookie Internal IP",
+         author      => "Sullo",
+         description => "Looks for internal IP addresses in cookies returned from an HTTP request.",
+         hooks       => { postfetch => { method => \&nikto_cookies_postfetch, }, },
+         copyright   => "2010 CIRT Inc."
+         };
+
+	# Store cookies to ensure we don't report multiple times.
+	my %CFOUND;
+    return $id;
+}
+
+sub nikto_cookies_postfetch {
+    my ($mark, $parameters, $request, $response) = @_;
+
+    if (!exists $response->{'set-cookie'}) {
+        return $request, $response;
+    }
+
+    foreach my $c (@{ $response->{'whisker'}->{'cookies'} }) {
+		my $c2 = $c;
+		$c =~ /^([^=]+)/;
+		my $cname = $1;
+		next if (defined $CFOUND{$cname}{$mark->{hostname}});
+		if ($c !~ /secure/ && $mark->{ssl}) {
+			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0,
+				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+		}
+		if ($c !~ /httponly/) {
+			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999960, 0,
+				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+		}
+        my @ips = get_ips($c);
+        foreach my $ip (@ips) {
+            my ($valid, $internal, $loopback) = is_ip($ip);
+            if ($valid && !$loopback) {
+                if ($ip ne $mark->{'ip'}) {
+                    my $msg   = "";
+                    my $osvdb = 0;
+
+                    if ($cname eq 'ARPT') {
+                        $msg =
+                          "Cisco content switch reveals internal IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                        $osvdb = 28121;
+                    }
+                    else {
+
+                        # is it an internal, or just different?
+                        my $int;
+                        if ($internal) { $int = "RFC-1918 "; }
+                        $msg = $int . "IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                    }
+                    add_vulnerability($mark, $msg, 999991, $osvdb, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+                }
+            }
+        }
+		$CFOUND{$cname}{$mark->{hostname}}=1;
+    }
+}
+
+1;

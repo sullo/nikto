@@ -1,0 +1,206 @@
+#VERSION,1.00
+# $Id$
+###############################################################################
+#  Copyright (C) 2009 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Log to Metasploit via XML::RPC service
+###############################################################################
+
+sub nikto_report_msf_init {
+    my $id;
+	$id = { name              => "report_metasploit",
+			full_name         => "Report data to Metasploit",
+			author            => "Sussurro",
+			description       => "Logs data to Metasploit.",
+			};
+    eval "require RPC::XML";
+    if (!$@) {
+        eval "require RPC::XML::Client";
+        if (!$@) {
+
+            $id = { report_head       => \&msf_head,
+                    report_host_start => \&msf_host_start,
+                    report_host_end   => \&msf_host_end,
+                    report_item       => \&msf_item,
+                    report_format     => 'msf',
+                    };
+        }
+    }				
+    if (($CLI{'format'} eq 'msf') && ($id eq '')) {
+        nprint("+ ERROR: Missing required module RPC::XML and/or RPC::XML::Client for MSF logging");
+        exit;
+    }
+
+    return $id;
+}
+
+###############################################################################
+sub msf_head {
+    my ($url) = @_;
+    my ($msfuser, $msfpass, $msfurl);
+
+    if ($url =~ /^(\S+)\:(\S+)\@(.*)/) {
+        $msfuser = $1;
+        $msfpass = $2;
+        $msfurl  = $3;
+    }
+    else {
+        $msfurl  = $url;
+        $msfuser = "msf";
+        $msfpass = "abc123";
+    }
+
+    $TEMPLATES{'msfuser'}  = $msfuser;
+    $TEMPLATES{'msfpass'}  = $msfpass;
+    $TEMPLATES{'msftoken'} = 0;
+
+    $cli = RPC::XML::Client->new($msfurl);
+    msfLogin($cli);
+
+    return $cli;
+
+}
+
+###############################################################################
+sub msf_host_start {
+    my ($handle, $mark) = @_;
+
+    msfLogin($handle);
+    my $xopts = RPC::XML::struct->new('host' => $mark->{'ip'},
+                                      'name' => 'nikto_scan_start',);
+
+    my $req = RPC::XML::request->new("db.report_event", $TEMPLATES{'msftoken'}, $xopts);
+    my $resp = $cli->send_request($req);
+
+    $xopts = RPC::XML::struct->new('host' => $mark->{'ip'},
+                                   'name' => $mark->{'display_name'},);
+
+    $req = RPC::XML::request->new("db.report_host", $TEMPLATES{'msftoken'}, $xopts);
+    $resp = $cli->send_request($req);
+
+    if (ref $resp && $resp->{'result'}->value eq "success") {
+        $xopts = RPC::XML::struct->new('host'  => $mark->{'ip'},
+                                       'proto' => 'tcp',
+                                       'state' => 'open',
+                                       'port'  => $mark->{'port'},
+                                       'name'  => $mark->{'banner'},
+                                       );
+        $req = RPC::XML::request->new("db.report_service", $TEMPLATES{'msftoken'}, $xopts);
+        $resp = $cli->send_request($req);
+    }
+
+    return;
+}
+
+###############################################################################
+sub msf_host_end {
+    my ($handle, $mark) = @_;
+    msfLogin($handle);
+
+    my $xopts = RPC::XML::struct->new(
+        'host' => $mark->{'ip'},
+        'name' => 'nikto_scan_end',
+
+        );
+
+    my $req = RPC::XML::request->new("db.report_event", $TEMPLATES{'msftoken'}, $xopts);
+    my $resp = $cli->send_request($req);
+
+    return;
+}
+
+###############################################################################
+sub msf_item {
+    my ($handle, $mark, $item) = @_;
+    msfLogin($handle);
+    my ($refs, $req, $resp, $xopts);
+    my $isVuln = 0;
+    $isVuln = 1 if ($item->{'osvdb'} ne "0");
+
+    if ($isVuln) {
+        $refs = RPC::XML::array->new("OSVDB-" . $item->{'osvdb'},) if ($item->{'osvdb'});
+
+        $info =
+            "Message: "
+          . $item->{'message'}
+          . ", uri = "
+          . $item->{'root'} . $item->{'uri'}
+          . ", method = "
+          . $item->{'method'}
+          . ", result = "
+          . $item->{'result'};
+
+        $xopts = RPC::XML::struct->new('host'  => $mark->{'ip'},
+                                       'port'  => $mark->{'port'},
+                                       'proto' => 'tcp',
+                                       'name'  => 'nikto.' . $item->{'nikto_id'},
+                                       'refs'  => $refs,
+                                       'info'  => $info
+                                       );
+
+        $req = RPC::XML::request->new("db.report_vuln", $TEMPLATES{'msftoken'}, $xopts);
+
+    }
+    else {
+        my $data = RPC::XML::struct->new('message' => $item->{'message'},
+                                         'uri'     => $item->{'root'} . $item->{'uri'},
+                                         'method'  => $item->{'method'},
+                                         'result'  => $item->{'result'}
+                                         );
+
+        $xopts = RPC::XML::struct->new('host'  => $mark->{'ip'},
+                                       'port'  => $mark->{'port'},
+                                       'proto' => 'tcp',
+                                       'ntype' => 'nikto.' . $item->{'nikto_id'},
+                                       'data'  => $data
+                                       );
+
+        $req = RPC::XML::request->new("db.report_note", $TEMPLATES{'msftoken'}, $xopts);
+
+    }
+
+    $resp = $cli->send_request($req);
+
+    return;
+}
+
+###############################################################################
+sub msfLogin {
+    ($cli) = @_;
+
+    return if ($TEMPLATES{'msflasttoken'} && time() - $TEMPLATES{'msflasttoken'} < (60 * 10));
+
+    $req = RPC::XML::request->new("auth.login",
+                                  RPC::XML::string->new($TEMPLATES{'msfuser'}),
+                                  RPC::XML::string->new($TEMPLATES{'msfpass'})
+                                  );
+
+    $resp = $cli->send_request($req);
+
+    if ($resp->{'result'}->value eq "success") {
+        $TEMPLATES{'msftoken'}     = $resp->{'token'}->value;
+        $TEMPLATES{'msflasttoken'} = time();
+    }
+    else {
+        nprint("Metasploit Login/Password failed... exiting");
+        exit;
+    }
+}
+
+1;
+

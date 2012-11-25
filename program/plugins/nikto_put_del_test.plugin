@@ -1,0 +1,63 @@
+#VERSION,2.04
+# $Id$
+###############################################################################
+#  Copyright (C) 2007 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Try put and then delete a file
+###############################################################################
+sub nikto_put_del_test_init {
+    my $id = { name      => "put_del_test",
+               full_name => "Put/Delete test",
+               author    => "Sullo",
+               description =>
+                 "Attempts to upload and delete files through the PUT and DELETE HTTP methods.",
+               hooks     => { scan => { method => \&nikto_put_del_test, }, },
+               copyright => "2008 CIRT Inc."
+               };
+    return $id;
+}
+
+sub nikto_put_del_test {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my $msg;
+
+    # PUT a page
+    my $uri = "/nikto-test-" . LW2::utils_randstr(8) . ".html";
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "PUT", "This was a Nikto test.", "", "", "put_del_test: PUT");
+
+    # Request it back
+    if ($res eq 201) {
+        ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
+        if ($content =~ /This was a Nikto test/) {
+            add_vulnerability($mark, "HTTP method 'PUT' allows clients to save files on the web server.", 999995, 397, "PUT", $uri, $request, $response);
+
+            # we were able to put it there--can we delete it?
+            ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "DELETE", "", "", "", "put_del_test: DELETE");
+            if ($res eq 200) {
+                ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
+                if ($content !~ /This was a Nikto test/)    # gone now
+                {
+                    add_vulnerability($mark, "HTTP method 'DELETE' allows clients to delete files on the web server.", 999994, 5646, "DELETE", $uri, $request, $response);
+                }
+            }
+        }
+    }
+}
+
+1;

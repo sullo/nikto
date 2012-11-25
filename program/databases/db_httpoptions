@@ -1,0 +1,27 @@
+#VERSION,2.002
+# $Id$
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2009 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+# NiktoDB 1.0
+#######################################################################
+"nikto_id","method","osvdb","message"
+"999976","DELETE","5646","HTTP method ('@TYPE@' Header): 'DELETE' may allow clients to remove files on the web server."
+"999978","PUT","397","HTTP method ('@TYPE@' Header): 'PUT' method could allow clients to save files on the web server."
+"999982","MOVE","5647","HTTP method ('@TYPE@' Header): 'MOVE' may allow clients to change file locations on the web server."
+"999983","CONNECT","0","HTTP method ('@TYPE@' Header): 'CONNECT' may allow server to proxy client requests."
+# WebDAV methods - "0" in nikto_id tells the code to treat it differently
+"0","PROPFIND","0","webdav"
+"0","PROPPATCH","0","webdav"
+"0","COPY","0","webdav"
+"0","LOCK","0","webdav"
+"0","UNLOCK","0","webdav"
+"0","SEARCH","0","webdav"
+"0","MKCOL","0","webdav"

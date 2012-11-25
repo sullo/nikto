@@ -1,0 +1,29 @@
+#VERSION,2.004
+# $Id$ 
+#######################################################################
+# Source: http://cirt.net
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from CIRT, Inc.
+# (c) 2007 CIRT, Inc., All Rights Reserved.
+#
+# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
+# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+#######################################################################
+# Notes:
+# Variables which will be used as replacements for values in the scan_database.db and user_scan_database.db files. 
+# Any values to be replaced must start with the @ character, such as: @CGIDIRS.
+# 
+# User defined variables should be set in config.txt as this file may be over-written during updates.
+#######################################################################
+@CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/
+@NUKE=/ /postnuke/ /postnuke/html/ /modules/ /phpBB/ /forum/
+@MUTATEDIRS=/....../ /members/ /porn/ /restricted/ /xxx/
+@MUTATEFILES=xxx.htm xxx.html porn.htm porn.html
+@ADMIN=/admin/ /adm/ /administrator/
+@USERS=adm bin daemon ftp guest listen lp mysql noaccess nobody nobody4 nuucp operator root smmsp smtp sshd sys test unknown uucp web www
+@PASSWORDDIRS=/ /admin/ /clients/ /pass/ /password/ /passwords/ /store/ /users/ /access/ /members/ /private/ /ccbill/ /dmr/ /mastergate/ /dmr/ /epoch/ /netbilling/ /webcash/ /wwwjoin/ /etc/security/
+@PASSWORDFILES=admins clients pass password passwords passwd passwd.adjunct store users .htpasswd .passwd
+@PHPMYADMIN=/3rdparty/phpMyAdmin/ /phpMyAdmin/ /3rdparty/phpmyadmin/ /phpmyadmin/ /pma/
+@HTTPFOUND=200 301 302 403
+@FCKEDITOR=/FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/
+@CRYSTALREPORTS=/ /CrystalReports/ /crystal/ /businessobjects/ /crystal/enterprise10/ /crystal/Enterprise10/ePortfolio/en/
