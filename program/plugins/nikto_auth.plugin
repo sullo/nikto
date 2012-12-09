@@ -102,7 +102,7 @@ sub split_auth_header {
 }
 
 # Actual authentication and retry takes place here.
-# User-supplied credentials will be tried first if present
+# If present, user-supplied credentials will be tried first
 sub nikto_auth {
     my ($mark, $parameters, $request, $response) = @_;
     my ($authtype) = 'basic';
@@ -134,10 +134,6 @@ sub nikto_auth {
         return if $mark->{'terminate'};
         unless ($realm =~ /$entry->{'realm'}/i || $entry->{'realm'} eq '@ANY') { next; }
 
-        if ($response->{'www-authenticate'} =~ /^ntlm/i) {
-            $authtype = 'ntlm';
-        }
-
         # Set up LW hash
         LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
 
@@ -156,9 +152,8 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        if ($response{'www-authenticate'} =~ /^ntlm/i) {
-
-            # NTLM is different...
+        # NTLM is different...
+        if ($authtype eq 'ntlm') {
             my @ntlm_x = split(/ /, $response{'www-authenticate'});
             if ($#ntlm_x == 1) {
                 sleeper();
