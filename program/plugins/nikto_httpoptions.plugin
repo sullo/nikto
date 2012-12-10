@@ -58,11 +58,12 @@ sub nikto_httpoptions {
     # lots of FP on this one; disabling for now
     #if (($content ne '') && ($res !~ /^3\d\d$/)) { 
     #    add_vulnerability($mark, "Response body of OPTIONS / request is not empty--this may describe additonal REST/API services", 999980, 0, "OPTIONS", "/", $request, $response);
-#	}
+    #	}
 
     foreach my $o (split(/,[ ]?/, $aoptions)) {
         $allow_methods .= ", $o" unless ($allow_methods =~ /\b$o\b/ || $o eq '');
     }
+
     $allow_methods =~ s/^[ ]?, //;
     foreach my $o (split(/,[ ]?/, $poptions)) {
         $public_methods .= ", $o" unless ($public_methods =~ /\b$o\b/ || $o eq '');

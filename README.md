@@ -1,9 +1,11 @@
 nikto
 =====
 
-Nikto web server scanner
+Nikto web server scanner  - https://cirt.net/Nikto2
 
-https://cirt.net/
+Full documentation - https://cirt.net/nikto2-docs/
+
+Basic usage:
 
 ```
    Options:
