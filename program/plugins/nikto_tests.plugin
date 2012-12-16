@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -53,11 +53,16 @@ sub nikto_tests {
         # Now repeat for each uri
         foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
-            my ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $TESTS{$checkid}{'data'}, "", "", $checkid);
+            my ($res, $content, $error, $request, $response, $headers_recv) =
+              nfetch($mark, $uri,
+                     $TESTS{$checkid}{'method'},
+                     $TESTS{$checkid}{'data'},
+                     "", "", $checkid);
 
-            # auth is now done in nfetch
+            # NOTE: auth is now done in nfetch
             if ($res eq 200) {
-                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
+                nprint(
+                     "+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
                   if $OUTPUT{'show_ok'};
             }
             elsif ($res =~ /30(?:[0-3]|7)/) {
@@ -67,27 +72,66 @@ sub nikto_tests {
                   if $OUTPUT{'show_redirects'};
             }
 
-	   # If user puts a @CODE= string in db_404_strings, let it take precedence
-	   foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
-        	if ($res =~ /$code/) {
-			return;
-        		}
-    		}
+            # If user puts a @CODE= string in db_404_strings, let it take precedence
+            foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
+                if ($res =~ /$code/) {
+                    return;
+                }
+            }
 
             my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
               "content";
-            my $positive = 0;
+            my ($positive, $hashme) = 0;
+            my $hash = '';
 
             # how to check each conditional
-            if ($TESTS{$checkid}{'match_1'}     =~ /^[0-9]{3}$/) { $m1_method  = "code"; }
-            if ($TESTS{$checkid}{'match_1_or'}  =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
+            if ($TESTS{$checkid}{'match_1'} =~ /^[0-9]{3}$/) { $m1_method = "code"; }
+            elsif ($TESTS{$checkid}{'match_1'} =~ /^\@MD5/) {
+                $m1_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'match_1'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'match_1_or'} =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
+            elsif ($TESTS{$checkid}{'match_1_or'} =~ /^\@MD5/) {
+                $m1o_method = "md5";
+                $hashme     = 1;
+                $TESTS{$checkid}{'match_1_or'} =~ s/^\@MD5//;
+            }
+
             if ($TESTS{$checkid}{'match_1_and'} =~ /^[0-9]{3}$/) { $m1a_method = "code"; }
-            if ($TESTS{$checkid}{'fail_1'}      =~ /^[0-9]{3}$/) { $f1_method  = "code"; }
-            if ($TESTS{$checkid}{'fail_2'}      =~ /^[0-9]{3}$/) { $f2_method  = "code"; }
+            elsif ($TESTS{$checkid}{'match_1_and'} =~ /^\@MD5/) {
+                $m1a_method = "md5";
+                $hashme     = 1;
+                $TESTS{$checkid}{'match_1_and'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'fail_1'} =~ /^[0-9]{3}$/) { $f1_method = "code"; }
+            elsif ($TESTS{$checkid}{'fail_1'} =~ /^\@MD5/) {
+                $f1_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'fail_1'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'fail_2'} =~ /^[0-9]{3}$/) { $f2_method = "code"; }
+            elsif ($TESTS{$checkid}{'fail_2'} =~ /^\@MD5/) {
+                $f2_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'fail_2'} =~ s/^\@MD5//;
+            }
+
+            if ($hashme) {
+                $hash = LW2::md5($content);
+            }
 
             # basic match for positive response
             if ($m1_method eq "content") {
                 if ($content =~ /$TESTS{$checkid}{'match_1'}/) {
+                    $positive = 1;
+                }
+            }
+            elsif ($m1_method eq "md5") {
+                if ($hash eq $TESTS{$checkid}{'match_1'}) {
                     $positive = 1;
                 }
             }
@@ -104,8 +148,14 @@ sub nikto_tests {
                         $positive = 1;
                     }
                 }
+                elsif ($m1o_method eq "md5") {
+                    if ($hash eq $TESTS{$checkid}{'match_1_or'}) {
+                        $positive = 1;
+                    }
+                }
                 else {
-                    if (($res eq $TESTS{$checkid}{'match_1_or'}) || ($res eq $FoF{'okay'}{'response'})) {
+                    if (   ($res eq $TESTS{$checkid}{'match_1_or'})
+                        || ($res eq $FoF{'okay'}{'response'})) {
                         $positive = 1;
                     }
                 }
@@ -117,6 +167,11 @@ sub nikto_tests {
                     if ($f1_method eq "content") {
                         if ($content =~ /$TESTS{$checkid}{'fail_1'}/) { next; }
                     }
+                    elsif ($f1_method eq "md5") {
+                        if ($hash eq $TESTS{$checkid}{'fail_1'}) {
+                            next;
+                        }
+                    }
                     else {
                         if ($res eq $TESTS{$checkid}{'fail_1'}) { next; }
                     }
@@ -125,6 +180,11 @@ sub nikto_tests {
                     if ($f2_method eq "content") {
                         if ($content =~ /$TESTS{$checkid}{'fail_2'}/) { next; }
                     }
+                    elsif ($f2_method eq "md5") {
+                        if ($hash eq $TESTS{$checkid}{'fail_2'}) {
+                            next;
+                        }
+                    }
                     else {
                         if ($res eq $TESTS{$checkid}{'fail_2'}) { next; }
                     }
@@ -132,6 +192,11 @@ sub nikto_tests {
                 if ($TESTS{$checkid}{'match_1_and'} ne "") {
                     if ($m1a_method eq "content") {
                         if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
+                    }
+                    elsif ($m1a_method eq "md5") {
+                        if ($hash ne $TESTS{$checkid}{'match_1_and'}) {
+                            next;
+                        }
                     }
                     else {
                         if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
@@ -146,11 +211,22 @@ sub nikto_tests {
 
                 # lastly check for a false positive based on file extension or type
                 if (($m1_method eq "code") || ($m1o_method eq "code")) {
-                    	if (is_404($mark->{'root'} . $uri, $content, $res, $headers_recv->{'location'})) { next; }
-                	}
+                    if (is_404($mark->{'root'} . $uri, $content, $res, $headers_recv->{'location'}))
+                    {
+                        next;
+                    }
+                }
 
                 $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
-                add_vulnerability($mark, "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}", $checkid, $TESTS{$checkid}{'osvdb'}, $TESTS{$checkid}{'method'}, $mark->{'root'} . $uri, $request, $response);
+                add_vulnerability($mark,
+                                  "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
+                                  $checkid,
+                                  $TESTS{$checkid}{'osvdb'},
+                                  $TESTS{$checkid}{'method'},
+                                  $mark->{'root'} . $uri,
+                                  $request,
+                                  $response
+                                  );
             }
         }
 
@@ -261,7 +337,8 @@ sub allchecks {
 sub testfile {
     return if $mark->{'terminate'};
     my ($mark, $uri, $name, $tid) = @_;
-    my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
     nprint("- $res for $uri (error: $error)", "v");
     if ($error) {
         $mark->{'total_errors'}++;
@@ -269,7 +346,8 @@ sub testfile {
         return;
     }
     if ($res == 200) {
-        add_vulnerability($mark, "$uri: file found during $name mutation", "$tid", "0", "GET", $uri, $request, $response);
+        add_vulnerability($mark, "$uri: file found during $name mutation",
+                          "$tid", "0", "GET", $uri, $request, $response);
     }
 }
 

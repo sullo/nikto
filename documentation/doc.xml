@@ -1237,6 +1237,21 @@ DOCDIR=EXECDIR/docs</screen>
     <title>Test and Code Writing</title>
 
     <section>
+      <title>Scan Database Syntax</title>
+
+      <para>The scan database is a CSV delimited file which contains most of
+      the tests. Fields are enclosed by quotes and separated by commas. The
+      field order is:</para>
+
+      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
+      Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
+
+      <para>Here is an example test:</para>
+
+      <screen>"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</screen>
+    </section>
+
+    <section>
       <title>Scan Database Field Values</title>
 
       <para>Though some checks can be found in other plugins, the
@@ -1264,7 +1279,7 @@ DOCDIR=EXECDIR/docs</screen>
             <row>
               <entry>Server Type</entry>
 
-              <entry>Generic server matching type</entry>
+              <entry>Check tuning types</entry>
             </row>
 
             <row>
@@ -1293,7 +1308,7 @@ DOCDIR=EXECDIR/docs</screen>
             </row>
 
             <row>
-              <entry>Match1 (And)</entry>
+              <entry>Match 1 (And)</entry>
 
               <entry>String or code to also match for successful test</entry>
             </row>
@@ -1331,6 +1346,17 @@ DOCDIR=EXECDIR/docs</screen>
           </tbody>
         </tgroup>
       </table>
+
+      <para>Variables from the db_variables or udb_variables files can be
+      replaced in the URI field. These can be used to expand single checks
+      into multiple locations, such as typical software install
+      directories.</para>
+
+      <para>The Match 1, Match 1 (Or), Match 1 (And), Fail 1 and Fail 2 fields
+      can have three types of values: numeric HTTP code, string/regex to match
+      content, or MD5 hash. To use an MD5 hash of the returned content,
+      preface the value with '@MD5', for example
+      '@MD56a6fa5d848ccec771678bf04f2eaf627'.</para>
     </section>
 
     <section>
@@ -1360,21 +1386,6 @@ DOCDIR=EXECDIR/docs</screen>
 
       <para>Please help Nikto's continued success by sending test updates to
       <email>sullo@cirt.net</email>.</para>
-    </section>
-
-    <section>
-      <title>Scan Database Syntax</title>
-
-      <para>The scan database is a CSV delimited file which contains most of
-      the tests. Fields are enclosed by quotes and separated by commas. The
-      field order is:</para>
-
-      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
-      Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
-
-      <para>Here is an example test:</para>
-
-      <screen>"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</screen>
     </section>
 
     <section>
