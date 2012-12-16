@@ -40,10 +40,10 @@ sub nikto_clientaccesspolicy {
     my $msg;
     my $file = "/clientaccesspolicy.xml";
 	
-    my ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $file, "GET", "", "", "", "clientaccesspolicy");
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "clientaccesspolicy");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
-        if (is_404($file, $content, $res, $headers_recv->{'location'})) { return; }
+        if (is_404($file, $content, $res, $response->{'location'})) { return; }
 
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {
@@ -68,10 +68,10 @@ sub nikto_clientaccesspolicy {
     }
 	
     my $file = "/crossdomain.xml" ;
-    ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
+    ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
-        if (is_404($file, $content, $res, $headers_recv->{'location'})) { return; }
+        if (is_404($file, $content, $res, $response->{'location'})) { return; }
 
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {

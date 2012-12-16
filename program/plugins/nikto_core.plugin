@@ -227,14 +227,13 @@ sub map_codes {
     my $rs = LW2::utils_randstr(8);
 
     # / for OK response
-    my ($res, $content, $error, $request, $response, $headers_recv) =
-      nfetch($mark, "/", "GET", "", "", "", "map_codes");
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "map_codes");
 
-    if ($headers_recv->{'location'} ne '') {
-        nprint("+ Root page / redirects to: $headers_recv->{'location'}");
-        if ($headers_recv->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
+    if ($response->{'location'} ne '') {
+        nprint("+ Root page / redirects to: $response->{'location'}");
+        if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
         {
-            my $uri = $headers_recv->{'location'};
+            my $uri = $response->{'location'};
             ($res, $content, $error, $request, $response) =
               nfetch($mark, "/", "GET", "", "", "", "map_codes");
         }
@@ -278,16 +277,14 @@ sub map_codes {
     foreach my $file (keys %REQS) {
         return if $mark->{'terminate'};
         nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n", "v");
-        %headers_recv = ();
-        ($res, $content, $error, $request, $response, $headers_recv) =
-          nfetch($mark, $file, "GET", "", "", "", "map_codes");
+        ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "map_codes");
 
         $ext = $REQS{$file};
         $FoF{$ext}{'response'} = $res;
 
         # handle .com to .org redirs or whatnot
-        if ($headers_recv->{'location'} ne '') {
-            $FoF{$ext}{'location'} = get_base_host($headers_recv->{'location'});
+        if ($response->{'location'} ne '') {
+            $FoF{$ext}{'location'} = get_base_host($response->{'location'});
         }
 
         # if it is not specific type, figure out Content or HASH method...
@@ -1456,7 +1453,6 @@ sub count_fields {
 ###############################################################################
 sub port_check {
     my ($hostname, $ip, $port, $key, $cert) = @_;
-    my $headers_recv;
     my $m = {};
 
     # Check SKIPPORTS
@@ -1489,9 +1485,7 @@ sub port_check {
                 $m->{'cert'} = $cert;
             }
             proxy_check($m);
-            my ($res, $content, $error, $request, $response, $headers_recv) =
-              nfetch($m, "/", $method, "", "", { noerror => 1, noprefetch => 1, nopostfetch => 1 },
-                     "Port Check");
+            my ($res, $content, $error, $request, $response) = nfetch($m, "/", $method, "", "", { noerror => 1, noprefetch => 1, nopostfetch => 1 }, "Port Check");
 
             if ($res) {
 
@@ -1503,7 +1497,7 @@ sub port_check {
                 }
                 nprint("- $checkssl Server found: "
                          . ($hostname || $ip)
-                         . ":$port \t$headers_recv->{server}",
+                         . ":$port \t$response->{server}",
                        "d",
                        $m
                        );
@@ -2169,7 +2163,7 @@ sub setup_hash {
 #######################################################################
 sub nfetch {
     my ($mark, $uri, $method, $data, $headers_send, $flags, $testid, $httpver) = @_;
-    my (%request, %result, %headers_recv);
+    my (%request, %result);
     setup_hash(\%request, $mark, $testid);
 
     # check for keyboard input
@@ -2290,12 +2284,6 @@ sub nfetch {
         }
     }
 
-    while (my ($key, $value) = each(%result)) {
-        if ($key ne "whisker" && $key ne "connection") {
-            $headers_recv{$key} = $value;
-        }
-    }
-
     # Run post hooks
     unless ($flags->{'nopostfetch'}) {
         ($request, %$result) = run_hooks($mark, "postfetch", \%request, \%result);
@@ -2305,7 +2293,7 @@ sub nfetch {
     $request{'whisker'}->{'version'} = $httpver_old;
 
     return $result{'whisker'}->{'code'}, $result{'whisker'}->{'data'},
-      $result{'whisker'}->{'error'}, \%request, \%result, \%headers_recv;
+      $result{'whisker'}->{'error'}, \%request, \%result;
 }
 
 #######################################################################

@@ -53,7 +53,7 @@ sub nikto_tests {
         # Now repeat for each uri
         foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
-            my ($res, $content, $error, $request, $response, $headers_recv) =
+            my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
                      $TESTS{$checkid}{'method'},
                      $TESTS{$checkid}{'data'},
@@ -67,7 +67,7 @@ sub nikto_tests {
             }
             elsif ($res =~ /30(?:[0-3]|7)/) {
                 nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
-                       . $headers_recv->{'location'}
+                       . $response->{'location'}
                        . " , $TESTS{$checkid}{'message'}")
                   if $OUTPUT{'show_redirects'};
             }
@@ -211,7 +211,7 @@ sub nikto_tests {
 
                 # lastly check for a false positive based on file extension or type
                 if (($m1_method eq "code") || ($m1o_method eq "code")) {
-                    if (is_404($mark->{'root'} . $uri, $content, $res, $headers_recv->{'location'}))
+                    if (is_404($mark->{'root'} . $uri, $content, $res, $response->{'location'}))
                     {
                         next;
                     }

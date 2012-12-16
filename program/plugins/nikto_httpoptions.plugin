@@ -40,19 +40,19 @@ sub nikto_httpoptions_init {
 sub nikto_httpoptions {
     return if $mark->{'terminate'};
     my ($mark) = @_;
-    my (%headers_recv, %request, %response, $res, $dbarray, $txt, $allow_methods, $public_methods);
+    my (%request, %response, $res, $dbarray, $txt, $allow_methods, $public_methods);
     $txt = "";
 
     # test for both OPTIONS / and OPTIONS * as they may give different results
-    my ($res, $content, $errors, $request, $resonse, $headers_recv) = nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
-    my $aoptions = "$headers_recv->{'allow'}, ";
-    my $poptions = "$headers_recv->{'public'}, ";
-    $dbarray = init_db("db_httpoptions");
-    %headers_recv=();
+    my ($res, $content, $errors, $request, $response) = nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
 
-    ($res, $content, $errors, $request, $response, $headers_recv) = nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
-    $aoptions .= $headers_recv->{'allow'};
-    $poptions .= $headers_recv->{'public'};
+    my $aoptions = "$response->{'allow'}, ";
+    my $poptions = "$response->{'public'}, ";
+    $dbarray = init_db("db_httpoptions");
+
+    ($res, $content, $errors, $request, $response) = nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
+    $aoptions .= $response->{'allow'};
+    $poptions .= $response->{'public'};
 
     # Odd case here, but maybe... http://zacstewart.com/2012/04/14/http-options-method.html
     # lots of FP on this one; disabling for now

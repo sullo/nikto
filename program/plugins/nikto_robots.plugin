@@ -41,10 +41,10 @@ sub nikto_robots_init {
 sub nikto_robots {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my ($code, $content, $errors, $request, $response, $headers_recv) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
+    my ($code, $content, $errors, $request, $response) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
 
     if (($code eq 200) || ($code eq $FoF{'okay'}{'response'})) {
-        if (is_404("robots.txt", $content, $code, $headers_recv->{'location'})) { return; }
+        if (is_404("robots.txt", $content, $code, $response->{'location'})) { return; }
 
         my ($DIRS, $RFILES) = "";
         my $DISCTR = 0;
