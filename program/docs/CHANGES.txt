@@ -1,3 +1,7 @@
+2013-xx-xx Nikto 2.1.6 release
+	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
+	- Ticket 22: Add location to db_favicon
+	- Ticket 11: Alert on HTTP PATCH available
 2012-09-16 Nikto 2.1.5 release
 	- Ticket 261: Update CSV report to include banner info and put data into proper columns
 	- Ticket 247: Move etag header check to postfetch so no additional requests are made
