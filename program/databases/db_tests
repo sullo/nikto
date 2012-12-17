@@ -6574,3 +6574,4 @@
 "006610","0","23","/.bzr/branch-format","GET","Bazaar-NG\smeta","","","","","Bazaar file found. Full repo details may be present.","",""
 "006611","0","23","/.hg/requires","GET","revlogv","","","","","Mercurial (HG) file found. Full repo details may be present.","",""
 "006612","0","3","/troubleshooting_logs.txt","GET","dhcpd:","","","","","Arris Touchstone log file available without authentication.","",""
+"006613","0","23","/caucho-status","GET","Caucho\sServlet\sEngine","","","","","Caucho Resin status file present","",""
