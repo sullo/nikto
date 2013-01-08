@@ -330,8 +330,8 @@ sub setup_dirs {
     unless (defined $CONFIGFILE{'TEMPLATEDIR'}) {
         $CONFIGFILE{'TEMPLATEDIR'} = "$CONFIGFILE{'EXECDIR'}/templates";
     }
-    unless (defined $CONFIGFILE{'DOCUMENTDIR'}) {
-        $CONFIGFILE{'DOCUMENTDIR'} = "$CONFIGFILE{'EXECDIR'}/docs";
+    unless (defined $CONFIGFILE{'DOCDIR'}) {
+        $CONFIGFILE{'DOCDIR'} = "$CONFIGFILE{'EXECDIR'}/docs";
     }
     unless (defined $CONFIGFILE{'DBDIR'}) {
         $CONFIGFILE{'DBDIR'} = "$CONFIGFILE{'EXECDIR'}/databases";

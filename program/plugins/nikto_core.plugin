@@ -1924,9 +1924,9 @@ sub check_updates {
         nprint("+ Retrieving 'CHANGES.txt'");
         my ($code, $content) = nfetch(\%mark, "$serverdir/CHANGES.txt", "GET");
         if (($content ne "") && ($code eq 200)) {
-            open(OUT, ">$CONFIGFILE{DOCUMENTDIR}/CHANGES.txt")
+            open(OUT, ">$CONFIGFILE{DOCDIR}/CHANGES.txt")
               || die print STDERR
-              "+ ERROR: Unable to open '$CONFIGFILE{DOCUMENTDIR}/CHANGES.txt' for write: $@\n";
+              "+ ERROR: Unable to open '$CONFIGFILE{DOCDIR}/CHANGES.txt' for write: $@\n";
             print OUT $content;
             close(OUT);
         }
