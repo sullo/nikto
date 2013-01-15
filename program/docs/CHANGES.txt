@@ -1,4 +1,5 @@
 2013-xx-xx Nikto 2.1.6 release
+	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
 	- Issue #24: Don't return headers distinctly from nfetch
 	- Issue #22: Add location to db_favicon
