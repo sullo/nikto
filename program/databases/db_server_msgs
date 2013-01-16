@@ -269,3 +269,4 @@
 "800254","HP System Management Homepage\/([0-2]|3\.0\.(0|1\.([0-6]|7[0-2])))","54608","HP System Management Homepage version contains multiple vulnerabilities."
 "800255","cp-sw-server","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800256","cpservd","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
+"800257","mod_speling","0","mod_speling can reveal otherwise hidden files via 'misspelled' file names."
