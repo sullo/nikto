@@ -50,7 +50,7 @@ sub nikto_favicon {
         my $hash = LW2::md5($content);
         $hash =~ s/^.*://;
         nprint("Got favicon.ico hash:$hash", "d", "");
-        favicon_matchhash($hash);
+        favicon_matchhash($hash, $mark->{'root'} . "/favicon.ico");
     }
 
     # Check for a <link> favicon
