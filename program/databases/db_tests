@@ -6589,3 +6589,4 @@
 "006625","0","23","/wp-content/plugins/wpvotes/db.sql","GET","CREATE\sTABLE","INSERT\sINTO","","","","A Wordpress MySQL database dump was found.","",""
 "006626","0","23","/wp-content/plugins/post-voting/db.sql","GET","CREATE\sTABLE","INSERT\sINTO","","","","A Wordpress MySQL database dump was found.","",""
 "006627","81817","3","/?q[]=x","GET","(trim|explode|preg_match|stristr)\(\)\sexpects\sparameter","Array\sto\sstring","","","","Drupal 7 contains a path information disclosure","",""
+"006628","0","3","/whoami.php","GET","php\sis\srunning\sas","","","","","Whoami.php reveals the web server user.","",""
