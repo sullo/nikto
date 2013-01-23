@@ -1,6 +1,7 @@
 2013-xx-xx Nikto 2.1.6 release
 	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
+	- Added nikto_sitezip.plugin to look for compressed archives of sites
 	- Issue #24: Don't return headers distinctly from nfetch
 	- Issue #22: Add location to db_favicon
 	- Issue #11: Alert on HTTP PATCH available
