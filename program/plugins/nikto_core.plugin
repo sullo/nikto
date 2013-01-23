@@ -2212,6 +2212,11 @@ sub nfetch {
         $request{'whisker'}->{'version'} = $httpver;
     }
 
+    if ($flags->{'nohost'}) { 
+	$request->{'Host'} = $mark->{'ip'};
+	$request{'whisker'}->{'host'} = $mark->{'ip'};
+	}
+
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
 
     # Run pre hooks
