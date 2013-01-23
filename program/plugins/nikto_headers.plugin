@@ -102,11 +102,11 @@ sub nikto_headers_postfetch {
             my $inode = "0x$fields[0]";
             my $size  = "0x$fields[1]";
             my $mtime = "0x$fields[2]";
+            my $ltime=substr( sprintf("%s",hex($mtime)) , 0,10);
 
-            # for some reason $mtime is mangled
             $message .=
               ($ishex == 1)
-              ? sprintf(", inode: %d, size: %d, mtime: %s", hex($inode), hex($size), $mtime)
+              ? sprintf(", inode: %d, size: %d, mtime: %s", hex($inode), hex($size), scalar(localtime($ltime)) )        
               : sprintf(", inode: %s, size: %s, mtime: %s", $inode,      $size,      $mtime);
         }
         else {
