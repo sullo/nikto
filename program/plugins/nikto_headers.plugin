@@ -143,7 +143,7 @@ sub nikto_headers_postfetch {
 				$request->{'whisker'}->{'method'},
 				$request->{'whisker'}->{'uri'},
 				$request,
-				$reponse);
+				$response);
 		}
 		$XFRAME=1;
 	}
@@ -159,7 +159,7 @@ sub nikto_headers_postfetch {
 	    elsif (defined $HFOUND{$header}{$mark->{'hostname'}})    { $found=1; }
         }
         if ($found == 0) {
-            my $x = $reponse->{$header};
+            my $x = $response->{$header};
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
             add_vulnerability($mark, "Uncommon header '$header' found, with contents: $response->{$header}", 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
