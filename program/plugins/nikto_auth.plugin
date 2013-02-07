@@ -31,7 +31,7 @@ sub nikto_auth_init {
                                      },
                           postfetch => { method => \&nikto_auth,
                                          weight => 19,
-                                         cond   => '$response->{whisker}->{code} eq 401',
+                                         cond   => '$result->{whisker}->{code} eq 401',
                                          },
                           prefetch => { method => \&nikto_auth_pre,
                                         weight => 19,

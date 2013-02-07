@@ -42,9 +42,9 @@ sub nikto_multiple_index {
         my ($res, $content, $error, $request, $response) = nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
         if ($res == 200) {
-            $content = rm_active_content($content, "/$item->{'index'}");
+            $content = rm_active_content($content, "$mark->{'root'}/$item->{'index'}");
             my $hash = LW2::md4($content);
-            $found{ $item->{'index'} } = $hash;
+            $found{ "$mark->{'root'}/$item->{'index'}" } = $hash;
             $hashes{$hash}++;
         }
 
