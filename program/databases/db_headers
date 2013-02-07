@@ -52,6 +52,7 @@
 "retry-after"
 "server"
 "set-cookie"
+"strict-transport-security"
 "te"
 "trailer"
 "transfer-encoding"
