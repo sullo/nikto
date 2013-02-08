@@ -6591,3 +6591,5 @@
 "006627","81817","3","/?q[]=x","GET","(trim|explode|preg_match|stristr)\(\)\sexpects\sparameter","Array\sto\sstring","","","","Drupal 7 contains a path information disclosure","",""
 "006628","0","3","/whoami.php","GET","php\sis\srunning\sas","","","","","Whoami.php reveals the web server user.","",""
 "006629","0","23","/elmah.axd","GET","Error\sLog\sfor","Atif\sAziz","","","","elmah.axd reveals application log details. See http://www.troyhunt.com/2012/01/aspnet-session-hijacking-with-google.html","",""
+"006630","0","b","/SAFileUpDocs/whnjs.htm","GET","<title>SoftArtisans FileUp 5.0</title>","","","","","SoftArtisans FileUp help documentation found","",""
+"006631","0","b","/SAFileUpSamples/","GET","FileUp v5 Code Sample Index","","","","","SoftArtisans FileUp samples found, these may allowed file uploads","",""
