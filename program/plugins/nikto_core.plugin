@@ -3012,7 +3012,18 @@ sub gmt_offset {
     my @t = localtime(time);
     return (timegm(@t) - timelocal(@t)) / 3600;
 }
-
+###############################################################################
+sub expand_range {
+	local $" = '..';
+    my (@range);
+	
+	sort {$a <=> $b}
+		map {
+			map {
+				((@range = split /-/) == 2) ? eval('map {$_} '. "@range") : $_
+			} split /\s/
+		} @_;
+}
 ###############################################################################
 sub nikto_core { return; }    # trap for this plugin being called to run. lame.
 ###############################################################################

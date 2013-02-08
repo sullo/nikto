@@ -34,6 +34,7 @@ sub nikto_tests_init {
                          passfiles => "Flag to indicate whether to check for common password files",
                          all => "Flag to indicate whether to check all files with all directories",
                          report => "Report a status after the passed number of tests",
+						 tids => "A range of testids that will only be run",
                          }
                  };
     return $id;
@@ -42,12 +43,19 @@ sub nikto_tests_init {
 sub nikto_tests {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+	my @tids;
+	
+	if (defined $parameters->{'tids'}) {
+		@tids = expand_range($parameters->{'tids'});
+	}
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
         return if $mark->{'terminate'};
         if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
                                              # replace variables in the uri
+		my $intcheck=int($checkid);
+		if ((scalar(@tids) > 0) && !grep(/^$intcheck$/, @tids)) { next; }
         my @urilist = change_variables($TESTS{$checkid}{'uri'});
 
         # Now repeat for each uri
