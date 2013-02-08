@@ -3294,7 +3294,7 @@
 "003302","556","8","/_vti_bin/..%255c..%255c..%255c..%255c..%255c..%255cwinnt/system32/cmd.exe?/c+dir","GET","<DIR>","","","","","IIS is vulnerable to a double-decode bug that allows commands to be executed on the system. CVE-2001-0333. BID-2708.","",""
 "003303","562","3","/server-info","GET","200","Server Information","","","","This gives a lot of Apache information. Comment out appropriate line in httpd.conf or restrict access to allowed hosts.","",""
 "003304","5689","4","@CGIDIRSnamazu.cgi","GET","200","","","","","Namazu search engine found. Vulnerable to XSS attacks (fixed 2001-11-25). Attacker could write arbitrary files outside docroot (fixed 2000-01-26). CA-2000-02.","",""
-"003305","5692","3","/oekaki/","GET","\.conf","","","","","The PaintBBS Server may allow unauthorized access to the config files.","",""
+"003305","5692","3","/oekaki/","GET","\.conf","","","404","","The PaintBBS Server may allow unauthorized access to the config files.","",""
 "003306","5709","3","/.nsconfig","GET","200","","","","","Contains authorization information","",""
 "003307","5709","3","@CGIDIRS.nsconfig","GET","200","","","","","Contains authorization information","",""
 "003308","582","2","/?D=A","GET","[Ii]ndex [Oo]f \\\/","","","","","Apache allows directory listings by requesting.","",""
