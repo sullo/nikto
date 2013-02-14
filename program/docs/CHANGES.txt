@@ -1,4 +1,5 @@
 2013-xx-xx Nikto 2.1.6 release
+	- mask passwords from -id in report output, thanks to Iggy "I want a cameo" Frankovic
 	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
 	- Added nikto_sitezip.plugin to look for compressed archives of sites
