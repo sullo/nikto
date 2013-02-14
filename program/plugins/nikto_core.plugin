@@ -486,6 +486,7 @@ sub general_config {
     $CLI{'pause'} = $CLI{'html'} = $OUTPUT{'verbose'} = $CLI{'skiplookup'} =
       $COUNTERS{'totalrequests'} = $OUTPUT{'debug'} = $OUTPUT{'scrub'} = $OUTPUT{'errors'} = 0;
     $CLI{'all_options'} = join(" ", @ARGV);
+    $CLI{'all_options'} =~ s/(\-id?\s[^\s:]+:)[^\s]+/$1****/i;
 
     GetOptions("ask=s"            => \$CLI{'ask'},
                "Cgidirs=s"        => \$CLI{'forcecgi'},
