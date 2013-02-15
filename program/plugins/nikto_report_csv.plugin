@@ -77,7 +77,8 @@ sub csv_item {
         $line .= "\",";
 
         $line .= "\"";
-        if ($uri ne '') { $line .= $mark->{'root'} . $uri; }
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
+		{ $line .= $mark->{'root'} . $uri; }
         $line .= "\",";
 
         $item->{'message'} =~ s/"/\\"/g;

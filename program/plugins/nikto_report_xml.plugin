@@ -158,6 +158,7 @@ sub xml_change_vars {
     $variables{"#TEMPL_ELAPSED#"}            = $mark->{'end_time'} - $mark->{'start_time'};
     $variables{"#TEMPL_LINK_IP#"} =
       $protocol . "://" . $mark->{'ip'} . ":" . $mark->{'port'} . $mark->{'root'};
+    if ($variables{"#TEMPL_LINK_IP#"} !~ /\/$/) { $variables{"#TEMPL_LINK_IP#"} .= '/'; }
     $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
     $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
@@ -169,6 +170,7 @@ sub xml_change_vars {
         $variables{"#TEMPL_LINK_NAME#"} =
           $protocol . "://" . $mark->{'hostname'} . ":" . $mark->{'port'} . $mark->{'root'};
     }
+    if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
 
     # do now in case we return early
     foreach my $var (keys %variables) {
@@ -191,7 +193,10 @@ sub xml_change_vars {
 
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
-        $variables{"#TEMPL_URI#"}         = simple_enc($mark->{'root'} . $item->{'uri'});
+	my $uri = $item->{'uri'};
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))             
+        	{ $line .= $mark->{'root'} . ${'uri'} . ": " }
+        $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $item->{'message'};
         $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
 

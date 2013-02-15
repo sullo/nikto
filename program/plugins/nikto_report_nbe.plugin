@@ -60,7 +60,8 @@ sub nbe_item {
             $line .= "Security Warning|";
             if ($item->{'osvdb'})  { $line .= OSVDB-$item->{'osvdb'} . ": " }
             if ($item->{'method'}) { $line .= $item->{'method'} . " " }
-            if ($uri)              { $line .= $mark->{'root'} . ${'uri'} . ": " }
+            if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
+            	{ $line .= $mark->{'root'} . ${'uri'} . ": " }
             $line .= $item->{'message'};
             print $handle "$line\n";
         }
