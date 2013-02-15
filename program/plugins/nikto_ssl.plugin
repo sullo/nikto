@@ -36,27 +36,28 @@ sub nikto_ssl {
     if ($mark->{ssl}) {
         $mark->{'ssl_cert_subject'} =~ /CN=([^$\/ ]+)/;
         my $cn_name = $1;
-	my $cn_display_name = $cn_name;
-	my $match=1;
+		my $cn_display_name = $cn_name;
+		my $match=1;
 
-	# wildcard cert
-	if ($cn_name =~ /^\*/) { 
-		$cn_name =~ s/([\.\?\-\(\)\{\}\+\$\@\!\\\|])/\\$1/g;
-		$cn_name =~ s/\*/\.\*/g;
-		my $name = $mark->{'hostname'};
-		if ($name !~ /^\./) { $name = '.' . $name; } 
-		if ($name !~ /^$cn_name$/i) { $match=0; }
-            	add_vulnerability($mark, "Server is using a wildcard certificate: '$cn_display_name'", 999992, 0);
+		# wildcard cert
+		if ($cn_name =~ /^\*/) { 
+			$cn_name =~ s/([\.\?\-\(\)\{\}\+\$\@\!\\\|])/\\$1/g;
+			$cn_name =~ s/\*/\.\*/g;
+			my $name = $mark->{'hostname'};
+			if ($name !~ /^\./) { $name = '.' . $name; } 
+			if ($name !~ /^$cn_name$/i) { $match=0; }
+			add_vulnerability($mark, "Server is using a wildcard certificate: '$cn_display_name'", 999992, 0);
+			$match=1;
 		}
-	# normal cert
-	else { 
-        	if (($mark->{'hostname'} ne $cn_name) && ($cn_name ne '')) {
-			$match=0;
+		# normal cert
+		else { 
+			if (($mark->{'hostname'} ne $cn_name) && ($cn_name ne '')) {
+				$match=0;
 			}
 		}
-	if (!$match) { 
-            add_vulnerability($mark, "Hostname '$mark->{'hostname'}' does not match certificate's CN '$cn_display_name'", 999993, 0);
-		 }
+		if (!$match) { 
+				add_vulnerability($mark, "Hostname '$mark->{'hostname'}' does not match certificate's CN '$cn_display_name'", 999993, 0);
+		}
     }
 }
 
