@@ -78,7 +78,7 @@ sub nikto_sitezip {
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/$file", "HEAD", "", "", "", "sitezip");
 
-        if ($res == 200) {
+        if (($res == 200) && (is_404("/$file", $content, $res, $response->{'location'}))) {
             add_vulnerability($mark, "/$file: Potential zip file of site found.",
                               740001, 0, "HEAD", "/$file", $request, $response);
         }
@@ -86,7 +86,7 @@ sub nikto_sitezip {
         # request by ip
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitezip");
-        if ($res == 200) {
+        if (($res == 200) && (is_404("/$file", $content, $res, $response->{'location'}))) {
             add_vulnerability($mark,
                         "/$file: Potential zip file of site found (NOTE: requested by IP address).",
                         740001, 0, "HEAD", "/file", $request, $response);
