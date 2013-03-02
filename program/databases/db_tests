@@ -6593,3 +6593,4 @@
 "006629","0","23","/elmah.axd","GET","Error\sLog\sfor","Atif\sAziz","","","","elmah.axd reveals application log details. See http://www.troyhunt.com/2012/01/aspnet-session-hijacking-with-google.html","",""
 "006630","0","b","/SAFileUpDocs/whnjs.htm","GET","<title>SoftArtisans FileUp 5.0</title>","","","","","SoftArtisans FileUp help documentation found","",""
 "006631","0","b","/SAFileUpSamples/","GET","FileUp v5 Code Sample Index","","","","","SoftArtisans FileUp samples found, these may allowed file uploads","",""
+"006633","0","3","/cgi-bin/status_cgi","GET","Touchstone\sStatus","","","","","Arris Touchstone status program reveals potentially sensitive information.","",""
