@@ -991,7 +991,7 @@ sub resolve {
     my $ident = $_[0] || return;
     my ($name, $ip, $dn) = "";
 
-    if (($request{'whisker'}->{'proxy_host'} ne '') && $CLI{'useproxy'}) {
+    if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
         $name = $ident;
         $ip   = $name;
         return $name, $ip, $name;
@@ -2018,10 +2018,10 @@ sub read_data {
 sub proxy_check {
     my ($mark) = @_;
 
+    setup_hash(\%request, $mark, "Proxy Check");
     if (($request{'whisker'}->{'proxy_host'} ne '') && ($CLI{'useproxy'}))    # proxy is set up
     {
         LW2::http_close(\%request);    # force-close any old connections
-        setup_hash(\%request, $mark, "Proxy Check");
         $request{'whisker'}->{'method'} = "GET";
         $request{'whisker'}->{'uri'}    = "/";
 
