@@ -6,6 +6,18 @@ use Time::Local;
 Getopt::Long::Configure('no_ignore_case');
 
 ###############################################################################
+# Optional modules loaded when needed:
+# POSIX, Time::HiRes
+#
+# These are needed for the MSF report module:
+# RPC::XML, RPC::XML::Client
+#
+# Needed in JSON-PP.pm for using -Save functionality
+# Math::BigInt, Math::BigFloat, Encode, Scalar::Util
+#
+# LW2 helpers to speedup
+# MIME::Base64, MD5
+###############################################################################
 #                               Nikto                                         #
 ###############################################################################
 #  Copyright (C) 2001 CIRT, Inc.
