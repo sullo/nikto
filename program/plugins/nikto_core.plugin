@@ -813,7 +813,7 @@ sub general_config {
         eval "use POSIX qw(:termios_h)";
         if (!$@) {
             $NIKTO{'SUPPORT'}{'POSIX'} = 1;
-            eval "use Time::HiRes qw(ualarm)";
+            eval "require Time::HiRes qw(ualarm)";
             if (!$@) {
                 $NIKTO{'POSIX'}{'support'}  = 1;
                 $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
@@ -829,7 +829,7 @@ sub general_config {
     # see if we have Time::HiRes sleep support
     if ($CLI{'pause'} > 0) {
         my $notice = "";
-        eval "use Time::HiRes qw(sleep)";
+        eval "require Time::HiRes qw(sleep)";
         if ($@ && ($CLI{'pause'} =~ /\./)) {
             my $integer = int($CLI{'pause'});
             $CLI{'pause'} =~ /\.(\d+)/;
