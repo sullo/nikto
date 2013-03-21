@@ -807,43 +807,16 @@ sub general_config {
     chomp($VARIABLES{'core_version'});
     $VARIABLES{'TEMPL_HCTR'} = 0;
 
-    # POSIX support for status?
-    $NIKTO{'POSIX'}{'support'} = 0;
-    if (!$CLI{'nointeractive'}) {
-        eval "use POSIX qw(:termios_h)";
-        if (!$@) {
-            $NIKTO{'SUPPORT'}{'POSIX'} = 1;
-            eval "require Time::HiRes qw(ualarm)";
-            if (!$@) {
-                $NIKTO{'POSIX'}{'support'}  = 1;
-                $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
-                $NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
-                $NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
-                $NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
-                $NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
-                $NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
-            }
-        }
-    }
+    $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
+    $NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
+    $NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
+    $NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
+    $NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
+    $NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
 
-    # see if we have Time::HiRes sleep support
     if ($CLI{'pause'} > 0) {
-        my $notice = "";
-        eval "require Time::HiRes qw(sleep)";
-        if ($@ && ($CLI{'pause'} =~ /\./)) {
-            my $integer = int($CLI{'pause'});
-            $CLI{'pause'} =~ /\.(\d+)/;
-            if ($1 >= 5) { $integer++; }
-            $CLI{'pause'} = $integer;
-            if ($CLI{'pause'} <= 0) { $CLI{'pause'} = 1; }    # don't sleep for 0!
-            nprint(
-                "-***** Pausing $CLI{'pause'} second(s) per request (rounded, as Time::HiRes is not available) *****"
-                );
-        }
-        else {
-            nprint("-***** Pausing $CLI{'pause'} second(s) per request *****");
-        }
-    }
+        nprint("-***** Pausing $CLI{'pause'} second(s) per request");
+    	}
 
     # Default values
     $COUNTERS{'totalrequests'} = 0;
@@ -876,13 +849,6 @@ sub sleeper {
 }
 
 ###############################################################################
-sub reset_term {
-    if (!$NIKTO{'POSIX'}{'support'}) { return; }
-    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'});
-    $NIKTO{'POSIX'}{'support'} = 0;
-}
-
-###############################################################################
 sub safe_quit {
     my ($mark) = @_;
     $mark->{'end_time'} = time();
@@ -895,7 +861,7 @@ sub safe_quit {
     report_host_end($mark);
     report_summary($mark);
     report_close($mark);
-    reset_term();
+    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'});
     exit(1);
 }
 
@@ -969,8 +935,6 @@ sub pause {
 }
 ###############################################################################
 sub readkey {
-    if (!$NIKTO{'POSIX'}{'support'}) { return; }
-
     my $key;
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'noecho'});
     $NIKTO{'POSIX'}{'term'}->setattr($NIKTO{'POSIX'}{'fd_stdin'}, TCSANOW);
@@ -1012,7 +976,6 @@ sub resolve {
             return;
         }
         else {
-            use IO::Socket;
             $ip = inet_ntoa($ip);
             if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
                 nprint("+ ERROR: Invalid IP '$ip'\n\n");
@@ -1030,7 +993,6 @@ sub resolve {
 
         $ip = $ident;
         if (!$CLI{'skiplookup'}) {
-            use IO::Socket;
             my $temp_ip = inet_aton($ip);
             $name = gethostbyaddr($temp_ip, AF_INET);
 
@@ -1955,7 +1917,6 @@ sub read_data {
                    "\x0a" => 'ENT',    # LF, Enter
                    );
 
-    if ($NIKTO{'POSIX'}{'support'}) {
         local (*TTY, *TTYOUT);
         open TTY,    "<&STDIN"   or return;
         open TTYOUT, ">>&STDOUT" or return;
@@ -2003,13 +1964,6 @@ sub read_data {
         $term->setattr($fd_tty, TCSAFLUSH);
         close(TTY);
         close(TTYOUT);
-    }
-    else    # non-POSIX
-    {
-        print $prompt;
-        $input = <STDIN>;
-        chomp($input);
-    }
 
     return $input;
 }

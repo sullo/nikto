@@ -1,22 +1,9 @@
 #!/usr/bin/perl
 use strict;
-#VERSION,2.1.5
-use Getopt::Long;
-use Time::Local;
-Getopt::Long::Configure('no_ignore_case');
-
+#VERSION,2.1.6
 ###############################################################################
-# Optional modules loaded when needed:
-# POSIX, Time::HiRes
-#
-# These are needed for the MSF report module:
-# RPC::XML, RPC::XML::Client
-#
-# Needed in JSON-PP.pm for using -Save functionality
-# Math::BigInt, Math::BigFloat, Encode, Scalar::Util
-#
-# LW2 helpers to speedup
-# MIME::Base64, MD5
+# Modules are now loaded in a function so errors can be trapped and evaluated
+load_modules();
 ###############################################################################
 #                               Nikto                                         #
 ###############################################################################
@@ -53,10 +40,11 @@ use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions/;
 use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup
+Getopt::Long::Configure('no_ignore_case');
 $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
-$VARIABLES{'version'}    = "2.1.5";
+$VARIABLES{'version'}    = "2.1.6";
 $VARIABLES{'configfile'} = "/etc/nikto.conf";    ### Change if it's having trouble finding it
 
 # signal trap so we can close down reports properly
@@ -277,6 +265,23 @@ sub config_init {
     }
 
     return;
+}
+
+###############################################################################
+sub load_modules {
+        my $errors=0;
+        eval "use Getopt::Long";
+        if ($@) { print "ERROR: Required module not found: Getopt::Long\n"; $errors=1; }
+        eval "use Time::Local";
+        if ($@) { print "ERROR: Required module not found: Time::Local\n"; $errors=1; }
+        eval " use POSIX qw(:termios_h)";
+        if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
+        eval "use Time::HiRes qw(ualarm)";
+        if ($@) { print "ERROR: Required module not found: Time::HiRes\n" .$@; $errors=1; }
+	eval "use IO::Socket";
+        if ($@) { print "ERROR: Required module not found: IO::Socket\n"; $errors=1; }
+
+	if ($errors) { exit; }
 }
 
 #################################################################################

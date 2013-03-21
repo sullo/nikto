@@ -1,5 +1,7 @@
 2013-xx-xx Nikto 2.1.6 release
-	- mask passwords from -id in report output, thanks to Iggy "I want a cameo" Frankovic
+	- Load modules inside a sub routine so errors can be reported
+	- No longer optionally load some modules, namely POSIX, Time::Local and Time::HiRes--require them
+	- Mask passwords from -id in report output, thanks to Iggy "I want a cameo" Frankovic
 	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
 	- Added nikto_sitezip.plugin to look for compressed archives of sites
