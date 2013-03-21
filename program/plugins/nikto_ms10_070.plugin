@@ -1,0 +1,66 @@
+#VERSION,1.00
+###############################################################################
+#  Copyright (C) 2013 CIRT, Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Determine if site is vulnerable to MS10-070
+###############################################################################
+use vars qw/%MS10070/;
+
+sub nikto_ms10_070_init {
+    my $id = { name        => "ms10_070",
+               full_name   => "ms10-070 Check",
+               author      => "Sullo",
+               description => "Determine if a site is vulnerable to ms10-070",
+               hooks       => {
+                          postfetch => { method => \&nikto_ms10_070,
+                                         weight => 20,
+                                         },
+                            },
+               copyright => "2013 CIRT Inc"
+               };
+
+    return $id;
+}
+
+sub nikto_ms10_070 {
+    return if $mark->{'terminate'};
+    my ($mark, $parameters, $request, $response) = @_;
+    return if $mark->{'ms100707'};
+    my $method = $response->{'whisker'}->{'method'} || "GET";
+
+   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) { 
+    	return if $mark->{'terminate'};
+ 	my $string = $1;
+	next if $MS10070{$string};
+	$MS10070{$string}=1;
+ 	$string =~ s/\-/\+/g;
+ 	$string =~ s/\_/\//g;
+	next if $string eq '';
+ 	my $count = chop($string);
+ 	$string = $string . ("=" x int($count));
+	$string = LW2::decode_base64($string);
+	if ((length($string) % 8) == 0) {
+		$mark->{'ms100707'}=1;
+        	add_vulnerability($mark, "Server is vulnerable to MS10-070 allowing a cryptographic padding oracle.", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
+        	}
+	}
+
+    return $request, $response;
+}
+
+1;

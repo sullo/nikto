@@ -1,4 +1,5 @@
 2013-xx-xx Nikto 2.1.6 release
+	- Added nikto_ms10070.plugin to check for MS10-070
 	- Load modules inside a sub routine so errors can be reported
 	- No longer optionally load some modules, namely POSIX, Time::Local and Time::HiRes--require them
 	- Mask passwords from -id in report output, thanks to Iggy "I want a cameo" Frankovic
