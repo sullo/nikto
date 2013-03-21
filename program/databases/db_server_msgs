@@ -10,6 +10,8 @@
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Example to get the server-message:
+#   ~S curl --head --silent www.example.com | grep --ignore-case server
 #######################################################################
 "nikto_id","server","osvdb","message"
 "800000","4D_WebSTAR_S\/5\.([0-2]|3\.[0-2])","7794","May be vulnerable to multiple flaws. http://secunia.com/advisories/12063/"
