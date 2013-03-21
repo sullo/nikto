@@ -562,7 +562,7 @@
 "000541","0","5","/../../../../winnt/repair/sam._","GET","200","","","Forbidden","","Sam backup successfully retrieved.","",""
 "000542","0","5","/..\\..\\..\\..\\..\\..\\..\\boot.ini","GET","boot loader","","","","","It is possible to read files on the server by adding /../ in front of file name.","",""
 "000543","0","5","///etc/passwd","GET","root:","","","","","The server install allows reading of any system file by adding an extra '/' to the URL.","",""
-"000544","0","5","///etc/hosts","GET","200","","","","","The server install allows reading of any system file by adding an extra '/' to the URL.","",""
+"000544","0","5","///etc/hosts","GET","127.0.0.1","","","","","The server install allows reading of any system file by adding an extra '/' to the URL.","",""
 "000545","0","5","////./../.../boot.ini","GET","boot loader","","","","","Server is vulnerable to directory traversal, this may be Lidik Webserver 0.7b from lysias.de. See http://www.it-checkpoint.net/advisory/14.html for details.","",""
 "000546","1269","5","/.cobalt/sysManage/../admin/.htaccess","GET","AuthName","","","","","Cobalt RaQ 4 server manager allows any files to be retrieved by using the path through the .cobalt directory.","",""
 "000547","50624","5","/albums/userpics/Copperminer.jpg.php?cat%20/etc/passwd","GET","root:","","","","","Coppermine 1.0 RC3 may have been compromised to allow arbitrary file retreival. Upgrade to the latest at http://www.chezgreg.net/coppermine/","",""
