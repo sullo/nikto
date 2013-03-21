@@ -10,6 +10,7 @@
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Example to get the md5hash: $ md5sum favicon.ico
 #######################################################################
 "nikto_id","md5hash","description"
 "500000","9ceae7a3c88fc451d59e24d8d5f6f166","Plesk managed system"
