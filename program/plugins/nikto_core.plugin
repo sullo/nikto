@@ -1763,6 +1763,7 @@ sub report_close {
 
 ###############################################################################
 sub check_updates {
+    $CLI{'nointeractive'}=1;
     LW2::http_init_request(\%request);
     my (%REMOTE, %LOCAL, @DBTOGET) = ();
     my ($pluginmsg, $remotemsg) = "";
@@ -2122,7 +2123,7 @@ sub nfetch {
     setup_hash(\%request, $mark, $testid);
 
     # check for keyboard input
-    if (($COUNTERS{'totalrequests'} % 10) == 0) {
+    if (!$CLI{'nointeractive'} && (($COUNTERS{'totalrequests'} % 10) == 0)) {
         if (check_input($mark) eq 'term') { $mark->{'terminate'} = 1; }
         if ($CLI{'until'} ne '') {
             if ($CLI{'until'} <= time()) {
