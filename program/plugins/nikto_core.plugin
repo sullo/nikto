@@ -364,6 +364,7 @@ sub rm_active_content {
 
         # unicode encoded
         $e = LW2::encode_unicode($_[1]);
+        $e = quotemeta($e);
         $cont =~ s/$e//gs;
 
         # url encoding, full url
