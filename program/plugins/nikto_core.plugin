@@ -807,13 +807,14 @@ sub general_config {
     $VARIABLES{'core_version'} =~ s/\#VERSION,//;
     chomp($VARIABLES{'core_version'});
     $VARIABLES{'TEMPL_HCTR'} = 0;
-
-    $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
-    $NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
-    $NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
-    $NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
-    $NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
-    $NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
+	if ($^O !~ /MSWin32/) {
+		$NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
+		$NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
+		$NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
+		$NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
+		$NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
+		$NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
+	}
 
     if ($CLI{'pause'} > 0) {
         nprint("-***** Pausing $CLI{'pause'} second(s) per request");
@@ -846,12 +847,13 @@ sub time_to_seconds {
 
 ###############################################################################
 sub sleeper {
-    sleep($CLI{'pause'});
+    sleep($CLI{'pause'}) if (defined $CLI{'pause'});
 }
 
 ###############################################################################
 sub safe_quit {
     my ($mark) = @_;
+
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
 
@@ -862,7 +864,7 @@ sub safe_quit {
     report_host_end($mark);
     report_summary($mark);
     report_close($mark);
-    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'});
+    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);;
     exit(1);
 }
 
@@ -924,6 +926,7 @@ sub check_input {
 }
 ###############################################################################
 sub pause {
+	return if ($^O =~ /MSWin32/);
     if ($_[0] eq 'u') {
         nprint("- Pausing due to 'until' flag--press P to resume.");
     }
@@ -937,6 +940,8 @@ sub pause {
 ###############################################################################
 sub readkey {
     my $key;
+	return if ($^O =~ /MSWin32/);
+
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'noecho'});
     $NIKTO{'POSIX'}{'term'}->setattr($NIKTO{'POSIX'}{'fd_stdin'}, TCSANOW);
     eval {
@@ -1455,7 +1460,8 @@ sub port_check {
 
       # this will fix for some Apaches that are smart enough to answer non ssl reqs on an ssl server
                 if (defined $content
-                    && $content =~ /speaking plain HTTP to an SSL/) {
+                    && ( $content =~ /plain HTTP to an SSL/ ||
+					     $content =~ /The plain HTTP request was sent to HTTPS port/ )) {
                     dump_var("Result Hash", \%result);
                     next;
                 }

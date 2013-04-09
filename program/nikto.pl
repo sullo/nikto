@@ -275,10 +275,13 @@ sub load_modules {
         eval "use Time::Local";
         if ($@) { print "ERROR: Required module not found: Time::Local\n"; $errors=1; }
         eval " use POSIX qw(:termios_h)";
-        if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
-        eval "use Time::HiRes qw(ualarm)";
+		if ($^O !~ /MSWin32/) {
+			# Allow this to work on Windows
+			if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
+			eval "use Time::HiRes qw(ualarm)";
+		}
         if ($@) { print "ERROR: Required module not found: Time::HiRes\n" .$@; $errors=1; }
-	eval "use IO::Socket";
+		eval "use IO::Socket";
         if ($@) { print "ERROR: Required module not found: IO::Socket\n"; $errors=1; }
 
 	if ($errors) { exit; }
