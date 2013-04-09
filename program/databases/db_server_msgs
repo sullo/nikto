@@ -10,6 +10,8 @@
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Example to get the server-message:
+#   ~$ curl --head --silent www.example.com | grep --ignore-case server
 #######################################################################
 "nikto_id","server","osvdb","message"
 "800000","4D_WebSTAR_S\/5\.([0-2]|3\.[0-2])","7794","May be vulnerable to multiple flaws. http://secunia.com/advisories/12063/"
@@ -270,3 +272,4 @@
 "800255","cp-sw-server","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800256","cpservd","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800257","mod_speling","0","mod_speling can reveal otherwise hidden files via 'misspelled' file names."
+"800258","nginx","0","http://nginx.com/"
