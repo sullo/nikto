@@ -10,6 +10,7 @@
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Example to get the md5hash: $ md5sum favicon.ico
 #######################################################################
 "nikto_id","md5hash","description"
 "500000","9ceae7a3c88fc451d59e24d8d5f6f166","Plesk managed system"
@@ -123,3 +124,4 @@
 "500110","9afa5d60e5ef15dc75d7662e418cac72","QNAP TurboNAS"
 "500111","5f09cded07bb864fd9b3d2dd72b5418e","TwonkyServer Premium 7.0.x"
 "500112","773669c6c97d65ac5ede9e8ea6b47116","Plex Media Server 0.9.x"
+"500113","46b742e6ba5d7ac03f13b312601c113f","XBMC Media Center 12.x (Web Interface)"
