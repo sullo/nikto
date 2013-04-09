@@ -321,58 +321,189 @@ further configuration information.</p>
 </dl>
 </div>
 
-<div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238272"></a>Basic Testing</h2></div></div></div><p>The most basic Nikto scan requires simply a host to target, since
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238272"></a>Basic Testing</h2>
+</div></div>
+</div>
+
+<p>The most basic Nikto scan requires simply a host to target, since
 port 80 is assumed if none is specified. The host can either be an IP or
 a hostname of a machine, and is specified using the -h (-host) option.
-This will scan the IP 192.168.0.1 on TCP port 80:</p><pre class="screen">perl nikto.pl -h 192.168.0.1</pre><p>To check on a different port, specify the port number with the -p
+This will scan the IP 192.168.0.1 on TCP port 80:</p>
+
+<pre class="screen">perl nikto.pl -h 192.168.0.1</pre>
+<p>To check on a different port, specify the port number with the -p
 (-port) option. This will scan the IP 192.168.0.1 on TCP port
-443:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443</pre><p>Hosts, ports and protocols may also be specified by using a full
-URL syntax, and it will be scanned:</p><pre class="screen">perl nikto.pl -h https://192.168.0.1:443/</pre><p>There is no need to specify that port 443 may be SSL, as Nikto
+443:</p>
+
+<pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443</pre>
+<p>Hosts, ports and protocols may also be specified by using a full
+URL syntax, and it will be scanned:</p>
+
+<pre class="screen">perl nikto.pl -h https://192.168.0.1:443/</pre>
+<p>There is no need to specify that port 443 may be SSL, as Nikto
 will first test regular HTTP and if that fails, HTTPS. If you are sure
-it is an SSL server, specifying -s (-ssl) will speed up the test.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p><em class="parameter"><code>-mutate</code></em> 1 increases the number of tests so
+it is an SSL server, specifying -s (-ssl) will speed up the test.</p>
+
+<pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre>
+
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+<table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr>
+<td align="left" valign="top"><p><em class="parameter"><code>-mutate</code></em> 1 increases the number of tests so
 that all filenames are tested against all databases inc 
 <code class="filename">db_tests</code>. This will produce over 2,000,000 extra
-tests, which will use up a massive amount of resource.</p></td></tr></table></div><p>More complex tests can be performed using the
+tests, which will use up a massive amount of resource.</p></td>
+</tr>
+</table>
+</div>
+
+<p>More complex tests can be performed using the
 <em class="parameter"><code>-mutate</code></em> parameter, as detailed later. This can
 produce extra tests, some of which may be provided with extra parameters
 through the <em class="parameter"><code>-mutate-options</code></em> parameter. For example,
-      using <em class="parameter"><code>-mutate</code></em> 3, with or without a file attempts
-      to brute force usernames if the web server allows
-      ~<em class="replaceable"><code>user</code></em> URIs:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -mutate 3 -mutate-options user-list.txt</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238384"></a>Multiple Port Testing</h2></div></div></div><p>Nikto can scan multiple ports in the same scanning session. To
-      test more than one port on the same host, specify the list of ports in
-      the -p (-port) option. Ports can be specified as a range (i.e., 80-90),
-      or as a comma-delimited list, (i.e., 80,88,90). This will scan the host
-      on ports 80, 88 and 443.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80,88,443</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238405"></a>Multiple Host Testing</h2></div></div></div><p>Nikto support scanning multiple hosts in the same session via a
-      text file of host names or IPs. Instead of giving a host name or IP for
-      the -h (-host) option, a file name can be given. A file of hosts must be
-      formatted as one host per line, with the port number(s) at the end of
-      each line. Ports can be separated from the host and other ports via a
-      colon or a comma. If no port is specified, port 80 is assumed.</p><p>This is an example of a valid hosts file:</p><div class="example"><a name="id238425"></a><p class="title"><b>Example�3.1.�Valid Hosts File</b></p><div class="example-contents"><pre class="programlisting">192.168.0.1:80
-http://192.168.0.1:8080/
-192.168.0.3</pre></div></div><br class="example-break"><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p>For win32 users: due to peculiaries in the way that cmd.exe
-         works with pipes, the above example may not work for you. In this case
-         a temporary file will have to be used to store the output from
-         nmap</p></td></tr></table></div><p>A host file may also be an nmap output in "greppable" format (i.e.
-      from the output from -oG).</p><p>A file may be passed to Nikto through stdout/stdin using a "-" as
-      the filename. For example:</p><pre class="screen">nmap -p80 192.168.0.0/24 -oG - | nikto.pl -h -</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238466"></a>Using a Proxy</h2></div></div></div><p>If the machine running Nikto only has access to the target host
-      (or update server) via an HTTP proxy, the test can still be performed.
-      Set the <code class="varname">PROXY*</code> variables (as described in section
-      4), then execute Nikto with the -u (-useproxy) command. All connections
-      will be relayed through the HTTP proxy specified in the configuration
-      file.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80 -u</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238782"></a>Updating</h2></div></div></div><p>Nikto can be automatically updated, assuming you have Internet
-      connectivity from the host Nikto is installed on. To update to the
-      latest plugins and databases, simply run Nikto with the -update
-      command.</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p>The -update option cannot be abbreviated.</p></td></tr></table></div><pre class="screen">perl nikto.pl -update</pre><p>If updates are required, you will see a list of the files
-      downloaded:</p><pre class="screen">
+using <em class="parameter"><code>-mutate</code></em> 3, with or without a file attempts
+to brute force usernames if the web server allows
+~<em class="replaceable"><code>user</code></em> URIs:</p>
+<pre class="screen">perl nikto.pl -h 192.168.0.1 -mutate 3 -mutate-options user-list.txt</pre>
+
+</div>
+
+<div class="section" lang="en">
+
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238384"></a>Multiple Port Testing</h2>
+</div></div>
+</div>
+
+<p>Nikto can scan multiple ports in the same scanning session. To
+test more than one port on the same host, specify the list of ports in
+the -p (-port) option. Ports can be specified as a range (i.e., 80-90),
+or as a comma-delimited list, (i.e., 80,88,90). This will scan the host
+on ports 80, 88 and 443.</p>
+
+<pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80,88,443</pre>
+</div>
+
+<div class="section" lang="en">
+
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238405"></a>Multiple Host Testing</h2>
+</div></div>
+</div>
+
+<p>Nikto support scanning multiple hosts in the same session via a
+text file of host names or IPs. Instead of giving a host name or IP for
+the -h (-host) option, a file name can be given. A file of hosts must be
+formatted as one host per line, with the port number(s) at the end of
+each line. Ports can be separated from the host and other ports via a
+colon or a comma. If no port is specified, port 80 is assumed.</p>
+
+<p>This is an example of a valid hosts file:</p>
+<div class="example">
+<a name="id238425"></a>
+<p class="title"><b>Example�3.1.�Valid Hosts File</b></p>
+<div class="example-contents">
+<pre class="programlisting">192.168.0.1:80 http://192.168.0.1:8080/ 192.168.0.3</pre>
+</div></div>
+<br class="example-break">
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+<table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr>
+<td align="left" valign="top"><p>For win32 users: due to peculiaries in the way that cmd.exe
+works with pipes, the above example may not work for you. In this case
+a temporary file will have to be used to store the output from nmap</p></td>
+</tr>
+</table>
+
+</div>
+
+<p>A host file may also be an nmap output in "greppable" format (i.e. from the output from -oG).</p>
+<p>A file may be passed to Nikto through stdout/stdin using a "-" as the filename. For example:</p>
+<pre class="screen">nmap -p80 192.168.0.0/24 -oG - | nikto.pl -h -</pre>
+</div>
+
+<div class="section" lang="en">
+
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238466"></a>Using a Proxy</h2>
+</div></div>
+</div>
+
+<p>If the machine running Nikto only has access to the target host
+(or update server) via an HTTP proxy, the test can still be performed.
+Set the <code class="varname">PROXY*</code> variables (as described in section
+4), then execute Nikto with the -u (-useproxy) command. All connections
+will be relayed through the HTTP proxy specified in the configuration
+file.</p>
+
+<pre class="screen">perl nikto.pl -h 192.168.0.1 -p 80 -u</pre>
+</div>
+
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238782"></a>Updating</h2>
+</div></div>
+</div>
+
+<p>Nikto can be automatically updated, assuming you have Internet
+connectivity from the host Nikto is installed on. To update to the
+latest plugins and databases, simply run Nikto with the -update
+command.</p>
+
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+<table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr>
+<td align="left" valign="top"><p>The -update option cannot be abbreviated.</p></td>
+</tr>
+</table>
+
+</div>
+
+<pre class="screen">perl nikto.pl -update</pre>
+<p>If updates are required, you will see a list of the files downloaded:</p>
+<pre class="screen">
  perl nikto.pl -update
  + Retrieving 'nikto_core.plugin'
  + Retrieving 'CHANGES.txt'
-      </pre><p>Updates may also be manually downloaded from <a class="ulink" href="http://www.cirt.net/" target="_top">http://www.cirt.net/</a></p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238829"></a>Integration with Nessus</h2></div></div></div><p>Nessus (<a class="ulink" href="http://www.nessus.org/" target="_top">http://www.nessus.org/nessus/</a>) can
-      be configured to automatically launch Nikto when it finds a web server.
-      Ensure Nikto works properly, then place the directory containing
-      nikto.pl in root's PATH environment variable. When nessusd starts, it
-      should see the nikto.pl program and enable usage through the
-      GUI.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="options"></a>Chapter�4.�Command Line Options</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt><dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238858"></a>All Options</h2></div></div></div><p>Below are all of the Nikto command line options and explanations. A
+</pre>
+
+<p>Updates may also be manually downloaded from <a class="ulink" href="http://www.cirt.net/" target="_top">http://www.cirt.net/</a></p>
+</div>
+
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238829"></a>Integration with Nessus</h2>
+</div></div>
+</div>
+
+<p>Nessus (<a class="ulink" href="http://www.nessus.org/" target="_top">http://www.nessus.org/nessus/</a>) can
+be configured to automatically launch Nikto when it finds a web server.
+Ensure Nikto works properly, then place the directory containing
+nikto.pl in root's PATH environment variable. When nessusd starts, it
+should see the nikto.pl program and enable usage through the GUI.</p>
+</div></div>
+
+<div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="options"></a>Chapter�4.�Command Line Options</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt><dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238858"></a>All Options</h2></div></div></div><p>Below are all of the Nikto command line options and explanations. A
 brief version of this text is available by running Nikto with the -h
 (-help) option.</p><div class="variablelist"><dl><dt><span class="term"><code class="option">-Cgidirs</code></span></dt><dd><p>Scan these CGI directories. Special words "none" or "all" may
 be used to scan all CGI directories or none, (respectively). A
