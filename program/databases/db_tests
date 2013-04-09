@@ -9,6 +9,7 @@
 # grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
 #######################################################################
 # Notes:
+#
 # Tuning options (field 3):
 # 0 - File Upload
 # 1 - Interesting File / Seen in logs
@@ -23,6 +24,10 @@
 # a - Authentication Bypass
 # b - Software Identification
 # c - Remote source inclusion
+#
+# Field order:
+# Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1 Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers
+#
 #######################################################################
 "000001","0","b","/TiVoConnect?Command=QueryServer","GET","Calypso Server","","","","","The Tivo Calypso server is running. This page will display the version and platform it is running on. Other URLs may allow download of media.","",""
 "000002","0","b","/TiVoConnect?Command=QueryContainer&Container=/&Recurse=Yes","GET","TiVoContainer","","","","","TiVo client service is running and may allow download of mp3 or jpg files.","",""
@@ -6594,3 +6599,4 @@
 "006630","0","b","/SAFileUpDocs/whnjs.htm","GET","<title>SoftArtisans FileUp 5.0</title>","","","","","SoftArtisans FileUp help documentation found","",""
 "006631","0","b","/SAFileUpSamples/","GET","FileUp v5 Code Sample Index","","","","","SoftArtisans FileUp samples found, these may allowed file uploads","",""
 "006633","0","3","/cgi-bin/status_cgi","GET","Touchstone\sStatus","","","","","Arris Touchstone status program reveals potentially sensitive information.","",""
+"006634","0","2","/docs/","GET","Apache Tomcat","","","","","Tomcat Documentation found","",""
