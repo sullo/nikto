@@ -231,25 +231,97 @@ GPL and passed to the community for support.</p>
 
 <div class="toc">
 <p><b>Table of Contents</b></p>
-<dl><dt><span class="section"><a href="#id238042">Requirements</a></span></dt><dt><span class="section"><a href="#id238232">Install</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238042"></a>Requirements</h2></div></div></div><p>Any system which supports a basic PERL installation should allow
-Nikto to run. It has been extensively tested on:</p><div class="itemizedlist"><ul type="disc"><li><p>Windows (using ActiveState Perl)</p></li><li><p>Mac OSX</p></li><li><p>Various Linux and Unix installations (including RedHat,
-Solaris, Debian, Knoppix, etc.)</p></li></ul></div><p>The only required PERL module that does not come standard is
+<dl>
+<dt><span class="section"><a href="#id238042">Requirements</a></span></dt>
+<dt><span class="section"><a href="#id238232">Install</a></span></dt>
+</dl>
+</div>
+
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238042"></a>Requirements</h2>
+</div></div>
+</div>
+
+<p>Any system which supports a basic PERL installation should allow
+Nikto to run. It has been extensively tested on:</p>
+
+<div class="itemizedlist">
+<ul type="disc">
+<li><p>Windows (using ActiveState Perl)</p></li>
+<li><p>Mac OSX</p></li>
+<li><p>Various Linux and Unix installations (including RedHat, Solaris, Debian, Knoppix, etc.)</p></li>
+</ul>
+</div>
+
+<p>The only required PERL module that does not come standard is
 LibWhisker. Nikto comes with and is configured to use a local LW.pm file
 (in the plugins directory), but users may wish to change Nikto to use a
 version installed on the system. See Section 2 for further
-information.</p><p>For SSL support the Net::SSLeay PERL module must be installed
+information.</p>
+
+<p>For SSL support the Net::SSLeay PERL module must be installed
 (which in turn requires OpenSSL on the Unix platform). Windows support
 for SSL is dependent on the installation package, but is rumored to
 exist for ActiveState's Perl.</p><p>The nmap scanner can also be used, if desired. In some cases using
 nmap will slow down Nikto execution, as it must call an external
 program. For scanning many ports across one or more servers, using nmap
-will be faster than using Nikto's internal PERL scanning.</p><div class="itemizedlist"><ul type="disc"><li><p>PERL: <a class="ulink" href="http://www.cpan.org/" target="_top">http://www.cpan.org/</a></p></li><li><p>LibWhisker: <a class="ulink" href="http://www.wiretrip.net/" target="_top">http://www.wiretrip.net/</a></p></li><li><p>ActiveState Perl: <a class="ulink" href="http://www.activestate.com/" target="_top">http://www.activestate.com/</a></p></li><li><p>OpenSSL: <a class="ulink" href="http://www.openssl.org/" target="_top">http://www.openssl.org/</a></p></li><li><p>nmap: <a class="ulink" href="http://www.insecure.org/" target="_top">http://insecure.org/</a></p></li></ul></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238232"></a>Install</h2></div></div></div><p>These instructions do not include information on installing PERL,
+will be faster than using Nikto's internal PERL scanning.</p>
+
+<div class="itemizedlist">
+<ul type="disc">
+<li><p>PERL: <a class="ulink" href="http://www.cpan.org/" target="_top">http://www.cpan.org/</a></p></li>
+<li><p>LibWhisker: <a class="ulink" href="http://www.wiretrip.net/" target="_top">http://www.wiretrip.net/</a></p></li>
+<li><p>ActiveState Perl: <a class="ulink" href="http://www.activestate.com/" target="_top">http://www.activestate.com/</a></p></li>
+<li><p>OpenSSL: <a class="ulink" href="http://www.openssl.org/" target="_top">http://www.openssl.org/</a></p></li>
+<li><p>nmap: <a class="ulink" href="http://www.insecure.org/" target="_top">http://insecure.org/</a></p></li>
+</ul>
+</div>
+
+</div>
+
+<div class="section" lang="en">
+
+<div class="titlepage">
+<div><div>
+<h2 class="title" style="clear: both"><a name="id238232"></a>Install</h2>
+</div></div>
+</div>
+
+<p>These instructions do not include information on installing PERL,
 PERL Modules, OpenSSL, LibWhisker or any of the utilities that may be
 needed during installation (such as gzip, tar, etc.). Please see the
 distributor's documentation for information on how to install and
-configure those software packages.</p><p>Unpack the download file:</p><pre class="screen">tar -xvfz nikto-current.tar.gz</pre><p>Assuming a standard OS/PERL installation, Nikto should now be
+configure those software packages.</p><p>Unpack the download file:</p>
+
+<pre class="screen">tar -xvfz nikto-current.tar.gz</pre>
+
+<p>Assuming a standard OS/PERL installation, Nikto should now be
 usable. See Chapter 4 (Options) or Chapter 8 (Troubleshooting) for
-further configuration information.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="usage"></a>Chapter�3.�Usage</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238272">Basic Testing</a></span></dt><dt><span class="section"><a href="#id238384">Multiple Port Testing</a></span></dt><dt><span class="section"><a href="#id238405">Multiple Host Testing</a></span></dt><dt><span class="section"><a href="#id238466">Using a Proxy</a></span></dt><dt><span class="section"><a href="#id238782">Updating</a></span></dt><dt><span class="section"><a href="#id238829">Integration with Nessus</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238272"></a>Basic Testing</h2></div></div></div><p>The most basic Nikto scan requires simply a host to target, since
+further configuration information.</p>
+</div></div>
+
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div>
+<h2 class="title"><a name="usage"></a>Chapter�3.�Usage</h2>
+</div></div>
+</div>
+
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#id238272">Basic Testing</a></span></dt>
+<dt><span class="section"><a href="#id238384">Multiple Port Testing</a></span></dt>
+<dt><span class="section"><a href="#id238405">Multiple Host Testing</a></span></dt>
+<dt><span class="section"><a href="#id238466">Using a Proxy</a></span></dt>
+<dt><span class="section"><a href="#id238782">Updating</a></span></dt>
+<dt><span class="section"><a href="#id238829">Integration with Nessus</a></span></dt>
+</dl>
+</div>
+
+<div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238272"></a>Basic Testing</h2></div></div></div><p>The most basic Nikto scan requires simply a host to target, since
 port 80 is assumed if none is specified. The host can either be an IP or
 a hostname of a machine, and is specified using the -h (-host) option.
 This will scan the IP 192.168.0.1 on TCP port 80:</p><pre class="screen">perl nikto.pl -h 192.168.0.1</pre><p>To check on a different port, specify the port number with the -p
