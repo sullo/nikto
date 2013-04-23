@@ -6601,3 +6601,6 @@
 "006633","0","3","/cgi-bin/status_cgi","GET","Touchstone\sStatus","","","","","Arris Touchstone status program reveals potentially sensitive information.","",""
 "006634","0","2","/docs/","GET","Apache Tomcat","","","","","Tomcat Documentation found","",""
 "006635","0","013","/sites/all/libraries/tinymce/examples/","GET","example\susing\sjQuery","TinyMCE\sexamples","","","","Drupal install of TinyMCE examples found, check for file uploads.","",""
+"006636","0","1","/notes.txt","GET","200","","","","","This might be interesting...","",""
+"006637","0","1","/httpd.conf","GET","configuration\sfile","","","","","Apache httpd.conf configuration file","",""
+"006638","0","1","/httpd.conf.bak","GET","configuration\sfile","","","","","Apache httpd.conf configuration file","",""
