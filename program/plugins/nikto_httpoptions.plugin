@@ -113,7 +113,7 @@ sub nikto_httpoptions {
                 "Content-Length" => "0",);
     ($res, $content, $error, $request, $response) = nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
     if ($res == 207) {
-        if ($content =~ "<a:href>http://") {
+        if ($content =~ "<a:href>https?://") {
             my $ipfound = $content;
             $ipfound =~ s/^.*<a:href>//g;
             $ipfound =~ s/<\/a:href>.*$//g;
