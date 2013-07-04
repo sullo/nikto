@@ -2476,11 +2476,9 @@ sub send_updates {
     foreach my $mark (@MARKS) {
         foreach my $component (keys %{ $mark->{'components'} }) {
             if ($mark->{'components'}->{$component} eq 2) {
-                if ($component !~ /[0-9]/) { next; }
-                elsif ($component eq "Win32")          { next; }
-                elsif ($component eq "(Win32)")        { next; }
-                elsif ($component eq "Linux-Mandrake") { next; }
-                elsif ($component eq "")               { next; }
+                if ($component !~ /\d/) { next; }
+		elsif ($component =~ /^(?:\(?Win32\)?|Linux-Mandrake$)/) { next; }
+                elsif ($component eq "") { next; }
                 $have_updates = 1;
                 $updated_version .= "$component ";
             }
@@ -2488,24 +2486,6 @@ sub send_updates {
     }
 
     if ((!$have_updates) || ($updated_version eq "")) { return; }
-
-    # make sure the db_outdatedb isn't *too* old
-    open(OD, "<$CONFIGFILE{'DBDIR'}/db_outdated")
-      || die print STDERR "+ ERROR: Unable to open '$CONFIGFILE{'DBDIR'}/db_outdated': $!\n";
-    @F = <OD>;
-    close(OD);
-
-    my @LASTUPDATED = grep(/^\# \$Id: db_outdated/, @F);
-    $LASTUPDATED[0] =~ /([0-9]{4}\-[0-9]{2})/;
-    $lm = $1;
-    $lm =~ s/\-//g;
-
-    my @NOW = localtime(time);
-    $NOW[5] += 1900;
-    $NOW[4]++;
-    if ($NOW[4] < 10) { $NOW[4] = "0$NOW[4]"; }
-    my $now = "$NOW[5]$NOW[4]";
-    if (($now - $lm) > 120) { return; }    # DB is 4 months old... ignore the updates!
 
     $updated_version =~ s/\s+$//;
     $updated_version =~ s/^\s+//;
@@ -2541,24 +2521,29 @@ sub send_updates {
 
     ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
 
-    ($code, $content) = nfetch(\%mark, "/cgi-bin/versions?DATA=$updated_version", "GET");
+    my $upd_enc = LW2::encode_base64($updated_version);
+    chomp($upd_enc);
+    ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
 
     if ($code eq 407) {
         if ($CONFIGFILE{PROXYUSER} eq "") {
             $CONFIGFILE{PROXYUSER} = read_data("Proxy ID: ",   "");
             $CONFIGFILE{PROXYPASS} = read_data("Proxy Pass: ", "noecho");
         }
-        ($code , $content) = nfetch(\%mark, "/cgi-bin/versions?DATA=$updated_version", "GET");
+    	($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
     if ($code eq "") {
         LW2::http_close(\%request);    # force-close any old connections
         $mark{'ip'} = $CONFIGFILE{CIRT};
-        ($code, $content) = nfetch(\%mark, "/cgi-bin/versions?DATA=$updated_version", "GET");
+        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$updated_version", "GET");
     }
 
-    if ($content !~ /SUCCESS/) {
-        nprint("+ ERROR: ($code, $content): Unable to send update info to CIRT.net");
+    if ($code != 200) { 
+	nprint("+ ERROR $code: Update failed, please notify sullo\@cirt.net of this code.");
+	}
+    elsif ($content !~ /SUCCESS/) {
+        nprint("+ ERROR $code: Unable to send update info to CIRT.net. Here was the request result content:\n$content\n");
     }
     else {
         nprint("- Sent updated info to CIRT.net -- Thank you!");
