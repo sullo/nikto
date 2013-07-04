@@ -85,7 +85,7 @@ sub split_auth_header {
     my ($realm, $authtype);
     my @authenticate = split(/=/, $header);
     if ($authenticate[0] =~ /^ntlm/i) {
-        $realm = $authtype = 'NTLM';
+        $realm = $authtype = 'ntlm';
     }
     else {
         $realm = $authenticate[1];
@@ -127,7 +127,7 @@ sub nikto_auth {
     }
 
     # Save to revert
-    $save_auth = $response{'www-authenticate'};
+    $save_auth = $response->{'www-authenticate'};
 
     # Now we have this we can try guessing the password
     foreach my $entry (@{$REALMS}) {
@@ -141,6 +141,11 @@ sub nikto_auth {
         $request->{'whisker'}->{'allow_short_reads'} = 1;
         LW2::http_fixup_request($request);
 
+
+	if ($authtype eq 'ntlm') { 
+                $request->{'whisker'}->{'allow_short_reads'} = 1;
+		}
+
         sleeper();
         LW2::http_do_request_timeout($request, $response);    # test auth
         $COUNTERS{'totalrequests'}++;
@@ -152,19 +157,8 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        # NTLM is different...
-        if ($authtype eq 'ntlm') {
-            my @ntlm_x = split(/ /, $response{'www-authenticate'});
-            if ($#ntlm_x == 1) {
-                sleeper();
-                $request->{'whisker'}->{'allow_short_reads'} = 1;
-                LW2::http_fixup_request($request);
-                LW2::http_do_request_timeout(\%request, \%response);
-                $COUNTERS{'totalrequests'}++;
-            }
-        }
-
-        if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
+        #if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
+        if (!defined $response->{'whisker'}->{'error'}) {
             unless ($entry->{'checked'} == 1) {
                 my $message;
                 if ($entry->{'message'} eq "Credentials provided by CLI.") {
