@@ -2470,7 +2470,7 @@ sub version {
 sub send_updates {
     return if ($CONFIGFILE{'UPDATES'} !~ /yes|auto/i);
     my (@MARKS) = @_;
-    my ($updated_version, $answer, $code);
+    my ($updated_version, $answer, $code, $upd_enc);
     my $have_updates = 0;
 
     foreach my $mark (@MARKS) {
@@ -2521,7 +2521,7 @@ sub send_updates {
 
     ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
 
-    my $upd_enc = LW2::encode_base64($updated_version);
+    $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
     ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
 
@@ -2536,7 +2536,7 @@ sub send_updates {
     if ($code eq "") {
         LW2::http_close(\%request);    # force-close any old connections
         $mark{'ip'} = $CONFIGFILE{CIRT};
-        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$updated_version", "GET");
+        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
     if ($code != 200) { 
