@@ -6607,3 +6607,6 @@
 "006639","0","1","/sites/default/files/backup_migrate/","GET","index\sof","","","","","Drupal database backups available","",""
 "006640","0","1","/sites/default/files/simpletest/verbose/ContentAccessModuleTestCase-2.html","GET","POST\srequest\sto","","","","","Drupal simpletest plugin has test cases available, may leak a username/password.","",""
 "006641","0","b","/menu/neo","GET","Citrix\sLogin","","","","","Citrix Access Gateway login page detected.","",""
+"006642","0","b","/eprise","GET","SilkRoad\sEprise","","","","","SilkRoad Eprise CMS login found.","",""
+"006643","0","b","/eprise/local/systempages/login/","GET","Eprise:\sLogin","","","","","SilkRoad Eprise CMS login found.","",""
+"006644","0","b","/eprise/WebServices/","GET","Eprise\sWeb\sService","","","","","SilkRoad Eprise WebServices found.","",""
