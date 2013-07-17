@@ -24,6 +24,7 @@
 # a - Authentication Bypass
 # b - Software Identification
 # c - Remote source inclusion
+# d - WebService
 #
 # Field order:
 # Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1 Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers
@@ -3582,7 +3583,7 @@
 "003587","0","b","/ampache/login.php","GET","Ampache :: Pour l\&#039;Amour de la Musique","","","","","Ampache is installed.","",""
 "003588","0","b","/ampache/docs/README","GET","README - Ampache","","","","","Ampache installation documents found.","",""
 "003589","0","b","/cgi-bin/webcgi/about","GET","\/cgi\/locale\/about_en\.xsl","","","","","Host seems to be a Dell Remote Access Controller (RAC).","",""
-"003590","0","b","/webservices/IlaWebServices","GET","200","","","","","Host has the Oracle iLearning environment installed.","",""
+"003590","0","bd","/webservices/IlaWebServices","GET","200","","","","","Host has the Oracle iLearning environment installed.","",""
 "003591","0","a","/SoundBridgeStatus.html","GET","200","","SoundBridge is running software version","","","Host is running the SoundBridge web server which doesn't support identification.","",""
 "003592","54339","4b","@CGIDIRSFormMail.pl","GET","Version 1\.92","","","","","Matt Wright's FormMail 1.92 is vulnerable to HTTP response splitting and Cross-Site Scripting","",""
 "003592","0","b","/CFIDE/componentutils/cfcexplorer.cfc","GET","Component Browser Login","","","","","ColdFusion Component Browser. Default password may be 'admin'.","",""
@@ -6485,7 +6486,7 @@
 "006495","0","1b","@PHPMYADMIN","GET","200","401","","","","phpMyAdmin directory found","",""
 "006496","0","3b","/admin/install/phpinfo.php","GET","PHP Version","","","","","LimeSurvey phpinfo page found. The install directory may contain resetadminpw.php, which will set admin to the default password, likely 'password'. The install directory should be removed.","",""
 "006497","0","b","/portal/binary/junk/","GET","Attempt\smade\s\to\sload\sunavailable\sclass","","","","","Vignette Server binary loader.","",""
-"006498","0","b","/portal/webservice/","GET","And\snow\.\.\.","","","","","Vignette Server webservices.","",""
+"006498","0","bd","/portal/webservice/","GET","And\snow\.\.\.","","","","","Vignette Server webservices.","",""
 "006499","0","b","/console/login/LoginForm.jsp","GET","Log\sin\sto\swork","","","","","Oracle WebLogic administrator login found.","",""
 "006500","0","b3","/home/?vhelp","GET","Global\sAvailable\sMacros","","","","","Intuit (diginsite.com) debug mode enabled.","",""
 "006501","0","b","/servlet/snoopservlet","GET","Hit Count Demonstration","","","","","IBM Websphere SnoopDog example servlet found","",""
@@ -6609,4 +6610,18 @@
 "006641","0","b","/menu/neo","GET","Citrix\sLogin","","","","","Citrix Access Gateway login page detected.","",""
 "006642","0","b","/eprise","GET","SilkRoad\sEprise","","","","","SilkRoad Eprise CMS login found.","",""
 "006643","0","b","/eprise/local/systempages/login/","GET","Eprise:\sLogin","","","","","SilkRoad Eprise CMS login found.","",""
-"006644","0","b","/eprise/WebServices/","GET","Eprise\sWeb\sService","","","","","SilkRoad Eprise WebServices found.","",""
+"006644","0","bd","/eprise/WebServices/","GET","Eprise\sWeb\sService","","","","","SilkRoad Eprise WebServices found.","",""
+"006645","0","b","/documents/appserver/default.htm","GET","Application\sServer\sKnowledge\sBase","","","","","Agfa Impex Application Server KB found.","",""
+"006646","0","b","/documents/default.htm","GET","IMPAX\sDocumentation","","","","","Agfa Impex Application Server documentation found.","",""
+"006647","0","d","/AgfaHC.BackOffice.Web.Services/BackOfficeService.asmx","GET","BackOfficeWebService\sWeb\sService","","","","","Agfa Impex WebService","",""
+"006648","0","b2","/eprsup/sitegenhelp/content/content.htm","GET","Content\sCenter","","","","","SilkRoad Eprise documentation.","",""
+"006649","0","b2","/eprsup/eWebEditPro2/test.htm","GET","License\sKeys","","","","","SilkRoad Eprise has WebEditPro2 installed--test file found.","",""
+"006650","0","b2","/eWebEditPro2/test.htm","GET","License\skeys","","","","","WebEditPro2 test/sample file found.","",""
+"006651","0","b2","/ewebeditpro2/samples/asp/database/index.asp","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006652","0","b2","/ewebeditpro2/samples/coldfusion/database/index.cfm","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006653","0","b2","/ewebeditpro2/samples/jsp/database/index.jsp","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006654","0","b2","/eprsup/ewebeditpro2/samples/asp/database/index.asp","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006655","0","b2","/eprsup/ewebeditpro2/samples/coldfusion/database/index.cfm","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006656","0","b2","/eprsup/ewebeditpro2/samples/jsp/database/index.jsp","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006657","0","b2","/eprsup/ewebeditpro2/samples/php/database/index.php","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""
+"006658","0","b2","/ewebeditpro2/samples/php/database/index.php","GET","Ektron\sWebEditPro","","","","","WebEditPro2 test/sample file found.","",""

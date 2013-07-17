@@ -648,6 +648,10 @@ http://192.168.0.1:8080/
         </listitem>
 
         <listitem>
+          <para>d - WebServices. HTTP WebService/API locations.</para>
+        </listitem>
+
+        <listitem>
           <para>x - Reverse Tuning Options. Perform exclusion of the specified
           tuning type instead of inclusion of the specified tuning
           type.</para>
