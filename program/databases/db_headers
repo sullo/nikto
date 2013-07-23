@@ -86,3 +86,4 @@
 "x-varnish"
 "xmlns"
 "persistent-auth"
+"x-ua-compatible"
