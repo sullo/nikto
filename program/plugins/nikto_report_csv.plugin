@@ -77,12 +77,18 @@ sub csv_item {
         $line .= "\",";
 
         $line .= "\"";
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
-		{ $line .= $mark->{'root'} . $uri; }
+        if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/))
+			{ $line .= $mark->{'root'} . $uri; }
+		else { $line .= $uri; }
         $line .= "\",";
-
-        $item->{'message'} =~ s/"/\\"/g;
-        $line .= "\"$item->{'message'}\"";
+	
+		my $msg = $item->{'message'};
+		$uri=quotemeta($uri);
+		my $root = quotemeta($mark->{'root'});
+		$msg =~ s/^$uri:\s//;
+		$msg =~ s/^$root$uri:\s//;
+        $msg =~ s/"/\\"/g;
+        $line .= "\"$msg\"";
         print $handle "$line\n";
     }
 }
