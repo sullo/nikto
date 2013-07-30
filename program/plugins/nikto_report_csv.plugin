@@ -51,7 +51,7 @@ sub csv_open {
 sub csv_host_start {
     my ($handle, $mark) = @_;
     $mark->{'banner'} =~ s/"/\\"/g;
-    print OUT "\"$mark->{'hostname'}\","
+    print $handle "\"$mark->{'hostname'}\","
       . "\"$mark->{'ip'}\","
       . "\"$mark->{'port'}\"," . "\"\"," . "\"\"," . "\"\","
       . "\"$mark->{'banner'}\"\n";
