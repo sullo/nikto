@@ -595,7 +595,7 @@ sub general_config {
     # deprecated -findonly overrides -Plugins
     if ($CLI{'findonly'}) {
         $CLI{'plugins'} =
-          '@@NONE;report_csv;report_html;report_text;report_xml;report_nbe;report_msf';
+          '@@NONE;report_csv;report_sqlg;report_html;report_text;report_xml;report_nbe;report_msf';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -680,15 +680,20 @@ sub general_config {
         }
     }
 
-    if    ($CLI{'format'} =~ /te?xt/i) { $CLI{'format'} = "txt"; }
-    elsif ($CLI{'format'} =~ /html?/i) { $CLI{'format'} = "htm"; }
-    elsif ($CLI{'format'} =~ /csv/i)   { $CLI{'format'} = "csv"; }
-    elsif ($CLI{'format'} =~ /nbe/i)   { $CLI{'format'} = "nbe"; }
-    elsif ($CLI{'format'} =~ /xml/i)   { $CLI{'format'} = "xml"; }
-    elsif ($CLI{'format'} =~ /msf/i)   { $CLI{'format'} = "msf"; }
-    elsif ($CLI{'format'} eq 'none') { }
-    else                             { nprint("+ ERROR: Invalid output format"); exit; }
-
+    if (($CLI{'format'} !~ /^te?xt$/i) &&
+    	($CLI{'format'} !~ /^html?$/i) &&
+    	($CLI{'format'} !~ /^csv$/i) &&
+    	($CLI{'format'} !~ /^sql$/i) &&
+    	($CLI{'format'} !~ /^nbe$/i) &&
+    	($CLI{'format'} !~ /^xml$/i) &&
+    	($CLI{'format'} !~ /^msf$/i) &&
+    	($CLI{'format'} ne 'none'))
+        	{ 
+        		nprint("+ ERROR: Invalid output format"); 
+        		exit; 
+        	}
+        $CLI{'format'}=lc($CLI{'format'});
+    
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
         nprint("+ERROR: Output file specified without a format");
         exit;
@@ -1701,6 +1706,7 @@ sub report_head {
                                          summary    => $plugin->{report_summary},
                                          handle     => $handle,
                                          };
+                                         
                     push(@REPORTS, $report_entry);
                 }
             }
@@ -2585,6 +2591,7 @@ sub usage {
                                htm   HTML Format
                                msf+  Log to Metasploit
                                nbe   Nessus NBE format
+                               sql   Generic SQL (see docs for schema)
                                txt   Plain text
                                xml   XML Format
                                (if not specified the format will be taken from the file extension passed to -output)
@@ -2759,7 +2766,9 @@ sub add_vulnerability {
                     method   => $method,
                     uri      => $uri,
                     result   => $result,
+                    request  => $request,
                     );
+                    
     push(@RESULTS, $resulthash);
     $mark->{total_vulns}++;
 
