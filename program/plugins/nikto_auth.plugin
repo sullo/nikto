@@ -23,7 +23,7 @@
 sub nikto_auth_init {
     my $id = { name        => 'auth',
                full_name   => 'Guess authentication',
-               author      => 'Sullo/Deity',
+               author      => 'Sullo/Tautology',
                description => 'Attempt to guess authentication realms',
                hooks       => {
                           start => { method => \&nikto_auth_load,

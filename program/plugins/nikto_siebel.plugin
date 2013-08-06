@@ -24,7 +24,7 @@ sub nikto_siebel_init {
     my $id = {
             name        => "siebel",
             full_name   => "Siebel Checks",
-            author      => "Deity",
+            author      => "Tautology",
             description => "Performs a set of checks against an installed Siebel application",
             hooks       => {
                               scan => {

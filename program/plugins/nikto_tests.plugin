@@ -22,7 +22,7 @@
 sub nikto_tests_init {
     my $id = { name        => "tests",
                full_name   => "Nikto Tests",
-               author      => "Sullo, Deity",
+               author      => "Sullo, Tautology",
                description => "Test host with the standard Nikto tests",
                copyright   => "2008 CIRT Inc.",
                hooks       => {

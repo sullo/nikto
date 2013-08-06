@@ -22,7 +22,7 @@
 sub nikto_multiple_index_init {
     my $id = { name        => "mutiple_index",
                full_name   => "Multiple Index",
-               author      => "deity",
+               author      => "Tautology",
                description => "Checks for multiple index files",
                hooks       => { scan => { method => \&nikto_multiple_index, }, },
                copyright   => "2009 CIRT Inc"

@@ -22,7 +22,7 @@
 sub nikto_report_text_init {
     my $id = { name              => "report_text",
                full_name         => "Text reports",
-               author            => "Deity",
+               author            => "Tautology",
                description       => "Produces a text report.",
                report_head       => \&text_open,
                report_host_start => \&text_host,

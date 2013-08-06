@@ -22,7 +22,7 @@
 sub nikto_dictionary_attack_init {
     my $id = { name        => "dictionary",
                full_name   => "Dictionary attack",
-               author      => "Deity",
+               author      => "Tautology",
                description => "Attempts to dictionary attack commonly known directories/files",
                hooks       => {
                           recon => { method => \&nikto_dictionary_attack,
