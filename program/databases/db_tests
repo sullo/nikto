@@ -6630,3 +6630,4 @@
 "006661","0","b1","/mychart/adminlogin.asp","GET","licensed\sfrom\sEpic","","","","","Epic Systems MyChart admin login found","",""
 "006662","0","12","/exception.php","GET","200","","","","","PHP Exceptions File","",""
 "006663","0","2","/","GET","200","","Test Page for the Nginx HTTP Server","","","Default Nginx install page found.","",""
+"006664","0","2","/","GET","200","","Check Point Certificate Services","","","Default Check point certificate page found.","",""
