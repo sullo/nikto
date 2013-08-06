@@ -6629,4 +6629,4 @@
 "006660","0","2","/eprise/samples/QuickForms/PageFromStyle/CreatePageFromStyle","GET","Into\sthe\sFolder","","","","","SilkRoad Eprise CMS create page shows a list of directories on the web site (backend CMS paths).","",""
 "006661","0","b1","/mychart/adminlogin.asp","GET","licensed\sfrom\sEpic","","","","","Epic Systems MyChart admin login found","",""
 "006662","0","12","/exception.php","GET","200","","","","","PHP Exceptions File","",""
-"006663","0","2","/","GET","200","Test Page for the Nginx HTTP Server","","","","Default Nginx install page found.","",""
+"006663","0","2","/","GET","200","","Test Page for the Nginx HTTP Server","","","Default Nginx install page found.","",""
