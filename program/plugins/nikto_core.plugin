@@ -680,20 +680,15 @@ sub general_config {
         }
     }
 
-    if (($CLI{'format'} !~ /^te?xt$/i) &&
-    	($CLI{'format'} !~ /^html?$/i) &&
-    	($CLI{'format'} !~ /^csv$/i) &&
-    	($CLI{'format'} !~ /^sql$/i) &&
-    	($CLI{'format'} !~ /^nbe$/i) &&
-    	($CLI{'format'} !~ /^xml$/i) &&
-    	($CLI{'format'} !~ /^msf$/i) &&
-    	($CLI{'format'} ne 'none'))
-        	{ 
-        		nprint("+ ERROR: Invalid output format"); 
-        		exit; 
-        	}
-        $CLI{'format'}=lc($CLI{'format'});
-    
+    $CLI{'format'}=lc($CLI{'format'});
+    $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
+    $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
+
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|msf|none)$/) { 
+        nprint("+ ERROR: Invalid output format"); 
+        exit; 
+	}
+
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
         nprint("+ERROR: Output file specified without a format");
         exit;
