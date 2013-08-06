@@ -142,9 +142,9 @@ sub nikto_auth {
         LW2::http_fixup_request($request);
 
 
-	if ($authtype eq 'ntlm') { 
-                $request->{'whisker'}->{'allow_short_reads'} = 1;
-		}
+        if ($authtype eq 'ntlm') { 
+            $request->{'whisker'}->{'allow_short_reads'} = 1;
+        }
 
         sleeper();
         LW2::http_do_request_timeout($request, $response);    # test auth
@@ -158,7 +158,7 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
         #if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
-        if (!defined $response->{'whisker'}->{'error'}) {
+        if ($response->{'whisker'}->{'code'} !~ /40[13]/ && !defined $response->{'whisker'}->{'error'}) {
             unless ($entry->{'checked'} == 1) {
                 my $message;
                 if ($entry->{'message'} eq "Credentials provided by CLI.") {
