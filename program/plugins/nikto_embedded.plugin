@@ -22,7 +22,7 @@
 sub nikto_embedded_init {
     my $id = { name        => "embedded",
                full_name   => "Embedded Detection",
-               author      => "Deity",
+               author      => "Tautology",
                description => "Checks to see whether the host is an embedded server.",
                hooks       => { scan => { method => \&nikto_embedded, }, 
                                 start => { method => \&nikto_embedded_load, },

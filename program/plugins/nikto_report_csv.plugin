@@ -22,7 +22,7 @@
 sub nikto_report_csv_init {
     my $id = { name              => "report_csv",
                full_name         => "CSV reports",
-               author            => "Deity",
+               author            => "Tautology",
                description       => "Produces a CSV report.",
                report_head       => \&csv_open,
                report_host_start => \&csv_host_start,

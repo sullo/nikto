@@ -6631,4 +6631,5 @@
 "006662","0","12","/exception.php","GET","200","","","","","PHP Exceptions File","",""
 "006663","0","2","/","GET","200","","Test Page for the Nginx HTTP Server","","","Default Nginx install page found.","",""
 "006664","0","2","/","GET","200","","Check Point Certificate Services","","","Default Check point certificate page found.","",""
-"006665","0","b","/errors/report.php?id=a","GET","Exception\sprinting","","","","","Magento Go is installed--reporting file found.","",""
+"006665","0","2","/owa","GET","200","","{57A118C6-2DA9-419d-BE9A-F92B0F9A418B}","","","Page appears to be an Outlook Web Access portal.","",""
+"006666","0","b","/errors/report.php?id=a","GET","Exception\sprinting","","","","","Magento Go is installed--reporting file found.","",""
