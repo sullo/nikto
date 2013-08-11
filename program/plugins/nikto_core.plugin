@@ -1435,9 +1435,10 @@ sub port_check {
     $m->{port}     = $port;
     $m->{ssl}      = 0;
 
-    my @checktypes = ('HTTP', 'HTTPS');
-    if ($CLI{'ssl'})   { shift(@checktypes); }
-    if ($CLI{'nossl'}) { pop(@checktypes); }
+    my @checktypes;
+    if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
+    elsif ($CLI{'ssl'}) { @checktypes = ('HTTPS'); }
+    else { @checktypes = ('HTTPS', 'HTTP'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
         $request{'whisker'}->{'method'} = $method;
