@@ -6635,3 +6635,5 @@
 "006666","0","b","/wp-admin/wp-login.php","GET","Powered\sby\sWordPress","","","","","Wordpress login found","",""
 "006667","0","b","/blog/wp-login.php","GET","Powered\sby\sWordPress","","","","","Wordpress login found","",""
 "006668","0","b","/wp-login.php","GET","Powered\sby\sWordPress","","","","","Wordpress login found","",""
+"006669","0","2","/adfs/ls/?wa=wsignout1.0","GET","200","method=\"post\" action=\"/adfs/ls/?wa=wsignout1.0\" id=\"aspnetForm\"","","","","Active Directory Federation Services sign out page found.","",""
+"006670","0","2","/adfs/ls/?wa=wsignin1.0&wtrealm=http://www.cirt.net/","GET","200","method=\"post\" action=\"/adfs/ls/?wa=wsignin1.0&wtrealm=http://www.cirt.net/\" id=\"aspnetForm\"","","","","Active Directory Federation Services sign in page found.","",""
