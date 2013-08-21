@@ -92,6 +92,7 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
     $mark->{'test'} = 1;
+    $mark->{'failures'} = 0;
 
     # Try to resolve the host
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}) = resolve($mark->{'ident'});

@@ -2196,10 +2196,16 @@ sub nfetch {
 
     # If we got an error, do 1 retry. This should be much more intelligent and configurable!
     if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
+	$mark->{'failures'}++;
         sleeper();
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
     }
+    if ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'}) { 
+	nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'});
+	$mark->{'terminate'} = 1;
+	}
+
 
     if ($OUTPUT{'debug'}) {
         dump_var("Request Hash", \%request);
