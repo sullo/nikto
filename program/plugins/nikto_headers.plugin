@@ -36,9 +36,11 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS/;
+    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS $BREACH/;
     $ETAGS=0;
 	$XFRAME=0;
+	$HEADERS_STS;
+	$BREACH=0;
 
     return $id;
 }
@@ -182,7 +184,6 @@ sub nikto_headers_postfetch {
 		$HEADERS_STS=1;
 	}
 	
-	
     return $request, $result;
 }
 
@@ -268,6 +269,30 @@ sub nikto_headers {
     if (($result->{'location'} ne "") && ($result->{'location'} =~ /http:\/\//)) { 
         add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, 5737, "GET", ".", $request, $result);
     }
+	
+	
+	# BREACH Checks
+	for (keys %locheaders) { 
+        delete $locheaders{$_}; 
+    } 
+    $locheaders{'Accept-Encoding'} = "deflate, gzip";
+	($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: BREACH Test", "1.1");
+	
+	if (!$BREACH && defined $result && $mark->{'ssl'})
+	{
+		if (defined $result->{'content-encoding'}) {
+			if ($result->{'content-encoding'} =~ "(deflate|gzip)") {
+				$BREACH=1;
+				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.",
+					999966,
+					0,
+					$request->{'whisker'}->{'method'},
+					$request->{'whisker'}->{'uri'},
+					$request,
+					$result);
+			}
+		}
+	}
 }
 
 1;
