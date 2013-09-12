@@ -62,7 +62,7 @@
 "600047","Apache-NeoWebScript/","2.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600048","Apache-SSL-US/","1.1.1+1.2+1.3b3-dev","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600049","Apache-SSL/","1.36","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600050","Apache/","Apache/2.2.22","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). Apache 1.3.42 (final release) and 2.0.64 are also current."
+"600050","Apache/","Apache/2.2.25","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). Apache 2.0.65 (final release) and 2.4.6 are also current."
 "600051","apachejserv/","1.1.2i","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600052","ApacheSSL/","2.0.58","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600053","AppleEmbeddedWebServer/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
