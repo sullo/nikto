@@ -197,7 +197,7 @@ sub status_report {
     else { $line = "- STATUS: Finishing up!"; }
     nprint($line);
     
-    nprint("- STATUS: " . running_average_print($mark));
+    nprint("- STATUS: " . running_average_print($mark)); 
 
     return;
 }
@@ -2160,6 +2160,7 @@ sub running_average_print {
 		$message .= "10 requests: $avg sec";
 		}
 
+	if ($message eq '') { $message="Not enough data"; }
 	return "Running average: $message.";	
 	}
 
