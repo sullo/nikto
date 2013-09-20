@@ -271,19 +271,22 @@ sub config_init {
 ###############################################################################
 sub load_modules {
         my $errors=0;
-        eval "use Getopt::Long";
-        if ($@) { print "ERROR: Required module not found: Getopt::Long\n"; $errors=1; }
-        eval "use Time::Local";
-        if ($@) { print "ERROR: Required module not found: Time::Local\n"; $errors=1; }
-        eval " use POSIX qw(:termios_h)";
-		if ($^O !~ /MSWin32/) {
-			# Allow this to work on Windows
-			if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
-			eval "use Time::HiRes qw(ualarm)";
+	my @modules = qw/Getopt::Long Time::Local IO::Socket/;
+	push(@modules,"List::Util qw(sum)");
+	push(@modules,"Time::HiRes qw(ualarm gettimeofday tv_interval)");
+	foreach my $mod (@modules) { 
+		eval "use $mod";
+        	if ($@) { 
+			print "ERROR: Required module not found: $mod\n"; 
+			$errors=1; 
+			}
 		}
-        if ($@) { print "ERROR: Required module not found: Time::HiRes\n" .$@; $errors=1; }
-		eval "use IO::Socket";
-        if ($@) { print "ERROR: Required module not found: IO::Socket\n"; $errors=1; }
+
+        eval "use POSIX qw(:termios_h)";
+	if ($^O !~ /MSWin32/) {
+		# Allow this to work on Windows
+		if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
+		}
 
 	if ($errors) { exit; }
 }

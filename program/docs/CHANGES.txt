@@ -1,4 +1,6 @@
 2013-xx-xx Nikto 2.1.6 release
+	- Added running average of last 10/100 requests to STATUS line output
+	- Cleanup of load_modules to remove duplicate code
 	- Added nikto.conf variable FAILURES, and nikto now terminate host scanning after this many HTTP request failures (not response codes, complete fails).
 	- Added nikto_ms10070.plugin to check for MS10-070
 	- Load modules inside a sub routine so errors can be reported

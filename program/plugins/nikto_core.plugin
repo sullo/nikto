@@ -155,6 +155,7 @@ sub get_ext {
 
 ###############################################################################
 sub status_report {
+   my ($mark) = shift;
 
     # without this we could face a div by 0 error
     if ($COUNTERS{'totalrequests'} eq 0) {
@@ -194,8 +195,10 @@ sub status_report {
         $line .= ")";
     }
     else { $line = "- STATUS: Finishing up!"; }
-
     nprint($line);
+    
+    nprint("- STATUS: " . running_average_print($mark));
+
     return;
 }
 ###############################################################################
@@ -877,7 +880,7 @@ sub check_input {
 
     lc($key);
     if ($key eq ' ') {
-        status_report();
+        status_report($mark);
     }
     elsif ($key eq 'v') {
         if   ($OUTPUT{'verbose'}) { $OUTPUT{'verbose'} = 0; }
@@ -915,7 +918,7 @@ sub check_input {
         safe_quit($mark);
     }
     elsif ($key eq 'P') {
-        status_report();
+        status_report($mark);
         pause();
     }
     elsif ($key eq 'N') {
@@ -2126,6 +2129,41 @@ sub setup_hash {
 }
 
 #######################################################################
+sub running_average {
+        my $last = shift;
+	my ($mark) = @_;
+        unshift(@{$mark->{'running_avg'}},$last);
+        splice(@{$mark->{'running_avg'}},100);
+        }
+
+#######################################################################
+sub running_average_print { 
+	use List::Util qw(sum);
+	my $message;
+	my ($mark) = @_;
+	my @data = @{$mark->{'running_avg'}};
+	my $elements=$#data;
+	$elements++;
+	if ($elements eq 100 ) { 
+		my $s = sum(@data);
+		my $avg = $s / $elements;
+		$avg = sprintf("%.5f", $avg);
+		$message = "100 requests: $avg sec, ";
+		}
+	if ($elements > 10) { 
+		@data=splice(@data,9);
+		my $s = sum(@data);
+		$elements=$#data;
+		$elements++;
+		my $avg = $s / $elements;
+		$avg = sprintf("%.4f", $avg);
+		$message .= "10 requests: $avg sec";
+		}
+
+	return "Running average: $message.";	
+	}
+
+#######################################################################
 sub nfetch {
     my ($mark, $uri, $method, $data, $headers_send, $flags, $testid, $httpver) = @_;
     my (%request, %result);
@@ -2191,8 +2229,10 @@ sub nfetch {
 
     # do the request
     sleeper();
+    my $time=[gettimeofday];
     LW2::http_do_request_timeout(\%request, \%result);
     $COUNTERS{'totalrequests'}++;
+    running_average(tv_interval($time, [gettimeofday]), $mark);
 
     # If we got an error, do 1 retry. This should be much more intelligent and configurable!
     if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
