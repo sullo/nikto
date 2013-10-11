@@ -1424,7 +1424,7 @@ sub count_fields {
 
 ###############################################################################
 sub port_check {
-    my ($hostname, $ip, $port, $key, $cert) = @_;
+    my ($start_time, $hostname, $ip, $port, $key, $cert) = @_;
     my $m = {};
 
     # Check SKIPPORTS
@@ -1433,6 +1433,7 @@ sub port_check {
         return 0;
     }
 
+    $m->{start_time} = $start_time;
     $m->{hostname} = $hostname;
     $m->{ip}       = $ip;
     $m->{port}     = $port;
