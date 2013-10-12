@@ -6639,3 +6639,4 @@
 "006670","0","2","/adfs/ls/?wa=wsignin1.0&wtrealm=http://www.cirt.net/","GET","200","method=\"post\" action=\"/adfs/ls/?wa=wsignin1.0&wtrealm=http://www.cirt.net/\" id=\"aspnetForm\"","","","","Active Directory Federation Services sign in page found.","",""
 "006671","0","b","/portal/changelog","GET","Version","","","","","Vignette richtext HTML editor changelog found.","",""
 "006672","3092","b","@PHPMYADMINDocumentation.html","GET","phpMyAdmin.*Documentation","","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
+"006673","89282","0","@FCKEDITOR_whatsnew.html","GET","Version\s2\.(?:6\.[0-8]|5\.\d+)<","","","","","FCKEditor versions below 2.6.9 allow file upload restriction bypasses, see http://soroush.secproject.com/blog/2012/11/file-in-the-hole/","",""
