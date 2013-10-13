@@ -9,6 +9,7 @@
 	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
 	- Added nikto_sitezip.plugin to look for compressed archives of sites
+	- Issue #82: Added check for Apache mod_negotiation bruteforcing.
         - Issue #46: Double directory names in report
 	- Issue #24: Don't return headers distinctly from nfetch
 	- Issue #22: Add location to db_favicon
