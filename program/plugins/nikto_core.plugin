@@ -1909,6 +1909,8 @@ sub check_updates {
         }
     }
 
+    check_modules();
+
     if ($#DBTOGET < 0) { nprint("+ No updates required."); }
     if ($remotemsg ne "") { nprint("+ $server message: $remotemsg"); }
     exit;
@@ -2458,6 +2460,31 @@ sub parse_csv {
     push(@new, undef) if substr($text, -1, 1) eq ',';
     return @new;
 }
+#######################################################################
+sub check_modules { 
+    # Check dependencies
+    eval "require JSON::PP";
+    if ($@) {
+        nprint("+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used.");
+    }
+    eval "require RPC::XML";
+    if ($@) {
+        nprint("+ WARNING: Module RPC::XML missing. Logging to Metasploit is disabled.");
+    }
+    eval "require RPC::XML::Client";
+    if ($@) {
+        nprint("+ WARNING: Module RPC::XML::Client missing. Logging to Metasploit is disabled.");
+    }
+    LW2::init_ssl_engine();
+    my ($avail, $lib, $ver) = LW2::ssl_is_available();
+    if ($avail) {
+        nprint("+ WARNING: SSL Module: $lib version $ver");
+    }
+    else {
+        nprint("+ WARNING: SSL: support not available.");
+    }
+
+}
 
 #######################################################################
 sub version {
@@ -2494,22 +2521,7 @@ sub version {
     nprint($VARIABLES{'DIV'});
 
     # Check dependencies
-    eval "require RPC::XML";
-    if ($@) {
-        nprint("Module RPC::XML missing. Logging to Metasploit is disabled.");
-    }
-    eval "require RPC::XML::Client";
-    if ($@) {
-        nprint("Module RPC::XML::Client missing. Logging to Metasploit is disabled.");
-    }
-    LW2::init_ssl_engine();
-    my ($avail, $lib, $ver) = LW2::ssl_is_available();
-    if ($avail) {
-        nprint("SSL Module: $lib version $ver");
-    }
-    else {
-        nprint("SSL: support not available.");
-    }
+    check_modules();
 
     nprint($VARIABLES{'DIV'});
 
@@ -2717,6 +2729,9 @@ sub usage {
 
 	Note: This is the short help output. Use -H for full help text.\n\n";
     }
+
+    check_modules(); 
+
     exit;
 }
 

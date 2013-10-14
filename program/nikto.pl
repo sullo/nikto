@@ -55,7 +55,6 @@ setup_dirs();
 require "$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin";
 nprint("T:" . localtime($COUNTERS{'scan_start'}) . ": Starting", "d");
 require "$CONFIGFILE{'PLUGINDIR'}/LW2.pm";
-require "$CONFIGFILE{'PLUGINDIR'}/JSON-PP.pm";
 $VARIABLES{'GMTOFFSET'} = gmt_offset();
 
 # use LW2;                   ### Change this line to use a different installed version

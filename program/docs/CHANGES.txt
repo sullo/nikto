@@ -1,4 +1,6 @@
 2013-xx-xx Nikto 2.1.6 release
+	- Removed JSON-PP.pm in favor of requiring JSON::PP be installed for -Savedir usage
+	- Added check_modules() to check for required/optional perl modules in help output, version check, etc.
 	- Added running average of last 10/100 requests to STATUS line output
 	- Cleanup of load_modules to remove duplicate code
 	- Added nikto.conf variable FAILURES, and nikto now terminate host scanning after this many HTTP request failures (not response codes, complete fails).
@@ -9,7 +11,7 @@
 	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
 	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
 	- Added nikto_sitezip.plugin to look for compressed archives of sites
-	- Issue #82: Added check for Apache mod_negotiation bruteforcing.
+	- Issue #82: Added plugin to check for Apache mod_negotiation bruteforcing.
         - Issue #46: Double directory names in report
 	- Issue #24: Don't return headers distinctly from nfetch
 	- Issue #22: Add location to db_favicon

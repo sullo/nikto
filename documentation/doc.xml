@@ -150,17 +150,31 @@
           <para>OpenSSL: <ulink
           url="http://www.openssl.org/">http://www.openssl.org/</ulink></para>
         </listitem>
+      </itemizedlist>
 
+     <para>Perl modules</para>
+
+      <itemizedlist>
         <listitem>
-          <para>Perl modules RPC::XML::Client and RPC::XML for Metasploit
-          logging integration</para>
+          <para>RPC::XML - Metasploit logging integration (optional).</para>
         </listitem>
 
         <listitem>
-          <para>For convenience, the JSON::PP module is included in the
-          distribution. This is used for saving requests and responses in a
-          parseable format.</para>
+          <para>RPC::XML::Client - Metasploit logging integration (optional).</para>
         </listitem>
+
+        <listitem>
+          <para>JSON::PP - Saving requests and responses in a parseable format (optional). Required for -Savedir usage. May require additional modules.</para>
+        </listitem>
+
+        <listitem>
+          <para>MIME::Base64 - Speed up base64 operations (optional).</para>
+        </listitem>
+
+        <listitem>
+          <para>MD5 - Speed up MD5 operations (optional).</para>
+        </listitem>
+
       </itemizedlist>
     </section>
 
