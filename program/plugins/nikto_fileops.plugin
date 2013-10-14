@@ -32,6 +32,7 @@ sub nikto_fileops_init {
 ###############################################################################
 # save a result to text file
 sub save_item {
+    require JSON::PP;
     my ($resulthash, $message, $request, $response) = @_;
     return if $resulthash->{'mark'}->{'save_prefix'} eq '';
     my $fn =
