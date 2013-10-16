@@ -2477,10 +2477,7 @@ sub check_modules {
     }
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
-    if ($avail) {
-        nprint("+ WARNING: SSL Module: $lib version $ver");
-    }
-    else {
+    if (!$avail) {
         nprint("+ WARNING: SSL: support not available.");
     }
 
