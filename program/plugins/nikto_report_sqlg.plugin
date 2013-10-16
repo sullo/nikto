@@ -50,10 +50,9 @@ sub sqlg_open {
     $opt =~ s/'/\\'/g;
     print OUT "# $VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
     print OUT "# Options:       $opt\n";
-	print OUT "# Start Time:    " . localtime($COUNTERS{'scan_start'}) . "\n";
-	print OUT "# End Time:      " . localtime($COUNTERS{'scan_end'}) . "\n";
-	print OUT "\n";
-	
+    print OUT "# Start Time:    " . localtime($COUNTERS{'scan_start'}) . "\n";
+    print OUT "# End Time:      " . localtime($COUNTERS{'scan_end'}) . "\n";
+    print OUT "\n";
     return OUT;
 }
 
