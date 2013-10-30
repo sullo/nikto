@@ -2682,6 +2682,7 @@ sub usage {
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
        -no404             Disables nikto attempting to guess a 404 page
+       -option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
        -Pause+            Pause between tests (seconds, integer or float)
        -Plugins+          List of plugins to run (default: ALL)
@@ -2709,6 +2710,7 @@ sub usage {
        -Userdbs           Load only user databases, not the standard databases
                                all   Disable standard dbs and load only user dbs
                                tests Disable only db_tests and load udb_tests
+       -useragent         Over-rides the default useragent
        -until             Run until the specified time or duration
        -update            Update databases and plugins from CIRT.net
        -useproxy          Use the proxy defined in nikto.conf
