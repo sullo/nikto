@@ -465,6 +465,8 @@ sub dump_target_info {
 sub general_config {
     ## gotta set these first
     $| = 1;
+    # internal array, this should never be used outside this sub
+    my @options;
 
     # This is used in dump_target_info(), not just help output
     $NIKTO{'anti_ids'}{'1'} = "Random URI encoding (non-UTF8)";
@@ -513,6 +515,7 @@ sub general_config {
                "nointeractive"    => \$CLI{'nointeractive'},
                "nolookup"         => \$CLI{'skiplookup'},
                "nossl"            => \$CLI{'nossl'},
+               "option=s"         => \@options,
                "output=s"         => \$CLI{'file'},
                "Pause=f"          => \$CLI{'pause'},
                "Plugins=s"        => \$CLI{'plugins'},
@@ -526,6 +529,7 @@ sub general_config {
                "update"           => \&check_updates,
                "Userdbs:s"        => \$CLI{'userdbs'},
                "useproxy:s"       => \$CLI{'useproxy'},
+               "useragent=s"      => \$CLI{'useragent'},
                "until:s"          => \$CLI{'until'},
                "Version"          => \&version,
                "vhost=s"          => \$CLI{'vhost'},
@@ -593,6 +597,16 @@ sub general_config {
             exit;
         }
         $CLI{'until'} = $pausetime;
+    }
+    
+    if ($CLI{'useragent'}) {
+        push(@options,"USERAGENT=" . $CLI{'useragent'});
+    }
+
+    # options allows overriding of nikto.conf entries on command line
+    foreach my $option (@options) {
+        my @optione=split("=", $option);
+        $CONFIGFILE{$optione[0]}=$optione[1];
     }
 
     # deprecated -findonly overrides -Plugins
