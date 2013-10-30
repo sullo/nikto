@@ -6640,3 +6640,5 @@
 "006671","0","b","/portal/changelog","GET","Version","","","","","Vignette richtext HTML editor changelog found.","",""
 "006672","3092","b","@PHPMYADMINDocumentation.html","GET","phpMyAdmin.*Documentation","200","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
 "006673","89282","0","@FCKEDITOR_whatsnew.html","GET","Version\s2\.(?:6\.[0-8]|5\.\d+)<","","","","","FCKEditor versions below 2.6.9 allow file upload restriction bypasses, see http://soroush.secproject.com/blog/2012/11/file-in-the-hole/","",""
+"006674","","3","/apc.php","GET","APC\sINFO","","","","","APC Opcode Cache for PHP information script found","",""
+"006675","0","b","/manager/html","GET","401","","","","","Tomcat Manager interface found (pass protected)","",""
