@@ -2236,7 +2236,9 @@ sub nfetch {
     my $time=[gettimeofday];
     LW2::http_do_request_timeout(\%request, \%result);
     $COUNTERS{'totalrequests'}++;
-    running_average(tv_interval($time, [gettimeofday]), $mark);
+    if ($^O !~ /MSWin32/) {
+		running_average(tv_interval($time, [gettimeofday]), $mark);
+	}
 
     # If we got an error, do 1 retry. This should be much more intelligent and configurable!
     if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
@@ -2477,10 +2479,7 @@ sub check_modules {
     }
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
-    if ($avail) {
-        nprint("+ WARNING: SSL Module: $lib version $ver");
-    }
-    else {
+    if (!$avail) {
         nprint("+ WARNING: SSL: support not available.");
     }
 
