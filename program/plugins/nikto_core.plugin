@@ -1460,6 +1460,7 @@ sub port_check {
     my @checktypes;
     if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
     elsif ($CLI{'ssl'}) { @checktypes = ('HTTPS'); }
+    elsif ($port == 80) { @checktypes = ('HTTP', 'HTTPS'); }
     else { @checktypes = ('HTTPS', 'HTTP'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
