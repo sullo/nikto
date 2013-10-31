@@ -277,17 +277,17 @@ sub load_modules {
         	if ($@) { 
 			print "ERROR: Required module not found: $mod\n"; 
 			$errors=1; 
-			}
 		}
+	}
 
-	@modules = [];
+	@modules = ();
 	push(@modules,"Time::HiRes qw(ualarm gettimeofday tv_interval)");
 	push(@modules,"POSIX qw(:termios_h)");
 	foreach my $mod (@modules) { 
 		eval "use $mod";
-		if ($^O !~ /MSWin32/) {
+		if ($@ && $^O !~ /MSWin32/) {
 			# Allow this to work on Windows
-			if ($@) { print "ERROR: Required module not found: POSIX\n"; $errors=1; }
+			if ($@) { print "ERROR: Required module not found: $mod\n"; $errors=1; }
 		}
 	}
 
