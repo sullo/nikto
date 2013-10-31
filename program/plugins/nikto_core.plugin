@@ -158,7 +158,9 @@ sub status_report {
    my ($mark) = shift;
 
     # without this we could face a div by 0 error
-    if ($COUNTERS{'totalrequests'} eq 0) {
+    if ($COUNTERS{'totalrequests'} eq 0 ||
+        $COUNTERS{'total_checks'} eq 0 ||
+        $COUNTERS{'total_targets'} eq 0) {
         nprint("- STATUS: Starting up!");
         return;
     }
@@ -176,8 +178,10 @@ sub status_report {
         }
     }
     else { $timeleft = sprintf("%.0f seconds", $secleft); }
+    
     my $perc_compl =
-      ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
+        ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
+
     my $line;
 
     # This 'if' is because I am a lazy, bad programmer.
