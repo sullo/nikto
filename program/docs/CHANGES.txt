@@ -1,4 +1,5 @@
 2013-xx-xx Nikto 2.1.6 release
+	- Add -Option to override nikto.conf settings
 	- Removed JSON-PP.pm in favor of requiring JSON::PP be installed for -Savedir usage
 	- Added check_modules() to check for required/optional perl modules in help output, version check, etc.
 	- Added running average of last 10/100 requests to STATUS line output

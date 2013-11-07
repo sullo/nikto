@@ -519,7 +519,7 @@ sub general_config {
                "nointeractive"    => \$CLI{'nointeractive'},
                "nolookup"         => \$CLI{'skiplookup'},
                "nossl"            => \$CLI{'nossl'},
-               "option=s"         => \@options,
+               "Option=s"         => \@options,
                "output=s"         => \$CLI{'file'},
                "Pause=f"          => \$CLI{'pause'},
                "Plugins=s"        => \$CLI{'plugins'},
@@ -2687,7 +2687,7 @@ sub usage {
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
        -no404             Disables nikto attempting to guess a 404 page
-       -option            Over-ride an option in nikto.conf, can be issued multiple times
+       -Option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
        -Pause+            Pause between tests (seconds, integer or float)
        -Plugins+          List of plugins to run (default: ALL)

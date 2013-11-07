@@ -205,6 +205,13 @@ type requests)</para>
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-Option</option></term>
+      <listitem>
+        <para>Specify options to override settings in nikto.conf. Can be
+        specified multiple times for multiple values.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
       <term><option>-output</option></term>
       <listitem>
         <para>Write output to the file specified. The format used will be
