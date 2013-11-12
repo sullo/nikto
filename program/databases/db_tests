@@ -6670,3 +6670,4 @@
 "006701","96181","2","/Federationmetadata/2007-06/FederationMetadata.xml","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006702","96181","2","/adfs/ls/IdpInitiatedSignon.aspx","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006703","0","1","/console/","GET","200","","","","","Application console found","",""
+"006704","0","1","/umbraco/login.aspx","GET","umbraco.org","","","","","Umbraco admin login page found","",""
