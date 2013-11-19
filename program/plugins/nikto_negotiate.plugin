@@ -40,7 +40,8 @@ sub nikto_negotiate {
 
     my ($res, $content, $error, $request, $response) = nfetch($mark, "/index", "GET", "", \%headers, "", "negotiate");
 
-    if (($res eq "406") && ($content ne "")) {
+    #if (($res eq "406") && ($content ne "")) {
+    if ($response->{'alternates'} =~ /\{\"/)  {
 	my $message = "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. See http://www.wisec.it/sectou.php?id=4698ebdc59d15. The following alternatives for 'index' were found: ";
 	my @alts = split(/,/, $response->{'alternates'});
 	foreach my $h (@alts) { 
