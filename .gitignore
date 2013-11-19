@@ -1,0 +1,10 @@
+# Komodo IDE Project files
+*.komodoproject
+.komodotools
+
+# Mac OS X files
+.DS_Store
+
+# Backup files
+*.bak
+*~
