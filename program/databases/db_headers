@@ -21,6 +21,7 @@
 "accept-ranges"
 "age"
 "allow"
+"alternates"
 "authorization"
 "cache-control"
 "commerce-server-software"
