@@ -126,10 +126,6 @@
       Windows support for SSL is dependent on the installation package, but is
       rumored to exist for ActiveState's Perl.</para>
 
-      <para>For support for logging to Metasploit, the RPC::XML and
-      RPC::XML::Client modules must be installed. Nikto will operate without
-      these modules, but the functionality will not be available.</para>
-
       <itemizedlist>
         <listitem>
           <para>Perl: <ulink
@@ -153,15 +149,6 @@
       </itemizedlist>
 
      <para>Perl modules</para>
-
-      <itemizedlist>
-        <listitem>
-          <para>RPC::XML - Metasploit logging integration (optional).</para>
-        </listitem>
-
-        <listitem>
-          <para>RPC::XML::Client - Metasploit logging integration (optional).</para>
-        </listitem>
 
         <listitem>
           <para>JSON::PP - Saving requests and responses in a parseable format (optional). Required for -Savedir usage. May require additional modules.</para>
@@ -1180,7 +1167,7 @@ DOCDIR=EXECDIR/docs</screen>
       <title>Export Formats</title>
 
       <para>Nikto allows output to be saved in a variety of formats, including
-      text, CSV, HTML, XML, NBE and exporting to metasploit. When using
+      text, CSV, HTML, XML, and NBE. When using
       <parameter>-output</parameter>, an output format may be specified with
       <parameter>-Format</parameter>.</para>
 

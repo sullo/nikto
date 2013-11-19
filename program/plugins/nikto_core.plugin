@@ -616,7 +616,7 @@ sub general_config {
     # deprecated -findonly overrides -Plugins
     if ($CLI{'findonly'}) {
         $CLI{'plugins'} =
-          '@@NONE;report_csv;report_sqlg;report_html;report_text;report_xml;report_nbe;report_msf';
+          '@@NONE;report_csv;report_sqlg;report_html;report_text;report_xml;report_nbe';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -705,7 +705,7 @@ sub general_config {
     $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
     $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|msf|none)$/) { 
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|none)$/) { 
         nprint("+ ERROR: Invalid output format"); 
         exit; 
 	}
@@ -2488,14 +2488,6 @@ sub check_modules {
     if ($@) {
         nprint("+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used.");
     }
-    eval "require RPC::XML";
-    if ($@) {
-        nprint("+ WARNING: Module RPC::XML missing. Logging to Metasploit is disabled.");
-    }
-    eval "require RPC::XML::Client";
-    if ($@) {
-        nprint("+ WARNING: Module RPC::XML::Client missing. Logging to Metasploit is disabled.");
-    }
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
     if (!$avail) {
@@ -2663,7 +2655,6 @@ sub usage {
         print "        -Format+           Save file (-o) format:
                                csv   Comma-separated-value
                                htm   HTML Format
-                               msf+  Log to Metasploit
                                nbe   Nessus NBE format
                                sql   Generic SQL (see docs for schema)
                                txt   Plain text

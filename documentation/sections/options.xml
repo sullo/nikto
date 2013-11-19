@@ -88,7 +88,6 @@ this format. If not specified, the default will be taken from the file
 extension specified in the -output option. Valid formats are:</para>
         <para>csv - a comma-seperated list</para>
         <para>htm - an HTML report</para>
-        <para>msf - log to Metasploit</para>
         <para>sql - generic SQL</para>
         <para>txt - a text report</para>
         <para>xml - an XML report</para>
@@ -222,9 +221,6 @@ type requests)</para>
 		the file name will be automatically generated based on the target being 
 		tested. Note that the -Format option is required when this is used. The 
 		scheme is: nikto_HOSTNAME_PORT_TIMESTAMP.FORMAT</para>
-	<para>For '-Format msf' the output option takes special meaning. It should contain
-		the password and location of the Metasploit RPC service. For example, it 
-		may look like: '-o msf:&lt;password&gt;@http://localhost:55553/RPC2'</para>
 	<para>For '-Format sql' a sample MySQL table create might look like:
 		create table nikto_table (testid varchar(6) not null, ip varchar(15), hostname text, port int(5), usessl tinyint(1), osvdb int, httpmethod text, uri text, message text, request blob, response blob);</para>
       </listitem>
