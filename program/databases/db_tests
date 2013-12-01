@@ -6672,3 +6672,7 @@
 "006703","0","1","/console/","GET","200","","","","","Application console found","",""
 "006704","0","1","/umbraco/login.aspx","GET","umbraco.org","","","","","Umbraco admin login page found","",""
 "006705","0","13","/aspmenu/_notes/dwsync.xml","GET","file\sname","","","","","Adobe Dreamweaver dwsync.xml Remote Information Disclosure","",""
+"006706","0","b6","/ws/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
+"006707","0","b6","/axis2/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
+"006708","0","b6","/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
+"006709","0","123","/application/configs/application.ini","GET","resources","","","","","Zend-Framework config file may contain very sensitive informations. for example, DBMS connection id, password, etc.","",""
