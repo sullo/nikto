@@ -6648,7 +6648,6 @@
 "006679","96181","2","/adfs/services/trust/mexsoap","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006680","96181","2","/adfs/services/trust/proxymexhttpget/","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006681","96181","2","/adfs/services/trust/proxymex","GET","200","","","","","Active Directory Federation Services page found.","",""
-"006682","96181","2","/adfs/services/trust/proxymexhttpget/","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006683","96181","2","/adfs/services/trust/2005/windowstransport","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006684","96181","2","/adfs/services/trust/2005/certificatemixed","GET","200","","","","","Active Directory Federation Services page found.","",""
 "006685","96181","2","/adfs/services/trust/2005/certificatetransport","GET","200","","","","","Active Directory Federation Services page found.","",""
