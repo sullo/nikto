@@ -6674,4 +6674,4 @@
 "006706","0","b6","/ws/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006707","0","b6","/axis2/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006708","0","b6","/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
-"006709","0","b6","/wsman/","GET","","","","","","Windows Remote Management is enabled","",""
+"006709","0","b6","/wsman/","GET","200","403","","","","Windows Remote Management is enabled","",""
