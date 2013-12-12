@@ -2700,6 +2700,7 @@ sub usage {
                                0     File Upload
                                a     Authentication Bypass
                                b     Software Identification
+                               b     Administration Console
                                c     Remote Source Inclusion
                                x     Reverse Tuning Options (i.e., include all except specified)
        -timeout+          Timeout for requests (default 10 seconds)
