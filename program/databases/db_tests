@@ -6674,4 +6674,4 @@
 "006706","0","b6","/ws/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006707","0","b6","/axis2/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006708","0","b6","/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
-"006709","0","3","/somenonexistingfile.epl","GET","Not found '","","","","","Embperl 404 message discloses full file path"
+"006709","0","3","/somenonexistingfile.epl","GET","404: somenonexistingfile.epl\(1\): Not found '/.*/somenonexistingfile.epl'","","","","","Embperl 404 message discloses full file path"
