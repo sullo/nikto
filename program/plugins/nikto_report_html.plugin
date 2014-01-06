@@ -135,7 +135,7 @@ sub html_change_vars {
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
     $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
     $variables{"#TEMPL_STATISTICS#"} =
-      "$COUNTERS{'total_checks'} items checked, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
+      "$COUNTERS{'totalrequests'} requests, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
     $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
     $variables{"#TEMPL_ELAPSED#"} = $mark->{'end_time'} - $mark->{'start_time'};
 
