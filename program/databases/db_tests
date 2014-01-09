@@ -6682,3 +6682,7 @@
 "006713","0","13","/fantastico_fileslist.txt","GET","200","","","","","fantastico_fileslist.txt file found. This file contains a list of all the files from the current directory.","",""
 "006714","0","d","/webservices/","GET","200","","","","","Webservices found","",""
 "006715","0","be","/atg/bcc","GET","200","","","","","Oracle ATG Business Control Center","",""
+"006716","0","be","/sqlJmsAdmin/","GET","SQL-JMS\sAdmin","","","","","Oracle ATG JMS SQL Admin","",""
+"006717","0","e","/dyn/admin/","GET","200","","","","","Admin page found; possibly Oracle ATG","",""
+"006718","0","e","/pls/apex","GET","Application\sExpress\sAdministration\sServices","","","","","Oracle APEX admin found","",""
+"006719","0","e","/pls/apex_admin","GET","Application\sExpress\sAdministration\sServices","","","","","Oracle APEX admin found","",""
