@@ -6680,3 +6680,5 @@
 "006711","0","27","/desktopmodules/feedbackdesigner/ajaxfbs/browser.html","GET","text\seditor","","","","","FCKEditor found","",""
 "006712","0","20","/desktopmodules/feedbackdesigner/ajaxfbs/frmupload.html","GET","text\seditor","","","","","FCKEditor file uploader found","",""
 "006713","0","13","/fantastico_fileslist.txt","GET","200","","","","","fantastico_fileslist.txt file found. This file contains a list of all the files from the current directory.","",""
+"006714","0","d","/webservices/","GET","200","","","","","Webservices found","",""
+"006715","0","be","/atg/bcc","GET","200","","","","","Oracle ATG Business Control Center","",""
