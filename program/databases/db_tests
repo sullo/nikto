@@ -6694,3 +6694,4 @@
 "006725","0","23","/_layouts/userdisp.aspx","GET","User\sinformation","","","","","Sharepoint discloses user information","",""
 "006726","0","23","/_layouts/viewgrouppermissions.aspx","GET","The\squery\sstring","","","","","Sharepoint discloses user information","",""
 "006727","0","23","/_vti_bin/spdisco.aspx","GET","<discovery\s","","","","","Sharepoint discloses WSDL information via this XML","",""
+"006737","3092","3","/dumpinfo","GET","200","Service\sLocator\sURL\sMappings","","","","National Instruments Service Locator","",""
