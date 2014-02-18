@@ -6703,3 +6703,4 @@
 "006734","0","0","/cqresource/","GET","200","","","","","CRX WebDAV upload","",""
 "006735","0","3","/etc/cloudservices","GET","200","","","","","Adobe Experience Manager Cloud Service Information","",""
 "006736","0","3","/etc/reports","GET","200","","","","","Adobe Experience Manager Reports","",""
+"006737","0","7","/wp-content/plugins/nextgen-gallery/products/photocrati_nextgen/modules/nextgen_addgallery_page/static/jquery.filetree/connectors/jqueryFileTree.php","GET","root","windows","","","","NextGEN Gallery LFI, see https://security.dxw.com/advisories/directory-traversal-in-nextgen-gallery-2-0-0/","dir=/",""
