@@ -6704,3 +6704,5 @@
 "006735","0","3","/etc/cloudservices","GET","200","","","","","Adobe Experience Manager Cloud Service Information","",""
 "006736","0","3","/etc/reports","GET","200","","","","","Adobe Experience Manager Reports","",""
 "006737","0","7","/wp-content/plugins/nextgen-gallery/products/photocrati_nextgen/modules/nextgen_addgallery_page/static/jquery.filetree/connectors/jqueryFileTree.php","GET","root","windows","","","","NextGEN Gallery LFI, see https://security.dxw.com/advisories/directory-traversal-in-nextgen-gallery-2-0-0/","dir=/",""
+"006738","0","8b","@CGIDIRSc99.php","GET","200","","r57 c99 shell","","","c99.php remote web shell","",""
+"006730","0","8b","/c99.php","GET","200","","r57 c99 shell","","","c99.php remote web shell","",""
