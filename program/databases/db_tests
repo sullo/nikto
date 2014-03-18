@@ -3153,7 +3153,7 @@
 "003154","4191","7","/viewimg.php?path=../../../../../../../../../../etc/passwd&form=1&var=1","GET","root:","","","","","KorWebLog from http://weblog.kldp.org/ allows any file to be read on the system.","",""
 "003155","4192","d","@CGIDIRSgettransbitmap","GET","200","","","","","Sun Answerbook2 is vulnerable to a buffer overflow in the gettransbitmap CGI. All default CGIs should be disabled or removed, and Answerbook2 should be disabled if not being used.","",""
 "003156","4220","8","@CGIDIRSguestbook.cgi?user=cpanel&template=|/bin/cat%20/etc/passwd|","GET","root:","","","","","cpanel's guestbook.cgi allows any command to be executed on the remote server. Remove /usr/local/cpanel/cgi-sys/guestbook.cgi or update to a new version of cpanel.","",""
-"003157","4231","3","/JUNK(5).xml","GET","file:","","","","","Coccoon from Apache-XML project reveals file system path in error messages.","",""
+"003157","4231","3","/JUNK(5).xml","GET","file:","","","file:hover","","Coccoon from Apache-XML project reveals file system path in error messages.","",""
 "003158","4231","3","/JUNK(5)/","GET","FileNotFoundException: \/","","","","","Coccoon 2.1.4 from Apache-XML project reveals file system path in error messages.","",""
 "003159","4233","1","/cgi-bin/main_menu.pl","GET","NetDetector Traffic Analysis","","","","","The NetDetector allows unauthenticated users to perform database queries.","",""
 "003160","4237","2","/ban.bak","GET","200","","","","","Bannermatic versions 1-3 reveal sensitive information from unprotected files. These files should be protected.","",""
