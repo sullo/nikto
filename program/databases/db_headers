@@ -88,3 +88,4 @@
 "xmlns"
 "persistent-auth"
 "x-ua-compatible"
+"x-xss-protection"
