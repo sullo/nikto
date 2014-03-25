@@ -6675,7 +6675,6 @@
 "006703","0","1e","/console/","GET","200","","","","","Application console found","",""
 "006704","0","1","/umbraco/login.aspx","GET","umbraco.org","","","","","Umbraco admin login page found","",""
 "006705","0","13","/aspmenu/_notes/dwsync.xml","GET","file\sname","","","","","Adobe Dreamweaver dwsync.xml Remote Information Disclosure","",""
-<<<<<<< HEAD
 "006706","0","b6e","/ws/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006707","0","b6e","/axis2/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006708","0","b6e","/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
@@ -6698,7 +6697,6 @@
 "006725","0","23","/_layouts/userdisp.aspx","GET","User\sinformation","","","","","Sharepoint discloses user information","",""
 "006726","0","23","/_layouts/viewgrouppermissions.aspx","GET","The\squery\sstring","","","","","Sharepoint discloses user information","",""
 "006727","0","23","/_vti_bin/spdisco.aspx","GET","<discovery\s","","","","","Sharepoint discloses WSDL information via this XML","",""
-<<<<<<< HEAD
 "006728","0","e","/crx","GET","200","","","","","Adobe CQ CRX Console","",""
 "006729","0","e","/system/console/configMgr","GET","200","","","","","OSGi Apache Felix console","",""
 "006730","0","e","/system/console/bundles","GET","200","","","","","OSGi Apache Felix console","",""
@@ -6713,3 +6711,4 @@
 "006739","0","8b","/c99.php","GET","200","","r57 c99 shell","","","c99.php remote web shell","",""
 "006740","3092","3","/dumpinfo","GET","200","Service\sLocator\sURL\sMappings","","","","National Instruments Service Locator","",""
 "006741","0","3","/somenonexistingfile.epl","GET","404: somenonexistingfile.epl\(1\): Not found '/.*/somenonexistingfile.epl'","","","","","Embperl 404 message discloses full file path"
+"006742","0","1","/umbraco/ping.aspx","GET","I'm alive!","","","","","Umbraco ping page found","",""
