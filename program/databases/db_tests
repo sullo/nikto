@@ -1,12 +1,15 @@
 #VERSION,2.021
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001-2014 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2007 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 #
@@ -3153,7 +3156,7 @@
 "003154","4191","7","/viewimg.php?path=../../../../../../../../../../etc/passwd&form=1&var=1","GET","root:","","","","","KorWebLog from http://weblog.kldp.org/ allows any file to be read on the system.","",""
 "003155","4192","d","@CGIDIRSgettransbitmap","GET","200","","","","","Sun Answerbook2 is vulnerable to a buffer overflow in the gettransbitmap CGI. All default CGIs should be disabled or removed, and Answerbook2 should be disabled if not being used.","",""
 "003156","4220","8","@CGIDIRSguestbook.cgi?user=cpanel&template=|/bin/cat%20/etc/passwd|","GET","root:","","","","","cpanel's guestbook.cgi allows any command to be executed on the remote server. Remove /usr/local/cpanel/cgi-sys/guestbook.cgi or update to a new version of cpanel.","",""
-"003157","4231","3","/JUNK(5).xml","GET","file:","","","","","Coccoon from Apache-XML project reveals file system path in error messages.","",""
+"003157","4231","3","/JUNK(5).xml","GET","file:","","","file:hover","","Coccoon from Apache-XML project reveals file system path in error messages.","",""
 "003158","4231","3","/JUNK(5)/","GET","FileNotFoundException: \/","","","","","Coccoon 2.1.4 from Apache-XML project reveals file system path in error messages.","",""
 "003159","4233","1","/cgi-bin/main_menu.pl","GET","NetDetector Traffic Analysis","","","","","The NetDetector allows unauthenticated users to perform database queries.","",""
 "003160","4237","2","/ban.bak","GET","200","","","","","Bannermatic versions 1-3 reveal sensitive information from unprotected files. These files should be protected.","",""
@@ -6672,7 +6675,6 @@
 "006703","0","1e","/console/","GET","200","","","","","Application console found","",""
 "006704","0","1","/umbraco/login.aspx","GET","umbraco.org","","","","","Umbraco admin login page found","",""
 "006705","0","13","/aspmenu/_notes/dwsync.xml","GET","file\sname","","","","","Adobe Dreamweaver dwsync.xml Remote Information Disclosure","",""
-<<<<<<< HEAD
 "006706","0","b6e","/ws/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006707","0","b6e","/axis2/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
 "006708","0","b6e","/axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis console found","",""
@@ -6695,7 +6697,6 @@
 "006725","0","23","/_layouts/userdisp.aspx","GET","User\sinformation","","","","","Sharepoint discloses user information","",""
 "006726","0","23","/_layouts/viewgrouppermissions.aspx","GET","The\squery\sstring","","","","","Sharepoint discloses user information","",""
 "006727","0","23","/_vti_bin/spdisco.aspx","GET","<discovery\s","","","","","Sharepoint discloses WSDL information via this XML","",""
-<<<<<<< HEAD
 "006728","0","e","/crx","GET","200","","","","","Adobe CQ CRX Console","",""
 "006729","0","e","/system/console/configMgr","GET","200","","","","","OSGi Apache Felix console","",""
 "006730","0","e","/system/console/bundles","GET","200","","","","","OSGi Apache Felix console","",""
@@ -6710,3 +6711,4 @@
 "006739","0","8b","/c99.php","GET","200","","r57 c99 shell","","","c99.php remote web shell","",""
 "006740","3092","3","/dumpinfo","GET","200","Service\sLocator\sURL\sMappings","","","","National Instruments Service Locator","",""
 "006741","0","3","/somenonexistingfile.epl","GET","404: somenonexistingfile.epl\(1\): Not found '/.*/somenonexistingfile.epl'","","","","","Embperl 404 message discloses full file path"
+"006742","0","1","/umbraco/ping.aspx","GET","I'm alive!","","","","","Umbraco ping page found","",""
