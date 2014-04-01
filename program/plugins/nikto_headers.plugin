@@ -101,6 +101,7 @@ sub nikto_headers_postfetch {
                     $ishex = 0;
                 }
             }
+            use bignum;
             my $inode = "0x$fields[0]";
             my $size  = "0x$fields[1]";
             my $mtime = "0x$fields[2]";
