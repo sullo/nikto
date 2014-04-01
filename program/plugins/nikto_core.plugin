@@ -641,6 +641,11 @@ sub general_config {
             nprint("+ ERROR: -Save must have a directory name or '.' for auto-generated");
             exit;
         }
+        eval "require JSON::PP";
+        if ($@) {
+            nprint("+ ERROR: Module JSON::PP missing.");
+            exit;
+        }
     }
 
     # port(s)
