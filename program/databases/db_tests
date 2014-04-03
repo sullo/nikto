@@ -6422,7 +6422,7 @@
 "006430","0","1","/maint.asp","GET","200","","","","","This might be interesting...","",""
 "006431","0","1","/maint.aspx","GET","200","","","","","This might be interesting...","",""
 "006432","59440","57","/sdk/%2E%2E/%2E%2E/%2E%2E/%2E%2E/%2E%2E/%2E%2E/etc/vmware/hostd/vmInventory.xml","GET","200","","","","","VMWare ESX is vulnerable to a directory traversal attack.","",""
-"006433","39003","4","/","<script>alert(1)</script>","413","","<script>alert\(1\)<\/script>","","","Apache HTTP Server 2.0.x and 2.2.x<script>alert(1)</script>","","Contentwidth: witty"
+"006433","39003","4","/","<script>alert(1)</script>","413","","<script>alert\(1\)<\/script>","","","Apache HTTP Server 2.0.x and 2.2.x<script>alert(1)</script>","","Content-Length: -1"
 "006434","0","3","/jk-status","GET","200","","","","","mod_jk status page is visible.","",""
 "006435","0","3","/balancer-manager","GET","200","","","","","mod_proxy_balancer management page is visible.","",""
 "006437","0","1","/servlets-examples/","GET","200","","","","","Tomcat servlets examples are visible.","",""
