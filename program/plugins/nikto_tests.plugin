@@ -65,7 +65,7 @@ sub nikto_tests {
             my %flags;
             if ($TESTS{$checkid}{'headers'}) {
                 %headrs=split /: /, $TESTS{$checkid}{'headers'};
-                $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # I need to fix this
+                $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
             my ($res, $content, $error, $request, $response) =
