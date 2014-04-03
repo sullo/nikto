@@ -2126,7 +2126,7 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
     $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
     if (defined $CLI{'evasion'}) {
-        $reqhash->{'whisker'}->{'encode_anti_ids'} = $CLI{'evasion'};
+        $reqhash->{'whisker'}->{'anti_ids'} = $CLI{'evasion'};
     }
     $reqhash->{'User-Agent'} = $VARIABLES{'useragent'};
     $reqhash->{'User-Agent'} =~ s/\@TESTID/$testid/;
@@ -2705,6 +2705,7 @@ sub usage {
                                0     File Upload
                                a     Authentication Bypass
                                b     Software Identification
+                               b     Administration Console
                                c     Remote Source Inclusion
                                x     Reverse Tuning Options (i.e., include all except specified)
        -timeout+          Timeout for requests (default 10 seconds)

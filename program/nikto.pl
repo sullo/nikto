@@ -191,7 +191,7 @@ foreach my $mark (@MARKS) {
     if (!$CLI{'findonly'}) {
         if (!$mark->{'terminate'}) {
             nprint(
-                "+ $COUNTERS{'total_checks'} items checked: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+                "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
                 );
         }
         else {

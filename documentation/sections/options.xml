@@ -304,6 +304,7 @@ number or letter to specify the type, multiple may be used:</para>
         <para>9 - SQL Injection</para>
         <para>a - Authentication Bypass</para>
         <para>b - Software Identification</para>
+        <para>e - Administration Console</para>
         <para>c - Remote Source Inclusion</para>
         <para>x - Reverse Tuning Options (i.e., include all except
 specified)</para>
