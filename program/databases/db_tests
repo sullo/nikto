@@ -6711,3 +6711,4 @@
 "006741","0","3","/somenonexistingfile.epl","GET","404: somenonexistingfile.epl\(1\): Not found '/.*/somenonexistingfile.epl'","","","","","Embperl 404 message discloses full file path","",""
 "006742","0","1","/umbraco/ping.aspx","GET","I'm alive!","","","","","Umbraco ping page found","",""
 "006743","0","3","/Trace.axd","GET","Request\sDetails","Application\sTrace","","","","Trace.axd can reveal application or system details","",""
+"006744","0","a","/SDE/timeout.aspx","GET","bmclabelbold","","","","","BMC Service Desk Express found","",""
