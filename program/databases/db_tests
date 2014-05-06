@@ -1375,7 +1375,7 @@
 "001358","13404","2","/com/","GET","200","","","","","Novell web server allows directory listing","",""
 "001359","13402","2","/com/novell/","GET","200","","","","","Novell web server allows directory listing","",""
 "001360","13403","2","/com/novell/webaccess","GET","200","","","","","Novell web server allows directory listing","",""
-"001361","10944","18","@CGIDIRS","GET","match","","","","","text goes here","",""
+"001361","10944","18","@CGIDIRS","GET","match","","","","","CGI Directory found","",""
 "001362","8193","7","/index.php?module=ew_filemanager&type=admin&func=manager&pathext=../../../etc","GET","passwd","","","","","EW FileManager for PostNuke allows arbitrary file retrieval.","",""
 "001363","8193","7","/index.php?module=ew_filemanager&type=admin&func=manager&pathext=../../../etc/&view=passwd","GET","root:","","","","","EW FileManager for PostNuke allows arbitrary file retrieval.","",""
 "001364","3093","1","@CGIDIRSccbill-local.pl?cmd=MENU","GET","200","","","","","This might be interesting... has been seen in web logs from an unknown scanner.","",""
