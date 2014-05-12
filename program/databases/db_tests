@@ -6712,3 +6712,7 @@
 "006742","0","1","/umbraco/ping.aspx","GET","I'm alive!","","","","","Umbraco ping page found","",""
 "006743","0","3","/Trace.axd","GET","Request\sDetails","Application\sTrace","","","","Trace.axd can reveal application or system details","",""
 "006744","0","a","/SDE/timeout.aspx","GET","bmclabelbold","","","","","BMC Service Desk Express found","",""
+"006745","0","e","/manage/CxSense","GET","200","","","","","Covertix SmartCipher Console Login","",""
+"006746","0","3","/manage/Logs","GET","200","","","","","Covertix SmartCipher Console Login and Web Service Log directory","",""
+"006747","0","d","/manage/CxSenseWebServices/CxSense.asmx","GET","200","","","","","Covertix SmartCipher Web Service","",""
+"006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","","","","Covertix SmartCipher DMZ Server Web Service","",""
