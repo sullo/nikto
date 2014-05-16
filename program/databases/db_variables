@@ -29,3 +29,4 @@
 @HTTPFOUND=200 301 302 403
 @FCKEDITOR=/FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/
 @CRYSTALREPORTS=/ /CrystalReports/ /crystal/ /businessobjects/ /crystal/enterprise10/ /crystal/Enterprise10/ePortfolio/en/
+@OWNCLOUD=/ /cloud/ /owncloud/ /ownCloud/ /OwnCloud/
