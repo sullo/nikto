@@ -708,7 +708,7 @@
 "000681","0","7","/ca/..\\..\\..\\..\\..\\..\\/\\etc/\\passwd","GET","root:","","","","","It is possible to read files on the server by adding through directory traversal by adding multiple /\\.. in front of file name.","",""
 "000682","0","7","/ca/..\\..\\..\\..\\..\\..\\..\\..\\winnt/\\win.ini","GET","\[fonts\]","","","","","It is possible to read files on the server by adding through directory traversal by adding multiple /\\.. in front of file name.","",""
 "000683","728","9","/admentor/adminadmin.asp","GET","200","","","","","Version 2.11 of AdMentor is vulnerable to SQL injection during login, in the style of: ' or =","",""
-"000684","36894","9","@POSTNUKEMy_eGallery/public/displayCategory.php","GET","200","","","","","My_eGallery prior to 3.1.1.g are vulnerable to a remote execution bug via SQL command injection. displayCategory.php calls imageFunctions.php without checking URL/location arguments.","",""
+"000684","36894","9","@NUKEMy_eGallery/public/displayCategory.php","GET","200","","","","","My_eGallery prior to 3.1.1.g are vulnerable to a remote execution bug via SQL command injection. displayCategory.php calls imageFunctions.php without checking URL/location arguments.","",""
 "000685","0","9","@CGIDIRSclassifieds/index.cgi","GET","200","","","","","My Classifieds pre 2.12 is vulnerable to SQL injection attacks.","",""
 "000686","10105","9","/imp/mailbox.php3?actionID=6&server=x&imapuser=x';somesql+--&pass=x","GET","parse error","","","","","IMP 2.x allows SQL injection, and reveals system information.","",""
 "000687","9392","9","/userinfo.php?uid=1;","GET","Query\sError:","","","","","Xoops portal gives detailed error messages including SQL syntax and may allow an exploit.","",""
