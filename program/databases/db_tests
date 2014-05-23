@@ -6717,3 +6717,4 @@
 "006747","0","d","/manage/CxSenseWebServices/CxSense.asmx","GET","200","","","","","Covertix SmartCipher Web Service","",""
 "006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","","","","Covertix SmartCipher DMZ Server Web Service","",""
 "006749","51887","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found. CVE-2009-0932.","",""
+"006754","0","b","@SECLOREWelcome.do","GET","200","Powered\sBy\sFileSecure","","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
