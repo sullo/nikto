@@ -275,5 +275,4 @@
 "800255","cp-sw-server","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800256","cpservd","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800257","mod_speling","0","mod_speling can reveal otherwise hidden files via 'misspelled' file names."
-"800258","nginx","0","http://nginx.com/"
 "800259","HttpFileServer\shttpd","0","This server has been known to host malware, see: https://pronto185.com/blog/2014/03/06/slightly-interesting-find-from-sshranking/"
