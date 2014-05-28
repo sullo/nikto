@@ -6715,6 +6715,6 @@
 "006745","0","e","/manage/CxSense/","GET","200","","SmartCipher","","","Covertix SmartCipher Console Login detected. Default credentials are: admin:Admin","",""
 "006746","0","3","/manage/Logs/","GET","200","","","","","Covertix SmartCipher Console Login and Web Service Log directory detected","",""
 "006747","0","d","/manage/CxSenseWebService/CxSense.asmx","GET","200","","CxSense\sWeb\sService","","","Covertix SmartCipher Web Service detected","",""
-"006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","","","","Covertix SmartCipher DMZ Server Web Service detected","",""
+"006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","CxServerDMZ","","","Covertix SmartCipher DMZ Server Web Service detected","",""
 "006749","51887","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found. CVE-2009-0932.","",""
 "006754","0","b","@SECLOREWelcome.do","GET","200","Powered\sBy\sFileSecure","","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
