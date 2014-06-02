@@ -6722,3 +6722,4 @@
 "006752","0","0","@OWNCLOUDremote.php/caldav","GET","Generated\sby\sSabreDAV","Sabre_DAV_Exception_NotAuthenticated","","","","ownCloud CalDAV interface detected (pass protected)","",""
 "006753","0","0","@OWNCLOUDremote.php/carddav","GET","Generated\sby\sSabreDAV","Sabre_DAV_Exception_NotAuthenticated","","","","ownCloud CardDAV interface detected (pass protected)","",""
 "006754","0","b","@SECLOREWelcome.do","GET","200","Powered\sBy\sFileSecure","","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
+"006755","0","e","/eyekit/eyekit.php","GET","200","","eyekit\sRelease","","","eyeKit CMS admin login detected","",""
