@@ -87,7 +87,7 @@ sub nikto_headers_postfetch {
     }
 
     # look for inode in etag header
-    if (!$ETAGS && defined $result->{'etag'}) { 
+    if (!$ETAGS && defined $result->{'etag'} && $result->{'etag'} =~ m/-/) {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
