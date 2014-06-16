@@ -61,13 +61,20 @@ sub nikto_tests {
         # Now repeat for each uri
         foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
-            my %headrs = split /:/, $TESTS{$checkid}{'headers'};
+            my %headrs;
+            my %flags;
+            if ($TESTS{$checkid}{'headers'}) {
+                %headrs=split /: /, $TESTS{$checkid}{'headers'};
+                $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
+                $flags{'noclean'} = 1;
+            }
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
                      $TESTS{$checkid}{'method'},
                      $TESTS{$checkid}{'data'},
                      \%headrs,
-                     "", $checkid);
+                     \%flags, 
+                     $checkid);
 
             # NOTE: auth is now done in nfetch
             if ($res eq 200) {
