@@ -2309,14 +2309,14 @@ sub nfetch {
         }
     }
 
-    nprint("- $result{'whisker'}{'code'} for $method:\t$request{'whisker'}->{'uri'}", "v");
+    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}", "v");
 
     # Check for errors to reduce false positives
     if ((defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '')
         && !exists $flags->{'noerror'}) {
         $mark->{'total_errors'}++;
         nprint(
-            "+ ERROR: $request{'whisker'}->{'uri'} returned an error: $result{'whisker'}{'error'}\n",
+            "+ ERROR: $result{'whisker'}->{'uri_requested'} returned an error: $result{'whisker'}{'error'}\n",
             "e"
             );
         if (($result{'whisker'}->{'code'} eq 502) && ($CLI{'useproxy'})) {
@@ -2326,7 +2326,7 @@ sub nfetch {
 
     if ($OUTPUT{'show_cookies'} && (defined($result{'whisker'}->{'cookies'}))) {
         foreach my $c (@{ $result{'whisker'}->{'cookies'} }) {
-            nprint("+ $request{'whisker'}->{'uri'} sent cookie: $c");
+            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c");
         }
     }
 
@@ -2840,7 +2840,7 @@ sub add_vulnerability {
                     nikto_id => $nikto_id,
                     osvdb    => $osvdb,
                     method   => $method,
-                    uri      => $uri,
+                    uri      => $response->{whisker}->{uri_requested},
                     result   => $result,
                     request  => $request,
                     );

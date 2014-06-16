@@ -2629,6 +2629,7 @@ sub _http_do_request_ex {
             $$hout{whisker}->{message}     = $6;
             $$hout{whisker}->{http_eol}    = $7;
             $$hout{whisker}->{'100_continue'}++ if ( $4 == 100 );
+            $$hout{whisker}->{'uri_requested'} = $$W{'uri'}; 
 
             @H = http_read_headers( $stream, $hin, $hout );
             if ( !$H[0] ) {
