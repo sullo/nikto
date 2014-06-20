@@ -2715,7 +2715,7 @@ sub usage {
        -useragent         Over-rides the default useragent
        -until             Run until the specified time or duration
        -update            Update databases and plugins from CIRT.net
-       -useproxy          Use the proxy defined in nikto.conf
+       -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
    		+ requires a value\n\n";
