@@ -65,8 +65,10 @@ sub sqlg_host_start {
     $banner =~ s/"/\\'/g;
     my $ssl=0;
     if (defined $mark->{'ssl_cipher'}) { $ssl=1; }
+    my $hostname = $mark->{'hostname'};
+    if ($mark->{'vhost'} ne '') { $hostname=$mark->{'hostname'}; }
     my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message) values(";
-    $sql .= "'999958','$mark->{'ip'}','$mark->{'hostname'}','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
+    $sql .= "'999958','$mark->{'ip'}','$hostname','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
 	print $handle $sql;
     
     if (defined $mark->{'ssl_cipher'}) {
@@ -89,8 +91,10 @@ sub sqlg_host_start {
 sub sqlg_item {
     my ($handle, $mark, $item) = @_;  
     foreach my $uri (split(' ', $item->{'uri'})) {
-		# escape ' in vals which could have them
-    	my $hostname = $item->{'mark'}->{'hostname'}; 
+	# escape ' in vals which could have them
+ 	my $hostname = $item->{'mark'}->{'hostname'};
+	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
+
     	$hostname =~ s/'/\\'/g;
     	my $httpmethod = $item->{'method'};
     	$httpmethod =~ s/'/\\'/g;
