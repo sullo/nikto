@@ -189,7 +189,7 @@ sub html_change_vars {
 		{ $uri = $mark->{'root'} . $uri; }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $msg;
-        $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
+        $variables{"#TEMPL_HTTP_METHOD#"} = simple_enc($item->{'method'});
         $variables{"#TEMPL_ITEM_IP_LINK#"} =
           "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
         $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
