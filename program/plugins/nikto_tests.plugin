@@ -82,11 +82,9 @@ sub nikto_tests {
                      "+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
                   if $OUTPUT{'show_ok'};
             }
-            elsif ($res =~ /30(?:[0-3]|7)/) {
+            elsif ($OUTPUT{'show_redirects'} && ($res =~ /30(?:[0-3]|7)/)) {
                 nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
-                       . $response->{'location'}
-                       . " , $TESTS{$checkid}{'message'}")
-                  if $OUTPUT{'show_redirects'};
+                       . $response->{'location'} . " , " . $TESTS{$checkid}{'message'});
             }
 
             # If user puts a @CODE= string in db_404_strings, let it take precedence
