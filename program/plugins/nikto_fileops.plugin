@@ -49,6 +49,7 @@ sub save_item {
     print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
     print SAVEFILE "OSVDB ID: \t" . $resulthash->{'osvdb'} . "\n";
     print SAVEFILE "Message:  \t" . $message . "\n";
+    print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Request\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";

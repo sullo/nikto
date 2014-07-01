@@ -54,8 +54,8 @@ sub nikto_tests {
         return if $mark->{'terminate'};
         if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
                                              # replace variables in the uri
-		my $intcheck=int($checkid);
-		if ((scalar(@tids) > 0) && !grep(/^$intcheck$/, @tids)) { next; }
+	my $intcheck=int($checkid);
+	if ((scalar(@tids) > 0) && !grep(/^$intcheck$/, @tids)) { next; }
         my @urilist = change_variables($TESTS{$checkid}{'uri'});
 
         # Now repeat for each uri
@@ -77,10 +77,8 @@ sub nikto_tests {
                      $checkid);
 
             # NOTE: auth is now done in nfetch
-            if ($res eq 200) {
-                nprint(
-                     "+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
-                  if $OUTPUT{'show_ok'};
+            if ($OUTPUT{'show_ok'} && ($res eq 200)) {
+                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}");
             }
             elsif ($OUTPUT{'show_redirects'} && ($res =~ /30(?:[0-3]|7)/)) {
                 nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
@@ -97,7 +95,7 @@ sub nikto_tests {
             my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
               "content";
             my ($positive, $hashme) = 0;
-            my $hash = '';
+            my ($hash, $reason) = '';
 
             # how to check each conditional
             if ($TESTS{$checkid}{'match_1'} =~ /^[0-9]{3}$/) { $m1_method = "code"; }
@@ -143,17 +141,24 @@ sub nikto_tests {
             if ($m1_method eq "content") {
                 if ($content =~ /$TESTS{$checkid}{'match_1'}/) {
                     $positive = 1;
+                    $reason = 'Content Match';
                 }
             }
             elsif ($m1_method eq "md5") {
                 if ($hash eq $TESTS{$checkid}{'match_1'}) {
                     $positive = 1;
+                    $reason = 'MD5 Hash';
                 }
             }
             else {
-                if (($res eq $TESTS{$checkid}{'match_1'}) || ($res eq $FoF{'okay'}{'response'})) {
+                if ($res eq $TESTS{$checkid}{'match_1'}) {
                     $positive = 1;
+                    $reason = 'Response Code Match';
                 }
+                elsif ($res eq $FoF{'okay'}{'response'}) {
+                    $positive = 1;
+                    $reason = 'Response Code Match - FoF OK Response)';
+		}
             }
 
             # no match, check optional match
@@ -161,17 +166,23 @@ sub nikto_tests {
                 if ($m1o_method eq "content") {
                     if ($content =~ /$TESTS{$checkid}{'match_1_or'}/) {
                         $positive = 1;
+                    	$reason = 'Content Match - Match 1 (Or)';
                     }
                 }
                 elsif ($m1o_method eq "md5") {
                     if ($hash eq $TESTS{$checkid}{'match_1_or'}) {
                         $positive = 1;
+                    	$reason = 'MD5 Hash - Match 1 (Or)';
                     }
                 }
                 else {
-                    if (   ($res eq $TESTS{$checkid}{'match_1_or'})
-                        || ($res eq $FoF{'okay'}{'response'})) {
+                    if ($res eq $TESTS{$checkid}{'match_1_or'}) {
                         $positive = 1;
+                        $reason = 'Response Code Match - Match 1 (Or)';
+			}
+                   elsif ($res eq $FoF{'okay'}{'response'}) {
+                        $positive = 1;
+                        $reason = 'Response Code Match - FoF OK Response / Match 1 (Or)';
                     }
                 }
             }
@@ -207,14 +218,17 @@ sub nikto_tests {
                 if ($TESTS{$checkid}{'match_1_and'} ne "") {
                     if ($m1a_method eq "content") {
                         if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
+			else { $reason .= ' and content Match1 (And)'; }
                     }
                     elsif ($m1a_method eq "md5") {
                         if ($hash ne $TESTS{$checkid}{'match_1_and'}) {
                             next;
                         }
+			else { $reason .= ' and MD5 Match1 (And)'; }
                     }
                     else {
                         if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
+			else { $reason .= ' and Response Code Match1 (And)'; }
                     }
                 }
 
@@ -240,7 +254,8 @@ sub nikto_tests {
                                   $TESTS{$checkid}{'method'},
                                   $mark->{'root'} . $uri,
                                   $request,
-                                  $response
+                                  $response,
+                                  $reason
                                   );
             }
         }
