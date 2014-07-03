@@ -6749,3 +6749,5 @@
 "006779","0","2be","/sitecore/login/default.aspx","GET","LoginPanelOuter","","","","","Sitecore CMS admin login","",""
 "006780","0","2be","/sitecore/shell/WebService/Service.asmx","GET","operations\sare\ssupported","","","","","Sitecore CMS webservice found","",""
 "006781","0","2be","/?sc_mode=edit","GET","302","","sitecore","","","Sitecore CMS is installed. This url redirects to the login page.","",""
+"006782","0","2be","/sitecore/admin/stats.aspx","GET","Renderings","","","","","Sitecore CMS admin/restricted pages available","",""
+"006783","0","2be","/wcadmin/login.aspx","GET","QS\/1","","","","","QS/1 Webconnect administration panel","",""

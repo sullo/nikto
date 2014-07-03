@@ -2813,14 +2813,14 @@ sub init_db {
 
 #######################################################################
 sub add_vulnerability {
-    my ($mark, $message, $nikto_id, $osvdb, $method, $uri, $request, $response) = @_;
+    my ($mark, $message, $nikto_id, $osvdb, $method, $uri, $request, $response, $reason) = @_;
     $uri    = "/"   unless (defined $uri);
     $method = "GET" unless (defined $method);
     $osvdb  = "0"   unless (defined $osvdb);
 
     # check to see if we've alerted already (can be from content search, etc.)
     foreach my $r (@RESULTS) {
-        if (   ($uri eq $r->{'uri'})
+        if (   ($uri                       eq $r->{'uri'})
             && ($message                   eq $r->{'message'})
             && ($method                    eq $r->{'method'})
             && (${ $r->{'mark'} }{'ident'} eq $mark->{'ident'})
@@ -2843,6 +2843,7 @@ sub add_vulnerability {
                     uri      => $response->{whisker}->{uri_requested},
                     result   => $result,
                     request  => $request,
+                    reason   => $reason,
                     );
                     
     push(@RESULTS, $resulthash);
