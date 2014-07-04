@@ -35,10 +35,11 @@ sub nikto_paths_init {
 }
 
 sub nikto_paths {
+print "in paths\n";
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
-    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "robots");
+    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
 
     if ($res eq 200) {
 
