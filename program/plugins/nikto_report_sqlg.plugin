@@ -72,15 +72,18 @@ sub sqlg_host_start {
 	print $handle $sql;
     
     if (defined $mark->{'ssl_cipher'}) {
-    	my $ciphers = $mark->{ssl_cipher};
-    	my $issuer = $mark->{ssl_cert_issuer};
-    	my $subj = $mark->{ssl_cert_subject};
+    	my $ciphers = $mark->{'ssl_cipher'};
+    	my $issuer = $mark->{'ssl_cert_issuer'};
+    	my $subj = $mark->{'ssl_cert_subject'};
+    	my $alt = $mark->{'ssl_cert_altnames'};
     	$ciphers =~ s/'/\\'/g;
     	$issuer =~ s/'/\\'/g;
     	$subj =~ s/'/\\'/g;
-		print OUT "# SSL Ciphers: $ciphers\n";
-		print OUT "# SSL Issuer:  $issuer\n";
-		print OUT "# SSL Info:    $subj\n";
+    	$alt =~ s/'/\\'/g;
+	print OUT "# SSL Ciphers: $ciphers\n";
+	print OUT "# SSL Altnames: $alt\n";
+	print OUT "# SSL Issuer:  $issuer\n";
+	print OUT "# SSL Info:    $subj\n";
     }
     
     return;

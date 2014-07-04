@@ -1,5 +1,5 @@
 #!perl
-# LW2 version 2.5
+# LW2 version 2.5.1
 #   LW2 Copyright (c) 2009, Jeff Forristal (wiretrip.net)
 #   All rights reserved.
 #
@@ -26,6 +26,9 @@
 #   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
 #   ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 #   POSSIBILITY OF SUCH DAMAGE.
+#
+#   Note that this file has been updated as part of the Nikto project,
+#   and is technically a fork of LibWhisker 2.5.
 
 =head1 NAME
 
@@ -3029,6 +3032,8 @@ sub _ssl_save_info {
             $hr->{whisker}->{ssl_cert_issuer} =
               Net::SSLeay::X509_NAME_oneline(
                 Net::SSLeay::X509_get_issuer_name($cert) );
+            $hr->{whisker}->{ssl_cert_altnames} =
+              [ Net::SSLeay::X509_get_subjectAltNames($cert) ];
         }
         return;
     }
