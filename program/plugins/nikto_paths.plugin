@@ -35,7 +35,6 @@ sub nikto_paths_init {
 }
 
 sub nikto_paths {
-print "in paths\n";
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
