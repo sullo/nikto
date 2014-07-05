@@ -401,6 +401,7 @@ sub dump_target_info {
     my $sslprint = "";
 
     if ($mark->{ssl}) {
+
         $sslprint = "$VARIABLES{'DIV'}\n";
         $sslprint .= "+ SSL Info:        Subject:  $mark->{'ssl_cert_subject'}\n";
         $sslprint .= "                   Altnames: $mark->{'ssl_cert_altnames'}\n" if $mark->{'ssl_cert_altnames'} ne '';
@@ -2306,7 +2307,12 @@ sub nfetch {
             $mark->{'ssl_cipher'}       = $result{'whisker'}->{'ssl_cipher'};
             $mark->{'ssl_cert_issuer'}  = $result{'whisker'}->{'ssl_cert_issuer'};
             $mark->{'ssl_cert_subject'} = $result{'whisker'}->{'ssl_cert_subject'};
-            $mark->{'ssl_cert_altnames'} = $result{'whisker'}->{'ssl_cert_altnames'};
+            # ssl_cert_altnaems comes back as an array
+            foreach my $n (@{$result{'whisker'}->{'ssl_cert_altnames'}}) { 
+		next if $n =~ /^[\d]+$/; # type
+		$mark->{'ssl_cert_altnames'} .= "$n, ";
+		}
+            $mark->{'ssl_cert_altnames'} =~ s/, $//;
         }
     }
 

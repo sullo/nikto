@@ -34,31 +34,49 @@ sub nikto_ssl {
     my ($mark) = @_;
 
     if ($mark->{ssl}) {
+    	my @names;
+	my $match=0;
         $mark->{'ssl_cert_subject'} =~ /CN=([^$\/ ]+)/;
-        my $cn_name = $1;
-		my $cn_display_name = $cn_name;
-		my $match=1;
-
-		# wildcard cert
-		if ($cn_name =~ /^\*/) { 
-			$cn_name =~ s/([\.\?\-\(\)\{\}\+\$\@\!\\\|])/\\$1/g;
-			$cn_name =~ s/\*/\.\*/g;
-			my $name = $mark->{'hostname'};
-			if ($name !~ /^\./) { $name = '.' . $name; } 
-			if ($name !~ /^$cn_name$/i) { $match=0; }
-			add_vulnerability($mark, "Server is using a wildcard certificate: '$cn_display_name'", 999992, 0);
-			$match=1;
-		}
-		# normal cert
-		else { 
-			if (($mark->{'hostname'} ne $cn_name) && ($cn_name ne '')) {
-				$match=0;
+	push(@names, $1);
+	if ($mark->{'ssl_cert_altnames'} ne '') { 
+		foreach my $n (split(/, /,$mark->{'ssl_cert_altnames'})) { 
+			push(@names, $n);
 			}
 		}
-		if (!$match) { 
-				add_vulnerability($mark, "Hostname '$mark->{'hostname'}' does not match certificate's CN '$cn_display_name'", 999993, 0);
+	@names = unique_vals(@names);
+	my $allnames = join(", ", @names);
+
+	foreach my $cert_name (@names) { 
+		# straight up match
+		if (lc($mark->{'hostname'}) eq lc($cert_name)) { $match = 1; }
+
+		# wildcard cert
+		elsif ($cert_name =~ /^\*/) { 
+			add_vulnerability($mark, "Server is using a wildcard certificate: $cert_name", 999992, 0);
+			$cert_name =~ s/^\*\.//;
+			$cert_name = rquote($cert_name);
+
+			# must match leading dot
+			# only one level of subdomain allowed
+			if ($mark->{'hostname'} =~ /^(.*)\.?$cert_name/i) {
+				my $matched = $1;
+				my $tldcount = ($matched =~ tr/\.//);
+				if ($tldcount <= 1) { $match = 1; }
+				}
+			}
+		last if $match;
 		}
+		
+		if (!$match) { 
+			add_vulnerability($mark, "Hostname '$mark->{'hostname'}' does not match certificate's names: $allnames", 999993, 0);
+			}
     }
 }
 
+sub unique_vals {
+    my %seen;
+    grep !$seen{$_}++, @_;
+}
+
 1;
+
