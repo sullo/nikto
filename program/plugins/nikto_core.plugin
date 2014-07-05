@@ -155,7 +155,8 @@ sub get_ext {
 
 ###############################################################################
 sub status_report {
-   my ($mark) = shift;
+    my ($mark) = shift;
+    my $line;
 
     # without this we could face a div by 0 error
     if ($COUNTERS{'totalrequests'} eq 0 ||
@@ -182,25 +183,20 @@ sub status_report {
     my $perc_compl =
         ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
 
-    my $line;
+    $line = "- STATUS: Completed $COUNTERS{'totalrequests'} requests";
+    if ($COUNTERS{'total_targets'} > 1) {
+    	$line .= " (target " . ($COUNTERS{'hosts_completed'} + 1) . "/$COUNTERS{'total_targets'})";
+	}
 
-    # This 'if' is because I am a lazy, bad programmer.
-    # And also because total_checks only takes into account db_tests, not other stuff. I swear.
     if (($perc_compl < 100) && ($secleft > 0)) {
-        $line = "- STATUS: Completed $COUNTERS{'totalrequests'} tests";
-        if ($COUNTERS{'total_targets'} > 1) {
-            $line .=
-              " (target " . ($COUNTERS{'hosts_completed'} + 1) . "/$COUNTERS{'total_targets'})";
-        }
-        $line .= sprintf(" (~%.0f%% complete, $timeleft left", $perc_compl);
-        if ($NIKTO{'current_plugin'} ne '') {
-            $line .= ": currently in plugin '$NIKTO{'current_plugin'}'";
-        }
-        $line .= ")";
-    }
-    else { $line = "- STATUS: Finishing up!"; }
+	$line .= sprintf(" (~%.0f%% complete, $timeleft left)", $perc_compl);
+	}
+
+    if ($NIKTO{'current_plugin'} ne '') {
+	$line .= ": currently in plugin '$NIKTO{'current_plugin'}'";
+ 	}
+
     nprint($line);
-    
     nprint("- STATUS: " . running_average_print($mark)); 
 
     return;
