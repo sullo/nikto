@@ -1013,8 +1013,12 @@ Returns the number of URLs actually crawled (not including those skipped).
         # we know this is defined, due to our tagmap
         my $t = $_crawl_linktags{$TAG};
 
+	# lowercase tags for normalization to prevent undefined behavior
+	# See: https://github.com/sullo/nikto/issues/142
+	$hr = { map lc, %$hr };
+
         while ( my ( $key, $val ) = each %$hr ) {    # normalize element values
-            $$hr{ lc($key) } = $val;
+            $$hr{ $key } = $val;
         }
 
         # all of this just to catch meta refresh URLs
