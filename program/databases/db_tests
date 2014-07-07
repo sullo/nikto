@@ -6751,3 +6751,5 @@
 "006781","0","2be","/?sc_mode=edit","GET","302","","sitecore","","","Sitecore CMS is installed. This url redirects to the login page.","",""
 "006782","0","2be","/sitecore/admin/stats.aspx","GET","Renderings","","","","","Sitecore CMS admin/restricted pages available","",""
 "006783","0","2be","/wcadmin/login.aspx","GET","QS\/1","","","","","QS/1 Webconnect administration panel","",""
+"006784","74115","4","/sitecore/login?xmlcontrol=Application&url=http://www.example.com&ch=WindowChrome&ic=Applications%2f32x32%2fabout.png&he=About+Sitecore&ma=0&mi=0&re=","GET","src=\"http://www.example.com","","","","","Sitecore CMS contains an arbitrary redirect vulnerability.","",""
+"006785","102660","4","/?xmlcontrol=body%20onload=alert(123)","GET","<body\sONLOAD=ALERT\s123","","","","","Sitecore CMS vulnerable to Cross-Site Scripting","",""
