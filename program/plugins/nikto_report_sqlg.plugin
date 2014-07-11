@@ -94,42 +94,39 @@ sub sqlg_host_start {
 sub sqlg_item {
     my ($handle, $mark, $item) = @_;  
     foreach my $uri (split(' ', $item->{'uri'})) {
-	# escape ' in vals which could have them
  	my $hostname = $item->{'mark'}->{'hostname'};
 	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
 
-    	$hostname =~ s/'/\\'/g;
+        $hostname =~ s/([^\/])(['])/$1\\$2/g;
     	my $httpmethod = $item->{'method'};
-    	$httpmethod =~ s/'/\\'/g;
-		$uri =~ s/'/\\'/g;
-		my $msg = $item->{'message'};
-        $msg =~ s/'/\\'/g;
+        $httpmethod =~ s/([^\/])(['])/$1\\$2/g;
+        $uri =~ s/([^\/])(['])/$1\\$2/g;
+	my $msg = $item->{'message'};
+        $msg =~ s/([^\/])(['])/$1\\$2/g;
         my $root = $mark->{'root'};
-		my $rootq = quotemeta($mark->{'root'});  # for regex
-		$root =~ s/'/\\'/g;
-		my $ssl=0;
-    	if (defined $mark->{'ssl_cipher'}) { $ssl=1; }
+        $root =~ s/([^\/])(['])/$1\\$2/g;
+	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
+        my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
     	my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message, request, response) values(";
 		$sql .= "'$item->{'nikto_id'}','$item->{'mark'}->{'ip'}','$hostname','$item->{'mark'}->{'port'}','$ssl',";
 		$sql .= "'$item->{'osvdb'}','$httpmethod',";
 
-        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/))
-			{ 
-				$sql .= "'" . $root . $uri . "',"; }
-		else { 
-			$sql .= "'$uri',"; 
-			}
+        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/)) { 
+		$sql .= "'" . $root . $uri . "',"; }
+	else { 
+		$sql .= "'$uri',"; 
+		}
 
-		$msg =~ s/^$uri:\s//;
-		$msg =~ s/^$rootq$uri:\s//;
+	$msg =~ s/^$uri:\s//;
+	$msg =~ s/^$rootq$uri:\s//;
         $sql .= "'$msg',";
         
-        # Rebuild the request from the hash -- no need to escape ' as it's base64 encoded
+        # Rebuild the request from the hash -- no need to escape as it's base64 encoded
         my $req = $$item{'request'};
     	if ($req->{'whisker'}{'method'} eq '') { 
-				$sql .= "'',";
-				}
+		$sql .= "'',";
+		}
     	else { 
     		my $rstring = $req->{'whisker'}{'method'} . " "
       			. $req->{'whisker'}{'uri'} . " "
@@ -143,10 +140,8 @@ sub sqlg_item {
         	$sql .= "'" . LW2::encode_base64($rstring,'') . "',";
 			}
 
-		# response content
-        $sql .= "'" . LW2::encode_base64($item->{'result'},'') . "'";
-
-		$sql .= ");";
+	# response content
+        $sql .= "'" . LW2::encode_base64($item->{'result'},'') . "');";
         print $handle "$sql\n";
     }
 }
