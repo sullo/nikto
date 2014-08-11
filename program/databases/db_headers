@@ -92,3 +92,5 @@
 "persistent-auth"
 "x-ua-compatible"
 "x-xss-protection"
+"content-security-policy-report-only"
+"content-security-policy"
