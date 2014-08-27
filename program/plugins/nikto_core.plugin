@@ -2674,7 +2674,7 @@ sub usage {
        -id+               Host authentication to use, format is id:pass or id:pass:realm
        -key+              Client certificate key file
        -list-plugins      List all available plugins, perform no testing
-       -maxtime+          Maximum testing time per host
+       -maxtime+          Maximum testing time per host (e.g., 1h, 60m, 3600s)
        -mutate+           Guess additional file names:\n";
 
         foreach my $k (sort keys %{ $NIKTO{'mutate_opts'} }) {
