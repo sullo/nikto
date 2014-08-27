@@ -94,3 +94,5 @@
 "x-xss-protection"
 "content-security-policy-report-only"
 "content-security-policy"
+"x-content-security-policy"
+"x-webkit-csp"
