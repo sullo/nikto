@@ -6774,3 +6774,4 @@
 "006805","3093","0","@FCKEDITOReditor/filemanager/connectors/php/connector.php?Command=GetFolders&Type=File&CurrentFolder=%2F","GET","</Connector>","This\sconnector\sis\sdisabled","","","","FCKeditor could allow files to be updated or edited by remote attackers.","",""
 "006806","3093","0","@FCKEDITOReditor/filemanager/connectors/py/connector.py?Command=GetFolders&Type=File&CurrentFolder=%2F","GET","</Connector>","This\sconnector\sis\sdisabled","","","","FCKeditor could allow files to be updated or edited by remote attackers.","",""
 "006807","0","123","/.git/config","GET","\[core\]","\[branch","","","","Git config file found. Infos about repo details may be present.","",""
+"006808","","e","/solr/admin/","GET","Solr admin page","","","","","Apache Solr administration console found","",""
