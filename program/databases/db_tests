@@ -6196,7 +6196,7 @@
 "006196","58464","04","/read/attach_file.tml?page=http://cirt.net/","GET","action=\"http:\/\/cirt\.net","","","","","Lyris ListManager XSRF/File Upload.","",""
 "006197","0","23","/config/config.txt","GET","200","","","","","Configuration file found.","",""
 "006198","0","23","/htaccess.txt","GET","RewriteEngine On","","","","","Default Joomla! htaccess.txt file found. This should be removed or renamed.","",""
-"006199","0","1b","/typo3/","GET","c-password","TYPO3","200","","","TYPO3 login found","",""
+"006199","0","1b","/typo3/","GET","c-password","TYPO3\sScript\sID","200","","","TYPO3 login found","",""
 "006200","0","12","@CGIDIRSphp.ini","GET","\[PHP\]","","","","","php.ini file found","",""
 "006201","0","3","/ConversionReport.txt","GET","This report shows","","","","","A report file from an ASP.NET 1.1 conversion to an ASP.NET 2.0 project was found and may reveal sensitive information.","",""
 "006202","0","b","/cadence/","GET","Cadre Technologies","","","","","Cadre Technologies Cadence WebAccess was found.","",""
