@@ -6783,3 +6783,4 @@
 "006814","","2b","/Portals/_default/Cache/ReadMe.txt","GET","cache\ssynchronization","","","","","DotNetNuke default page found. Look for an admin interface on /tabid/19/, /tabid/36/ or enumerate numbers to identify logins/content.","",""
 "006815","","9","/DesktopModules/DNNArticle/DNNArticleRSS.aspx?portalid=18&moduleid=0&categoryid=1+or+1=@@junk","GET","Conversoin\sfailed","","","","","DotNetNuke SQL injection found, see http://www.exploit-db.com/exploits/27602/.","",""
 "006816","","52","/Providers/HtmlEditorProviders/Fck/fcklinkgallery.aspx","GET","Link\sGallery","","","","","DotNetNuke Link Gallery may allow file upload/retrieval. See http://www.exploit-db.com/exploits/12700/","",""
+"006817","3093","23","/typo3_src/ChangeLog","GET","Release\sof\sTYPO3","","","","","TYPO3 ChangeLog file found.","",""
