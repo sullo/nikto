@@ -21,8 +21,8 @@
 # Replay a saved request
 ###############################################################################
 use Getopt::Long;
+use JSON::PP;
 require 'plugins/LW2.pm';
-require 'plugins/JSON-PP.pm';
 my ($infile, $proxy, %request, $header, %result, $s_request);
 LW2::http_init_request(\%request);
 
