@@ -2288,8 +2288,10 @@ sub nfetch {
 
             # Check banner hasn't changed
             if (   exists $result{'server'}
-                && $mark->{'banner'} ne $result{'server'}
-                && !exists $mark->{'bannerchanged'}) {
+                && !exists $mark->{'bannerchanged'}
+                && ($mark->{'banner'} ne $result{'server'})
+		&& ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
+		) {
                 nprint(
                     "+ Server banner has changed from '$mark->{banner}' to '$result{server}' which may suggest a WAF, load balancer or proxy is in place"
                     );
