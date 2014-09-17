@@ -1804,7 +1804,7 @@
 "001793","3092","1","/perl5/","GET","200","","","","","This might be interesting...","",""
 "001794","3092","1","/php/","GET","200","","","","","This might be interesting...","",""
 "001795","3092","b","@PHPMYADMINchangelog.php","GET","phpMyAdmin\s\-\sChangeLog","","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
-"001796","3092","1","/phpMyAdmin/","GET","200","","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
+"001796","3092","b","@PHPMYADMINChangeLog","GET","phpMyAdmin\s-\sChangeLog","","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
 "001797","3092","1","/pics/","GET","200","","","","","This might be interesting...","",""
 "001798","3092","1","/piranha/secure/passwd.php3","GET","200","","","","","This might be interesting...","",""
 "001799","3092","1","/pix/","GET","200","","","","","This might be interesting...","",""
