@@ -141,7 +141,7 @@ sub nikto_headers_postfetch {
 		}
 		else {
 			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.",
-				999976,
+				999957,
 				0,
 				$request->{'whisker'}->{'method'},
 				$request->{'whisker'}->{'uri'},
