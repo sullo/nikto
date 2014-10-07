@@ -1245,16 +1245,8 @@ sub load_databases {
 
 ###############################################################################
 sub check_dbs {
-    my @dbs =
-      qw/db_headers db_httpoptions db_multiple_index db_server_msgs db_subdomains db_favicon db_embedded db_parked_strings db_404_strings  db_outdated  db_realms  db_tests  db_variables db_content_search/;
-    my $prefix = $_[0];
-    if (($prefix eq "") || ($prefix eq "dbcheck")) {
-        $prefix = "";    # for options from Get::Opt
-        nprint("\n-->\tNikto Databases");
-    }
-    elsif ($prefix eq "u") {
-        nprint("\n-->\tUser Databases");
-    }
+    @dbs = dirlist($CONFIGFILE{'DBDIR'}, "^u?db_*");
+    my %ALL_IDS;
 
     for my $file (@dbs) {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
@@ -1262,25 +1254,25 @@ sub check_dbs {
             nprint("+ ERROR: Unable to read \"$filename\"");
             next;
         }
-        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$@\n");
         nprint("Syntax Check: $filename");
 
         if ($file eq 'db_outdated') {
+	    my $count=0;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
                 if ($line eq "") { next; }
+		$count++;
                 my @L = parse_csv($line);
                 if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-                $ENTRIES{"$L[0]"}++;
-            }
-            foreach $entry (keys %ENTRIES) {
-                if ($ENTRIES{$entry} > 1) {
-                    nprint("\t+ ERROR: Duplicate ($ENTRIES{$entry}): $entry");
-                }
-            }
-            nprint("\t" . keys(%ENTRIES) . " entries");
+		if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) { 
+                    	nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+			}
+		else { $ALL_IDS{$L[0]}=1; }
+		}
+	        nprint("\t$count entries");
         }
         elsif ($file eq 'db_tests') {
             my %ENTRIES;
@@ -1312,10 +1304,14 @@ sub check_dbs {
                     my ($result, $bad) = validate_and_fix_regex($L[$i], 1);
                     if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\""); }
                 }
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                        nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                        }
+                else { $ALL_IDS{$L[0]}=1; }
             }
             foreach $entry (keys %ENTRIES) {
                 if ($ENTRIES{$entry} > 1) {
-                    nprint("\t+ ERROR: Duplicate ($ENTRIES{$entry}): $entry");
+                    nprint("\t+ ERROR: Duplicate Check Syntax ($ENTRIES{$entry}): $entry");
                 }
             }
             nprint("\t" . keys(%ENTRIES) . " entries");
@@ -1331,12 +1327,17 @@ sub check_dbs {
         }
         elsif ($file eq 'db_404_strings') {
             my $ctr = 1;
+            my %STRINGS;
             foreach $line (<IN>) {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
                 my ($result, $bad) = validate_and_fix_regex($line, 1);
                 if ($bad) { nprint("\t+ ERROR: Invalid regex on line $ctr: \"$line\""); }
+                if (exists($STRINGS{$line})) {
+                        nprint("\t+ ERROR: Duplicate String: $line");
+                        }
+                else { $STRINGS{$line}=1; }
                 $ctr++;
             }
             $ctr--;
@@ -1357,10 +1358,18 @@ sub check_dbs {
         }
         elsif ($file eq 'db_headers') {
             my $ctr = 0;
+            my %HEADERS;
             foreach $line (<IN>) {
+		chomp($line);
+                $line =~ s/\#.*$//;
+                next if $line eq '';
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
+                if (exists($HEADERS{$line})) {
+                        nprint("\t+ ERROR: Duplicate Header: $line");
+                        }
+                else { $HEADERS{$line}=1; }
                 $ctr++;
             }
             nprint("\t$ctr entries");
@@ -1376,16 +1385,14 @@ sub check_dbs {
             nprint("\t$ctr entries");
         }
         else {
-
             # It's a file of standard DB type, we can do this intelligently
             my (@headers, @regex_fields);
             my $ctr = 0, $fields = 0;
             foreach $line (<IN>) {
-
+                $line =~ s/^#.*//;
+                next if $line eq "";
                 # first, grab the headers
                 if ($fields == 0) {
-                    $line =~ s/\#.*//;
-                    next if ($line eq "");
                     @headers = parse_csv($line);
                     $fields  = $#headers;
 
@@ -1400,8 +1407,10 @@ sub check_dbs {
                     next;
                 }
 
+		chomp($line);
+                next if $line eq "";
+                my @entry = parse_csv($line);
                 if ($regex_fields[0] ne '') {
-                    my @entry = parse_csv($line);
                     foreach my $f (@regex_fields) {
                         my ($result, $bad) = validate_and_fix_regex($entry[$f], 1);
                         if ($bad) {
@@ -1415,7 +1424,12 @@ sub check_dbs {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
 
-                $ctr++;
+                if (($entry[0] ne 0) && exists($ALL_IDS{$entry[0]})) {
+                        nprint("\t+ ERROR: Duplicate Test ID: $entry[0]");
+                        }
+                else { $ALL_IDS{$entry[0]}=1; }
+
+            $ctr++;
             }
             nprint("\t$ctr entries");
         }
@@ -1423,7 +1437,34 @@ sub check_dbs {
         close(IN);
     }
 
-    if ($_[0] eq "") { check_dbs('u'); }    # do this once
+    # Try to grab the test IDs from plugins to check for duplicates. Not foolproof.
+    nprint("Checking plugins for duplicate test IDs");
+    my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
+    foreach my $pf (@pluginlist) { 
+	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$file': $@\n";
+	my @file=<PF>;
+	close(PF);
+  	my @adds= grep(/add_vulnerability\(/, @file);
+	foreach my $addv (@adds) { 
+		chomp($addv);
+		my @bits = parse_csv($addv);
+		$bits[2] =~ s/\s+//g;
+		if ($bits[2] =~ /^[\d]+$/) { 
+                	if (($bits[2] ne 0) && exists($ALL_IDS{$bits[2]})) {
+                        nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
+                        }
+                	else { $ALL_IDS{$bits[2]}=1; }
+			}
+		}
+	}
+
+    # Look for bad/invalid IDs 
+    foreach my $id (keys %ALL_IDS) { 
+	chomp($id);
+	next if (($id eq 0) || ($id eq '') || ($id eq 'nikto_id'));
+	if ($id =~ /[^\d]/) { nprint("+ERROR: Invalid test ID: $id"); next; }
+	if (length($id) < 6) {  nprint("+WARNING: Possibly invalid test ID: $id"); }
+	}
 
     nprint("\n");
     exit;
