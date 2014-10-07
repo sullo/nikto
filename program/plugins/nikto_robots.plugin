@@ -79,7 +79,7 @@ sub nikto_robots {
 				if (!defined($parameters->{'nocheck'})) {
 					my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
 					if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
-						add_vulnerability($mark, "File/dir '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999996, 0, "GET", "/$line", $request, $response);
+						add_vulnerability($mark, "File/dir '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
 					}
 				}
                 $DISCTR++;

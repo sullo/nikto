@@ -376,8 +376,7 @@ sub testfile {
         return;
     }
     if ($res == 200) {
-        add_vulnerability($mark, "$uri: file found during $name mutation",
-                          "$tid", "0", "GET", $uri, $request, $response);
+        add_vulnerability($mark, "$uri: file found during $name mutation", "$tid", "0", "GET", $uri, $request, $response);
     }
 }
 

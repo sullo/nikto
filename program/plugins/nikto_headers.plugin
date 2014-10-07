@@ -129,24 +129,11 @@ sub nikto_headers_postfetch {
 			if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
 				my $allowed = $result->{'x-frame-options'};
 				$allowed =~ s/^.* //g;
-				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. \
-					This is only supported in Internet Explorer and may lead to the header being ignored.",
-					999978,
-					0,
-					$request->{'whisker'}->{'method'},
-					$request->{'whisker'}->{'uri'},
-					$request,
-					$result);
+				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. This is only supported in Internet Explorer and may lead to the header being ignored.", 999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 		else {
-			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.",
-				999957,
-				0,
-				$request->{'whisker'}->{'method'},
-				$request->{'whisker'}->{'uri'},
-				$request,
-				$result);
+			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$XFRAME=1;
 	}
@@ -174,13 +161,7 @@ sub nikto_headers_postfetch {
 	if ($mark->{'ssl'} && !$HEADERS_STS && defined $result)
 	{
 		if (!defined $result->{'strict-transport-security'}) {
-			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.",
-				999970,
-				0,
-				$request->{'whisker'}->{'method'},
-				$request->{'whisker'}->{'uri'},
-				$request,
-				$result);
+			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$HEADERS_STS=1;
 	}
@@ -284,13 +265,7 @@ sub nikto_headers {
 		if (defined $result->{'content-encoding'}) {
 			if ($result->{'content-encoding'} =~ "(deflate|gzip)") {
 				$BREACH=1;
-				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.",
-					999966,
-					0,
-					$request->{'whisker'}->{'method'},
-					$request->{'whisker'}->{'uri'},
-					$request,
-					$result);
+				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.", 999966, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 	}

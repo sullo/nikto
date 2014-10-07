@@ -91,7 +91,7 @@ sub nikto_clientaccesspolicy {
 		$msg .= " which should be manually viewed for improper domains or wildcards.";
 
         if ($DISCTR > 0) {
-            add_vulnerability($mark, $msg, 999974, 0, "GET", $file, $request, $response);
+            add_vulnerability($mark, $msg, 999956, 0, "GET", $file, $request, $response);
         }
     }
 }
