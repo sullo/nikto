@@ -36,7 +36,7 @@ sub nikto_ssl {
     if ($mark->{ssl}) {
     	my @names;
 	my $match=0;
-        $mark->{'ssl_cert_subject'} =~ /CN=([^$\/ ]+)/;
+        $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/;
 	push(@names, $1);
 	if ($mark->{'ssl_cert_altnames'} ne '') { 
 		foreach my $n (split(/, /,$mark->{'ssl_cert_altnames'})) { 
