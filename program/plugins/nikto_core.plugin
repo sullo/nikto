@@ -1621,6 +1621,9 @@ sub load_plugins {
                 push(@PLUGINS, $pluginhash);
                 nprint("- Loaded \"$pluginhash->{full_name}\" plugin.", "v");
             }
+           else { 
+		nprint("WARNING: No init found for $plugin_name\n","d");
+		}
         }
     }
     $CONFIGFILE{'@@ALL'} = join(';', @all_names);
