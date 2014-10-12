@@ -229,7 +229,7 @@ sub nikto_headers {
         	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$result->{'content-location'}\".", 999989, 630, "GET", "/", $request, $result);
     }
 
-         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
+         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
   
      if (   ($result->{'location'} ne "") 
          && ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
