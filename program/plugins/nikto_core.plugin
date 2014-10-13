@@ -1628,6 +1628,15 @@ sub load_plugins {
     }
     $CONFIGFILE{'@@ALL'} = join(';', @all_names);
     my @torun = split(/;/, expand_pluginlist($CLI{'plugins'}, 0));
+    # Force-enable report plugins if needed
+    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) { 
+	push(@torun,'report_csv') if $CLI{'file'} =~ /csv/i;
+	push(@torun,'report_html') if $CLI{'file'} =~ /html?/i;
+	push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe/i;
+	push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
+	push(@torun,'report_text') if $CLI{'file'} =~ /txt/i;
+	push(@torun,'report_xml') if $CLI{'file'} =~ /xml/i;
+	}
 
     # Second pass to ensure that @@ALL is configured
     foreach my $plugin (@PLUGINS) {
@@ -2177,7 +2186,7 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
     $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
-    if (defined $CLI{'evasion'}) {
+    if ($CLI{'evasion'} ne '') {
         $reqhash->{'whisker'}->{'anti_ids'} = $CLI{'evasion'};
     }
     $reqhash->{'User-Agent'} = $VARIABLES{'useragent'};
@@ -2185,7 +2194,7 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'retry'} = 0;
     $reqhash->{'whisker'}->{'host'} = $mark->{'hostname'} || $mark->{'ip'};
 
-    if ($mark->{'vhost'}) {
+    if ($mark->{'vhost'} ne '') {
         $reqhash->{'Host'} = $mark->{'vhost'};
     }
     $reqhash->{'whisker'}->{'port'}            = $mark->{'port'};
