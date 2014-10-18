@@ -115,7 +115,7 @@ sub nikto_headers_postfetch {
             }
         }
         add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-		$ETAGS=1;
+		$ETAGS{$mark->{hostname}}{$mark->{port}}=1;
     }
 	
 	# Look for X-Frame-Options
