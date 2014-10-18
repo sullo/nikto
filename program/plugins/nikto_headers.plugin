@@ -36,12 +36,7 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS $BREACH $XSSPROTECTION/;
-    $ETAGS=0;
-	$XFRAME=0;
-	$HEADERS_STS;
-	$BREACH=0;
-	$XSSPROTECTION=0;
+    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION/;
 
     return $id;
 }
@@ -88,7 +83,7 @@ sub nikto_headers_postfetch {
     }
 
     # look for inode in etag header
-    if (!$ETAGS && defined $result->{'etag'} && $result->{'etag'} =~ m/-/) {
+    if (!defined $ETAGS{$mark->{hostname}}{$mark->{port}} && defined $result->{'etag'} && $result->{'etag'} =~ m/-/) {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
@@ -124,7 +119,7 @@ sub nikto_headers_postfetch {
     }
 	
 	# Look for X-Frame-Options
-	if (!$XFRAME && defined $result)
+	if (!$XFRAME{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (defined $result->{'x-frame-options'}) {
 			if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
@@ -136,17 +131,17 @@ sub nikto_headers_postfetch {
 		else {
 			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
-		$XFRAME=1;
+		$XFRAME{$mark->{hostname}}{$mark->{port}}=1;
 	}
 	
 	# X-XSS-Protection
-	if (!$XSSPROTECTION && defined $result)
+	if (!$XSSPROTECTION{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (defined $result->{'x-xss-protection'}) {
 			# Parse this and see whether it's set to 0
 			if ($result->{'x-xss-protection'} =~ /^0/) {
 				add_vulnerability($mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.", 999101, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-				$XSSPROTECTION=1;
+				$XSSPROTECTION{$mark->{hostname}}{$mark->{port}}=1;
 			}
 		}
 	}
@@ -171,12 +166,12 @@ sub nikto_headers_postfetch {
         }
     }
 
-	if ($mark->{'ssl'} && !$HEADERS_STS && defined $result)
+	if ($mark->{'ssl'} && !$HEADERS_STS{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (!defined $result->{'strict-transport-security'}) {
 			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
-		$HEADERS_STS=1;
+		$HEADERS_STS{$mark->{hostname}}{$mark->{port}}=1;
 	}
 	
     return $request, $result;
