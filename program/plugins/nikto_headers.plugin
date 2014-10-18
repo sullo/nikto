@@ -36,11 +36,12 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS $BREACH/;
+    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS $BREACH $XSSPROTECTION/;
     $ETAGS=0;
 	$XFRAME=0;
 	$HEADERS_STS;
 	$BREACH=0;
+	$XSSPROTECTION=0;
 
     return $id;
 }
@@ -136,6 +137,18 @@ sub nikto_headers_postfetch {
 			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$XFRAME=1;
+	}
+	
+	# X-XSS-Protection
+	if (!$XSSPROTECTION && defined $result)
+	{
+		if (defined $result->{'x-xss-protection'}) {
+			# Parse this and see whether it's set to 0
+			if ($result->{'x-xss-protection'} =~ /^0/) {
+				add_vulnerability($mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.", 999101, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+				$XSSPROTECTION=1;
+			}
+		}
 	}
 
     # Look for any uncommon headers
