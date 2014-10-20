@@ -1327,7 +1327,7 @@ sub check_dbs {
             }
             nprint("\t$ctr entries");
         }
-        elsif ($file eq 'db_404_strings') {
+        elsif ($file eq 'db_404_strings' || $file eq 'db_dictionary') {
             my $ctr = 1;
             my %STRINGS;
             foreach $line (<IN>) {
