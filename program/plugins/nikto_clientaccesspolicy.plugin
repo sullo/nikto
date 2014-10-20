@@ -73,6 +73,7 @@ sub nikto_clientaccesspolicy {
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
         if (is_404($file, $content, $res, $response->{'location'})) { return; }
 
+		my $domainlist="";
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {
             chomp($line);
@@ -81,14 +82,18 @@ sub nikto_clientaccesspolicy {
             elsif ($line =~ /allow-access-from\sdomain="\*"/) {
                 add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", 999975, 0, "GET", $file, $request, $response);
             }
-            elsif ($line =~ /allow-access-from/) {
+            elsif ($line =~ /allow-access-from/ && $line =~ /\*\./ ) {
                 $DISCTR++;
+				my $domain = $line;
+				$domain =~ s/^(.*allow-access-from domain=\")//;
+				$domain =~ s/\" \/>$//;
+				$domainlist .= "$domain ";
             }
         }    # end foreach my $line 
 
 		$msg =  $mark->{'root'} . "$file contains $DISCTR ";
 		$msg .= ($DISCTR > 1)?"lines":"line";
-		$msg .= " which should be manually viewed for improper domains or wildcards.";
+		$msg .= " which include the following domains: $domainlist";
 
         if ($DISCTR > 0) {
             add_vulnerability($mark, $msg, 999956, 0, "GET", $file, $request, $response);
