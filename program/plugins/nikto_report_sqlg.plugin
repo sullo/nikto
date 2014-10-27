@@ -97,14 +97,14 @@ sub sqlg_item {
  	my $hostname = $item->{'mark'}->{'hostname'};
 	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
 
-        $hostname =~ s/([^\/])(['])/$1\\$2/g;
+        $hostname =~ s/([^\\])(['])/$1\\$2/g;
     	my $httpmethod = $item->{'method'};
-        $httpmethod =~ s/([^\/])(['])/$1\\$2/g;
-        $uri =~ s/([^\/])(['])/$1\\$2/g;
+        $httpmethod =~ s/([^\\])(['])/$1\\$2/g;
+        $uri =~ s/([^\\])(['])/$1\\$2/g;
 	my $msg = $item->{'message'};
-        $msg =~ s/([^\/])(['])/$1\\$2/g;
+        $msg =~ s/([^\\])(['])/$1\\$2/g;
         my $root = $mark->{'root'};
-        $root =~ s/([^\/])(['])/$1\\$2/g;
+        $root =~ s/([^\\])(['])/$1\\$2/g;
 	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
         my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
