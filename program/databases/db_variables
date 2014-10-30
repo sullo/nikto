@@ -17,7 +17,7 @@
 # 
 # User defined variables should be set in config.txt as this file may be over-written during updates.
 #######################################################################
-@CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/
+@CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/ /cgi-bin-sdb/ /cgi-mod/
 @NUKE=/ /postnuke/ /postnuke/html/ /modules/ /phpBB/ /forum/
 @MUTATEDIRS=/....../ /members/ /porn/ /restricted/ /xxx/
 @MUTATEFILES=xxx.htm xxx.html porn.htm porn.html
@@ -27,7 +27,7 @@
 @PASSWORDFILES=admins clients pass password passwords passwd passwd.adjunct store users .htpasswd .passwd
 @PHPMYADMIN=/3rdparty/phpMyAdmin/ /phpMyAdmin/ /3rdparty/phpmyadmin/ /phpmyadmin/ /pma/
 @HTTPFOUND=200 301 302 403
-@FCKEDITOR=/fckeditor/ /FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/
+@FCKEDITOR=/fckeditor/ /FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/ /js/editor/fckeditor/
 @CRYSTALREPORTS=/ /CrystalReports/ /crystal/ /businessobjects/ /crystal/enterprise10/ /crystal/Enterprise10/ePortfolio/en/
 @OWNCLOUD=/ /cloud/ /owncloud/ /ownCloud/ /OwnCloud/
 @SECLORE=/ /filesecure/ /policyserver/
