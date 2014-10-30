@@ -477,7 +477,7 @@
 "600460","mod_interchange/","1.34","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600461","mod_ipdrop/","0.01","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600462","mod_ipw/","0.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600463","mod_jk/","1.2.37","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600463","mod_jk/","1.2.40","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600464","mod_jk2/","2.0.5-dev","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600465","Mod_JServ/","1.1.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600466","mod_layout/","4.0.1a","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
