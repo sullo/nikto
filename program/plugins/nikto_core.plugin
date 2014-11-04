@@ -1173,10 +1173,11 @@ sub load_databases {
     for my $file (@dbs) {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
+	nprint("- Loading DB: $filename","d");
         open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
 
         # db_tests
-        if ($file eq 'db_tests') { push(@DBFILE, <IN>); next; }
+        if ($file =~ /u?db_tests/) { push(@DBFILE, <IN>); next; }
 
         # all the other files require per-line processing
         else {
@@ -1192,7 +1193,7 @@ sub load_databases {
             }
 
             # db_variables
-            if ($file eq 'db_variables') {
+            if ($file =~ /u?db_variables/) {
                 foreach my $l (@file) {
                     if ($l =~ /^@/) {
                         next if $l eq '';
@@ -1203,7 +1204,7 @@ sub load_databases {
             }
 
             # db_parked_strings
-            elsif ($file eq 'db_parked_strings') {
+            elsif ($file =~ /u?db_parked_strings/) {
                 foreach my $l (@file) {
                     $l = validate_and_fix_regex($l);
                     $VARIABLES->{'PARKEDSTRINGS'}->{$l} = 1;
@@ -1211,7 +1212,7 @@ sub load_databases {
             }
 
             # db_404_strings
-            elsif ($file eq 'db_404_strings') {
+            elsif ($file =~ /u?db_404_strings/) {
                 foreach my $l (@file) {
                     if ($l =~ /^\@CODE=/) {
                         $l =~ s/^\@CODE=//;
@@ -1226,7 +1227,7 @@ sub load_databases {
             }
 
             # db_outdated
-            elsif ($file eq 'db_outdated') {
+            elsif ($file =~ /u?db_outdated/) {
                 foreach my $l (@file) {
                     my @T = parse_csv($l);
                     next if $T[1] eq '';
@@ -1257,7 +1258,7 @@ sub check_dbs {
         open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$@\n");
         nprint("Syntax Check: $filename");
 
-        if ($file eq 'db_outdated') {
+        if ($file =~ /u?db_outdated/) {
 	    my $count=0;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
@@ -1274,7 +1275,7 @@ sub check_dbs {
 		}
 	        nprint("\t$count entries");
         }
-        elsif ($file eq 'db_tests') {
+        elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
             foreach my $line (<IN>) {
                 if ($line !~ /^\"/) { next; }
@@ -1318,7 +1319,7 @@ sub check_dbs {
             }
             nprint("\t" . keys(%ENTRIES) . " entries");
         }
-        elsif ($file eq 'db_variables') {
+        elsif ($file =~ /u?db_variables/) {
             my $ctr = 0;
             foreach $line (<IN>) {
                 if ($line !~ /^\@/)         { next; }
@@ -1327,7 +1328,7 @@ sub check_dbs {
             }
             nprint("\t$ctr entries");
         }
-        elsif ($file eq 'db_404_strings' || $file eq 'db_dictionary') {
+        elsif ($file =~ /u?db_404_strings/ || $file =~ /u?db_dictionary/) {
             my $ctr = 1;
             my %STRINGS;
             foreach $line (<IN>) {
@@ -1345,7 +1346,7 @@ sub check_dbs {
             $ctr--;
             nprint("\t$ctr entries");
         }
-        elsif ($file eq 'db_parked_strings') {
+        elsif ($file =~ /u?db_parked_strings/) {
             my $ctr = 1;
             foreach $line (<IN>) {
                 chomp($line);
@@ -1358,7 +1359,7 @@ sub check_dbs {
             $ctr--;
             nprint("\t$ctr entries");
         }
-        elsif ($file eq 'db_headers') {
+        elsif ($file =~ /u?db_headers/) {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<IN>) {
@@ -1376,7 +1377,7 @@ sub check_dbs {
             }
             nprint("\t$ctr entries");
         }
-        elsif ($file eq 'db_multiple_index') {
+        elsif ($file =~ /u?db_multiple_index/) {
             my $ctr = 0;
             foreach $line (<IN>) {
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
