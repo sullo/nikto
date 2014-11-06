@@ -94,18 +94,13 @@ sub sqlg_host_start {
 sub sqlg_item {
     my ($handle, $mark, $item) = @_;  
     foreach my $uri (split(' ', $item->{'uri'})) {
- 	my $hostname = $item->{'mark'}->{'hostname'};
-	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
-
-        $hostname =~ s/([^\\])(['])/$1\\$2/g;
-    	my $httpmethod = $item->{'method'};
-        $httpmethod =~ s/([^\\])(['])/$1\\$2/g;
-        $uri =~ s/([^\\])(['])/$1\\$2/g;
-	my $msg = $item->{'message'};
-        $msg =~ s/([^\\])(['])/$1\\$2/g;
-        my $root = $mark->{'root'};
-        $root =~ s/([^\\])(['])/$1\\$2/g;
+ 	my $hostname = quotemeta($item->{'mark'}->{'hostname'});
+    	my $httpmethod = quotemeta($item->{'method'});
+	my $msg = quotemeta($item->{'message'});
+        my $root = quotemeta($mark->{'root'});
 	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
+        $uri =~ quotemeta($uri);
+	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
         my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
     	my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message, request, response) values(";
