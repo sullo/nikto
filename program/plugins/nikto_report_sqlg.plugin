@@ -136,7 +136,20 @@ sub sqlg_item {
 			}
 
 	# response content
-        $sql .= "'" . LW2::encode_base64($item->{'result'},'') . "');";
+        my $response = $$item{'response'};
+	$rstring='';
+    	if ($response->{'whisker'}{'protocol'} ne '') {
+    		$rstring = $response->{'whisker'}{'protocol'} . "/"
+      		. $response->{'whisker'}{'version'} . " "
+      		. $response->{'whisker'}{'code'} . " "
+      		. $response->{'whisker'}{'message'} . "\n";
+    		foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
+        		$rstring .= $header . ": " . $response->{$header} . "\n";
+    			}
+    		$rstring .= "\n" . $response->{'whisker'}{'data'} . "\n";
+    		}
+
+        $sql .= "'" . LW2::encode_base64($rstring,'') . "');";
         print $handle "$sql\n";
     }
 }
