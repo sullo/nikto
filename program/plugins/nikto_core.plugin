@@ -624,6 +624,7 @@ sub general_config {
 
     # CLI proxy overrides nikto.conf
     if ((defined($CLI{'useproxy'})) && ($CLI{'useproxy'} ne '')) {
+        if ($CLI{'useproxy'} !~ /^https?:\/\//) { $CLI{'useproxy'} = "http://$CLI{'useproxy'}"; }
         my @prox = LW2::uri_split($CLI{'useproxy'});
         $CONFIGFILE{'PROXYHOST'} = $prox[2];
         $CONFIGFILE{'PROXYPORT'} = $prox[3];
