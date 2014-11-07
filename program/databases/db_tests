@@ -6792,3 +6792,4 @@
 "006828","0","1","/debug/","GET","200","","","","","Possible debug directory/program found.","",""
 "006829","0","1","/stats","GET","Statistics\sReport","","","","","HAProxy stats page found.","",""
 "006830","0","1","/haproxy_stats","GET","Statistics\sReport","","","","","HAProxy stats page found.","",""
+"006831","0","2b","/cgi-bin/info.cgi","GET","200","","Model=WDMyCloud","","","WD My Cloud (Mirror) NAS found. Default credentials for the login on / is 'admin' with an empty password.","",""
