@@ -2334,7 +2334,7 @@ sub nfetch {
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
     }
-    if ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'}) { 
+    if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
 	nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'});
 	$mark->{'terminate'} = 1;
 	}
