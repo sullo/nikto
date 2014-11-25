@@ -1032,7 +1032,7 @@
 "601018","mod_qos_control/","7.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601019","nginx/","1.2.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601020","sw-cp-server/","1.0.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"601021","Oracle-iPlanet-Web-Server/","7.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"601021","Oracle-iPlanet-Web-Server/","7.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601022","CVOS/","3.9.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601023","Zeus/","6_0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601024","mod_lo/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"

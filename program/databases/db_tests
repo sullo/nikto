@@ -6798,3 +6798,6 @@
 "006835","3092","123b","/project.xml","GET","<project>","","","","","Maven Project Object Model file may contain interesting information.","",""
 "006836","3092","123b","/maven.xml","GET","<project","","","","","Maven Project Object Model file may contain interesting information.","",""
 "006837","0","1","/ultrasearch/","GET","Oracle Ultra Search","","","","","Oracle Ultrasearch page found.","",""
+"006838","0","be","/useradmin/index.jsp","GET","/useradmin/userAdminServlet","","","","","SAP Admin interface.","",""
+"006839","0","be","/uddiclient/jsps/index.jsp","GET","apUrMapi_","","","","","SAP Admin interface.","",""
+"006840","0","be","/webdynpro/dispatcher/sap.com/tc~lm~webadmin~mainframe~wd/WebAdminApp","GET","SAP\sNetWeaver","","","","","SAP Admin interface.","",""
