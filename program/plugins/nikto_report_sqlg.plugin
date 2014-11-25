@@ -99,7 +99,7 @@ sub sqlg_item {
 	my $msg = quotemeta($item->{'message'});
         my $root = quotemeta($mark->{'root'});
 	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
-        $uri =~ quotemeta($uri);
+        $uri = quotemeta($uri);
 	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
         my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
