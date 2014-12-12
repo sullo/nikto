@@ -52,7 +52,7 @@ sub nikto_shellshock {
 		my ($res, $content, $error, $request, $response) =
 		nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
 		if ($response->{'nikto-added'} eq 'true') {
-				add_vulnerability($mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 000137, 0, "GET", "$parameters->{'uri'}", $request, $response);
+				add_vulnerability($mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999949, 0, "GET", "$parameters->{'uri'}", $request, $response);
 		}
 	} else {
 		foreach my $cgidir (@dirs) {
@@ -63,7 +63,7 @@ sub nikto_shellshock {
 					my ($res, $content, $error, $request, $response) =
 					nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
 					if ($response->{'nikto-added'} eq 'true') {
-							add_vulnerability($mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 000137, 0, "GET", "$cgidir$file", $request, $response);
+							add_vulnerability($mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, 0, "GET", "$cgidir$file", $request, $response);
 					}
 			}
 		}
