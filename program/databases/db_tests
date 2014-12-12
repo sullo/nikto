@@ -6804,3 +6804,4 @@
 "006841","0","be","/admin/","GET","<title>Magnolia Login Form</title>","","<h1>Magnolia Login</h1>","","","Magnolia administrative login found.","",""
 "006842","0","3be","@TYPO3superadmin.php","GET","<title>TYPO3\sSuper\sAdmin</title>","<title>Typo3\sSuper\sAdmin</title>","200","","","TYPO3 Super Admin component identified. This could contain passwords and infos about the current installed TYPO3 instances.","",""
 "006843","0","3be","@TYPO3misc/superadmin.php","GET","<title>TYPO3\sSuper\sAdmin</title>","<title>Typo3\sSuper\sAdmin</title>","200","","","TYPO3 Super Admin component identified. This could contain passwords and infos about the current installed TYPO3 instances.","",""
+"006844","0","d","/_vti_bin/lists.asmx","GET","Lists\sWeb\sService","","","","","Microsoft Sharepoint WebService available.","",""
