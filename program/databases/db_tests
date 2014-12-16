@@ -6911,3 +6911,7 @@
 "006950","0","b1","/_catalogs/masterpage/Forms/AllItems.aspx","GET","200","","","","","FrontPage/Sharepointfile available.","",""
 "006951","0","b1","/_catalogs/wp/Forms/AllItems.aspx","GET","200","","","","","FrontPage/Sharepointfile available.","",""
 "006952","0","b1","/_catalogs/wt/Forms/Common.aspx","GET","200","","","","","FrontPage/Sharepointfile available.","",""
+"006953","0","b1","/_vti_pvt/service.grp","GET","200","","","","","FrontPage/Sharepointfile available.","",""
+"006954","0","b1","/_vti_pvt/botsinf.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
+"006955","0","b1","/_vti_pvt/structure.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
+"006956","0","b1","/_vti_pvt/uniqperm.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
