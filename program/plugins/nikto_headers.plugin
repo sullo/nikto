@@ -37,6 +37,7 @@ sub nikto_headers_init {
 
     # some global variables
     use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION/;
+	use vars qw/%HEADERS_XXS %HEADERS_XCTO/;
 
     return $id;
 }
@@ -145,7 +146,15 @@ sub nikto_headers_postfetch {
 			}
 		}
 	}
-
+	# And for if it's not defined
+	if (!$HEADERS_XXP{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (!defined $result->{'x-xss-protection'}) {
+			add_vulnerability($mark,"The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS", 999102, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+		}
+		$HEADERS_XXP{$mark->{hostname}}{$mark->{port}}=1;
+	}
+	
     # Look for any uncommon headers
 
     foreach my $header (keys %$result) {
@@ -173,6 +182,14 @@ sub nikto_headers_postfetch {
 		}
 		$HEADERS_STS{$mark->{hostname}}{$mark->{port}}=1;
 	}
+
+	if (!$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (!defined $result->{'X-Content-Type-Options'}) {
+			add_vulnerability($mark,"The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type", 999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+		}
+		$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}}=1;
+	}	
 	
     return $request, $result;
 }
