@@ -1308,10 +1308,13 @@ sub check_dbs {
                 }
                 if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
                         nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
-                        }
+                }
                 else { 
 			$ALL_IDS{$L[0]}=1; 
-			}
+		}
+                if ($L[2] =~ /[^a-e0-9]/) {
+			nprint("\t+ ERROR: Invalid Tuning Type: $line");
+		}
             }
             foreach $entry (keys %ENTRIES) {
                 if ($ENTRIES{$entry} > 1) {
@@ -2776,8 +2779,9 @@ sub usage {
                                0     File Upload
                                a     Authentication Bypass
                                b     Software Identification
-                               b     Administration Console
                                c     Remote Source Inclusion
+                               d     WebService
+                               e     Administrative Console
                                x     Reverse Tuning Options (i.e., include all except specified)
        -timeout+          Timeout for requests (default 10 seconds)
        -Userdbs           Load only user databases, not the standard databases
