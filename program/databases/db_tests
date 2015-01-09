@@ -1434,7 +1434,7 @@
 "001417","155","6","/counter/1/n/n/0/3/5/0/a/123.gif","GET","200","","","","","The Roxen Counter may eat up excessive CPU time with image requests.","",""
 "001418","2","6","/iissamples/exair/search/search.asp","GET","200","","","","","Scripts within the Exair package on IIS 4 can be used for a DoS against the server. CVE-1999-0449. BID-193.","",""
 "001419","2087","7","@CGIDIRSwebcart/webcart.cgi?CONFIG=mountain&CHANGE=YES&NEXTPAGE=;cat%20/etc/passwd|&CODE=PHOLD","GET","root:","","","","","webcart.cgi allows remote command execution. Upgrade to the latest version.","",""
-"001420","2091","5","/../webserver.ini","GET","Authentic","","","","","Nuca WebServer allows retrieval of the web server configuration.","",""
+"001420","2091","5","/../webserver.ini","GET","Authentic=","","","","","Nuca WebServer allows retrieval of the web server configuration.","",""
 "001421","2117","2","/","GET","ESS Launch","","","","","Default IBM TotalStorage server found.","",""
 "001422","2117","2","/na_admin/","GET","Network Appliance","","","","","Default Network Appliance server found.","",""
 "001423","2117","2","/","GET","Celerra Web Manager","","","","","Default EMC Cellera manager server is running.","",""
