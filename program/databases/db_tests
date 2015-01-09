@@ -6529,7 +6529,7 @@
 "006556","0","3b","/snoop/","GET","Request Information","","","","","WebSphere snoop servlet information disclosure.","",""
 "006557","0","3b","/web-console/ServerInfo.jsp","GET","Version Name","","","","","JBoss Application Server information available .","",""
 "006558","0","3b","/otrs/installer.pl","GET","OTRS\sProject","","","","","OTRS installer application found","",""
-"006559","0","3bz","/reaction/RSTest.htm","GET","ReAction Server Test Page","","","","","ReAction Server test page is installed, this may reveal environmental information","",""
+"006559","0","3b","/reaction/RSTest.htm","GET","ReAction Server Test Page","","","","","ReAction Server test page is installed, this may reveal environmental information","",""
 "006560","3092","3","/bookmarks.nsfdeslo","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
 "006561","3092","3","/deslog.nsf","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
 "006562","3092","3","/docdomguide.nsf","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
