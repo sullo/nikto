@@ -6915,3 +6915,5 @@
 "006954","0","b1","/_vti_pvt/botsinf.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
 "006955","0","b1","/_vti_pvt/structure.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
 "006956","0","b1","/_vti_pvt/uniqperm.cnf","GET","200","","","","","FrontPage/Sharepointfile available.","",""
+"006957","0","0","/Editor/assetmanager/assetmanager.php","GET","Upload\sFile","","","","","InnovaStudio file uploader found","",""
+"006958","0","23","/Glimpse.axd","GET","Standard\sSettings","","","","","Glimpse debug program found","",""
