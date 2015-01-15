@@ -1541,9 +1541,7 @@ sub load_plugins {
 
     # Check if running plugins is NONE - if so, don't bother initalising plugins
     if ($CLI{'plugins'} eq '@@NONE') {
-        # return;
-        # enable text reporting by default
-        $CLI{'plugins'} = 'report_text';
+        return;
     }
 
     foreach my $plugin (@pluginlist) {
