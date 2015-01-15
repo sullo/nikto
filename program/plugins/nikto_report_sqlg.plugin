@@ -65,20 +65,25 @@ sub sqlg_host_start {
     $banner =~ s/"/\\'/g;
     my $ssl=0;
     if (defined $mark->{'ssl_cipher'}) { $ssl=1; }
+    my $hostname = $mark->{'hostname'};
+    if ($mark->{'vhost'} ne '') { $hostname=$mark->{'hostname'}; }
     my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message) values(";
-    $sql .= "'999958','$mark->{'ip'}','$mark->{'hostname'}','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
+    $sql .= "'999958','$mark->{'ip'}','$hostname','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
 	print $handle $sql;
     
     if (defined $mark->{'ssl_cipher'}) {
-    	my $ciphers = $mark->{ssl_cipher};
-    	my $issuer = $mark->{ssl_cert_issuer};
-    	my $subj = $mark->{ssl_cert_subject};
+    	my $ciphers = $mark->{'ssl_cipher'};
+    	my $issuer = $mark->{'ssl_cert_issuer'};
+    	my $subj = $mark->{'ssl_cert_subject'};
+    	my $alt = $mark->{'ssl_cert_altnames'};
     	$ciphers =~ s/'/\\'/g;
     	$issuer =~ s/'/\\'/g;
     	$subj =~ s/'/\\'/g;
-		print OUT "# SSL Ciphers: $ciphers\n";
-		print OUT "# SSL Issuer:  $issuer\n";
-		print OUT "# SSL Info:    $subj\n";
+    	$alt =~ s/'/\\'/g;
+	print OUT "# SSL Ciphers: $ciphers\n";
+	print OUT "# SSL Altnames: $alt\n";
+	print OUT "# SSL Issuer:  $issuer\n";
+	print OUT "# SSL Info:    $subj\n";
     }
     
     return;
@@ -89,40 +94,34 @@ sub sqlg_host_start {
 sub sqlg_item {
     my ($handle, $mark, $item) = @_;  
     foreach my $uri (split(' ', $item->{'uri'})) {
-		# escape ' in vals which could have them
-    	my $hostname = $item->{'mark'}->{'hostname'}; 
-    	$hostname =~ s/'/\\'/g;
-    	my $httpmethod = $item->{'method'};
-    	$httpmethod =~ s/'/\\'/g;
-		$uri =~ s/'/\\'/g;
-		my $msg = $item->{'message'};
-        $msg =~ s/'/\\'/g;
-        my $root = $mark->{'root'};
-		my $rootq = quotemeta($mark->{'root'});  # for regex
-		$root =~ s/'/\\'/g;
-		my $ssl=0;
-    	if (defined $mark->{'ssl_cipher'}) { $ssl=1; }
+ 	my $hostname = quotemeta($item->{'mark'}->{'hostname'});
+    	my $httpmethod = quotemeta($item->{'method'});
+	my $msg = quotemeta($item->{'message'});
+        my $root = quotemeta($mark->{'root'});
+	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
+        $uri = quotemeta($uri);
+	if ($item->{'mark'}->{'vhost'} ne '') { $hostname=$item->{'mark'}->{'vhost'}; }
+        my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
     	my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message, request, response) values(";
 		$sql .= "'$item->{'nikto_id'}','$item->{'mark'}->{'ip'}','$hostname','$item->{'mark'}->{'port'}','$ssl',";
 		$sql .= "'$item->{'osvdb'}','$httpmethod',";
 
-        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/))
-			{ 
-				$sql .= "'" . $root . $uri . "',"; }
-		else { 
-			$sql .= "'$uri',"; 
-			}
+        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/)) { 
+		$sql .= "'" . $root . $uri . "',"; }
+	else { 
+		$sql .= "'$uri',"; 
+		}
 
-		$msg =~ s/^$uri:\s//;
-		$msg =~ s/^$rootq$uri:\s//;
+	$msg =~ s/^$uri:\s//;
+	$msg =~ s/^$rootq$uri:\s//;
         $sql .= "'$msg',";
         
-        # Rebuild the request from the hash -- no need to escape ' as it's base64 encoded
+        # Rebuild the request from the hash -- no need to escape as it's base64 encoded
         my $req = $$item{'request'};
     	if ($req->{'whisker'}{'method'} eq '') { 
-				$sql .= "'',";
-				}
+		$sql .= "'',";
+		}
     	else { 
     		my $rstring = $req->{'whisker'}{'method'} . " "
       			. $req->{'whisker'}{'uri'} . " "
@@ -136,10 +135,21 @@ sub sqlg_item {
         	$sql .= "'" . LW2::encode_base64($rstring,'') . "',";
 			}
 
-		# response content
-        $sql .= "'" . LW2::encode_base64($item->{'result'},'') . "'";
+	# response content
+        my $response = $$item{'response'};
+	$rstring='';
+    	if ($response->{'whisker'}{'protocol'} ne '') {
+    		$rstring = $response->{'whisker'}{'protocol'} . "/"
+      		. $response->{'whisker'}{'version'} . " "
+      		. $response->{'whisker'}{'code'} . " "
+      		. $response->{'whisker'}{'message'} . "\n";
+    		foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
+        		$rstring .= $header . ": " . $response->{$header} . "\n";
+    			}
+    		$rstring .= "\n" . $response->{'whisker'}{'data'} . "\n";
+    		}
 
-		$sql .= ");";
+        $sql .= "'" . LW2::encode_base64($rstring,'') . "');";
         print $handle "$sql\n";
     }
 }

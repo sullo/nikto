@@ -142,7 +142,8 @@ sub xml_change_vars {
         $variables{"#TEMPL_SSL_INFO#"} = 
           "<ssl ciphers=\"" . hex_enc($mark->{ssl_cipher}) . "\" issuers=\"" . 
 		  hex_enc($mark->{ssl_cert_issuer}) . "\" info=\"" . 
-		  hex_enc($mark->{ssl_cert_subject}) . "\" />";
+		  hex_enc($mark->{ssl_cert_subject}) . "\" altnames=\"" .
+                  hex_enc($mark->{ssl_cert_altnames}) . "\" />";
     }
 
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});

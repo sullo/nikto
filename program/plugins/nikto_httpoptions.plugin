@@ -131,7 +131,7 @@ sub nikto_httpoptions {
     }
 
     # Special checks for TRACE/TRACK to see whether its vulnerable
-    %headers = ("Host" => "Nikto",);
+    %headers = ("Trace-Test" => "Nikto");
     foreach my $method (split(/ /, "TRACE TRACK")) {
 
         # Check for all flavours of HTTP
@@ -139,7 +139,7 @@ sub nikto_httpoptions {
             return if $mark->{'terminate'};
             ($res, $content, $error, $request, $response) = nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", "1.0");
             if ($res == 200) {
-                if ($content =~ "Nikto") {
+                if ($content =~ /Trace-Test: Nikto/) {
                     add_vulnerability($mark, "HTTP $method method is active, suggesting the host is vulnerable to XST", 999971, 877, $method, "/", $request, $response);
 
                     # now we know its vulnerable stop testing

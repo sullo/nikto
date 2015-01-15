@@ -36,11 +36,8 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND $ETAGS $XFRAME $HEADERS_STS $BREACH/;
-    $ETAGS=0;
-	$XFRAME=0;
-	$HEADERS_STS;
-	$BREACH=0;
+    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION/;
+	use vars qw/%HEADERS_XXS %HEADERS_XCTO/;
 
     return $id;
 }
@@ -87,7 +84,7 @@ sub nikto_headers_postfetch {
     }
 
     # look for inode in etag header
-    if (!$ETAGS && defined $result->{'etag'} && $result->{'etag'} =~ m/-/) {
+    if (!defined $ETAGS{$mark->{hostname}}{$mark->{port}} && defined $result->{'etag'} && $result->{'etag'} =~ m/-/) {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
@@ -119,38 +116,45 @@ sub nikto_headers_postfetch {
             }
         }
         add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-		$ETAGS=1;
+		$ETAGS{$mark->{hostname}}{$mark->{port}}=1;
     }
 	
 	# Look for X-Frame-Options
-	if (!$XFRAME && defined $result)
+	if (!$XFRAME{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (defined $result->{'x-frame-options'}) {
 			if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
 				my $allowed = $result->{'x-frame-options'};
 				$allowed =~ s/^.* //g;
-				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. \
-					This is only supported in Internet Explorer and may lead to the header being ignored.",
-					999978,
-					0,
-					$request->{'whisker'}->{'method'},
-					$request->{'whisker'}->{'uri'},
-					$request,
-					$result);
+				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. This is only supported in Internet Explorer and may lead to the header being ignored.", 999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 		else {
-			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.",
-				999976,
-				0,
-				$request->{'whisker'}->{'method'},
-				$request->{'whisker'}->{'uri'},
-				$request,
-				$result);
+			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
-		$XFRAME=1;
+		$XFRAME{$mark->{hostname}}{$mark->{port}}=1;
 	}
-
+	
+	# X-XSS-Protection
+	if (!$XSSPROTECTION{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (defined $result->{'x-xss-protection'}) {
+			# Parse this and see whether it's set to 0
+			if ($result->{'x-xss-protection'} =~ /^0/) {
+				add_vulnerability($mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.", 999101, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+				$XSSPROTECTION{$mark->{hostname}}{$mark->{port}}=1;
+			}
+		}
+	}
+	# And for if it's not defined
+	if (!$HEADERS_XXP{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (!defined $result->{'x-xss-protection'}) {
+			add_vulnerability($mark,"The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS", 999102, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+		}
+		$HEADERS_XXP{$mark->{hostname}}{$mark->{port}}=1;
+	}
+	
     # Look for any uncommon headers
 
     foreach my $header (keys %$result) {
@@ -171,19 +175,21 @@ sub nikto_headers_postfetch {
         }
     }
 
-	if ($mark->{'ssl'} && !$HEADERS_STS && defined $result)
+	if ($mark->{'ssl'} && !$HEADERS_STS{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (!defined $result->{'strict-transport-security'}) {
-			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.",
-				999970,
-				0,
-				$request->{'whisker'}->{'method'},
-				$request->{'whisker'}->{'uri'},
-				$request,
-				$result);
+			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
-		$HEADERS_STS=1;
+		$HEADERS_STS{$mark->{hostname}}{$mark->{port}}=1;
 	}
+
+	if (!$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (!defined $result->{'X-Content-Type-Options'}) {
+			add_vulnerability($mark,"The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type", 999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+		}
+		$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}}=1;
+	}	
 	
     return $request, $result;
 }
@@ -248,7 +254,7 @@ sub nikto_headers {
         	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$result->{'content-location'}\".", 999989, 630, "GET", "/", $request, $result);
     }
 
-         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
+         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
   
      if (   ($result->{'location'} ne "") 
          && ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
@@ -284,13 +290,7 @@ sub nikto_headers {
 		if (defined $result->{'content-encoding'}) {
 			if ($result->{'content-encoding'} =~ "(deflate|gzip)") {
 				$BREACH=1;
-				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.",
-					999966,
-					0,
-					$request->{'whisker'}->{'method'},
-					$request->{'whisker'}->{'uri'},
-					$request,
-					$result);
+				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.", 999966, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 	}

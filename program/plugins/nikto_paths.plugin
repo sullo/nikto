@@ -38,7 +38,7 @@ sub nikto_paths {
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
-    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "robots");
+    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
 
     if ($res eq 200) {
 

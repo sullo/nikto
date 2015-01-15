@@ -45,7 +45,7 @@ sub nikto_apacheusers {
     my $apacheusers = 0;
 
     # First ensure that the server is vulnerable
-    my ($result, $content) = nfetch($mark, "/~root", "GET", "", "", "", "apacheusers: known user");
+    my ($result, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
     $content = quotemeta($content);
     if ($content =~ /forbidden/i)    # good on "root"
@@ -55,7 +55,7 @@ sub nikto_apacheusers {
         $content = quotemeta($content);
         if ($content !~ /forbidden/i)    # Good, it gave an error instead of forbidden
         {
-            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).", 999999, 637, "GET", "/~root", $request, $response);
+            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).", 999999, 637, "GET", "/~bin", $request, $response);
         }
         $apacheusers = 1;
     }

@@ -17,21 +17,21 @@
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
-# Look for zips of the site
+# Look for interesting files based on site name/ip
 ###############################################################################
-sub nikto_sitezip_init {
-    my $id = { name        => "sitezip",
-               full_name   => "Site Zip",
+sub nikto_sitefiles_init {
+    my $id = { name        => "sitefiles",
+               full_name   => "Site Files",
                author      => "sullo",
-               description => "Look for zips of the web site",
-               hooks       => { scan => { method => \&nikto_sitezip, }, },
-               copyright   => "2013 CIRT Inc"
+               description => "Look for interesting files based on the site's IP/name",
+               hooks       => { scan => { method => \&nikto_sitefiles, }, },
+               copyright   => "2014 CIRT Inc"
                };
 
     return $id;
 }
 
-sub nikto_sitezip {
+sub nikto_sitefiles {
     my ($mark) = @_;
     my ($found, @names,);
 
@@ -66,7 +66,7 @@ sub nikto_sitezip {
 
     foreach my $item (keys %names) {
         next if $item eq '';
-        foreach my $ext (qw/zip tar tar.gz tgz tar.bz2 tar.lzma/) {
+        foreach my $ext (qw/jks cer pem zip tar tar.gz tgz tar.bz2 tar.lzma/) {
             $files{"$item\.$ext"} = 1;
         }
     }
@@ -76,20 +76,21 @@ sub nikto_sitezip {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", "", "sitezip");
+          nfetch($mark, "/$file", "HEAD", "", "", "", "sitefiles");
 
-        if (($res == 200) && (is_404("/$file", $content, $res, $response->{'location'}))) {
-            add_vulnerability($mark, "/$file: Potential zip file of site found.",
-                              740001, 0, "HEAD", "/$file", $request, $response);
+        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
+		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html') && 
+		($content != '')) {
+            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found.", 740001, 0, "HEAD", "/$file", $request, $response);
         }
 
         # request by ip
         my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitezip");
-        if (($res == 200) && (is_404("/$file", $content, $res, $response->{'location'}))) {
-            add_vulnerability($mark,
-                        "/$file: Potential zip file of site found (NOTE: requested by IP address).",
-                        740001, 0, "HEAD", "/file", $request, $response);
+          nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitefiles");
+        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
+		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html') &&
+		($content != '')) {
+            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found. (NOTE: requested by IP address).", 740002, 0, "HEAD", "/file", $request, $response);
         }
     }
 }
