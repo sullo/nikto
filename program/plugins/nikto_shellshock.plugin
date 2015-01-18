@@ -1,4 +1,4 @@
-#VERSION,2.00
+#VERSION,2.01
 ###############################################################################
 #  Copyright (C) 2014 CIRT, Inc.
 #
@@ -24,50 +24,51 @@ sub nikto_shellshock_init {
                full_name   => "shellshock",
                author      => "sullo",
                description => "Look for the bash 'shellshock' vulnerability.",
-               hooks       => { scan => { method => \&nikto_shellshock, weight => 20}, },
+               hooks       => { scan => { method => \&nikto_shellshock, weight => 20 }, },
                copyright   => "2014 CIRT Inc",
-			   options     => {
-			                    uri => "uri to assess",
-							  },
+               options => { uri => "uri to assess", },
                };
- 
+
     return $id;
 }
- 
+
 sub nikto_shellshock {
     my ($mark, $parameters) = @_;
     my ($found, @names,);
 
     # This would be better coming from live scan results and not db_variables
-    my @files=split(/ /, $VARIABLES{"\@SHELLSHOCK"});
- 
-    push(@files,"");
+    my @files = split(/ /, $VARIABLES{"\@SHELLSHOCK"});
+
+    push(@files, "");
     my %headers;
     $headers{'User-Agent'} = '() { :; }; echo Nikto-Added: true;echo;echo;';
     my @dirs = split(/ /, $VARIABLES{'@CGIDIRS'});
-    push(@dirs,"/");
- 
+    push(@dirs, "/");
+
     if (defined $parameters->{'uri'}) {
-		# request by hostname
-		my ($res, $content, $error, $request, $response) =
-		nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-		if ($response->{'nikto-added'} eq 'true') {
-				add_vulnerability($mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999949, 0, "GET", "$parameters->{'uri'}", $request, $response);
-		}
-	} else {
-		foreach my $cgidir (@dirs) {
-			foreach my $file (@files) {
-					return if $mark->{'terminate'};
-	 
-					# request by hostname
-					my ($res, $content, $error, $request, $response) =
-					nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
-					if ($response->{'nikto-added'} eq 'true') {
-							add_vulnerability($mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, 0, "GET", "$cgidir$file", $request, $response);
-					}
-			}
-		}
-	}
+
+        # request by hostname
+        my ($res, $content, $error, $request, $response) = nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
+        if (($response->{'nikto-added'} eq 'true') || ($content =~ /Nikto-Added: true/)) {
+            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999949, 0, "GET",
+                 "$parameters->{'uri'}", $request, $response);
+        }
+    }
+    else {
+        foreach my $cgidir (@dirs) {
+            foreach my $file (@files) {
+                return if $mark->{'terminate'};
+
+                # request by hostname
+                my ($res, $content, $error, $request, $response) = nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
+                if (($response->{'nikto-added'} eq 'true') || ($content =~ /Nikto-Added: true/)) {
+                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, 0, "GET",
+                         "$cgidir$file", $request, $response
+                         );
+                }
+            }
+        }
+    }
 }
- 
+
 1;
