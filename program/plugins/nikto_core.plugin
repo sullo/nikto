@@ -1885,7 +1885,7 @@ sub check_updates {
     my $server       = "CIRT.net";
 
     # set up our mark
-    my %mark = ('ident' => 'www.cirt.net',
+    my %mark = ('ident' => 'cirt.net',
                 'ssl'   => 0,
                 'port'  => 80
                 );
@@ -1901,7 +1901,7 @@ sub check_updates {
             last;
         }
     }
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
 
     # retrieve versions file
     my ($code, $content) = nfetch(\%mark, "$serverdir/versions.txt", "GET");
@@ -2668,7 +2668,7 @@ sub send_updates {
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
-    my %mark = ('ident' => 'www.cirt.net',
+    my %mark = ('ident' => 'cirt.net',
                 'ssl'   => 0,
                 'port'  => 80
                 );
@@ -2680,7 +2680,7 @@ sub send_updates {
         }
     }
 
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
