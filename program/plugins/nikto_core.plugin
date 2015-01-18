@@ -507,7 +507,6 @@ sub general_config {
                "host=s"           => \$CLI{'host'},
                "id=s"             => \$CLI{'hostauth'},
                "key=s"            => \$CLI{'key'},
-               "IgnoreCode=s"     => \$CLI{'ignorecode'},
                "list-plugins"     => \&list_plugins,
                "maxtime=s"        => \$CLI{'maxtime'},
                "mutate-options=s" => \$CLI{'mutate-options'},
@@ -534,12 +533,23 @@ sub general_config {
                "until:s"          => \$CLI{'until'},
                "Version"          => \&version,
                "vhost=s"          => \$CLI{'vhost'},
+               "404string=s"      => \$CLI{'404string'},
+               "404code=s"        => \$CLI{'404code'},
                ) or usage();
 
-    # Set up IgnoreCode
-    if ($CLI{'ignorecode'} ne '') {
-        foreach my $code (split(/\s?,\s?/, $CLI{'ignorecode'})) {
-            if ($code =~ /[^\d]/) { next; }
+    # 404string
+    if ($CLI{'404string'} ne '') { 
+        my $s = validate_and_fix_regex($CLI{'404string'});
+        $VARIABLES->{'ERRSTRINGS'}->{$s} = 1;
+        }
+
+    # 404code
+    if ($CLI{'404code'} ne '') {
+        foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
+            if ($code =~ /[^\d]/) { 
+                 nprint("+ ERROR: Invalid 404code, must be an integer");
+                 exit;
+                 }
             $VARIABLES->{'ERRCODES'}->{$code} = 1;
         }
     }
