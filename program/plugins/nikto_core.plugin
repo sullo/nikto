@@ -2731,7 +2731,8 @@ sub usage {
                                (if not specified the format will be taken from the file extension passed to -output)
        -Help              Extended help information
        -host+             Target host
-       -IgnoreCode        Ignore Codes--treat as negative responses
+       -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
+       -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
        -id+               Host authentication to use, format is id:pass or id:pass:realm
        -key+              Client certificate key file
        -list-plugins      List all available plugins, perform no testing
