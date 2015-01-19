@@ -993,65 +993,45 @@ sub readkey {
 ###############################################################################
 sub resolve {
     my $ident = $_[0] || return;
-    my ($name, $ip, $dn) = "";
+    my ($name, $ip) = "";
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
-        $name = $ident;
-        $ip   = $name;
-        return $name, $ip, $name;
+        return $ident, $ident, $ident;
     }
 
-    # ident is name, lookup IP
-    if ($ident =~ /[^0-9\.]/)    # not an IP, assume name
+    if ($ident =~ /[^0-9\.]/)    # not an IP, assume name & resolve
     {
         if ($CLI{'skiplookup'}) {
-            print("+ ERROR: -skiplookup set, but given name\n");
+            print("+ ERROR: -nolookup set, but given name\n");
             exit;
         }
-        $ip = gethostbyname($ident);
 
-        # can't resolve name to IP
+        $ip = gethostbyname($ident);
         if ($ip eq "") {
             nprint("+ ERROR: Cannot resolve hostname '$ident'\n");
             return;
         }
-        else {
-            $ip = inet_ntoa($ip);
-            if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-                nprint("+ ERROR: Invalid IP '$ip'\n\n");
-                return;
-            }
-            $name = $ident;
+
+        # inet_ntoa will throw errors if something is wrong
+        $ip = inet_ntoa($ip);
+        if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
+            nprint("+ ERROR: Invalid IP: $ip\n\n");
+            exit;
         }
-    }
-    else    # ident is IP, lookup name
+       $name = $ident;
+     }
+    else    # ident is IP
     {
         if ($ident !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-            nprint("+ ERROR: Invalid IP '$ident'\n\n");
+            nprint("+ ERROR: Invalid IP: $ident\n\n");
             return;
         }
 
-        $ip = $ident;
-        if (!$CLI{'skiplookup'}) {
-            my $temp_ip = inet_aton($ip);
-            $name = gethostbyaddr($temp_ip, AF_INET);
-
-            # check reverse dns to avoid an inet_aton error
-            my $rdnsip = gethostbyname($name);
-            if ($rdnsip ne "") {
-                $rdnsip = inet_ntoa($rdnsip);
-                if ($ip ne $rdnsip) { $name = $ip; }    # Reverse DNS does not match
-            }
-            else { $name = $ip; }                       # Reverse DNS does not exist
-        }
-        if ($name eq "") { $name = $ip; }
+        $ip = $name = $ident;
     }
 
-    # set displayname -- name takes precedence
-    if   ($name ne "") { $dn = $name; }
-    else               { $dn = $ip; }
-
-    return $name, $ip, $dn;
+    my $displayname = ($name) ? $name : $ip;
+    return $name, $ip, $displayname;
 }
 
 ###############################################################################
