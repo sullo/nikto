@@ -2928,7 +2928,7 @@ sub http_fixup_request {
             if(!defined $host || $host eq '');
         $$hin{'Host'} .= ':' . $$hin{whisker}->{'port'}
           if ( index($$hin{'Host'},':') == -1 && 
-          	( $$hin{whisker}->{port} != 80 || ( $$hin{whisker}->{ssl}==1 &&
+               ( $$hin{whisker}->{port} != 80 && ( $$hin{whisker}->{ssl}==1 &&
               $$hin{whisker}->{port} != 443 ) ) );
         my ($conn) = utils_find_lowercase_key($hin,'connection');
         $$hin{'Connection'} = 'Keep-Alive' 
