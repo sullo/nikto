@@ -6937,3 +6937,4 @@
 "006976","0","3","/tr064dev.xml","GET","<root","","upnp-org","","","Device UPnP XML file found, which may leak device information.","",""
 "006977","0","3","/upnp/IGD.xml","GET","<root","","upnp-org","","","Device UPnP XML file found, which may leak device information.","",""
 "006978","0","3","/upnp/printer/ddf.xml","GET","<root","","upnp-org","","","Device UPnP XML file found, which may leak device information.","",""
+"006979","0","d","/apidocs/","GET","API\sDoc","","","","","Possible API documentation available.","",""
