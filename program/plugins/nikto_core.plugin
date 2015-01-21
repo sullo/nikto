@@ -1305,6 +1305,10 @@ sub check_dbs {
                 if ($L[2] =~ /[^a-e0-9]/) {
 			nprint("\t+ ERROR: Invalid Tuning Type: $line");
 		}
+		if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029)/i) {
+			nprint("\t+ ERROR: Possible wrong used slash: $line");
+			nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+		}
             }
             foreach $entry (keys %ENTRIES) {
                 if ($ENTRIES{$entry} > 1) {
