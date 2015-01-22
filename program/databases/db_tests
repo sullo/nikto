@@ -62,7 +62,6 @@
 "000026","0","28","@CGIDIRSfinger","GET","200","","","","","finger other users, may be other commands?","",""
 "000027","0","28","@CGIDIRSfinger.pl","GET","200","","","","","finger other users, may be other commands?","",""
 "000028","0","3","@CGIDIRSformmail.cgi","GET","Matt\sWright","","","","","The remote CGI reveals its version number, which may aid attackers in finding vulnerabilities in the script.","",""
-"000029","0","3","@CGIDIRSformmail.pl","GET","Matt\sWright","","","","","The remote CGI reveals its version number, which may aid attackers in finding vulnerabilities in the script.","",""
 "000030","0","3","@CGIDIRSformmail","GET","Matt\sWright","","","","","The remote CGI reveals its version number, which may aid attackers in finding vulnerabilities in the script.","",""
 "000031","0","3","@CGIDIRSget32.exe","GET","200","","","","","This can allow attackers to execute arbitrary commands remotely.","",""
 "000032","0","3","@CGIDIRSgm-authors.cgi","GET","200","","","","","GreyMatter 'password' file, that controls who can post. This contains login and password information and is installed mode 666 by default. See http://www.attrition.org/~jericho/works/security/greymatter.html for more info.","",""
