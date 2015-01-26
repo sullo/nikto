@@ -6939,5 +6939,4 @@
 "006979","0","d","/apidocs/","GET","API\sDoc","","","","","Possible API documentation available.","",""
 "006980","0","3","/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
 "006981","0","3","/paypal/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
-"006982","0","3","/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
 "006983","0","3","/psystems/paypal/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
