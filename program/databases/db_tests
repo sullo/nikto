@@ -6945,3 +6945,4 @@
 "006986","0","d","/api/soap/?wsdl=1","GET","<definitions xmlns:typens=\"urn:Magento\" ","","","","","Magento Shop WebService identified.","",""
 "006987","0","123b","/RELEASE_NOTES.txt","GET","==== ([0-9\.]+) ====","","","","","Magento Shop Changelog identified.","",""
 "006988","0","e","/admin/","GET","Magento\sInc.","","","","","Magento Shop admin backend identified.","",""
+"006989","0","e","/downloader/","GET","Magento\sConnect\sManager\sver.","","","","","Magento Connect Manager login identified. This might also reval the installed version of Magento","",""
