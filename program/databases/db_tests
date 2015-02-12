@@ -6946,4 +6946,4 @@
 "006988","0","e","/admin/","GET","Magento\sInc.","","","","","Magento Shop admin backend identified.","",""
 "006989","0","e","/downloader/","GET","Magento\sConnect\sManager\sver.","","","","","Magento Connect Manager login identified. This might also reval the installed version of Magento","",""
 "006990","0","3b","@AXIS2services/Version/getVersion","GET","Hello\sI\sam\sAxis2","Hi\s-\sthe\sAxis2\sversion\sis","","","","Apache Axis2 version identified","",""
-"006991","62292","3","/messagebroker/http","GET","<amfx ver=","","</amfx>","","","Adobe BlazeDS identified. Depending on the version this also might be vulnerable to an XXE (CVE-2009-3960)","",""
+"006991","62292","3","@ADOBEXML","GET","<amfx ver=","","</amfx>","","","Adobe BlazeDS identified. Depending on the version this also might be vulnerable to an XXE (CVE-2009-3960)","",""
