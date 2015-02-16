@@ -1294,7 +1294,7 @@ sub check_dbs {
                 }
                 for (my $i = 5 ; $i <= 9 ; $i++) {
                     my ($result, $bad) = validate_and_fix_regex($L[$i], 1);
-                    if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\""); }
+                    if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\", line: $line"); }
                 }
                 if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
                         nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
@@ -1306,9 +1306,12 @@ sub check_dbs {
 			nprint("\t+ ERROR: Invalid Tuning Type: $line");
 		}
 		if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029)/i) {
-			nprint("\t+ ERROR: Possible wrong used slash: $line");
+			nprint("\t+ ERROR: Possible incorrect slashes: $line");
 			nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
 		}
+                if (($L[4] ne 'POST') && ($L[11] ne '')) {
+                        nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
+                }
             }
             foreach $entry (keys %ENTRIES) {
                 if ($ENTRIES{$entry} > 1) {
