@@ -114,9 +114,16 @@ style output</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-IgnoreCode</option></term>
+      <term><option>-404code</option></term>
       <listitem>
         <para>Ignore these HTTP codes as negative responses (always). Format is "302,301".</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+    <varlistentry>
+      <term><option>-404string</option></term>
+      <listitem>
+        <para>Ignore this string in response body content as negative response (always). Can be a regular expression..</para>
       </listitem>
     </varlistentry>
     <varlistentry>

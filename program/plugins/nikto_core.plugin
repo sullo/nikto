@@ -507,7 +507,6 @@ sub general_config {
                "host=s"           => \$CLI{'host'},
                "id=s"             => \$CLI{'hostauth'},
                "key=s"            => \$CLI{'key'},
-               "IgnoreCode=s"     => \$CLI{'ignorecode'},
                "list-plugins"     => \&list_plugins,
                "maxtime=s"        => \$CLI{'maxtime'},
                "mutate-options=s" => \$CLI{'mutate-options'},
@@ -534,12 +533,23 @@ sub general_config {
                "until:s"          => \$CLI{'until'},
                "Version"          => \&version,
                "vhost=s"          => \$CLI{'vhost'},
+               "404string=s"      => \$CLI{'404string'},
+               "404code=s"        => \$CLI{'404code'},
                ) or usage();
 
-    # Set up IgnoreCode
-    if ($CLI{'ignorecode'} ne '') {
-        foreach my $code (split(/\s?,\s?/, $CLI{'ignorecode'})) {
-            if ($code =~ /[^\d]/) { next; }
+    # 404string
+    if ($CLI{'404string'} ne '') { 
+        my $s = validate_and_fix_regex($CLI{'404string'});
+        $VARIABLES->{'ERRSTRINGS'}->{$s} = 1;
+        }
+
+    # 404code
+    if ($CLI{'404code'} ne '') {
+        foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
+            if ($code =~ /[^\d]/) { 
+                 nprint("+ ERROR: Invalid 404code, must be an integer");
+                 exit;
+                 }
             $VARIABLES->{'ERRCODES'}->{$code} = 1;
         }
     }
@@ -983,65 +993,45 @@ sub readkey {
 ###############################################################################
 sub resolve {
     my $ident = $_[0] || return;
-    my ($name, $ip, $dn) = "";
+    my ($name, $ip) = "";
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
-        $name = $ident;
-        $ip   = $name;
-        return $name, $ip, $name;
+        return $ident, $ident, $ident;
     }
 
-    # ident is name, lookup IP
-    if ($ident =~ /[^0-9\.]/)    # not an IP, assume name
+    if ($ident =~ /[^0-9\.]/)    # not an IP, assume name & resolve
     {
         if ($CLI{'skiplookup'}) {
-            print("+ ERROR: -skiplookup set, but given name\n");
+            print("+ ERROR: -nolookup set, but given name\n");
             exit;
         }
-        $ip = gethostbyname($ident);
 
-        # can't resolve name to IP
+        $ip = gethostbyname($ident);
         if ($ip eq "") {
             nprint("+ ERROR: Cannot resolve hostname '$ident'\n");
             return;
         }
-        else {
-            $ip = inet_ntoa($ip);
-            if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-                nprint("+ ERROR: Invalid IP '$ip'\n\n");
-                return;
-            }
-            $name = $ident;
+
+        # inet_ntoa will throw errors if something is wrong
+        $ip = inet_ntoa($ip);
+        if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
+            nprint("+ ERROR: Invalid IP: $ip\n\n");
+            exit;
         }
-    }
-    else    # ident is IP, lookup name
+       $name = $ident;
+     }
+    else    # ident is IP
     {
         if ($ident !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-            nprint("+ ERROR: Invalid IP '$ident'\n\n");
+            nprint("+ ERROR: Invalid IP: $ident\n\n");
             return;
         }
 
-        $ip = $ident;
-        if (!$CLI{'skiplookup'}) {
-            my $temp_ip = inet_aton($ip);
-            $name = gethostbyaddr($temp_ip, AF_INET);
-
-            # check reverse dns to avoid an inet_aton error
-            my $rdnsip = gethostbyname($name);
-            if ($rdnsip ne "") {
-                $rdnsip = inet_ntoa($rdnsip);
-                if ($ip ne $rdnsip) { $name = $ip; }    # Reverse DNS does not match
-            }
-            else { $name = $ip; }                       # Reverse DNS does not exist
-        }
-        if ($name eq "") { $name = $ip; }
+        $ip = $name = $ident;
     }
 
-    # set displayname -- name takes precedence
-    if   ($name ne "") { $dn = $name; }
-    else               { $dn = $ip; }
-
-    return $name, $ip, $dn;
+    my $displayname = ($name) ? $name : $ip;
+    return $name, $ip, $displayname;
 }
 
 ###############################################################################
@@ -1304,14 +1294,24 @@ sub check_dbs {
                 }
                 for (my $i = 5 ; $i <= 9 ; $i++) {
                     my ($result, $bad) = validate_and_fix_regex($L[$i], 1);
-                    if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\""); }
+                    if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\", line: $line"); }
                 }
                 if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
                         nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
-                        }
+                }
                 else { 
 			$ALL_IDS{$L[0]}=1; 
-			}
+		}
+                if ($L[2] =~ /[^a-e0-9]/) {
+			nprint("\t+ ERROR: Invalid Tuning Type: $line");
+		}
+		if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029)/i) {
+			nprint("\t+ ERROR: Possible incorrect slashes: $line");
+			nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+		}
+                if (($L[4] ne 'POST') && ($L[11] ne '')) {
+                        nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
+                }
             }
             foreach $entry (keys %ENTRIES) {
                 if ($ENTRIES{$entry} > 1) {
@@ -1872,7 +1872,7 @@ sub check_updates {
     my $server       = "CIRT.net";
 
     # set up our mark
-    my %mark = ('ident' => 'www.cirt.net',
+    my %mark = ('ident' => 'cirt.net',
                 'ssl'   => 0,
                 'port'  => 80
                 );
@@ -1888,7 +1888,7 @@ sub check_updates {
             last;
         }
     }
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
 
     # retrieve versions file
     my ($code, $content) = nfetch(\%mark, "$serverdir/versions.txt", "GET");
@@ -2655,7 +2655,7 @@ sub send_updates {
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
-    my %mark = ('ident' => 'www.cirt.net',
+    my %mark = ('ident' => 'cirt.net',
                 'ssl'   => 0,
                 'port'  => 80
                 );
@@ -2667,7 +2667,7 @@ sub send_updates {
         }
     }
 
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('www.cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
@@ -2738,7 +2738,8 @@ sub usage {
                                (if not specified the format will be taken from the file extension passed to -output)
        -Help              Extended help information
        -host+             Target host
-       -IgnoreCode        Ignore Codes--treat as negative responses
+       -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
+       -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
        -id+               Host authentication to use, format is id:pass or id:pass:realm
        -key+              Client certificate key file
        -list-plugins      List all available plugins, perform no testing
@@ -2776,8 +2777,9 @@ sub usage {
                                0     File Upload
                                a     Authentication Bypass
                                b     Software Identification
-                               b     Administration Console
                                c     Remote Source Inclusion
+                               d     WebService
+                               e     Administrative Console
                                x     Reverse Tuning Options (i.e., include all except specified)
        -timeout+          Timeout for requests (default 10 seconds)
        -Userdbs           Load only user databases, not the standard databases

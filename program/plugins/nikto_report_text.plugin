@@ -48,7 +48,8 @@ sub text_open {
 sub text_host {
     my ($handle, $mark) = @_;
     my ($curr_host, $curr_port);
-    print $handle "+ Target Host: $mark->{hostname}\n";
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    print $handle "+ Target Host: $hostname\n";
     print $handle "+ Target Port: $mark->{port}\n";
 }
 

@@ -1,4 +1,4 @@
-#VERSION,2.01
+#VERSION,2.02
 ###############################################################################
 #  Copyright (C) 2010 CIRT, Inc.
 #
@@ -52,9 +52,11 @@ sub nbe_item {
             if ($item->{'mark'}->{'hostname'} =~ /^(\d+\.\d+\.\d+)\.\d+$/) {
                 $network = $1;
             }
+            my $hostname = $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
+
             $line .= "results|";
             $line .= "$network|";
-            $line .= "$item->{'mark'}->{'hostname'}|";
+            $line .= "hostname|";
             $line .= "$item->{'mark'}->{'port'}|";
             $line .= "$item->{'nikto_id'}|";
             $line .= "Security Warning|";
