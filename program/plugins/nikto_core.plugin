@@ -1309,7 +1309,7 @@ sub check_dbs {
 			nprint("\t+ ERROR: Possible incorrect slashes: $line");
 			nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
 		}
-                if (($L[4] ne 'POST') && ($L[11] ne '')) {
+                if ((($L[4] ne 'POST') && ($L[4] ne 'SEARCH')) && ($L[11] ne '')) {
                         nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
                 }
             }
