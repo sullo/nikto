@@ -35,3 +35,4 @@
 @TYPO3=/ /cms/ /site/ /typo/ /typo3/
 @AXIS2=/ /axis2/ /imcws/ /WebServiceImpl/ /dswsbobje/
 @ADOBEXML=/flex2gateway/ /flex2gateway/http /flex2gateway/httpsecure /flex2gateway/cfamfpoolling /flex2gateway/amf /flex2gateway/amfpolling /messagebroker/http /messagebroker/httpsecure /blazeds/messagebroker/http /blazeds/messagebroker/httpsecure /samples/messagebroker/http /samples/messagebroker/httpsecure /lcds/messagebroker/http /lcds/messagebroker/httpsecure /lcds-samples/messagebroker/http /lcds-samples/messagebroker/httpsecure
+@JENKINS=/ /jenkins/ /hudson/

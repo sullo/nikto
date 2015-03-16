@@ -6953,3 +6953,5 @@
 "006995","0","b","/portal/","GET","Mitel\sNetworks","","","","","Mitel Audio and Web Conferencing login found.","",""
 "006996","0","b","/server-manager/","GET","401","","","","","Mitel Audio and Web Conferencing server manager identified.","",""
 "006997","0","b","/awcuser/cgi-bin/vcs?xml=withXsl&xsl=/vcs/vcs_home.xsl&show_codes=&current_vanities=&settings=global%3buser%3bphone&show_port_res_settings","GET","Verify\sClient","","","","","Mitel Audio and Web Conferencing found.","",""
+"006998","","e","@JENKINSmanage","GET","Manage Jenkins","Manage Hudson","200","","","Jenkins/Hudson Management console accessible without authentication.","",""
+"006999","","8","@JENKINSscript","GET","Script Console","","Groovy script","","","Jenkins/Hudson Groovy Script console accessible without authentication. This allows to execution of shell commands.","",""
