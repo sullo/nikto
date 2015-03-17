@@ -6955,3 +6955,5 @@
 "006999","0","8","@JENKINSscript","GET","Script\sConsole","","Groovy\sscript","","","Jenkins/Hudson Groovy Script console accessible without authentication. This allows to execution of shell commands.","",""
 "007000","0","d","@AXIS2services/listServices","GET","<title>List\sServices</title>","","","","","Apache Axis2 WebServices identified.","",""
 "007001","0","b","@AXIS2axis2-web/index.jsp","GET","<title>Axis\s2\s-\sHome</title>","","","","","Apache Axis2 Web Application identified.","",""
+"007002","0","b","/host-manager/html","GET","<tt>conf/tomcat-users.xml</tt>","","","","","Default Tomcat Host-Manager interface found","",""
+"007003","0","b","/host-manager/html","GET","401","","","","","Tomcat Host-Manager interface found (pass protected)","",""
