@@ -103,3 +103,4 @@
 "access-control-allow-origin"
 "access-control-allow-credentials"
 "access-control-max-age"
+"x-clacks-overhead"

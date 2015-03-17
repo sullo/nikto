@@ -36,7 +36,7 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION/;
+    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION %XCO/;
 	use vars qw/%HEADERS_XXS %HEADERS_XCTO/;
 
     return $id;
@@ -185,10 +185,18 @@ sub nikto_headers_postfetch {
 
 	if (!$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
-		if (!defined $result->{'X-Content-Type-Options'}) {
+		if (!defined $result->{'x-content-type-options'}) {
 			add_vulnerability($mark,"The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type", 999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}}=1;
+	}	
+
+	if (!$HEADERS_XCO{$mark->{hostname}}{$mark->{port}} && defined $result)
+	{
+		if (defined $result->{'x-clacks-overhead'}) {
+			add_vulnerability($mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			$HEADERS_XCO{$mark->{hostname}}{$mark->{port}}=1;
+		}
 	}	
 	
     return $request, $result;
