@@ -6671,7 +6671,7 @@
 "006703","0","1e","/console/","GET","200","","","","","Application console found","",""
 "006704","0","1","/umbraco/login.aspx","GET","umbraco.org","","","","","Umbraco admin login page found","",""
 "006705","0","13","/aspmenu/_notes/dwsync.xml","GET","file\sname","","","","","Adobe Dreamweaver dwsync.xml Remote Information Disclosure","",""
-"006707","68662","b68e","@AXIS2axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis2 administration console found. Default credentials are admin:axis2, see also http://www.rapid7.com/security-center/advisories/R7-0037.jsp","",""
+"006707","0","be","@AXIS2axis2-admin/","GET","Axis2\sadministration\sconsole","","","","","Apache Axis2 administration console found.","",""
 "006709","0","b6","/wsman/","GET","200","403","","","","Windows Remote Management is enabled","",""
 "006710","0","be","/XMSPortal/","GET","XMS\sCustomer\sPortal","","","","","XMS Portal found","",""
 "006711","0","27","/desktopmodules/feedbackdesigner/ajaxfbs/browser.html","GET","text\seditor","","","","","FCKEditor found","",""
@@ -6957,3 +6957,4 @@
 "007001","0","b","@AXIS2axis2-web/index.jsp","GET","<title>Axis\s2\s-\sHome</title>","","","","","Apache Axis2 Web Application identified.","",""
 "007002","0","b","/host-manager/html","GET","<tt>conf/tomcat-users.xml</tt>","","","","","Default Tomcat Host-Manager interface found","",""
 "007003","0","b","/host-manager/html","GET","401","","","","","Tomcat Host-Manager interface found (pass protected)","",""
+"007004","68662","b8e","@AXIS2axis2-admin/login","POST","Welcome\sto\sAxis2\sWeb\sAdmin\sModule\s!!","","","","","Apache Axis2 administration console with default credentials admin:axis2 found (CVE-2010-2103), see also http://www.rapid7.com/security-center/advisories/R7-0037.jsp","userName=admin&password=axis2&submit=+Login+",""
