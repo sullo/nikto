@@ -76,13 +76,16 @@ sub nikto_robots {
                 nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d");
                 if (($realdir  ne "") && ($realdir  ne "/")) { $DIRS{$realdir}++; }
                 if (($realfile ne "") && ($realfile ne "/")) { $RFILES{$realfile}++; }
+                $DISCTR++;
+				next if (($realdir eq "/" && $realfile eq "") ||
+				         ($realfile eq "/" && $realdir eq ""));
 				if (!defined($parameters->{'nocheck'})) {
 					my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
 					if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
-						add_vulnerability($mark, "File/dir '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
+						add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
 					}
 				}
-                $DISCTR++;
+
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
 
