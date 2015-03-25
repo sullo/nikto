@@ -1285,3 +1285,4 @@
 "601272","mod_security/","1.8.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601273","mod_suid/","1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "601274","srp/","2.c","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"601275","Jetty","Jetty(9.2.10-v20150310)","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). Jetty 8.1.16.v20140903 and 7.6.16.v20140903 are also current."
