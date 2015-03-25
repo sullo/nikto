@@ -6960,3 +6960,4 @@
 "007004","68662","b8e","@AXIS2axis2-admin/login","POST","Welcome\sto\sAxis2\sWeb\sAdmin\sModule\s!!","","","","","Apache Axis2 administration console with default credentials admin:axis2 found (CVE-2010-2103), see also http://www.rapid7.com/security-center/advisories/R7-0037.jsp","userName=admin&password=axis2&submit=+Login+",""
 "007005","","be","/adminer.php","GET","www.adminer.org","","","","","The Adminer program is a database access tool which can allow full administrative access to MySQL databases","",""
 "007006","","be","/adminer.php","GET","www.adminer.org","","","","","The Adminer program is a database admin access tool which can allow full administrative access to databases","",""
+"007009","0","be","@AXIS2Login.jsp","GET","Login\sto\sAxis2::","","","","","Apache Axis2 administration console found.","",""
