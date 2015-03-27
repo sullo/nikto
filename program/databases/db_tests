@@ -6965,3 +6965,4 @@
 "007011","0","8","@MODIR@MOFILE?collection=secpulse&action=listRows&find=array();phpinfo();exit;","GET","<title>phpinfo()","","","","","PHPMoAdmin is vulnerable to a remote code execution (CVE-2015-2208).","",""
 "007012","0","be","@MODIR@MOFILE","GET","<title>phpMoAdmin","","","","","PHPMoAdmin identified.","",""
 "007013","0","be","@RAINLOOP?admin","GET","RainLoop\sTeam","","rainloopAppData","","","RainLoop Webmail admin backend identified. Default credentials are admin:12345","",""
+"007014","0","b9","/wp-content/plugins/gravityforms/change_log.txt","GET","200","","","1.9.3.6","","Gravity forms is installed. Based on the version number in the changelog, it is vulnerable to an authenticated SQL injection. https://wpvulndb.com/vulnerabilities/7849","",""
