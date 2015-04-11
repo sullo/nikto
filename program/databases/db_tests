@@ -6968,4 +6968,4 @@
 "007014","0","b9","/wp-content/plugins/gravityforms/change_log.txt","GET","200","","","1.9.3.6","","Gravity forms is installed. Based on the version number in the changelog, it is vulnerable to an authenticated SQL injection. https://wpvulndb.com/vulnerabilities/7849","",""
 "007015","0","b","/manager/status","GET","<tt>conf/tomcat-users.xml</tt>","","","","","Default Tomcat Server Status interface found","",""
 "007016","0","b","/manager/status","GET","401","","","","","Tomcat Server Status interface found (pass protected)","",""
-"007017","0","be","/admin/index.jsp","GET","<title>Tomcat Server Administration","","","","","Tomcat Server Administration interface found","",""
+"007017","0","be","/admin/login.jsp","GET","<title>Tomcat Server Administration","","","","","Tomcat Server Administration interface found","",""
