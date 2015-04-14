@@ -40,3 +40,5 @@
 @JENKINS=/ /jenkins/ /hudson/
 @RAINLOOP=/ /rainloop/ /webmail/
 @TOMCATADMIN=/manager/ /jk-manager/ /jk-status/ /admin/ /host-manager/
+@PHPINFODIRS=/ /test/
+@PHPINFOFILES=phpinfo.php phpinfo.php3 test.php info.php index.php php_info.php
