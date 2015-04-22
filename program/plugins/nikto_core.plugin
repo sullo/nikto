@@ -74,7 +74,7 @@ sub is_404 {
         }
     }
 
-    # Note: ERRCODES are checkined in nikto_tests.plugin as they
+    # Note: ERRCODES are checked in nikto_tests.plugin as they
     # take precedent over ALL other tests
     foreach my $string (keys %{ $VARIABLES->{'ERRSTRINGS'} }) {
         if ($content =~ /$string/i) {
@@ -909,7 +909,7 @@ sub check_input {
     my $key = readkey();
     if ($key eq '') { return; }
 
-    lc($key);
+    $key=lc($key);
     if ($key eq ' ') {
         status_report($mark);
     }
