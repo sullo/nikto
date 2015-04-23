@@ -6775,7 +6775,7 @@
 "006817","3093","23","@TYPO3typo3_src/ChangeLog","GET","Release\sof\sTYPO3","","","","","TYPO3 ChangeLog file found.","",""
 "006818","0","23","/_about","GET","Tildeslash","","","","","Unrestricted Monit web interface found. This reveals sensitive information, and may allow stopping of critical services.","",""
 "006823","0","be","/portlet/login/login.jsp","GET","sign-in-form","","","","","LifeRay Portal administrative login found.","",""
-"006824","0","9a","/CHANGELOG.txt","GET","Drupal 7.[012][0-9]","200","","","","Version number implies that there is a SQL Injection in Drupal 7, can be used for authentication bypass (Drupageddon: see https://www.sektioneins.de/advisories/advisory-012014-drupal-pre-auth-sql-injection-vulnerability.html).","",""
+"006824","0","9a","/CHANGELOG.txt","GET","Drupal 7.([012][0-9]|3[0-1])","200","","","","Version number implies that there is a SQL Injection in Drupal 7, can be used for authentication bypass (Drupageddon: see https://www.sektioneins.de/advisories/advisory-012014-drupal-pre-auth-sql-injection-vulnerability.html).","",""
 "006825","0","1","/debug.jsp","GET","200","","","","","Possible debug directory/program found.","",""
 "006826","0","1","/debug.asp","GET","200","","","","","Possible debug directory/program found.","",""
 "006827","0","1","/debug.php","GET","200","","","","","Possible debug directory/program found.","",""
