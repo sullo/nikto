@@ -61,11 +61,12 @@ sub nikto_headers_postfetch {
     # look for internal IPs
     foreach my $header (keys %$result) {
         # skip some very unlikely headers
-        if    ($header eq 'whisker')        { next; }
-        elsif ($header eq 'date')           { next; }
-        elsif ($header eq 'content-type')   { next; }
-        elsif ($header eq 'content-length') { next; }
-        elsif ($header eq 'connection')     { next; }
+        if    ($header eq 'whisker')         { next; }
+        elsif ($header eq 'date')            { next; }
+        elsif ($header eq 'content-type')    { next; }
+        elsif ($header eq 'content-length')  { next; }
+        elsif ($header eq 'connection')      { next; }
+        elsif ($header eq 'x-mod-pagespeed') { next; }
 	elsif (defined $HFOUND{$header})    { next; }
         foreach my $ip (get_ips($result->{$header})) {
             my ($valid, $internal, $loopback) = is_ip($ip);
