@@ -6962,3 +6962,5 @@
 "007015","0","b","@TOMCATADMIN/status","GET","<tt>conf/tomcat-users.xml</tt>","","","","","Default Tomcat Server Status interface found","",""
 "007016","0","b","@TOMCATADMIN/status","GET","401","","","","","Tomcat Server Status interface found (pass protected)","",""
 "007017","0","be","@TOMCATADMIN/login.jsp","GET","<title>Tomcat Server Administration","","","","","Tomcat Server Administration interface found","",""
+"007018","0","b","/server-status","GET","401","","","","","Apache server-status interface found (pass protected)","",""
+"007019","0","b","/server-info","GET","401","","","","","Apache server-info interface found (pass protected)","",""
