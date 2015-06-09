@@ -6706,7 +6706,7 @@
 "006747","0","d","/manage/CxSenseWebService/CxSense.asmx","GET","200","","CxSense\sWeb\sService","","","Covertix SmartCipher Web Service detected","",""
 "006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","CxServerDMZ","","","Covertix SmartCipher DMZ Server Web Service detected","",""
 "006749","51887","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found. CVE-2009-0932.","",""
-"006750","0","b","@OWNCLOUDstatus.php","GET","200","","{\"installed\":\"true\",\"version\":\"","","","ownCloud installation indentified by status.php, see the status.php for the running version and http://owncloud.org/about/security/advisories/ for security advisories","",""
+"006750","0","b","@OWNCLOUDstatus.php","GET","200","","{\"installed\":\"true\",\"version\":\"","","","ownCloud installation indentified by status.php, see the status.php for the running version and https://owncloud.org/security/advisories/ for security advisories","",""
 "006751","0","0","@OWNCLOUDremote.php/webdav","GET","Generated\sby\sSabreDAV","Sabre_DAV_Exception_NotAuthenticated","","","","ownCloud WebDAV file upload detected (pass protected), remote.php/caldav and remote.php/carddav are also valid","",""
 "006752","0","1235","@OWNCLOUDdata/owncloud.log","GET","{\"app\":\"","{\"reqId\":","200","","","Unprotected ownCloud data directory identified","",""
 "006754","0","b","@SECLOREWelcome.do","GET","200","","Powered\sBy\sFileSecure","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
