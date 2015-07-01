@@ -43,4 +43,3 @@
 @PHPINFODIRS=/ /test/
 @PHPINFOFILES=phpinfo.php phpinfo.php3 test.php info.php index.php php_info.php
 @MANTIS=/ /mantis/ /mantisbt/
-@DOKUWIKI=/ /wiki/ /dokuwiki/
