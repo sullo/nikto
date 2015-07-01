@@ -6966,3 +6966,4 @@
 "007019","0","b","/server-info","GET","401","","","","","Apache server-info interface found (pass protected)","",""
 "007020","0","b","/README.mediawiki","GET","== MediaWiki ==","","","","","Mediawiki README file found","",""
 "007021","0","123b","@MANTISdoc/RELEASE","GET","MantisBT Release Notes","(Maintenance|Stable|Security) Release","","","","Mantis Bugtracker Release Notes identified.","",""
+"007022","0","123b","@DOKUWIKIVERSION","GET","([0-9]+\-[0-9]+\-[0-9]+[a-z])? \"[a-zA-Z].*\"","","","","","Dokuwiki Version file identified.","",""
