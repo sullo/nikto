@@ -1310,10 +1310,10 @@ sub check_dbs {
 			nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
 		}
                 if ((($L[4] ne 'POST') && ($L[4] ne 'SEARCH')) && ($L[11] ne '')) {
-			# Some test IDs need this
-			if ($L[0] != '006992') {
-                        	nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
-				}
+                    # Some test IDs need this
+                    if ($L[0] !~ /(006992|000126|000291|001153)/i) {
+                        nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
+                    }
                 }
             }
             foreach $entry (keys %ENTRIES) {
