@@ -1313,6 +1313,7 @@ sub check_dbs {
                     # Some test IDs need this
                     if ($L[0] !~ /(006992|000126|000291|001153)/i) {
                         nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
+                        nprint("\t+ If the POST data is needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
                     }
                 }
             }
