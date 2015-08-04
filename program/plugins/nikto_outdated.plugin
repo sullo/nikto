@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -118,7 +118,7 @@ sub nikto_outdated {
                     $msg =~ s/\@RUNNING_VER/$BI/g;
                     $msg =~ s/\@CURRENT_VER/$v/g;
                     chomp($msg);
-                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, 0, "HEAD");
+                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, 0, "HEAD", "/");
                 }
             }
         }

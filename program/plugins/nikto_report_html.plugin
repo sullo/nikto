@@ -1,4 +1,4 @@
-#VERSION,2.05
+#VERSION,2.06
 ###############################################################################
 #  Copyright (C) 2007 CIRT, Inc.
 #
@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -143,20 +143,12 @@ sub html_change_vars {
     }
     if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
 
-    # do now in case we return early
-    foreach my $var (keys %variables) {
-        $template =~ s/$var/$variables{$var}/g;
-    }
-
-    if ($item->{'uri'} eq '') { return $template }
-
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # OSVDB info
     my $OSVDB = $item->{'osvdb'};
     if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    $OSVDB_LINK                      = "http://osvdb.org/$OSVDB";
-    $variables{"#TEMPL_OSVDB_LINK#"} = $OSVDB_LINK;
+    $variables{"#TEMPL_OSVDB_LINK#"} = "http://osvdb.org/$OSVDB";
     $variables{"#TEMPL_OSVDB#"}      = $OSVDB;
 
     # Scanner Messages Handling
@@ -181,7 +173,7 @@ sub html_change_vars {
             $msg .= join(", ", @links);
         }
 
-	my $uri = $item->{'uri'};
+  	my $uri = $item->{'uri'};
         if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
 		{ $uri = $mark->{'root'} . $uri; }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
