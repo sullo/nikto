@@ -469,7 +469,7 @@
 "000437","31150","3","/USER/CONFIG.AP","GET","200","","","","","MIPCD configuration information. MIPCD should not have the web interface enabled.","",""
 "000438","0","3","@CGIDIRSmail","GET","200","","","","","Simple Perl mailing script to send form data to a pre-configured email address","",""
 "000439","0","3","@CGIDIRSnph-error.pl","GET","200","","","","","Gives more information in error messages","",""
-"000440","0","3","@CGIDIRSpost-query","POST","200","","","","","Echoes back result of your POST","",""
+"000440","0","3","@CGIDIRSpost-query","POST","MYDATA","","","","","Echoes back result of your POST","MYDATA",""
 "000441","0","3","@CGIDIRSquery","GET","200","","","","","Echoes back result of your GET","",""
 "000442","0","3","@CGIDIRStest-cgi.tcl","GET","200","","","","","May echo environment variables or give directory listings","",""
 "000443","0","3","@CGIDIRStest-env","GET","200","","","","","May echo environment variables or give directory listings","",""
