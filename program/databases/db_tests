@@ -6971,3 +6971,4 @@
 "007024","0","be","/sixcms/admin/login/","GET","<title>SixCMS","","","","","SixCMS Administration interface found","",""
 "007025","0","be","@ROCKMONGOindex.php?action=login.index","GET","<title>RockMongo","","","","","RockMongo MongoDB administration tool found. Default credentials are admin:admin.","",""
 "007026","0","be","@ROCKMONGOindex.php?action=admin.index","GET","Command Line","Build Information","<title>RockMongo","","","Unprotected RockMongo MongoDB administration tool found.","",""
+"007027","0","3","/humans.txt","GET","200","","","","","The humans.txt file may reveal information aboute site owners/developers. See http://humanstxt.org/ for info.","",""
