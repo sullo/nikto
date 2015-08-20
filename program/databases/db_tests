@@ -6979,3 +6979,5 @@
 "007033","0","be","/wba/browser_test.html","GET","aXes\sBrowser\sCompatibility","","","","","Lansa aXes Browser Compatibility.","",""
 "007034","0","be","/echo","GET","FastCGI\sEcho","","","","","Lansa aXes echo page found.","",""
 "007035","0","b","/cgi-bin/lansaweb?about","GET","LANSA\sfor\sthe\sWeb","","","","","Lansa for the Web main CGI found.","",""
+"007036","3092","b","@PHPMYADMINdoc/html/index.html","GET","phpMyAdmin.*Documentation","","200","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
+"007037","3092","b","@PHPMYADMINdocs/html/index.html","GET","phpMyAdmin.*Documentation","","200","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
