@@ -280,11 +280,12 @@ sub nikto_headers {
     $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
     $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ WebLogic\ internal\ IP/; 
 
-    ($res, $content, $errors, $request, $result) =  nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0"); 
- 
-    if (($result->{'location'} ne "") && ($result->{'location'} =~ /http:\/\//)) { 
-        add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, 5737, "GET", ".", $request, $result);
-    }
+    ($res, $content, $errors, $request, $result) =  nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0");
+      if ($res eq "200") {
+          if (($result->{'location'}  ne "") && ($result->{'location'} =~ /http:\/\//)) {
+              add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, 5737, "GET", ".", $request, $result);
+          }
+      }
 	
 	
 	# BREACH Checks
