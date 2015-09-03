@@ -6982,3 +6982,4 @@
 "007036","3092","b","@PHPMYADMINdoc/html/index.html","GET","phpMyAdmin.*Documentation","","200","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
 "007037","3092","b","@PHPMYADMINdocs/html/index.html","GET","phpMyAdmin.*Documentation","","200","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
 "007038","0","3","/mod_gzip_status","GET","mod_gzip_version","mod_gzip_on","200","","","The mod_gzip_status page may reveal the version of mod_gzip running on this host.","",""
+"007039","0","b","/server-status","GET","403","","","","","Apache server-status interface found (access forbidden)","",""
