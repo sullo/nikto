@@ -1,4 +1,3 @@
-#VERSION,2.1.5
 ###############################################################################
 #  Copyright (C) 2006 CIRT, Inc.
 #
@@ -835,10 +834,9 @@ sub general_config {
     open(FI, "<$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin");
     my @F = <FI>;
     close(FI);
-    my @VERS = grep(/^#VERSION/, @F);
-    $VARIABLES{'core_version'} = $VERS[0];
-    $VARIABLES{'core_version'} =~ s/\#VERSION,//;
-    chomp($VARIABLES{'core_version'});
+    my @VERS = grep(/^#VERSION:/, @F);
+    $VARIABLES{'core_version'} = chomp($VERS[0]);
+    $VARIABLES{'core_version'} =~ s/\#VERSION: //;
     $VARIABLES{'TEMPL_HCTR'} = 0;
 	if ($^O !~ /MSWin32/) {
 		$NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
@@ -2589,28 +2587,25 @@ sub version {
     nprint($VARIABLES{'DIV'});
     nprint("$VARIABLES{'name'} Versions");
     nprint($VARIABLES{'DIV'});
-    nprint("File                               Version      Last Mod");
-    nprint("-----------------------------      --------     ----------");
-    nprint("Nikto main                         $VARIABLES{'version'}");
+    nprint("File                               Version");
+    nprint("-----------------------------      --------");
+    nprint("Nikto                              $VARIABLES{'version'}");
     nprint("LibWhisker                         $LW2::VERSION");
 
-    foreach my $FILE (sort keys %NIKTOFILES) {
-        next if $FILE eq 'LW2.pm';
-        open(FI, "<$NIKTOFILES{$FILE}")
-          || die print STDERR "+ ERROR: Unable to open '$NIKTOFILES{$FILE}': $!\n";
-        my @F = <FI>;
-        close(FI);
-        my @VERS = grep(/^#VERSION/, @F);
-        my @MODS = grep(/^# \$Id:/,  @F);
-        chomp($VERS[0]);
-        chomp($MODS[0]);
-        my @modification = split(/ /, $MODS[0]);
-        $VERS[0] =~ s/^#VERSION,//;
-        my $ws1 = (35 - length($FILE));
-        my $ws2 = (13 - length($VERS[0]));
-        nprint("$FILE" . " " x $ws1 . "$VERS[0]" . " " x $ws2 . "$modification[4]");
-    }
-    nprint($VARIABLES{'DIV'});
+#    foreach my $FILE (sort keys %NIKTOFILES) {
+#        next if $FILE eq 'LW2.pm';
+#        open(FI, "<$NIKTOFILES{$FILE}")
+#          || die print STDERR "+ ERROR: Unable to open '$NIKTOFILES{$FILE}': $!\n";
+#        my @F = <FI>;
+#        close(FI);
+#        my @VERS = grep(/^#VERSION/, @F);
+#        chomp($VERS[0]);
+#        $VERS[0] =~ s/^#VERSION,//;
+#        my $ws1 = (35 - length($FILE));
+#        my $ws2 = (13 - length($VERS[0]));
+#        nprint("$FILE" . " " x $ws1 . $VERS[0]);
+#    }
+#    nprint($VARIABLES{'DIV'});
 
     # Check dependencies
     check_modules();

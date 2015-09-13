@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-#VERSION,2.1.6
+#VERSION: 2.1.6
 ###############################################################################
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
