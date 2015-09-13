@@ -582,7 +582,7 @@ http://192.168.0.1:8080/
           <para>1 - Interesting File / Seen in logs. An unknown but suspicious
           file or attack that has been seen in web server logs (note: if you
           have information regarding any of these attacks, please contact
-          CIRT, Inc.).</para>
+          Chris Sullo).</para>
         </listitem>
 
         <listitem>
@@ -1067,7 +1067,7 @@ Documentation - Apache HTTP Server&lt;/title&gt;
 
             <para>Default Setting</para>
 
-            <screen>CIRT=174.142.17.165</screen>
+            <screen>CIRT=107.170.99.251</screen>
           </listitem>
         </varlistentry>
 
@@ -1715,7 +1715,7 @@ DOCDIR=EXECDIR/docs</screen>
                                        weight =&gt; 19,
                                     },
                                    },
-               copyright        =&gt; "2010 CIRT Inc"
+               copyright        =&gt; "2010 Chris Sullo"
                };
 
     return $id;
@@ -2724,7 +2724,7 @@ $TESTS{999999}{references}="OSVDB-637";</screen>
       <title>Nikto</title>
 
       <para>Nikto is licensed under the GNU General Public License (GPL), and
-      copyrighted by CIRT, Inc.</para>
+      copyrighted by Chris Sullo</para>
     </section>
 
     <section>
@@ -2738,7 +2738,7 @@ $TESTS{999999}{references}="OSVDB-637";</screen>
       <title>Tests</title>
 
       <para>The web tests are licensed for use with Nikto only, and may not be
-      reused without written consent from CIRT, Inc.</para>
+      reused without written consent from Chris Sullo</para>
     </section>
   </chapter>
 
@@ -2844,7 +2844,7 @@ $TESTS{999999}{references}="OSVDB-637";</screen>
         </listitem>
       </itemizedlist>
 
-      <para>This document is © 2010 CIRT, Inc. and may not be reused without
+      <para>This document is © 2010 Chris Sullo and may not be reused without
       permission.</para>
     </section>
   </chapter>

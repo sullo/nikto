@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ sub nikto_favicon_init {
                full_name   => "Favicon",
                author      => "Sullo",
                description => "Checks the web server's favicon against known favicons.",
-               copyright   => "2008 CIRT Inc.",
+               copyright   => "2008 Chris Sullo",
                hooks       => {
                           scan  => { method => \&nikto_favicon, },
                           start => { method => \&nikto_favicon_load, }

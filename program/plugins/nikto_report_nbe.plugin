@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2010 CIRT, Inc.
+#  Copyright (C) 2010 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@ sub nikto_report_nbe_init {
                report_head   => \&nbe_open,
                report_item   => \&nbe_item,
                report_format => 'nbe',
-               copyright     => "2010 CIRT Inc."
+               copyright     => "2010 Chris Sullo"
                };
     return $id;
 }

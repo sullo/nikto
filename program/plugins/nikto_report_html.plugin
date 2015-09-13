@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ sub nikto_report_html_init {
                report_item       => \&html_item,
                report_close      => \&html_close,
                report_format     => 'htm',
-               copyright         => "2008 CIRT Inc."
+               copyright         => "2008 Chris Sullo"
                };
 
     # load up the templates now

@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_headers_init {
                    postfetch => { method => \&nikto_headers_postfetch, },
                    start     => { method => \&nikto_headers_load, },
                    },
-        copyright => "2008 CIRT Inc."
+        copyright => "2008 Chris Sullo"
         };
 
     # some global variables

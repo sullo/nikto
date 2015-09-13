@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2012 CIRT, Inc.
+#  Copyright (C) 2012 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ sub nikto_paths_init {
                                      weight => 20,
                                      },
                             },
-               copyright => "2012 CIRT Inc."
+               copyright => "2012 Chris Sullo"
                };
     return $id;
 }

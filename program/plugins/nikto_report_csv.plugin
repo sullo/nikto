@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ sub nikto_report_csv_init {
                report_host_start => \&csv_host_start,
                report_item       => \&csv_item,
                report_format     => 'csv',
-               copyright         => "2008 CIRT Inc."
+               copyright         => "2008 Chris Sullo"
                };
     return $id;
 }

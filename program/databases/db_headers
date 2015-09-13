@@ -10,10 +10,7 @@
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# Notes:
-# - Use lower case letters
-# - Keep list alphabetically (for readability and easy human lookup)
-# Example to get the server headers: $ curl -I www.example.com
+# Note: use only lowercase
 #######################################################################
 "header"
 "accept"

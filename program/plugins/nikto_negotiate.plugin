@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2013 CIRT, Inc.
+#  Copyright (C) 2013 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ sub nikto_negotiate_init {
                full_name   => "Negotiate",
                author      => "Sullo",
                description => "Checks the mod_negotiation MultiViews.",
-               copyright   => "2013 CIRT Inc.",
+               copyright   => "2013 Chris Sullo",
                hooks       => {
                           scan  => { method => \&nikto_negotiate, },
                           },

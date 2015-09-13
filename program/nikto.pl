@@ -7,7 +7,7 @@ load_modules();
 ###############################################################################
 #                               Nikto                                         #
 ###############################################################################
-#  Copyright (C) 2001 CIRT, Inc.
+#  Copyright (C) 2001 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License

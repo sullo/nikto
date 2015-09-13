@@ -1,5 +1,5 @@
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@ sub nikto_tests_init {
                full_name   => "Nikto Tests",
                author      => "Sullo, Tautology",
                description => "Test host with the standard Nikto tests",
-               copyright   => "2008 CIRT Inc.",
+               copyright   => "2008 Chris Sullo",
                hooks       => {
                           scan => { method => \&nikto_tests,
                                     weight => 99,
