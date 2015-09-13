@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -77,7 +77,7 @@ sub nikto_headers_postfetch {
                     my $msg;
                     if ($internal) { $msg .= "RFC-1918 "; }
                     $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
-                    add_vulnerability($mark, $msg, 999979, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                    add_vulnerability($mark, $msg, 999979, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 	            $HFOUND{$header}=1;
                 }
             }
@@ -107,7 +107,7 @@ sub nikto_headers_postfetch {
 
             $message .=
               ($ishex == 1)
-              ? sprintf(", inode: %d, size: %d, mtime: %s", hex($inode), hex($size), scalar(localtime($ltime)) )        
+              ? sprintf(", inode: %d, size: %d, mtime: %s", hex($inode), hex($size), scalar(localtime($ltime)) )
               : sprintf(", inode: %s, size: %s, mtime: %s", $inode,      $size,      $mtime);
         }
         else {
@@ -116,10 +116,10 @@ sub nikto_headers_postfetch {
                 $message .= "0x$field ";
             }
         }
-        add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        add_vulnerability($mark, $message, 999984, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		$ETAGS{$mark->{hostname}}{$mark->{port}}=1;
     }
-	
+
 	# Look for X-Frame-Options
 	if (!$XFRAME{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
@@ -127,22 +127,22 @@ sub nikto_headers_postfetch {
 			if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
 				my $allowed = $result->{'x-frame-options'};
 				$allowed =~ s/^.* //g;
-				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. This is only supported in Internet Explorer and may lead to the header being ignored.", 999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+				add_vulnerability($mark,"X-Frame-Options header is set to allow framing from $allowed. This is only supported in Internet Explorer and may lead to the header being ignored.", 999978, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 		else {
-			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			add_vulnerability($mark,"The anti-clickjacking X-Frame-Options header is not present.", 999957, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$XFRAME{$mark->{hostname}}{$mark->{port}}=1;
 	}
-	
+
 	# X-XSS-Protection
 	if (!$XSSPROTECTION{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (defined $result->{'x-xss-protection'}) {
 			# Parse this and see whether it's set to 0
 			if ($result->{'x-xss-protection'} =~ /^0/) {
-				add_vulnerability($mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.", 999101, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+				add_vulnerability($mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.", 999101, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 				$XSSPROTECTION{$mark->{hostname}}{$mark->{port}}=1;
 			}
 		}
@@ -151,11 +151,11 @@ sub nikto_headers_postfetch {
 	if (!$HEADERS_XXP{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (!defined $result->{'x-xss-protection'}) {
-			add_vulnerability($mark,"The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS", 999102, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			add_vulnerability($mark,"The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS", 999102, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$HEADERS_XXP{$mark->{hostname}}{$mark->{port}}=1;
 	}
-	
+
     # Look for any uncommon headers
 
     foreach my $header (keys %$result) {
@@ -170,7 +170,7 @@ sub nikto_headers_postfetch {
             my $x = $result->{$header};
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
-            add_vulnerability($mark, "Uncommon header '$header' found, with contents: $result->{$header}", 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability($mark, "Uncommon header '$header' found, with contents: $result->{$header}", 999100, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $reportnum++;
 	    $HFOUND{$header}{$mark->{'hostname'}}=1;
         }
@@ -179,7 +179,7 @@ sub nikto_headers_postfetch {
 	if ($mark->{'ssl'} && !$HEADERS_STS{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (!defined $result->{'strict-transport-security'}) {
-			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			add_vulnerability($mark,"The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$HEADERS_STS{$mark->{hostname}}{$mark->{port}}=1;
 	}
@@ -187,19 +187,19 @@ sub nikto_headers_postfetch {
 	if (!$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (!defined $result->{'x-content-type-options'}) {
-			add_vulnerability($mark,"The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type", 999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			add_vulnerability($mark,"The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type", 999103, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$HEADERS_XCTO{$mark->{hostname}}{$mark->{port}}=1;
-	}	
+	}
 
 	if (!$HEADERS_XCO{$mark->{hostname}}{$mark->{port}} && defined $result)
 	{
 		if (defined $result->{'x-clacks-overhead'}) {
-			add_vulnerability($mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+			add_vulnerability($mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			$HEADERS_XCO{$mark->{hostname}}{$mark->{port}}=1;
 		}
-	}	
-	
+	}
+
     return $request, $result;
 }
 
@@ -220,7 +220,7 @@ sub nikto_headers_check {
             my $value = $result->{$header};
             $HFOUND{$key} = $value;
 
-            add_vulnerability($mark, $message . " " . $value, $tid, "0", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability($mark, $message . " " . $value, $tid, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         }
     }
 }
@@ -241,7 +241,7 @@ sub nikto_headers {
             ($res, $content, $error, $request, $result) = nfetch($mark, $f . "\\", "GET", "", \%transheaders, "", "headers: Translate-f #2");
             if ($res eq "200") {
                 if ($content =~ /<asp:/ || $content =~ /<\/asp:/) {
-                    add_vulnerability($mark, "Host may be vulnerable to a source disclosure using the Translate: header", 999983, 390, "GET", $f, $request, $result);
+                    add_vulnerability($mark, "Host may be vulnerable to a source disclosure using the Translate: header", 999983, "OSVDB-390", "GET", $f, $request, $result);
                     last;
                 }
             }
@@ -250,56 +250,56 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my %locheaders, %locflags; 
-    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
-    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/; 
-    $locflags{'noclean'} = 1; 
+    my %locheaders, %locflags;
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/;
+    $locflags{'noclean'} = 1;
 
-     my ($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
+     my ($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0");
 
-     if (   ($result->{'content-location'} ne "") 
-         && ($result->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
-         && ($result->{'content-location'} !~ /$mark->{'ip'}/)) { 
-        	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$result->{'content-location'}\".", 999989, 630, "GET", "/", $request, $result);
+     if (   ($result->{'content-location'} ne "")
+         && ($result->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)
+         && ($result->{'content-location'} !~ /$mark->{'ip'}/)) {
+        	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$result->{'content-location'}\".", 999989, "OSVDB-630", "GET", "/", $request, $result);
     }
 
-         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0"); 
-  
-     if (   ($result->{'location'} ne "") 
-         && ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
-         && ($result->{'location'} !~ /$mark->{'ip'}/)) { 
-        add_vulnerability($mark, "IIS may reveal its internal or real IP in the Location header via a request to the /images directory. The value is \"$result->{'location'}\".", 999988, 630, "GET", "/images", $request, $result);
+         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0");
+
+     if (   ($result->{'location'} ne "")
+         && ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)
+         && ($result->{'location'} !~ /$mark->{'ip'}/)) {
+        add_vulnerability($mark, "IIS may reveal its internal or real IP in the Location header via a request to the /images directory. The value is \"$result->{'location'}\".", 999988, "OSVDB-630", "GET", "/images", $request, $result);
     }
 
     #######################################################################
     # Location header in WebLogic
-    # Clear out locheaders 
-    for (keys %locheaders) { 
-        delete $locheaders{$_}; 
-    } 
-    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
-    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ WebLogic\ internal\ IP/; 
-
-    ($res, $content, $errors, $request, $result) =  nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0"); 
- 
-    if (($result->{'location'} ne "") && ($result->{'location'} =~ /http:\/\//)) { 
-        add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, 5737, "GET", ".", $request, $result);
+    # Clear out locheaders
+    for (keys %locheaders) {
+        delete $locheaders{$_};
     }
-	
-	
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ WebLogic\ internal\ IP/;
+
+    ($res, $content, $errors, $request, $result) =  nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0");
+
+    if (($result->{'location'} ne "") && ($result->{'location'} =~ /http:\/\//)) {
+        add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, "OSVDB-5737", "GET", ".", $request, $result);
+    }
+
+
 	# BREACH Checks
-	for (keys %locheaders) { 
-        delete $locheaders{$_}; 
-    } 
+	for (keys %locheaders) {
+        delete $locheaders{$_};
+    }
     $locheaders{'Accept-Encoding'} = "deflate, gzip";
 	($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: BREACH Test", "1.1");
-	
+
 	if (!$BREACH && defined $result && $mark->{'ssl'})
 	{
 		if (defined $result->{'content-encoding'}) {
 			if ($result->{'content-encoding'} =~ "(deflate|gzip)") {
 				$BREACH=1;
-				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.", 999966, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+				add_vulnerability($mark,"The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.", 999966, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 			}
 		}
 	}

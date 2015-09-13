@@ -46,7 +46,7 @@ if (!-r $infile) {
 
 open(INFILE, "<$infile") || die print "Unable to open file: $!\n\n";
 while (<INFILE>) {
-    if ($_ =~ /^(((Test|OSVDB) ID)|Message):/) { $header .= $_; next; }
+    if ($_ =~ /^(Test ID|Message|References):/) { $header .= $_; next; }
     next unless $_ =~ /^REQUEST:/;
     chomp;
     $_ =~ s/^REQUEST://;

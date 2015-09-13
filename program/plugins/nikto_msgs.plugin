@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -50,7 +50,7 @@ sub nikto_msgs {
     foreach my $item (@$dbarray) {
         $item->{'server'} = validate_and_fix_regex($item->{'server'});
         if ($mark->{'banner'} =~ /($item->{'server'})\b/i) {
-            add_vulnerability($mark, "$1 - $item->{'message'}", $item->{'nikto_id'}, $item->{'osvdb'});
+            add_vulnerability($mark, "$1 - $item->{'message'}", $item->{'nikto_id'}, $item->{'refs'});
         }
     }
 
@@ -62,15 +62,15 @@ sub nikto_msgs {
 
         # Computer name
         return if $mark->{'terminate'};
-	if ($content=~ /ComputerName/) { 
+	if ($content=~ /ComputerName/) {
         	my $name = $content;
         	$name =~ s#(^.*<ComputerName>)([^<]+)(</ComputerName>.*$)#$2#;
         	my $eposerver = $content;
         	$eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
-        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 980100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 980100, "", "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
- 	else { 
-        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 980100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+ 	else {
+        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 980100, "", "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
     }
 
@@ -93,7 +93,7 @@ sub nikto_msgs {
                 $ipaddrs .= " $ipaddr";
             }
         }
-        add_vulnerability($mark, "Web server is an HP WBEM agent, showing the hostname is $name and the IP addresses are$ipaddrs.", 80101, 0, "GET", "/cpqlogin.htm", $request, $response);
+        add_vulnerability($mark, "Web server is an HP WBEM agent, showing the hostname is $name and the IP addresses are$ipaddrs.", 80101, "", "GET", "/cpqlogin.htm", $request, $response);
     }
 }
 

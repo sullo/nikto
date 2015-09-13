@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -39,7 +39,7 @@ sub nikto_apache_expect_xss {
     my ($code, $content, $errors, $request, $response) = nfetch($mark, "/", "GET", "", \%headers, "", "apache_expect_xss");
 
     if ($content =~ /<script>alert\(xss\)<\/script>/) {
-	 add_vulnerability($mark, "Apache is vulnerable to XSS via the Expect header", 999974, 27487, "GET", "/", $request, $response);
+	 add_vulnerability($mark, "Apache is vulnerable to XSS via the Expect header", 999974, "OSVDB-27487", "GET", "/", $request, $response);
     }
 }
 

@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -47,10 +47,10 @@ sub nikto_cookies_postfetch {
 		my $cname = $1;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
 		if ($c !~ /secure/i && $mark->{ssl}) {
-			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
 		if ($c !~ /httponly/i) {
-			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
         my @ips = get_ips($c);
         foreach my $ip (@ips) {
@@ -58,12 +58,12 @@ sub nikto_cookies_postfetch {
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {
                     my $msg   = "";
-                    my $osvdb = 0;
+                    my $refs = "";
 
                     if ($cname eq 'ARPT') {
                         $msg =
                           "Cisco content switch reveals internal IP address found in the '$cname' cookie. The IP is \"$ip\".";
-                        $osvdb = 28121;
+                        $refs = "OSVDB-28121";
                     }
                     else {
 
@@ -72,7 +72,7 @@ sub nikto_cookies_postfetch {
                         if ($internal) { $int = "RFC-1918 "; }
                         $msg = $int . "IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
-                    add_vulnerability($mark, $msg, 999991, $osvdb, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+                    add_vulnerability($mark, $msg, 999991, $refs, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
                 }
             }
         }

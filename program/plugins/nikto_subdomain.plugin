@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -63,7 +63,7 @@ sub nikto_subdomain {
         my ($response, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "subdomain");
 
         if ($error eq "") {
-            add_vulnerability($mark, "Subdomain $item->{'subdomain'} found", $item->{'nikto_id'}, 0, "GET", "/", $request, $response);
+            add_vulnerability($mark, "Subdomain $item->{'subdomain'} found", $item->{'nikto_id'}, "", "GET", "/", $request, $response);
         }
 
     }    # End foreach

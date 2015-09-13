@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -66,7 +66,7 @@ sub nikto_content_search {
 
             # Check whether we've already matched it
             my $outmessage = "$file: $testid->{'message'}";
-            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'osvdb'}, $method, $file, $request, $response);
+            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'refs'}, $method, $file, $request, $response);
             $CSMATCHED{ $mark->{'hostname'} }{$file} = 1;
         }
     }

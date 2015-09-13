@@ -71,7 +71,7 @@ sub csv_item {
         $line .= "\"$item->{'mark'}->{'port'}\",";
 
         $line .= "\"";
-        if ($item->{'osvdb'} ne '') { $line .= "OSVDB-" . $item->{'osvdb'}; }
+        if ($item->{'refs'} ne '') { $line .= $item->{'refs'}; }
         $line .= "\",";
 
         $line .= "\"";
@@ -83,7 +83,7 @@ sub csv_item {
 			{ $line .= $mark->{'root'} . $uri; }
 		else { $line .= $uri; }
         $line .= "\",";
-	
+
 		my $msg = $item->{'message'};
 		$uri=quotemeta($uri);
 		my $root = quotemeta($mark->{'root'});

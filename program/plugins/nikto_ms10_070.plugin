@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -43,7 +43,7 @@ sub nikto_ms10_070 {
     return if $mark->{'ms100707'};
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
-   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) { 
+   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
     	return if $mark->{'terminate'};
  	my $string = $1;
 	next if $MS10070{$string};
@@ -56,7 +56,7 @@ sub nikto_ms10_070 {
 	$string = LW2::decode_base64($string);
 	if ((length($string) % 8) == 0) {
 		$mark->{'ms100707'}=1;
-        	add_vulnerability($mark, "Server is vulnerable to MS10-070 allowing a cryptographic padding oracle.", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
+        	add_vulnerability($mark, "Server is vulnerable to MS10-070 allowing a cryptographic padding oracle.", 999959, "OSVDB-68127", $method, $response->{'whisker'}->{'uri'}, $request, $response);
         	}
 	}
 

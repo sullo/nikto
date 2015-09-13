@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -141,7 +141,7 @@ sub nikto_auth {
         $request->{'whisker'}->{'allow_short_reads'} = 1;
         LW2::http_fixup_request($request);
 
-        if ($authtype eq 'ntlm') { 
+        if ($authtype eq 'ntlm') {
             $request->{'whisker'}->{'allow_short_reads'} = 1;
         }
 
@@ -175,7 +175,7 @@ sub nikto_auth {
                       "Default account found for '$realm' at $request->{'whisker'}->{'uri'} (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
                 }
 
-                add_vulnerability($mark, $message, $entry->{'nikto_id'}, 0, "GET", $request{'whisker'}->{'uri'}, $request, $response);
+                add_vulnerability($mark, $message, $entry->{'nikto_id'}, "", "GET", $request{'whisker'}->{'uri'}, $request, $response);
 
                 # Mark it successful
                 $entry->{'checked'}                 = 1;

@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -24,7 +24,7 @@ sub nikto_embedded_init {
                full_name   => "Embedded Detection",
                author      => "Tautology",
                description => "Checks to see whether the host is an embedded server.",
-               hooks       => { scan => { method => \&nikto_embedded, }, 
+               hooks       => { scan => { method => \&nikto_embedded, },
                                 start => { method => \&nikto_embedded_load, },
                               },
                copyright   => "2009 CIRT Inc."
@@ -58,7 +58,7 @@ sub nikto_embedded {
                     $model =~ s/\+/ /g;
 
                     if ($model ne "") {
-                        add_vulnerability($mark, "$item->{'message'} $model", $item->{'nikto_id'}, 0, "GET", $item->{'uri'}, $request, $response);
+                        add_vulnerability($mark, "$item->{'message'} $model", $item->{'nikto_id'}, "", "GET", $item->{'uri'}, $request, $response);
                     }
                 }
             }

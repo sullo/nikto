@@ -678,8 +678,8 @@ $ ./replay -file savedir_host_80_2012-09-11-00-07-42/host_80_2012-09-11_002114.t
 --------------------------------------------  Info
 Request to:     http://host:80/manual/
 Test ID:        002114
-OSVDB ID:       3092
-Message:        OSVDB-3092: /manual/: Web server manual found.
+References:     OSVDB-3092
+Message:        /manual/: Web server manual found. References: OSVDB-3092
 --------------------------------------------  Response
 date: Tue, 11 Sep 2012 04:14:20 GMT
 server: Apache/2.2.21 (Unix) mod_ssl/2.2.21 OpenSSL/0.9.8r DAV/2 PHP/5.3.10 with Suhosin-Patch
@@ -1223,7 +1223,7 @@ DOCDIR=EXECDIR/docs</screen>
       <title>Development Source</title>
 
       <para>The Nikto development source code is located in a GitHub
-      repository which is publicly accessible at https://github.com/sullo/nikto. 
+      repository which is publicly accessible at https://github.com/sullo/nikto.
       To download the source code, install git and issue the following command:</para>
 
       <itemizedlist>
@@ -1257,10 +1257,9 @@ DOCDIR=EXECDIR/docs</screen>
             </row>
 
             <row>
-              <entry>OSVDB-ID</entry>
+              <entry>References</entry>
 
-              <entry>Corresponding vulnerability entry number for
-              osvdb.org</entry>
+              <entry>Industry references (CVE, OSVDB, etc.) and links</entry>
             </row>
 
             <row>
@@ -1349,12 +1348,6 @@ DOCDIR=EXECDIR/docs</screen>
       will also be checked for syntax when <parameter>-dbcheck</parameter> is
       used.</para>
 
-      <para>For tests which require a "private" OSVDB ID, use the OSVDB ID 0
-      (zero). This should be used for all vulnerabilities that do not (or
-      should not) exist in OSVDB, as ID 0 is for testing only. You are
-      encouraged to send missing information to OSVDB at
-      moderators@osvdb.org.</para>
-
       <para>For the "Test ID", it is recommended you use unique numbers
       between 400000 and 499999 to allow for growth of the Nikto database
       without interfering with your own tests (note: numbers above 500000 are
@@ -1371,7 +1364,7 @@ DOCDIR=EXECDIR/docs</screen>
       the tests. Fields are enclosed by quotes and separated by commas. The
       field order is:</para>
 
-      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
+      <para>Test-ID, References, Tuning Type, URI, HTTP Method, Match 1, Match 1
       Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
 
       <para>Here is an example test:</para>
@@ -1721,7 +1714,7 @@ DOCDIR=EXECDIR/docs</screen>
                                        method =&gt; \&amp;nikto_auth_pre,
                                        weight =&gt; 19,
                                     },
-                                   },                   
+                                   },
                copyright        =&gt; "2010 CIRT Inc"
                };
 
@@ -2131,11 +2124,9 @@ DOCDIR=EXECDIR/docs</screen>
                   </row>
 
                   <row>
-                    <entry>osvdb</entry>
+                    <entry>references</entry>
 
-                    <entry>OSVDB reference to the vulnerability in the Open
-                    Source Vulnerability Database. This may be 0 if an OSVDB
-                    reference is not relevant or doesn't exist.</entry>
+                    <entry>Industry references (CVE, OSVDB, etc.) and links</entry>
                   </row>
 
                   <row>
@@ -2392,7 +2383,7 @@ array[0]-&gt;{description}</screen>
 
             <paramdef>string <parameter>nikto_id</parameter></paramdef>
 
-            <paramdef>string <parameter>osvdb</parameter></paramdef>
+            <paramdef>string <parameter>references</parameter></paramdef>
 
             <paramdef>string <parameter>method</parameter></paramdef>
 
@@ -2675,15 +2666,15 @@ array[0]-&gt;{description}</screen>
       <para>As much data as possible in the <varname>%TESTS</varname> hash
       should be populated for each new test that is defined in code (plugins).
       These fields include URI for the test, message to print on success, HTTP
-      method and OSVDB ID. Without a 'message' value in
+      method and references. Without a 'message' value in
       <varname>%TESTS</varname> output will not be saved in HTML or XML
-      reports. Not all tests are expected to have a uri, method or OSVDB ID.
+      reports. Not all tests are expected to have a uri, method or references.
       Here is an example of setting those fields:</para>
 
       <screen>$TESTS{999999}{uri}="/~root";
 $TESTS{999999}{message}="Enumeration of users is possible by requesting ~username";
 $TESTS{999999}{method}="GET";
-$TESTS{999999}{osvdb}=637;</screen>
+$TESTS{999999}{references}="OSVDB-637";</screen>
     </section>
 
     <section>
@@ -2758,16 +2749,15 @@ $TESTS{999999}{osvdb}=637;</screen>
       <title>Nikto</title>
 
       <para>Nikto is written and maintained by Chris Sullo and David Lodge.
-      LibWhisker is written and maintained by Jeff Forristal (Rain Forrest
-      Puppy).</para>
+      LibWhisker was written by Jeff Forristal (Rain Forrest Puppy) and is
+      maintained by the Nikto team.</para>
     </section>
 
     <section>
       <title>Thanks</title>
 
-      <para>Many people have provided feedback, fixes, and suggestions. This
-      list is a feeble attempt to thank a few people, in no particular
-      order:</para>
+      <para>Many people have provided feedback, fixes, suggestions, and code, and
+        all are appreciated. Here are just a few:</para>
 
       <itemizedlist>
         <listitem>
@@ -2776,7 +2766,7 @@ $TESTS{999999}{osvdb}=637;</screen>
         </listitem>
 
         <listitem>
-          <para>Jericho (attrition.org/OSVDB/OSF).
+          <para>Jericho (attrition.org/OSVDB).
           Support/ideas/tests/corrections/spam and help matching OSVDB IDs to
           tests.</para>
         </listitem>
@@ -2790,7 +2780,7 @@ $TESTS{999999}{osvdb}=637;</screen>
         </listitem>
 
         <listitem>
-          <para>Jake Kouns (OSVDB/OSF).</para>
+          <para>Jake Kouns (OSVDB/Risk Based Security/RVAsec).</para>
         </listitem>
 
         <listitem>

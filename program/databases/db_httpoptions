@@ -14,12 +14,12 @@
 # Notes:
 # NiktoDB 1.0
 #######################################################################
-"nikto_id","method","osvdb","message"
+"nikto_id","method","references","message"
 "400000","DELETE","5646","HTTP method ('@TYPE@' Header): 'DELETE' may allow clients to remove files on the web server."
 "400001","PUT","397","HTTP method ('@TYPE@' Header): 'PUT' method could allow clients to save files on the web server."
 "400002","MOVE","5647","HTTP method ('@TYPE@' Header): 'MOVE' may allow clients to change file locations on the web server."
-"400003","CONNECT","0","HTTP method ('@TYPE@' Header): 'CONNECT' may allow server to proxy client requests."
-"400004","PATCH","0","HTTP method: 'PATCH' may allow client to issue patch commands to server. See RFC-5789."
+"400003","CONNECT","","HTTP method ('@TYPE@' Header): 'CONNECT' may allow server to proxy client requests."
+"400004","PATCH","","HTTP method: 'PATCH' may allow client to issue patch commands to server. See RFC-5789."
 # WebDAV methods - "0" in nikto_id tells the code to treat it differently
 "0","PROPFIND","0","webdav"
 "0","PROPPATCH","0","webdav"

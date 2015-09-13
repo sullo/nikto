@@ -47,16 +47,16 @@ sub save_item {
     print SAVEFILE "			  Information\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
-    print SAVEFILE "OSVDB ID: \t" . $resulthash->{'osvdb'} . "\n";
+    print SAVEFILE "References: \t" . $resulthash->{'refs'} . "\n";
     print SAVEFILE "Message:  \t" . $message . "\n";
     print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Request\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($request->{'whisker'}{'method'} eq '') { 
+    if ($request->{'whisker'}{'method'} eq '') {
 	print SAVEFILE "Not Applicable\n";
 	}
-    else { 
+    else {
     print SAVEFILE $request->{'whisker'}{'method'} . " "
       . $request->{'whisker'}{'uri'} . " "
       . $request->{'whisker'}{'protocol'} . "/"
@@ -71,10 +71,10 @@ sub save_item {
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Response\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($response->{'whisker'}{'protocol'} eq '') { 
+    if ($response->{'whisker'}{'protocol'} eq '') {
 	print SAVEFILE "Not Applicable\n";
 	}
-    else { 
+    else {
     print SAVEFILE $response->{'whisker'}{'protocol'} . "/"
       . $response->{'whisker'}{'version'} . " "
       . $response->{'whisker'}{'code'} . " "
@@ -87,10 +87,10 @@ sub save_item {
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Data Objects\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($request->{'whisker'}{'method'} ne '') { 
+    if ($request->{'whisker'}{'method'} ne '') {
     	print SAVEFILE "REQUEST:$json_request\n";
 	}
-    if ($response->{'whisker'}{'protocol'} ne '') { 
+    if ($response->{'whisker'}{'protocol'} ne '') {
     	print SAVEFILE "RESPONSE:$json_response\n";
 	}
     close(SAVEFILE);
@@ -113,7 +113,7 @@ sub save_getprefix {
 ###############################################################################
 # get mark's save file name
 # Note: this is unused right now but keeping for next release
-sub get_report_filename { 
+sub get_report_filename {
 	my ($in_file, $in_format, $mark) = @_;
 	if ($in_file eq '.') {
     		my $prefix = "nikto_http";
@@ -126,9 +126,9 @@ sub get_report_filename {
     		$now =~ s/\s.*$//;
     		$prefix .= "_" . $now . "." . $in_format;
 		}
-	else { 
+	else {
 		$prefix = $in_file;
-		if ($in_format eq '') { 
+		if ($in_format eq '') {
 			$in_format = lc($in_file);
 			$in_format =~ s/(^.*\.)([^.]*$)/$2/g;
 			}

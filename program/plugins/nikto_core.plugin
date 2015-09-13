@@ -128,11 +128,10 @@ sub nprint {
     # don't print to STDOUT if output file is "-"
     if ((defined $CLI{'file'}) && ($CLI{'file'} eq "-")) { return; }
 
-    $line =~ s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
-    $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/http:\/\/www.cert.org\/advisories\/$1.html/g;
-    $line =~ s/BID\-([0-9]{4})/http:\/\/www.securityfocus.com\/bid\/$1/g;
-    $line =~
-      s/(MS[0-9]{2}\-[0-9]{3})/http:\/\/www.microsoft.com\/technet\/security\/bulletin\/$1.asp/gi;
+#    $line =~ s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
+#    $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/http:\/\/www.cert.org\/advisories\/$1.html/g;
+#    $line =~ s/BID\-([0-9]{4})/http:\/\/www.securityfocus.com\/bid\/$1/g;
+#    $line =~ s/(MS[0-9]{2}\-[0-9]{3})/http:\/\/www.microsoft.com\/technet\/security\/bulletin\/$1.asp/gi;
 
     print $line . "\n";
 
@@ -179,7 +178,7 @@ sub status_report {
         }
     }
     else { $timeleft = sprintf("%.0f seconds", $secleft); }
-    
+
     my $perc_compl =
         ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
 
@@ -197,7 +196,7 @@ sub status_report {
  	}
 
     nprint($line);
-    nprint("- STATUS: " . running_average_print($mark)); 
+    nprint("- STATUS: " . running_average_print($mark));
 
     return;
 }
@@ -538,7 +537,7 @@ sub general_config {
                ) or usage();
 
     # 404string
-    if ($CLI{'404string'} ne '') { 
+    if ($CLI{'404string'} ne '') {
         my $s = validate_and_fix_regex($CLI{'404string'});
         $VARIABLES->{'ERRSTRINGS'}->{$s} = 1;
         }
@@ -546,7 +545,7 @@ sub general_config {
     # 404code
     if ($CLI{'404code'} ne '') {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
-            if ($code =~ /[^\d]/) { 
+            if ($code =~ /[^\d]/) {
                  nprint("+ ERROR: Invalid 404code, must be an integer");
                  exit;
                  }
@@ -609,7 +608,7 @@ sub general_config {
         }
         $CLI{'until'} = $pausetime;
     }
-    
+
     if ($CLI{'useragent'}) {
         push(@options,"USERAGENT=" . $CLI{'useragent'});
     }
@@ -718,9 +717,9 @@ sub general_config {
     $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
     $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|none)$/) { 
-        nprint("+ ERROR: Invalid output format"); 
-        exit; 
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|none)$/) {
+        nprint("+ ERROR: Invalid output format");
+        exit;
 	}
 
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
@@ -1259,7 +1258,7 @@ sub check_dbs {
 		$count++;
                 my @L = parse_csv($line);
                 if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-		if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) { 
+		if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
                     	nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
 			}
 		else { $ALL_IDS{$L[0]}=1; }
@@ -1287,7 +1286,6 @@ sub check_dbs {
                 if (($L[3] =~ /^\@CG/) && ($L[3] !~ /^\@CGIDIRS/)) {
                     nprint("\t+ ERROR: Possible \@CGIDIRS misspelling: $line");
                 }
-                if (($L[1] =~ /[^0-9]/) || ($L[1] eq "")) { nprint("\t+ ERROR: Invalid OSVDB ID: $line"); }
                 $ENTRIES{"$L[3],$L[4],$L[5],$L[6],$L[7],$L[8],$L[9],$L[11],$L[12]"}++;
                 if ((count_fields($line, 1) ne 12) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
@@ -1452,16 +1450,16 @@ sub check_dbs {
     # Try to grab the test IDs from plugins to check for duplicates. Not foolproof.
     nprint("Checking plugins for duplicate test IDs");
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
-    foreach my $pf (@pluginlist) { 
+    foreach my $pf (@pluginlist) {
 	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$file': $@\n";
 	my @file=<PF>;
 	close(PF);
   	my @adds= grep(/add_vulnerability\(/, @file);
-	foreach my $addv (@adds) { 
+	foreach my $addv (@adds) {
 		chomp($addv);
 		my @bits = parse_csv($addv);
 		$bits[2] =~ s/\s+//g;
-		if ($bits[2] =~ /^[\d]+$/) { 
+		if ($bits[2] =~ /^[\d]+$/) {
                 	if (($bits[2] ne 0) && exists($ALL_IDS{$bits[2]})) {
                         nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
                         }
@@ -1470,8 +1468,8 @@ sub check_dbs {
 		}
 	}
 
-    # Look for bad/invalid IDs 
-    foreach my $id (keys %ALL_IDS) { 
+    # Look for bad/invalid IDs
+    foreach my $id (keys %ALL_IDS) {
 	chomp($id);
 	next if (($id eq 0) || ($id eq '') || ($id eq 'nikto_id'));
 	if ($id =~ /[^\d]/) { nprint("+ERROR: Invalid test ID: $id"); next; }
@@ -1481,7 +1479,7 @@ sub check_dbs {
     # Suggest some open IDs
     my $open=();
     my $id='000001';
-    while ($#open < 6) { 
+    while ($#open < 6) {
                 if (!exists($ALL_IDS{$id})) { push(@open,$id); }
  		$id++;
 		}
@@ -1631,7 +1629,7 @@ sub load_plugins {
                 push(@PLUGINS, $pluginhash);
                 nprint("- Loaded \"$pluginhash->{full_name}\" plugin.", "v");
             }
-           else { 
+           else {
 		nprint("WARNING: No init found for $plugin_name\n","d");
 		}
         }
@@ -1639,7 +1637,7 @@ sub load_plugins {
     $CONFIGFILE{'@@ALL'} = join(';', @all_names);
     my @torun = split(/;/, expand_pluginlist($CLI{'plugins'}, 0));
     # Force-enable report plugins if needed
-    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) { 
+    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) {
 	push(@torun,'report_csv') if $CLI{'file'} =~ /csv/i;
 	push(@torun,'report_html') if $CLI{'file'} =~ /html?/i;
 	push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe/i;
@@ -1801,7 +1799,7 @@ sub report_head {
                                          summary    => $plugin->{report_summary},
                                          handle     => $handle,
                                          };
-                                         
+
                     push(@REPORTS, $report_entry);
                 }
             }
@@ -2235,20 +2233,20 @@ sub running_average {
         }
 
 #######################################################################
-sub running_average_print { 
+sub running_average_print {
 	use List::Util qw(sum);
 	my $message;
 	my ($mark) = @_;
 	my @data = @{$mark->{'running_avg'}};
 	my $elements=$#data;
 	$elements++;
-	if ($elements eq 100 ) { 
+	if ($elements eq 100 ) {
 		my $s = sum(@data);
 		my $avg = $s / $elements;
 		$avg = sprintf("%.5f", $avg);
 		$message = "100 requests: $avg sec, ";
 		}
-	if ($elements > 10) { 
+	if ($elements > 10) {
 		@data=splice(@data,9);
 		my $s = sum(@data);
 		$elements=$#data;
@@ -2259,7 +2257,7 @@ sub running_average_print {
 		}
 
 	if ($message eq '') { $message="Not enough data"; }
-	return "Running average: $message.";	
+	return "Running average: $message.";
 	}
 
 #######################################################################
@@ -2314,7 +2312,7 @@ sub nfetch {
         $request{'whisker'}->{'version'} = $httpver;
     }
 
-    if ($flags->{'nohost'}) { 
+    if ($flags->{'nohost'}) {
 	$request->{'Host'} = $mark->{'ip'};
 	$request{'whisker'}->{'host'} = $mark->{'ip'};
 	}
@@ -2380,7 +2378,7 @@ sub nfetch {
             $mark->{'ssl_cert_issuer'}  = $result{'whisker'}->{'ssl_cert_issuer'};
             $mark->{'ssl_cert_subject'} = $result{'whisker'}->{'ssl_cert_subject'};
             # ssl_cert_altnaems comes back as an array
-            foreach my $n (@{$result{'whisker'}->{'ssl_cert_altnames'}}) { 
+            foreach my $n (@{$result{'whisker'}->{'ssl_cert_altnames'}}) {
 		next if $n =~ /^[\d]+$/; # type
 		$mark->{'ssl_cert_altnames'} .= "$n, ";
 		}
@@ -2483,7 +2481,7 @@ sub set_scan_items {
 
                 $COUNTERS{total_checks}++;
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
-                $TESTS{ $item[0] }{'osvdb'}       = $item[1];
+                $TESTS{ $item[0] }{'refs'}        = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
                 $TESTS{ $item[0] }{'match_1'}     = $item[5];
                 $TESTS{ $item[0] }{'match_1_or'}  = $item[6];
@@ -2566,7 +2564,7 @@ sub parse_csv {
     return @new;
 }
 #######################################################################
-sub check_modules { 
+sub check_modules {
     # Check dependencies
     eval "require JSON::PP";
     if ($@) {
@@ -2695,7 +2693,7 @@ sub send_updates {
         ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
-    if ($code != 200) { 
+    if ($code != 200) {
 	nprint("+ ERROR $code: Update failed, please notify sullo\@cirt.net of this code.");
 	}
     elsif ($content !~ /SUCCESS/) {
@@ -2816,7 +2814,7 @@ sub usage {
        -no404              Disables 404 checks
        -Plugins+           List of plugins to run (default: ALL)
        -port+              Port to use (default 80)
-       -root+              Prepend root value to all requests, format is /directory 
+       -root+              Prepend root value to all requests, format is /directory
        -ssl                Force ssl mode on port
        -Tuning+            Scan tuning
        -timeout+           Timeout for requests (default 10 seconds)
@@ -2828,7 +2826,7 @@ sub usage {
 	Note: This is the short help output. Use -H for full help text.\n\n";
     }
 
-    check_modules(); 
+    check_modules();
 
     exit;
 }
@@ -2894,10 +2892,9 @@ sub init_db {
 
 #######################################################################
 sub add_vulnerability {
-    my ($mark, $message, $nikto_id, $osvdb, $method, $uri, $request, $response, $reason) = @_;
+    my ($mark, $message, $nikto_id, $refs, $method, $uri, $request, $response, $reason) = @_;
     $uri    = "/"   unless (defined $uri);
     $method = "GET" unless (defined $method);
-    $osvdb  = "0"   unless (defined $osvdb);
 
     # check to see if we've alerted already (can be from content search, etc.)
     foreach my $r (@RESULTS) {
@@ -2919,7 +2916,7 @@ sub add_vulnerability {
     %$resulthash = (mark     => $mark,
                     message  => $message,
                     nikto_id => $nikto_id,
-                    osvdb    => $osvdb,
+                    refs     => $refs,
                     method   => $method,
                     uri      => $response->{whisker}->{uri_requested},
                     result   => $result,
@@ -2927,13 +2924,14 @@ sub add_vulnerability {
                     response => $response,
                     reason   => $reason,
                     );
-                    
+
     push(@RESULTS, $resulthash);
     $mark->{total_vulns}++;
 
-    unless (($osvdb eq "0") || ($osvdb eq "")) {
-        $message = "OSVDB-$osvdb: $message";
-    }
+    if ($refs ne "") {
+        $message .= " References: $refs";
+        }
+
     nprint("+ $message");
 
     # Save it
@@ -3132,7 +3130,7 @@ sub gmt_offset {
 sub expand_range {
 	local $" = '..';
     my (@range);
-	
+
 	sort {$a <=> $b}
 		map {
 			map {

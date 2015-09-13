@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -55,7 +55,7 @@ sub nikto_apacheusers {
         $content = quotemeta($content);
         if ($content !~ /forbidden/i)    # Good, it gave an error instead of forbidden
         {
-            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).", 999999, 637, "GET", "/~bin", $request, $response);
+            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).", 999999, "OSVDB-637", "GET", "/~bin", $request, $response);
         }
         $apacheusers = 1;
     }
@@ -153,7 +153,7 @@ sub nikto_user_enum_apache_brute {
         $ctr++;
     }
     if (scalar(@foundusers)) {
-        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "637", "HEAD", "/", $request, $response);
+        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "OSVDB-637", "HEAD", "/", $request, $response);
     }
 
 }
@@ -189,7 +189,7 @@ sub nikto_user_enum_apache_dictionary {
     }
     close(IN);
     if (scalar(@foundusers)) {
-        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "637", "HEAD", "/", $request, $response);
+        add_vulnerability($mark, $message . join(', ', @foundusers), 999997, "OSVDB-637", "HEAD", "/", $request, $response);
     }
 }
 
@@ -208,4 +208,3 @@ sub nikto_user_enum_apache_check {
 }
 
 1;
-

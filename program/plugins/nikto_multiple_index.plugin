@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -71,12 +71,12 @@ sub nikto_multiple_index {
 
         # some unique... report slightly differently
         if ($total_unique < keys(%found)) {
-            add_vulnerability($mark, "Multiple index files found (note, these may not all be unique): $tempstring", 740000, 0, "GET", "/", $request, $response);
+            add_vulnerability($mark, "Multiple index files found (note, these may not all be unique): $tempstring", 740000, "", "GET", "/", $request, $response);
         }
 
         # all unique... report
         if ($total_unique eq keys(%found)) {
-            add_vulnerability($mark, "Multiple index files found: $tempstring", 740000, 0, "GET", "/", $request, $response);
+            add_vulnerability($mark, "Multiple index files found: $tempstring", 740000, "", "GET", "/", $request, $response);
         }
     }
 }

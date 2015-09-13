@@ -166,7 +166,8 @@ sub xml_change_vars {
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
     $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
     $variables{"#TEMPL_ERRORS#"}       = $mark->{'total_errors'};
-
+    $variables{"#TEMPL_REFS#"}         = $item->{'refs'};
+    
     $variables{"#TEMPL_LINK_NAME#"} = "N/A";
     if ($hostname ne "") {
         $variables{"#TEMPL_LINK_NAME#"} =
@@ -175,12 +176,6 @@ sub xml_change_vars {
     if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
     if ($item->{'uri'} eq '') { return $template; }
     $variables{"#ID#"} = $item->{'nikto_id'};
-
-    # OSVDB info
-    my $OSVDB = $item->{'osvdb'};
-    if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    $variables{"#TEMPL_OSVDB_LINK#"} = "http://osvdb.org/$OSVDB";
-    $variables{"#TEMPL_OSVDB#"}      = $OSVDB;
 
     # Scanner Messages Handling
     $variables{"#TEMPL_SMMSG#"} = $item->{'message'};

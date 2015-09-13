@@ -177,8 +177,7 @@ foreach my $mark (@MARKS) {
         }
 
         add_vulnerability($mark,
-                   "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}",
-                   0);
+                   "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}", "");
     }
     else {
         dump_target_info($mark);
@@ -272,18 +271,18 @@ sub load_modules {
         my $errors=0;
 	my @modules = qw/Getopt::Long Time::Local IO::Socket/;
 	push(@modules,"List::Util qw(sum)");
-	foreach my $mod (@modules) { 
+	foreach my $mod (@modules) {
 		eval "use $mod";
-        	if ($@) { 
-			print "ERROR: Required module not found: $mod\n"; 
-			$errors=1; 
+        	if ($@) {
+			print "ERROR: Required module not found: $mod\n";
+			$errors=1;
 		}
 	}
 
 	@modules = ();
 	push(@modules,"Time::HiRes qw(ualarm gettimeofday tv_interval)");
 	push(@modules,"POSIX qw(:termios_h)");
-	foreach my $mod (@modules) { 
+	foreach my $mod (@modules) {
 		eval "use $mod";
 		if ($@ && $^O !~ /MSWin32/) {
 			# Allow this to work on Windows
