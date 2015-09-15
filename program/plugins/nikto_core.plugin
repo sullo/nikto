@@ -1568,6 +1568,7 @@ sub port_check {
 
 ###############################################################################
 # Directory listing
+# Note: this is needed to load plugins, so can't move to fileops plugin
 sub dirlist {
     my $DIR     = $_[0] || return;
     my $PATTERN = $_[1] || "";
@@ -1588,16 +1589,14 @@ sub dirlist {
 
 ###############################################################################
 sub load_plugins {
+    # Check if running plugins is NONE - if so, don't bother initalising plugins
+    return if ($CLI{'plugins'} eq '@@NONE');
+
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     my @all_names;
 
     # populate plugin macros
     $CONFIGFILE{'@@NONE'} = "";
-
-    # Check if running plugins is NONE - if so, don't bother initalising plugins
-    if ($CLI{'plugins'} eq '@@NONE') {
-        return;
-    }
 
     foreach my $plugin (@pluginlist) {
         my $plugin_name = $plugin;
@@ -1634,14 +1633,15 @@ sub load_plugins {
     }
     $CONFIGFILE{'@@ALL'} = join(';', @all_names);
     my @torun = split(/;/, expand_pluginlist($CLI{'plugins'}, 0));
+
     # Force-enable report plugins if needed
     if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) {
-	push(@torun,'report_csv') if $CLI{'file'} =~ /csv/i;
-	push(@torun,'report_html') if $CLI{'file'} =~ /html?/i;
-	push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe/i;
-	push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
-	push(@torun,'report_text') if $CLI{'file'} =~ /txt/i;
-	push(@torun,'report_xml') if $CLI{'file'} =~ /xml/i;
+    push(@torun,'report_csv') if $CLI{'file'} =~ /csv$/i;
+    push(@torun,'report_html') if $CLI{'file'} =~ /html?$/i;
+    push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe$/i;
+    push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg$/i;
+    push(@torun,'report_text') if $CLI{'file'} =~ /txt$/i;
+    push(@torun,'report_xml') if $CLI{'file'} =~ /xml$/i;
 	}
 
     # Second pass to ensure that @@ALL is configured
