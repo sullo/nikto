@@ -3575,7 +3575,7 @@
 "003582","3092","3","/sitemap.gz","GET","200","","","","","The sitemap.gz file, used for Google indexing, contains an xml representation of the web site's structure.","",""
 "003583","3092","3","/content/sitemap.gz","GET","200","","","","","The sitemap.gz file, used for Google indexing, contains an xml representation of the web site\'s structure.","",""
 "003584","3233","b","/icons/README","GET","Public Domain Icons","","","","","Apache default file found.","",""
-"003585","3092","b","/localstart.asp","GET","Welcome to Windows 2000","","","","","Default IIS install page found.","",""
+"003585","3092","b","/localstart.asp","GET","<title>Welcome to Windows","","","","","Default IIS install page found.","",""
 "003586","0","b","/ampache/update.php","GET","Ampache Update","","","","","Ampache update page is visible.","",""
 "003587","0","b","/ampache/login.php","GET","Ampache :: Pour l\&#039;Amour de la Musique","","","","","Ampache is installed.","",""
 "003588","0","b","/ampache/docs/README","GET","README - Ampache","","","","","Ampache installation documents found.","",""
