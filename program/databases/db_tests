@@ -6986,3 +6986,5 @@
 "007040","0","8","/tws/getStatus","POST","\"result_msg\":\"Success\"","","","","","Accellion allows RCE oath_token. See https://community.rapid7.com/community/metasploit/blog/2015/07/10/r7-2015-08-accellion-file-transfer-appliance-vulnerabilities-cve-2015-2856-cve-2015-2857","transaction_id=1&oauth_token='%3becho '",""
 "007041","0","3","/rails/info/properties/","GET",">(Ruby|Rails)\sversion<","<title>Routes</title>","200","","","The Ruby on Rails status page may reveal the version of RoR and further details on this host.","",""
 "007042","0","3","/rails/info/routes/","GET","<title>Routes</title>","","200","","","The Ruby on Rails routes page may reveal all available routes on this host.","",""
++"007043","","d","/wps/wsdl","GET","wsdl:definitions","","","","","IBM Websphere web services found.","",""
++"007044","","1e","/wps/portal/Home/Welcome/!ut/","GET","Sign\sUp","","","","","IBM Websphere default portal found. May allow users to create accounts.","",""
