@@ -45,3 +45,5 @@
 @MANTIS=/ /mantis/ /mantisbt/
 @DOKUWIKI=/ /wiki/ /dokuwiki/
 @ROCKMONGO=/ /rockmongo/ /rock-mongo/
+@MAGENTO=/ /magento/ /shop/
+@MAGMI=/ magmi/ magmi-importer/
