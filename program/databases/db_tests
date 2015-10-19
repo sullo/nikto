@@ -6995,3 +6995,5 @@
 "007049","0","123b","@MAGMIReleaseNotes.txt","GET","RELEASE NOTES FOR MAGMI","","","","","MAGMI Release Notes identified.","",""
 "007050","0","be","@HYBRIS","GET","[H|h]ybris","","[M|m]anagement\s[C|c]onsole","","","SAP Hybris Management Console found. Default credentials are admin:nimda","",""
 "007051","0","be","@HYBRISlogin.jsp","GET","[H|h]ybris","","[A|a]dministration\s[C|c]onsole","","","SAP Hybris Administration Console found. Default credentials are admin:nimda","",""
+"007052","0","23","/cfg/CFGConnectionParams.txt","GET","user=","","","","","Caremark Carestream config file found. May include account information and host data..","",""
+"007053","0","23","/serverVars.js","GET","SERVER_IPADDRESS","","","","","Caremark Carestream JavaScript config file found. May include host information..","",""
