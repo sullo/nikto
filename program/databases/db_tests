@@ -6560,7 +6560,7 @@
 "006594","3092","3","/quickstartqstart50.nsf","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
 "006595","3092","3","/quickstartwwsample.nsf","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
 "006596","3092","3","/samplesiregw46.nsf","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
-"006597","0","3b","/WorkArea/version.xml","GET","installation","","","","","Ektron CMS version information","",""
+"006597","0","3b","/WorkArea/version.xml","GET","<installation>","","","","","Ektron CMS version information","",""
 "006598","0","23","/wp-content/debug.log","GET","PHP\sNotice","PHP\sWarn","","","","PHP debug log found","",""
 "006599","0","23","/mobileadmin/db/MobileAdminDB.sqlite","GET","200","","","","","RoveIT Mobile Admin internal database is available for download","",""
 "006600","0","b","/mobileadmin/","GET","SolarWinds\sWorldwide","","","","","RoveIT Mobile Admin internal database is available for download","",""
