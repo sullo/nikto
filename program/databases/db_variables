@@ -48,3 +48,4 @@
 @MAGENTO=/ /magento/ /shop/
 @MAGMI=/ /magmi/ /magmi-importer/ /magento/magmi/ /magento/magmi-importer/ /shop/magmi/ /shop/magmi-importer/
 @HYBRIS=/ /hmc/ /hac/
+@PIWIK=/ /piwik/ /analytics/
