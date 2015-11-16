@@ -6429,7 +6429,6 @@
 "006442","0","1","/help.php","GET","200","","","","","A help file was found.","",""
 "006443","0","b","/wordpress/","GET","\/wp-content\/","","","","","A Wordpress installation was found.","",""
 "006445","66505","3","@VBULLETINfaq.php?s=&do=search&q=database&match=all&titlesonly=0","GET","Database<\/span> Name:","","","","","vBulletin 3.6.8 contains a vulnerability that reveals the database credentials via a FAQ search. See http://www.vbulletin.com/forum/showthread.php?357818-Security-Patch-Release-3.8.6-PL1","",""
-"006446","66505","3","@VBULLETINfaq.php?s=&do=search&q=database&match=all&titlesonly=0","GET","Database<\/span> Name:","","","","","vBulletin 3.6.8 contains a vulnerability that reveals the database credentials via a FAQ search. See http://www.vbulletin.com/forum/showthread.php?357818-Security-Patch-Release-3.8.6-PL1","",""
 "006447","0","2b","/wconnect/admin.html","GET","e-SPS Web","","","","","American Software e-SPS admin section found.","",""
 "006448","0","18","/open.txt","GET","Fx29ID","","","","","Payload for Fx29ID RFI exploit. The server may have been compromised to act as a repository for this file.","",""
 "006449","0","18","/fx29id1.txt","GET","Fx29ID","","","","","Payload for Fx29ID RFI exploit. The server may have been compromised to act as a repository for this file.","",""
