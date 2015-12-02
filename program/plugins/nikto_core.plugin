@@ -1266,6 +1266,28 @@ sub check_dbs {
 		}
 	        nprint("\t$count entries");
         }
+        elsif ($file =~ /u?db_favicon/) {
+            my $counter=0;
+            my %MD5SUM;
+            foreach $line (<IN>) {
+                $line =~ s/^\s+//;
+                if ($line =~ /^\#/) { next; }
+                chomp($line);
+                if ($line eq "") { next; }
+                $counter++;
+                my @L = parse_csv($line);
+                if ($#L ne 2) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                }
+                else { $ALL_IDS{$L[0]}=1; }
+                if (exists($MD5SUM{$L[1]})) {
+                    nprint("\t+ ERROR: Duplicate MD5sum: $line");
+                }
+                else { $MD5SUM{$L[1]}=1; }
+            }
+            nprint("\t$counter entries");
+        }
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
             foreach my $line (<IN>) {
