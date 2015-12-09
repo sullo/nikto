@@ -7008,3 +7008,6 @@
 "007063","0","e","/page.cmd","POST","(IP configuration|Subnet mask|Default route|Primary DNS)","","","","","Unify/Siemens OpenStage SIP has a default password 123456 set.","page_submit=WEBMp_AdminLogin&page-next=WEBM_Admin_IpConfiguration&WEBMv-Admin-Password=123456",""
 "007064","0","e","/page.cmd","POST","(IP configuration|Subnet mask|Default route|Primary DNS)","","","","","Unify/Siemens OpenStage SIP has a default password 123456 set.","page_submit=WEBMp_AdminLogin&page-next=WEBM_Admin_IpConfiguration&AdminPassword=123456",""
 "007065","0","e","/authorize","POST","Access Granted. This IP Address now has admin","access to the restricted printer pages.","","","","Zebra PrintServer Webinterface has a default password 1234 set.","0=1234",""
+"007066","0","eb","/sitecore/login","GET","Sitecore.NET","","","","","Sitecore CMS login found.","",""
+"007067","0","eb","/sitecore/admin/login.aspx?returnUrl=/","GET","into\sSitecore","","","","","Sitecore CMS admin login found.","",""
+
