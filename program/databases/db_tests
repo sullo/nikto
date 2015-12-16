@@ -7010,4 +7010,5 @@
 "007065","0","e","/authorize","POST","Access Granted. This IP Address now has admin","access to the restricted printer pages.","","","","Zebra PrintServer Webinterface has a default password 1234 set.","0=1234",""
 "007066","0","eb","/sitecore/login","GET","Sitecore.NET","","","","","Sitecore CMS login found.","",""
 "007067","0","eb","/sitecore/admin/login.aspx?returnUrl=/","GET","into\sSitecore","","","","","Sitecore CMS admin login found.","",""
-
+"007068","0","b","/admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
+"007069","0","b","/cms-admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
