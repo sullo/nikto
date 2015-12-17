@@ -6732,7 +6732,7 @@
 "006775","0","2be","/sitecore_data/webdav.lic","GET","IT\sHit\sWebDAV","","","","","Sitecore CMS license","",""
 "006776","0","2be","/sitecore%20modules/Shell/IndexViewer/MainForm.aspx","GET","Welcome\sto\sthe\sIndexViewer","","","","","Sitecore CMS admin/restricted pages available","",""
 "006777","0","2be","/sitecore/data/logs/nvelocity.log","GET","SimpleLog4NetLogSystem","","","","","Sitecore CMS admin/restricted pages available","",""
-"006778","0","2be","/sitecore/debug/Profile.xslt","GET","Data\sCache","","","","","Sitecore CMS admin/restricted pages available","",""
+"006778","0","2be","/sitecore/debug/Profile.xslt","GET","Data\sCache","cachemiss","","","","Sitecore CMS admin/restricted pages available","",""
 "006779","0","2be","/sitecore/login/default.aspx","GET","LoginPanelOuter","","","","","Sitecore CMS admin login","",""
 "006780","0","2be","/sitecore/shell/WebService/Service.asmx","GET","operations\sare\ssupported","","","","","Sitecore CMS webservice found","",""
 "006781","0","2be","/?sc_mode=edit","GET","302","","sitecore","","","Sitecore CMS is installed. This url redirects to the login page.","",""
@@ -7012,3 +7012,4 @@
 "007067","0","eb","/sitecore/admin/login.aspx?returnUrl=/","GET","into\sSitecore","","","","","Sitecore CMS admin login found.","",""
 "007068","0","b","/admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
 "007069","0","b","/cms-admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
+"007070","0","be","/struts/webconsole.html","GET","wc-command","","","","","Struts debugging is enabled and OGNL console is available.","",""
