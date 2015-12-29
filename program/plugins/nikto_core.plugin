@@ -2337,8 +2337,8 @@ sub nfetch {
     }
 
     if ($flags->{'nohost'}) { 
-	$request->{'Host'} = $mark->{'ip'};
-	$request{'whisker'}->{'host'} = $mark->{'ip'};
+		#$request->{'Host'} = $mark->{'ip'};
+		$request{'whisker'}->{'host'} = $mark->{'ip'};
 	}
 
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
