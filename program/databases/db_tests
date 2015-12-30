@@ -7015,3 +7015,4 @@
 "007070","0","be","/struts/webconsole.html","GET","wc-command","","","","","Struts debugging is enabled and OGNL console is available.","",""
 "007071","0","3b","/owa/auth/logon.aspx","GET","<title>Outlook Web App</title>","(/owa/([0-9.]+)/themes/|/owa/auth/([0-9.]+)/themes/)","","","","Outlook Web App identified. OWA is exposing its version within the themes path like /owa/auth/15.0.995/themes.","",""
 "007072","0","be","/system/console/configMgr","GET","401","","","","","Adobe Experience Manager OSGi console found.","",""
+"007073","0","be","/system/console/bundles","GET","401","","","","","Adobe Experience Manager OSGi console found.","",""
