@@ -14,11 +14,8 @@
 # Notes:
 # NiktoDB 1.0
 # Example to get the md5hash: $ md5sum favicon.ico
-#
-# Field order:
-# Test-ID, md5hash, description
-#
 #######################################################################
+"nikto_id","md5hash","description"
 "500017","4987120f4fb1dc454f889e8c92f6dabe","Google Web Server"
 # at /platform/images/favicon.ico, see ticket 238
 "500108","c0dc2e457e05c2ce0a99886ec1048d77","Platform Computing Corporation Platform Management Console Version v2.0"
