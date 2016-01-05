@@ -1273,7 +1273,7 @@ sub check_dbs {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
-                if ($line eq "") { next; }
+                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
                 $counter++;
                 my @L = parse_csv($line);
                 if ($#L ne 2) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
