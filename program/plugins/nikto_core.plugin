@@ -1272,9 +1272,9 @@ sub check_dbs {
             }
             nprint("\t$count entries");
         }
-        elsif ($file =~ /u?db_favicon/) {
+        elsif ($file =~ /u?db_favicon/ || $file =~ /u?db_domino/) {
             my $counter=0;
-            my %MD5SUM;
+            my %ENTRY;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
@@ -1287,10 +1287,10 @@ sub check_dbs {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
                 else { $ALL_IDS{$L[0]}=1; }
-                if (exists($MD5SUM{$L[1]})) {
-                    nprint("\t+ ERROR: Duplicate MD5sum: $line");
+                if (exists($ENTRY{$L[1]})) {
+                    nprint("\t+ ERROR: Duplicate entry: $line");
                 }
-                else { $MD5SUM{$L[1]}=1; }
+                else { $ENTRY{$L[1]}=1; }
             }
             nprint("\t$counter entries");
         }
