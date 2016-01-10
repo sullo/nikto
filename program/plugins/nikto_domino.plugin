@@ -18,15 +18,14 @@
 ###############################################################################
 # PURPOSE:
 # Perform IBM/Lotus Domino specific tests to identify files
-# accessible without authentication
+# accessible without authentication and the version of the server
 # TBD: Also report files with authentication?
-# TODO: Fingerprint Domino server, don't rely only on the banner
 ###############################################################################
 sub nikto_domino_init {
     my $id = { name        => "domino",
                full_name   => "IBM/Lotus Domino Specific Tests",
                author      => "RealRancor",
-               description => "Performs a selection of IBM/Louts Domino specific tests to identify Domino specific files accessible without authentication",
+               description => "Performs a selection of IBM/Louts Domino specific tests to identify Domino specific files accessible without authentication and the version of the server",
                hooks       => { scan => { method => \&nikto_domino, }, 
                                 start => { method => \&nikto_domino_load, },
                               },
@@ -48,14 +47,34 @@ sub nikto_domino {
     # quit if user is terminating - this is a catch all and we should never execute it
     return if $mark->{'terminate'};
 
+    # check domcfg.nsf which should be always there
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/domcfg.nsf", "GET", "", "", "", "Domino detection");
+
     # quit if banner is not from IBM/Lotus Domino
     if ($mark->{'banner'} !~ /lotus domino/i &&
-        $mark->{'banner'} !~ /lotus-domino/i) {
-        nprint("+ nikto_domino.plugin: No IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' detected.", "d");
+        $mark->{'banner'} !~ /lotus-domino/i &&
+        ( $res ne "200" || $content != /src="\/domcfg.nsf\// ) ) {
+        nprint("+ nikto_domino.plugin: No IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected.", "d");
         return;
     }
 
-    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' detected, try to identifiy files accessible without authentication.", "d");
+    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected, try to identifiy files accessible without authentication.", "d");
+ 
+    # Identify version of the Domino Server
+    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf') {
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        if ($res eq "200" && $content =~ /Version=([0-9.]+)/ ) {
+            add_vulnerability(
+            $mark,                                         # mark structure to identify target
+            "$uri: IBM/Lotus Domino Version $1 detected.", # message
+            520000,                                        # tid
+            0,                                             # OSVDB reference
+            $uri,                                          # URI
+            $request,                                      # Request structure for full output
+            $response);                                    # Response structure for full output
+            last;
+        }
+    }
 
     # Now the main meat: we shall enumerated through the database and attempt to look for the
     # .nsf files which are accessible without authentication
