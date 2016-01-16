@@ -6777,3 +6777,4 @@
 "007075","0","be","/crx/de/index.jsp","GET","crxde_favicon.ico","","","","","Adobe Experience Manager CRXDE console.","",""
 "007076","0","be","/libs/cq/core/content/login.html","GET","CQ5 - Sign In","","","","","Adobe Experience Manager CQ5 admin login.","",""
 "007077","0","5","/scgi-bin/platform.cgi","POST","root:","loic_ipsec:","","","","Devices with Cisco http firewall are prone to a local file inclusion. See: https://www.exploit-db.com/exploits/39184/","button.login.home=Se%20connecter&Login.userAgent=0x4148_Fu&reload=0&SSLVPNUser.Password=0x4148Fu&SSLVPNUser.UserName=0x4148&thispage=../../../../../../etc/passwd%00",""
+"007078","0","3","@PAGESPEED","GET","<b>Pagespeed\sAdmin</b>","","","","","This reveals information about the running Pagespeed Module (mod_pagespeed/ngx_pagespeed). Comment out appropriate line in the webservers conf file or restrict access to allowed sources.","",""
