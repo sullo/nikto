@@ -256,7 +256,7 @@ sub nikto_headers {
     $locflags{'noclean'} = 1; 
 	$locflags{'nohost'} = 1;
 
-	foreach my $uri ('/', '/images', '/Autodiscover/Autodiscover.xml', '/Autodiscover/', '/Microsoft-Server-ActiveSync', '/Microsoft-Server-ActiveSync/default.css', '/ECP', '/EWS', '/EWS/Exchange.asmx','/Exchange', '/OWA') {
+	foreach my $uri ('/', '/images', '/Autodiscover/Autodiscover.xml', '/Autodiscover/', '/Microsoft-Server-ActiveSync', '/Microsoft-Server-ActiveSync/default.css', '/ECP', '/EWS', '/EWS/Exchange.asmx','/Exchange', '/OWA', '/Microsoft-Server-ActiveSync/default.eas', '/Rpc', '/EWS/Services.wsdl', '/ecp', '/OAB', '/aspnet_client', '/PowerShell') {
 		my ($res, $content, $errors, $request, $result) =  nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP", "1.0"); 
 
 		if (   ($result->{'content-location'} ne "") 
@@ -267,7 +267,12 @@ sub nikto_headers {
 		if (   ($result->{'location'} ne "") 
 			&& ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
 			&& ($result->{'location'} !~ /$mark->{'ip'}/)) { 
-			add_vulnerability($mark, "IIS may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999988, 630, "GET", "$uri", $request, $result);
+			add_vulnerability($mark, "The webserver may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999988, 630, "GET", "$uri", $request, $result);
+		}
+		if (   ($result->{'www-authenticate'} ne "") 
+			&& ($result->{'www-authenticate'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+			&& ($result->{'www-authenticate'} !~ /$mark->{'ip'}/)) { 
+			add_vulnerability($mark, "Microsoft Exchange Systems (CAS and OWA) may reveal their internal or real IP in the WWW-Authenticate header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999986, 630, "GET", "$uri", $request, $result);
 		}
 	}
 	
