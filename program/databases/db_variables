@@ -50,3 +50,4 @@
 @HYBRIS=/ /hmc/ /hac/
 @PIWIK=/ /piwik/ /analytics/
 @VBULLETIN=/ /forum/ /forums/
+@PAGESPEED=/ngx_pagespeed_statistics /ngx_pagespeed_global_statistics /ngx_pagespeed_message /mod_pagespeed_statistics /mod_pagespeed_global_statistics /mod_pagespeed_message /pagespeed_console /pagespeed_admin/ /pagespeed_global_admin/
