@@ -91,7 +91,7 @@ sub nikto_domino {
         my ($res, $content, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
 
         # We're looking for a 200 response
-        if ($res eq "200") {
+        if (($res eq "200") && !(is_404($item->{'file'}, $content, $res, $response->{'location'}))) {
             # We could assume we've got a validate result here, but we may as well check the
             # data if the fetched database file is password protected.
             if ($content !~ /Please identify yourself/ &&
