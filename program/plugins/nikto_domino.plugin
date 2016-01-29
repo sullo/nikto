@@ -43,6 +43,7 @@ sub nikto_domino_load {
 sub nikto_domino {
     # load mark from plugin caller
     my ($mark) = @_;
+    my $ver, $tmpver, $finaluri, $finalmark, $finalreq, $finalres;
 
     # quit if user is terminating - this is a catch all and we should never execute it
     return if $mark->{'terminate'};
@@ -58,22 +59,44 @@ sub nikto_domino {
         return;
     }
 
-    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected, try to identifiy files accessible without authentication.", "d");
+    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected, try to identifiy files accessible without authentication.");
  
-    # Identify version of the Domino Server
+    # Identify version of the Domino Server, some files have lower versions than others
     foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf') {
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && $content =~ /Version=([0-9.]+)/ ) {
-            add_vulnerability(
-            $mark,                                         # mark structure to identify target
-            "$uri: IBM/Lotus Domino Version $1 detected.", # message
-            520000,                                        # tid
-            0,                                             # OSVDB reference
-            $uri,                                          # URI
-            $request,                                      # Request structure for full output
-            $response);                                    # Response structure for full output
-            last;
+            if ($ver eq "") {
+                $ver = $1;
+                $finaluri = $uri;
+                $finalmark = $mark;
+                $finalreq = $request;
+                $finalres = $response;
+            }
+
+            $tmpver = $1;
+            nprint("+ nikto_domino.plugin: Current detected version in '$uri' : '$tmpver' , previous version: '$ver'", "d");
+
+            if ($tmpver gt $ver) {
+                $ver = $tmpver;
+                $finaluri = $uri;
+                $finalmark = $mark;
+                $finalreq = $request;
+                $finalres = $response;
+            }
         }
+    }
+
+    if ($ver ne "") {
+        nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d");
+
+        add_vulnerability(
+        $finalmark,                                           # mark structure to identify target
+        "nikto_domino.plugin: $finaluri: IBM/Lotus Domino Version $ver detected.", # message
+        520000,                                               # tid
+        0,                                                    # OSVDB reference
+        $finaluri,                                            # URI
+        $finalreq,                                            # Request structure for full output
+        $finalres);                                           # Response structure for full output
     }
 
     # Now the main meat: we shall enumerated through the database and attempt to look for the
