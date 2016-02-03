@@ -54,7 +54,7 @@ sub nikto_domino {
     # quit if banner is not from IBM/Lotus Domino
     if ($mark->{'banner'} !~ /lotus domino/i &&
         $mark->{'banner'} !~ /lotus-domino/i &&
-        ( $res ne "200" && $content != /src="\/domcfg.nsf\// ) ) {
+        ( $res ne "200" && $content !~ /src="\/domcfg.nsf\// ) ) {
         nprint("+ nikto_domino.plugin: No IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected.", "d");
         return;
     }
