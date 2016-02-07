@@ -1926,13 +1926,13 @@ sub check_updates {
     my (%REMOTE, %LOCAL, @DBTOGET) = ();
     my ($pluginmsg, $remotemsg) = "";
     my $code_updates = 0;
-    my $serverdir    = "/nikto/UPDATES/$VARIABLES{'version'}";
+    my $serverdir    = "/ni1to/UPDATES/$VARIABLES{'version'}";
     my $server       = "CIRT.net";
 
     # set up our mark
-    my %mark = ('ident' => 'cirt.net',
-                'ssl'   => 0,
-                'port'  => 80
+    my %mark = ('ident' => $server,
+                'ssl'   => 1,
+                'port'  => 443 
                 );
 
     for (my $i = 0 ; $i <= $#ARGV ; $i++) {
