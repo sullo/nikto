@@ -14,6 +14,11 @@
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Use @TRAVALL, @TRAVLIN or @TRAVWIN as a placeholder where nikto
+# should instert the file to check.
+# @TRAVLIN: /etc/passwd
+# @TRAVWIN: boot.ini winnt/win.ini windows/win.ini
+# @TRAVALL: All of the above
 #######################################################################
 "nikto_id","osvdb_id","file","description"
 "521000","54058","typo3/dev/translations.php?ONLY=%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/@TRAVALL%00","TYPO3 allows any file to be retrieved remotely. Upgrade to the latest version."
