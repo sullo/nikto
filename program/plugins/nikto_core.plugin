@@ -2242,6 +2242,7 @@ sub setup_hash {
 
     # Do the standard set up for the hash
     LW2::http_init_request($reqhash);
+    $reqhash->{'whisker'}->{'ignore_duplicate_headers'}   = 0;
     $reqhash->{'whisker'}->{'ssl_save_info'}              = 1;
     $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
