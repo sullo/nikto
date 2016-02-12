@@ -45,14 +45,16 @@ sub nikto_dir_traversal {
     # quit if user is terminating - this is a catch all and we should never execute it
     return if $mark->{'terminate'};
 
-    my %TRAVWIN, %TRAVLIN, %TRAVALL;
-    $TRAVWIN{'boot.ini'} = '[boot loader]';
+    my %TRAVWIN;
+    $TRAVWIN{'boot.ini'} = '\[boot loader\]';
     $TRAVWIN{'winnt/win.ini'} = '; for 16-bit app support';
     $TRAVWIN{'windows/win.ini'} = '; for 16-bit app support';
 
+    my %TRAVLIN;
     $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
 
-    $TRAVALL{'boot.ini'} = '[boot loader]';
+    my %TRAVALL;
+    $TRAVALL{'boot.ini'} = '\[boot loader\]';
     $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
     $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';
     $TRAVALL{'etc/passwd'} = 'root:.*:0:[01]:';
@@ -68,61 +70,38 @@ sub nikto_dir_traversal {
 
         # Check / replace placeholder with pattern
         if ($uri =~ "\@TRAVWIN") {
-            for my $key (keys %TRAVWIN) {
-                my $value = $TRAVWIN{$key};
-                (my $newuri = $uri) =~ s/\@TRAVWIN/$key/;
-                # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
-                my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
-                if ($content =~ /$value/) {
-                    # Looks like a match - raise this up to the front end
-                    add_vulnerability(
-                        $mark,                                     # mark structure to identify target
-                        "$newuri: $item->{'description'}",         # message
-                        $item->{'nikto_id'},                       # tid
-                        $item->{'osvdb_id'},                       # OSVDB reference
-                        $newuri,                                   # URI
-                        $request,                                  # Request structure for full output
-                        $response);                                # Response structure for full output
-                }
-            }
+            dir_trav_check(TRAVWIN, $item, $uri, $mark);
         } elsif ($uri =~ "\@TRAVLIN") {
-            for my $key (keys %TRAVLIN) {
-                my $value = $TRAVLIN{$key};
-                (my $newuri = $uri) =~ s/\@TRAVLIN/$key/;
-                # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
-                my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
-                if ($content =~ /$value/) {
-                    # Looks like a match - raise this up to the front end
-                    add_vulnerability(
-                        $mark,                                     # mark structure to identify target
-                        "$newuri: $item->{'description'}",         # message
-                        $item->{'nikto_id'},                       # tid
-                        $item->{'osvdb_id'},                       # OSVDB reference
-                        $newuri,                                   # URI
-                        $request,                                  # Request structure for full output
-                        $response);                                # Response structure for full output
-                }
-            }
+            dir_trav_check(TRAVLIN, $item, $uri, $mark);
         } elsif ($uri =~ "\@TRAVALL") {
-            for my $key (keys %TRAVALL) {
-                my $value = $TRAVALL{$key};
-                (my $newuri = $uri) =~ s/\@TRAVALL/$key/;
-                # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
-                my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
-                if ($content =~ /$value/) {
-                    # Looks like a match - raise this up to the front end
-                    add_vulnerability(
-                        $mark,                                     # mark structure to identify target
-                        "$newuri: $item->{'description'}",         # message
-                        $item->{'nikto_id'},                       # tid
-                        $item->{'osvdb_id'},                       # OSVDB reference
-                        $newuri,                                   # URI
-                        $request,                                  # Request structure for full output
-                        $response);                                # Response structure for full output
-                }
-            }
+            dir_trav_check(TRAVALL, $item, $uri, $mark);
         } else {
             next;
+        }
+    }
+}
+
+sub dir_trav_check {
+    my $type = $_[0] || return;
+    my $item = $_[1] || return;
+    my $uri = $_[2] || return;
+    my $mark = $_[3] || return;
+
+    for my $key (keys %$type) {
+        my $value = $$type{$key};
+        (my $newuri = $uri) =~ s/\@$type/$key/;
+        # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
+        my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
+        if ($content =~ /$value/) {
+            # Looks like a match - raise this up to the front end
+            add_vulnerability(
+                $mark,                                     # mark structure to identify target
+                "$newuri: $item->{'description'}",         # message
+                $item->{'nikto_id'},                       # tid
+                $item->{'osvdb_id'},                       # OSVDB reference
+                $newuri,                                   # URI
+                $request,                                  # Request structure for full output
+                $response);                                # Response structure for full output
         }
     }
 }
