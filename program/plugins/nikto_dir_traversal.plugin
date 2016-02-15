@@ -21,7 +21,7 @@
 ###############################################################################
 sub nikto_dir_traversal_init {
     my $id = { name        => "dir_traversal",
-               full_name   => "dir_traversal",
+               full_name   => "Directory Traversal",
                author      => "RealRancor",
                description => "Check applications / servers for directory traversal vulnerabilities.",
                hooks       => { scan => { method => \&nikto_dir_traversal, }, 
@@ -36,6 +36,21 @@ sub nikto_dir_traversal_init {
 sub nikto_dir_traversal_load {
     # load up the database here so we don't redo it each time
     $DIRTRAVERSALDB = init_db("db_dir_traversal");
+
+    %TRAVWIN;
+    $TRAVWIN{'boot.ini'} = '\[boot loader\]';
+    $TRAVWIN{'winnt/win.ini'} = '; for 16-bit app support';
+    $TRAVWIN{'windows/win.ini'} = '; for 16-bit app support';
+
+    %TRAVLIN;
+    $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
+
+    %TRAVALL;
+    $TRAVALL{'boot.ini'} = '\[boot loader\]';
+    $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
+    $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';
+    $TRAVALL{'etc/passwd'} = 'root:.*:0:[01]:';
+
 }
 
 sub nikto_dir_traversal {
@@ -44,20 +59,6 @@ sub nikto_dir_traversal {
 
     # quit if user is terminating - this is a catch all and we should never execute it
     return if $mark->{'terminate'};
-
-    my %TRAVWIN;
-    $TRAVWIN{'boot.ini'} = '\[boot loader\]';
-    $TRAVWIN{'winnt/win.ini'} = '; for 16-bit app support';
-    $TRAVWIN{'windows/win.ini'} = '; for 16-bit app support';
-
-    my %TRAVLIN;
-    $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
-
-    my %TRAVALL;
-    $TRAVALL{'boot.ini'} = '\[boot loader\]';
-    $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
-    $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';
-    $TRAVALL{'etc/passwd'} = 'root:.*:0:[01]:';
 
     foreach my $item (@$DIRTRAVERSALDB) {
         # $item will contain the entry in db_dir_traversal, made into a hash pointer
@@ -87,8 +88,8 @@ sub dir_trav_check {
     my $uri = $_[2] || return;
     my $mark = $_[3] || return;
 
-    for my $key (keys %$type) {
-        my $value = $$type{$key};
+    for my $key (keys %{$type}) {
+        my $value = ${$type}{$key};
         (my $newuri = $uri) =~ s/\@$type/$key/;
         # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
         my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
