@@ -250,29 +250,33 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my %locheaders, %locflags; 
+    my %locheaders, %locflags, $cl, $l, $wa; 
     $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
     $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/; 
-    $locflags{'noclean'} = 1; 
-	$locflags{'nohost'} = 1;
+    $locflags{'noclean'} = 1;
+    $locflags{'nohost'} = 1;
+    $cl = $l = $wa = 0;
 
 	foreach my $uri ('/', '/images', '/Autodiscover/Autodiscover.xml', '/Autodiscover/', '/Microsoft-Server-ActiveSync', '/Microsoft-Server-ActiveSync/default.css', '/ECP', '/EWS', '/EWS/Exchange.asmx','/Exchange', '/OWA', '/Microsoft-Server-ActiveSync/default.eas', '/Rpc', '/EWS/Services.wsdl', '/ecp', '/OAB', '/aspnet_client', '/PowerShell') {
 		my ($res, $content, $errors, $request, $result) =  nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP", "1.0"); 
 
-		if (   ($result->{'content-location'} ne "") 
+		if (!$cl && ($result->{'content-location'} ne "") 
 			&& ($result->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
 			&& ($result->{'content-location'} !~ /$mark->{'ip'}/)) { 
+				$cl=1;
 				add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request over HTTP/1.0. The value is \"$result->{'content-location'}\".", 999989, 630, "GET", "$uri", $request, $result);
 		}  
-		if (   ($result->{'location'} ne "") 
+		if (!$l && ($result->{'location'} ne "") 
 			&& ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
 			&& ($result->{'location'} !~ /$mark->{'ip'}/)) { 
-			add_vulnerability($mark, "The webserver may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999988, 630, "GET", "$uri", $request, $result);
+				$l=1;
+				add_vulnerability($mark, "The webserver may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999988, 630, "GET", "$uri", $request, $result);
 		}
-		if (   ($result->{'www-authenticate'} ne "") 
+		if (!$wa && ($result->{'www-authenticate'} ne "") 
 			&& ($result->{'www-authenticate'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
 			&& ($result->{'www-authenticate'} !~ /$mark->{'ip'}/)) { 
-			add_vulnerability($mark, "Microsoft Exchange Systems (CAS and OWA) may reveal their internal or real IP in the WWW-Authenticate header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999986, 630, "GET", "$uri", $request, $result);
+				$wa=1;
+				add_vulnerability($mark, "Microsoft Exchange Systems (CAS and OWA) may reveal their internal or real IP in the WWW-Authenticate header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999986, 630, "GET", "$uri", $request, $result);
 		}
 	}
 	
