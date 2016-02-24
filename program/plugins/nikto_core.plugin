@@ -728,7 +728,7 @@ sub general_config {
         exit;
     }
 
-    if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "")) {
+    if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "none")) {
         nprint("+ERROR: Output file format specified without a name");
         exit;
     }
