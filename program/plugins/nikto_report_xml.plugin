@@ -41,6 +41,7 @@ sub nikto_report_xml_init {
 
 sub xml_head {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # check for xml headers
     $header_present = 0;

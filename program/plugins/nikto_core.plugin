@@ -728,6 +728,11 @@ sub general_config {
         exit;
     }
 
+    if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "")) {
+        nprint("+ERROR: Output file format specified without a name");
+        exit;
+    }
+
     # verify readable dtd
     if ($CLI{'format'} eq 'xml' && !-r $CONFIGFILE{'NIKTODTD'}) {
         nprint("+ ERROR: reading DTD");

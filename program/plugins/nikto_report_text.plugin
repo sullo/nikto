@@ -35,6 +35,7 @@ sub nikto_report_text_init {
 
 sub text_open {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # Open file and produce header
     open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
