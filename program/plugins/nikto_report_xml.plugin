@@ -174,7 +174,6 @@ sub xml_change_vars {
           $protocol . "://" . $hostname . ":" . $mark->{'port'} . $mark->{'root'};
     }
     if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
-    if ($item->{'uri'} eq '') { return $template; }
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # OSVDB info
