@@ -37,6 +37,7 @@ sub nikto_report_csv_init {
 # open output file
 sub csv_open {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # Open file and produce header
     open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
@@ -51,7 +52,8 @@ sub csv_open {
 sub csv_host_start {
     my ($handle, $mark) = @_;
     $mark->{'banner'} =~ s/"/\\"/g;
-    print $handle "\"$mark->{'hostname'}\","
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    print $handle "\"$hostname\","
       . "\"$mark->{'ip'}\","
       . "\"$mark->{'port'}\"," . "\"\"," . "\"\"," . "\"\","
       . "\"$mark->{'banner'}\"\n";
@@ -64,7 +66,8 @@ sub csv_item {
     my ($handle, $mark, $item) = @_;
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $line = '';
-        $line .= "\"$item->{'mark'}->{'hostname'}\",";
+    	my $hostname = $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
+        $line .= "\"$hostname\",";
         $line .= "\"$item->{'mark'}->{'ip'}\",";
         $line .= "\"$item->{'mark'}->{'port'}\",";
 

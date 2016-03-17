@@ -247,7 +247,8 @@ sub nikto_tests {
                 }
 
                 $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
-                add_vulnerability($mark,
+		if ($positive) {
+                	add_vulnerability($mark,
                                   "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
                                   $checkid,
                                   $TESTS{$checkid}{'osvdb'},
@@ -257,6 +258,7 @@ sub nikto_tests {
                                   $response,
                                   $reason
                                   );
+		}
             }
         }
 

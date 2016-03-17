@@ -27,3 +27,5 @@
 "750507","0","Call to undefined function.*\(\) in \/","PHP error reveals file system path."
 "750508","36099","FrameworkLog.xsl\"\\?>.*<version>(?:[0-2]|3\.(?:[0-5]|6\.0\.(?:[0-4]|5(?:[0-3]|4[0-5]))))","McAfee Common Management Agent 3.6.0.546 and below contain multiple overflows."
 "750509","0","However, we found documents with names similar to the one you requested","The mod_speling module can reveal otherwise 'hidden' files in directories."
+"750510","0","makes use of the Zend Scripting Language","Output from the phpinfo() function was found."
+"750511","0","SQLSTATE\[","A database error may reveal internal details about the running database."
