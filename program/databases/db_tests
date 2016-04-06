@@ -6788,3 +6788,4 @@
 "007086","0","ae","/main.html","GET","<span\slxc_lang=\"view_Channel\">Channel</span>","<a\sid=\"connectAll\"\slxc_lang=\"view_Connect_all\">","200","","","Multiple DVR devices are prone to an authentication bypass. See https://www.pentestpartners.com/blog/pwning-cctv-cameras/","","Cookie: dvr_camcnt=24; dvr_usr=null; dvr_pwd=null"
 "007087","0","b","@SYMPHONYREADME.markdown","GET","http://getsymphony.com","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
 "007088","0","b","@SYMPHONYREADME","GET","Symphony\s([0-9.]+)","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
+"007089","0","3b","@AXIS2services/Version?method=getVersion","GET","Apache\sAxis\sversion","The\sAXIS\sengine\scould\snot\sfind\sa\starget\sservice\sto\sinvoke!","","","","Apache Axis identified. This URL might also expose the running version of Axis.","",""
