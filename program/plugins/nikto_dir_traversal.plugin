@@ -44,13 +44,14 @@ sub nikto_dir_traversal_load {
 
     %TRAVLIN;
     $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
+    $TRAVLIN{'etc/hosts'} = 'localhost';
 
     %TRAVALL;
     $TRAVALL{'boot.ini'} = '\[boot loader\]';
     $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
     $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';
     $TRAVALL{'etc/passwd'} = 'root:.*:0:[01]:';
-
+    $TRAVALL{'etc/hosts'} = 'localhost';
 }
 
 sub nikto_dir_traversal {
