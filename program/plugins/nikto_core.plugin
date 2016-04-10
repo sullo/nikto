@@ -623,7 +623,7 @@ sub general_config {
     # deprecated -findonly overrides -Plugins
     if ($CLI{'findonly'}) {
         $CLI{'plugins'} =
-          '@@NONE;report_csv;report_sqlg;report_html;report_text;report_xml;report_nbe';
+          '@@NONE;report_csv;report_json;report_sqlg;report_html;report_text;report_xml;report_nbe';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -718,7 +718,7 @@ sub general_config {
     $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
     $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|none)$/) { 
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) { 
         nprint("+ ERROR: Invalid output format"); 
         exit; 
 	}
@@ -1721,6 +1721,7 @@ sub load_plugins {
     # Force-enable report plugins if needed
     if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) { 
 	push(@torun,'report_csv') if $CLI{'file'} =~ /csv/i;
+	push(@torun,'report_json') if $CLI{'file'} =~ /json/i;
 	push(@torun,'report_html') if $CLI{'file'} =~ /html?/i;
 	push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe/i;
 	push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
@@ -2819,6 +2820,7 @@ sub usage {
 
         print "        -Format+           Save file (-o) format:
                                csv   Comma-separated-value
+                               json  JSON Format
                                htm   HTML Format
                                nbe   Nessus NBE format
                                sql   Generic SQL (see docs for schema)
