@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2013 CIRT, Inc.
+#  Copyright (C) 2013 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_ms10_070_init {
                                          weight => 20,
                                          },
                             },
-               copyright => "2013 CIRT Inc"
+               copyright => "2013 Chris Sullo"
                };
 
     return $id;
