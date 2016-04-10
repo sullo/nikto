@@ -225,8 +225,8 @@ versions.</p></dd><dt><span class="term"><code class="option">-vhost</code></spa
       may check several different types of exploit. For example:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -T 58xb</pre><p>The valid tuning options are:</p><div class="itemizedlist"><ul type="disc"><li><p>0 - File Upload. Exploits which allow a file to be
             uploaded to the target server.</p></li><li><p>1 - Interesting File / Seen in logs. An unknown but suspicious
             file or attack that has been seen in web server logs (note: if you
-            have information regarding any of these attacks, please contact
-            CIRT, Inc.).</p></li><li><p>2 - Misconfiguration / Default File. Default files or files
+            have information regarding any of these attacks, please contact us).
+            </p></li><li><p>2 - Misconfiguration / Default File. Default files or files
             which have been misconfigured in some manner. This could be
             documentation, or a resource which should be password
             protected.</p></li><li><p>3 - Information Disclosure. A resource which reveals
@@ -386,7 +386,7 @@ NMPOPTS=-P0</pre></dd><dt><span class="term"><code class="varname">SKIPPORTS</co
                retrieved. This is currently unused.</p><p>Default Setting</p><pre class="screen">MAX_WARN=20</pre></dd><dt><span class="term"><code class="varname">PROMPTS</code></span></dt><dd><p><span class="emphasis"><em>Deprecated</em></span></p><p>Disables Nikto prompts if set to "no". This is currently
                unused and has been deprecated by the UPDATES item.</p><p>Default Setting</p><pre class="screen">PROMPTS=</pre></dd><dt><span class="term"><code class="varname">CIRT</code></span></dt><dd><p>The IP address that Nikto will use to update the databases
                and plugins, or will send version information back to (as
-               described in the <code class="varname">UPDATES</code> item).</p><p>Default Setting</p><pre class="screen">CIRT=209.172.49.178</pre></dd><dt><span class="term"><code class="varname">PROXYHOST</code>, </span><span class="term"><code class="varname">PROXYPORT</code>, </span><span class="term"><code class="varname">PROXYUSER</code>, </span><span class="term"><code class="varname">PROXYPASS</code></span></dt><dd><p>Address, port and username password of a proxy to relay all
+               described in the <code class="varname">UPDATES</code> item).</p><p>Default Setting</p><pre class="screen">CIRT=107.170.99.251</pre></dd><dt><span class="term"><code class="varname">PROXYHOST</code>, </span><span class="term"><code class="varname">PROXYPORT</code>, </span><span class="term"><code class="varname">PROXYUSER</code>, </span><span class="term"><code class="varname">PROXYPASS</code></span></dt><dd><p>Address, port and username password of a proxy to relay all
                requests through. Note, to use a proxy, you must set the
                configuration items in the configuration file and supply the
                <em class="parameter"><code>-useproxy</code></em> switch to the command
@@ -540,7 +540,7 @@ DOCDIR=EXECDIR/docs</pre></dd></dl></div></div></div><div class="chapter" lang="
       recon_method =&gt; \&amp;nikto_dictionary_attack,
       recon_cond   =&gt; '$CLI{mutate} =~ /6/',
       recon_weight =&gt; 20,
-      copyright    =&gt; "2009 CIRT Inc"
+      copyright    =&gt; "2009 Chris Sullo"
    };
 
    return $id;
@@ -698,10 +698,9 @@ $TESTS{999999}{osvdb}=637;</pre></div><div class="section" lang="en"><div class=
       <em class="parameter"><code>-Display</code></em> with v (verbose) or d (debug). This
       will output a vast amount of extra information to the screen, so
       it is advised to redirect output to a file when using them.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="licences"></a>Chapter 9. Licences</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291106">Nikto</a></span></dt><dt><span class="section"><a href="#id291117">LibWhisker</a></span></dt><dt><span class="section"><a href="#id291129">Tests</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291106"></a>Nikto</h2></div></div></div><p>Nikto is licensed under the GNU General Public License (GPL), and
-      copyrighted by CIRT, Inc.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291117"></a>LibWhisker</h2></div></div></div><p>LibWhisker is licensed under the GNU General Public License (GPL),
+      copyrighted by Chris Sullo</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291117"></a>LibWhisker</h2></div></div></div><p>LibWhisker is licensed under the GNU General Public License (GPL),
       and copyrighted by Rain Forrest Puppy.</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291129"></a>Tests</h2></div></div></div><p>The web tests are licensed for use with Nikto only, and may not be
-      reused without written consent from CIRT, Inc.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="credits"></a>Chapter 10. Credits</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291149">Nikto</a></span></dt><dt><span class="section"><a href="#id291161">Thanks</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291149"></a>Nikto</h2></div></div></div><p>Nikto was originally written and maintained by Sullo, CIRT, Inc.
-      It is currently maintained by David Lodge. LibWhisker was written
+      reused without written consent from Chris Sullo</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="credits"></a>Chapter 10. Credits</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id291149">Nikto</a></span></dt><dt><span class="section"><a href="#id291161">Thanks</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291149"></a>Nikto</h2></div></div></div><p>Nikto is written and maintained by Chris Sullo and David Lodge. LibWhisker was written
       by Rain Forrest Puppy</p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id291161"></a>Thanks</h2></div></div></div><p>Many people have provided feedback, fixes, and suggestions. This
       list attempts to make note of those people, though not all contributors
       are listed. In no particular order:</p><div class="itemizedlist"><ul type="disc"><li><p>Nikto 2 Testing: Paul Woroshow, Mark G. Spencer, Michel
@@ -710,5 +709,5 @@ $TESTS{999999}{osvdb}=637;</pre></div><div class="section" lang="en"><div class=
             to tests.</p></li><li><p>rfp (wiretrip.net). LibWhisker and continuing
             support.</p></li><li><p>Erik Cabetas for many updates and fixes.</p></li><li><p>Jake Kouns (OSVDB/OSF).</p></li><li><p>Jabra (spl0it.org) for XML DTD, XML templates and supporting
             code.</p></li><li><p>Stephen Valdez. Extensive testing. We all miss you.</p></li><li><p>S Saady. Extensive testing.</p></li><li><p>Zeno (cgisecurity.com). Nikto mirroring.</p></li><li><p>P Eronen (nixu.com). Provided many code fixes.</p></li><li><p>M Arboi. Great support by writing the code to make Nikto
-            work within Nessus, as well as bug reports.</p></li><li><p>T Seyrat. Maintains Nikto for the Debian releases.</p></li><li><p>J DePriest. Ideas/fixes.</p></li><li><p>P Woroshow. Ideas/fixes.</p></li><li><p>fr0stman. Tests.</p></li><li><p>H Heimann. Tests.</p></li><li><p>Xiola (xiola.net). Web design and more.</p></li><li><p>Ryan Dewhurst. Domain guessing code.</p></li></ul></div><p>This document is © 2009 CIRT, Inc. and may not be reused without
+            work within Nessus, as well as bug reports.</p></li><li><p>T Seyrat. Maintains Nikto for the Debian releases.</p></li><li><p>J DePriest. Ideas/fixes.</p></li><li><p>P Woroshow. Ideas/fixes.</p></li><li><p>fr0stman. Tests.</p></li><li><p>H Heimann. Tests.</p></li><li><p>Xiola (xiola.net). Web design and more.</p></li><li><p>Ryan Dewhurst. Domain guessing code.</p></li></ul></div><p>This document is © 2009 Chris Sullo and may not be reused without
       permission.</p></div></div></div></body></html>
