@@ -1342,7 +1342,6 @@ sub check_dbs {
                 }
             }
             nprint("\t$counter entries");
->>>>>>> master
         }
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
