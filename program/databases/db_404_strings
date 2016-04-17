@@ -1,6 +1,6 @@
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2014 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from 
 # Chris Sullo (csullo@gmail.com)
@@ -47,3 +47,4 @@ page no longer exist
 Your session has expired				# cPanel webmail
 no longer available
 Request Rejected
+More about this error					# MS Lync 2010

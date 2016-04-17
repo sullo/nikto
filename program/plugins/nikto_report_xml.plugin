@@ -40,6 +40,7 @@ sub nikto_report_xml_init {
 
 sub xml_head {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # check for xml headers
     $header_present = 0;
@@ -173,7 +174,6 @@ sub xml_change_vars {
           $protocol . "://" . $hostname . ":" . $mark->{'port'} . $mark->{'root'};
     }
     if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
-    if ($item->{'uri'} eq '') { return $template; }
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # Scanner Messages Handling

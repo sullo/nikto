@@ -33,6 +33,7 @@ sub nikto_report_nbe_init {
 
 sub nbe_open {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # Open file and produce header
     open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
@@ -55,7 +56,7 @@ sub nbe_item {
 
             $line .= "results|";
             $line .= "$network|";
-            $line .= "hostname|";
+            $line .= "$hostname|";
             $line .= "$item->{'mark'}->{'port'}|";
             $line .= "$item->{'nikto_id'}|";
             $line .= "Security Warning|";

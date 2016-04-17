@@ -1,3 +1,4 @@
+#VERSION,2.1.6
 #######################################################################
 # File Source: https://cirt.net
 # (c) 2001 Chris Sullo, All Rights Reserved.
@@ -9,28 +10,15 @@
 # By submitting updates to this file you are transfering any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
+#
 #######################################################################
 # Notes:
+# NiktoDB 1.0
+# Use @TRAVALL, @TRAVLIN or @TRAVWIN as a placeholder where nikto
+# should instert the file to check.
+# @TRAVLIN: /etc/passwd
+# @TRAVWIN: boot.ini winnt/win.ini windows/win.ini
+# @TRAVALL: All of the above
 #######################################################################
-"index"
-"index.php"
-"index.php3"
-"index.php4"
-"index.php5"
-"index.php7"
-"index.html"
-"index.htm"
-"index.shtml"
-"index.cfm"
-"index.cgi"
-"index.pl"
-"index.asp"
-"index.aspx"
-"default.asp"
-"default.aspx"
-"default.htm"
-"index.do"
-"index.jhtml"
-"index.jsp"
-"index.xml"
-"index.jsp"
+"nikto_id","osvdb_id","file","description"
+"521000","54058","typo3/dev/translations.php?ONLY=%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/@TRAVALL%00","TYPO3 allows any file to be retrieved remotely. Upgrade to the latest version."

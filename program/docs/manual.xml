@@ -1170,7 +1170,7 @@ DOCDIR=EXECDIR/docs</screen>
       <title>Export Formats</title>
 
       <para>Nikto allows output to be saved in a variety of formats, including
-      text, CSV, HTML, XML, NBE and exporting to metasploit. When using
+      text, JSON, CSV, HTML, XML & NBE. When using
       <parameter>-output</parameter>, an output format may be specified with
       <parameter>-Format</parameter>.</para>
 
@@ -1183,7 +1183,7 @@ DOCDIR=EXECDIR/docs</screen>
     </section>
 
     <section>
-      <title>HTML and XML Customisation</title>
+      <title>HTML and XML Customization</title>
 
       <para>HTML reports are generated from template files located in the
       <filename>templates</filename> directory. Variables are defined as
@@ -1714,7 +1714,7 @@ DOCDIR=EXECDIR/docs</screen>
                                        method =&gt; \&amp;nikto_auth_pre,
                                        weight =&gt; 19,
                                     },
-                                   },
+                                   },                   
                copyright        =&gt; "2010 Chris Sullo"
                };
 

@@ -35,6 +35,7 @@ sub nikto_shellshock {
     my ($mark, $parameters) = @_;
     my ($found, @names,);
 
+
     # This would be better coming from live scan results and not db_variables
     my @files = split(/ /, $VARIABLES{"\@SHELLSHOCK"});
 
@@ -45,16 +46,24 @@ sub nikto_shellshock {
     my @dirs = split(/ /, $VARIABLES{'@CGIDIRS'});
     push(@dirs, "/");
 
+    #check for FP... error in page
+    my $checkcontent=1;
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", \%headers, "", "shellshock");
+    if ($content =~ /Nikto-Added-CVE/) {
+	$checkcontent=0;
+	nprint("Content seems to contain error headers, ignoring content match in shellshock plugin","v");
+	}
+
     if (defined $parameters->{'uri'}) {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) = nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-        if (($response->{'nikto-added-cve-2014-6271'} eq 'true') || ($content =~ /Nikto-Added-CVE-2014-6271: true/)) {
-            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999949, "OSVDB-112004,CVE-2014-6271", "GET",
+        if (($response->{'nikto-added-cve-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /Nikto-Added-CVE-2014-6271: true/))) {
+            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999949, "CVE-2014-6271", "GET",
                 "$parameters->{'uri'}", $request, $response);
         }
-        if (($response->{'nikto-added-cve-2014-6278'} eq 'true') || ($content =~ /Nikto-Added-CVE-2014-6278: true/)) {
-            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, "OSVDB-112004,CVE-2014-6278", "GET",
+        if (($response->{'nikto-added-cve-2014-6278'} eq 'true') || ($checkcontent && ($content =~ /Nikto-Added-CVE-2014-6278: true/))) {
+            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, "CVE-2014-6278", "GET",
                 "$parameters->{'uri'}", $request, $response);
         }
     }
@@ -66,11 +75,11 @@ sub nikto_shellshock {
                 # request by hostname
                 my ($res, $content, $error, $request, $response) = nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
                 if (($response->{'nikto-added-cve-2014-6271'} eq 'true') || ($content =~ /Nikto-Added-CVE-2014-6271: true/)) {
-                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999947, "OSVDB-112004,CVE-2014-6271", "GET",
+                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999947, "CVE-2014-6271", "GET",
                         "$cgidir$file", $request, $response);
                 }
                 if (($response->{'nikto-added-cve-2014-6278'} eq 'true') || ($content =~ /Nikto-Added-CVE-2014-6278: true/)) {
-                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999946, "OSVDB-112004,CVE-2014-6278", "GET",
+                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999946, "CVE-2014-6278", "GET",
                         "$cgidir$file", $request, $response);
                 }
             }

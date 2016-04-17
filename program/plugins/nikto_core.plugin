@@ -621,7 +621,7 @@ sub general_config {
     # deprecated -findonly overrides -Plugins
     if ($CLI{'findonly'}) {
         $CLI{'plugins'} =
-          '@@NONE;report_csv;report_sqlg;report_html;report_text;report_xml;report_nbe';
+          '@@NONE;report_csv;report_json;report_sqlg;report_html;report_text;report_xml;report_nbe';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -716,13 +716,18 @@ sub general_config {
     $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
     $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|sql|nbe|xml|none)$/) {
-        nprint("+ ERROR: Invalid output format");
-        exit;
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) { 
+        nprint("+ ERROR: Invalid output format"); 
+        exit; 
 	}
 
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
         nprint("+ERROR: Output file specified without a format");
+        exit;
+    }
+
+    if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "none")) {
+        nprint("+ERROR: Output file format specified without a name");
         exit;
     }
 
@@ -1247,21 +1252,97 @@ sub check_dbs {
         nprint("Syntax Check: $filename");
 
         if ($file =~ /u?db_outdated/) {
-	    my $count=0;
+            my $count=0;
+            my %BANNER;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
-                if ($line eq "") { next; }
-		$count++;
+                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                $count++;
                 my @L = parse_csv($line);
                 if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-		if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
-                    	nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
-			}
-		else { $ALL_IDS{$L[0]}=1; }
-		}
-	        nprint("\t$count entries");
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) { 
+                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                }
+                else { $ALL_IDS{$L[0]}=1; }
+                if (exists($BANNER{$L[1]}) && $L[0] !~ /(600067|600068|601085)/i) {
+                    nprint("\t+ ERROR: Duplicate Server Banner: $line");
+                    nprint("\t+ If this expected/needed: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+                }
+                else { $BANNER{$L[1]}=1; }
+            }
+            nprint("\t$count entries");
+        }
+        elsif ($file =~ /u?db_favicon/ || $file =~ /u?db_domino/) {
+            my $counter=0;
+            my %ENTRY;
+            foreach $line (<IN>) {
+                $line =~ s/^\s+//;
+                if ($line =~ /^\#/) { next; }
+                chomp($line);
+                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                $counter++;
+                my @L = parse_csv($line);
+                if ($#L ne 2) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                }
+                else { $ALL_IDS{$L[0]}=1; }
+                if (exists($ENTRY{$L[1]})) {
+                    nprint("\t+ ERROR: Duplicate entry: $line");
+                }
+                else { $ENTRY{$L[1]}=1; }
+            }
+            nprint("\t$counter entries");
+        }
+        elsif ($file =~ /u?db_drupal/) {
+            my $counter=0;
+            my %ENTRY;
+            foreach $line (<IN>) {
+                $line =~ s/^\s+//;
+                if ($line =~ /^\#/) { next; }
+                chomp($line);
+                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                $counter++;
+                my @L = parse_csv($line);
+                if ($#L ne 1) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                }
+                else { $ALL_IDS{$L[0]}=1; }
+                if (exists($ENTRY{$L[1]})) {
+                    nprint("\t+ ERROR: Duplicate entry: $line");
+                }
+                else { $ENTRY{$L[1]}=1; }
+            }
+            nprint("\t$counter entries");
+        }
+        elsif ($file =~ /u?db_dir_traversal/) {
+            my $counter=0;
+            my %ENTRY;
+            foreach $line (<IN>) {
+                $line =~ s/^\s+//;
+                if ($line =~ /^\#/) { next; }
+                chomp($line);
+                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                $counter++;
+                my @L = parse_csv($line);
+                if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
+                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
+                }
+                else { $ALL_IDS{$L[0]}=1; }
+                if (exists($ENTRY{$L[1]})) {
+                    nprint("\t+ ERROR: Duplicate entry: $line");
+                }
+                else { $ENTRY{$L[1]}=1; }
+                if ($L[2] !~ /(\@TRAVWIN|\@TRAVLIN|\@TRAVALL)/) {
+                    nprint("\t+ ERROR: Invalid or missing placeholder: $line");
+                }
+            }
+            nprint("\t$counter entries");
+>>>>>>> master
         }
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
@@ -1637,6 +1718,7 @@ sub load_plugins {
     # Force-enable report plugins if needed
     if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) {
     push(@torun,'report_csv') if $CLI{'file'} =~ /csv$/i;
+    push(@torun,'report_json') if $CLI{'file'} =~ /csv$/i;
     push(@torun,'report_html') if $CLI{'file'} =~ /html?$/i;
     push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe$/i;
     push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg$/i;
@@ -1872,13 +1954,13 @@ sub check_updates {
     my (%REMOTE, %LOCAL, @DBTOGET) = ();
     my ($pluginmsg, $remotemsg) = "";
     my $code_updates = 0;
-    my $serverdir    = "/nikto/UPDATES/$VARIABLES{'version'}";
+    my $serverdir    = "/ni1to/UPDATES/$VARIABLES{'version'}";
     my $server       = "CIRT.net";
 
     # set up our mark
-    my %mark = ('ident' => 'cirt.net',
-                'ssl'   => 0,
-                'port'  => 80
+    my %mark = ('ident' => $server,
+                'ssl'   => 1,
+                'port'  => 443 
                 );
 
     for (my $i = 0 ; $i <= $#ARGV ; $i++) {
@@ -2188,6 +2270,7 @@ sub setup_hash {
 
     # Do the standard set up for the hash
     LW2::http_init_request($reqhash);
+    $reqhash->{'whisker'}->{'ignore_duplicate_headers'}   = 0;
     $reqhash->{'whisker'}->{'ssl_save_info'}              = 1;
     $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
@@ -2310,9 +2393,8 @@ sub nfetch {
         $request{'whisker'}->{'version'} = $httpver;
     }
 
-    if ($flags->{'nohost'}) {
-	$request->{'Host'} = $mark->{'ip'};
-	$request{'whisker'}->{'host'} = $mark->{'ip'};
+    if ($flags->{'nohost'}) { 
+		$request{'whisker'}->{'host'} = $mark->{'ip'};
 	}
 
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
@@ -2731,6 +2813,7 @@ sub usage {
 
         print "        -Format+           Save file (-o) format:
                                csv   Comma-separated-value
+                               json  JSON Format
                                htm   HTML Format
                                nbe   Nessus NBE format
                                sql   Generic SQL (see docs for schema)

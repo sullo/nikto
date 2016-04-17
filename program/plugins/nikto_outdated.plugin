@@ -59,6 +59,12 @@ sub nikto_outdated {
         $mark->{'components'}->{ $T[0] } = 1;
     }
 
+    # Jetty: strip the ( ) away:
+    elsif ($mark->{'banner'} =~ /jetty\(/i) {
+        $mark->{'banner'} =~ /Jetty\(([0-9a-zA-Z.\-]+)\)/i;
+        $mark->{'components'}->{ 'Jetty/' . $1 } = 1;
+    }
+
     # Some, like WEBrick, have multiple items but no spaces
     elsif (($mark->{'banner'} !~ /\s/) && ($mark->{'banner'} =~ /\/.*\//) && ($mark->{'banner'} =~ /\(/)) {
 

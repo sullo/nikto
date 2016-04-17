@@ -51,7 +51,7 @@ sub nikto_headers_postfetch {
 
     # Check for known headers
     my @interesting_headers =
-      qw /commerce-server-software daap-server dasl datacenter dav generator hosted-by hosted-with microsoftofficewebserver microsoftsharepointteamservices ms-author-via powered-by server-name serverid servlet-engine via x-aspnet-version x-blackboard-product x-cocoon-version x-compressed-by x-dmuser x-gallery-version x-hosted-at x-hostname x-isp x-powered-by x-responding-server x-served-by x-server x-server-name x-webserver/;
+      qw /commerce-server-software daap-server dasl datacenter dav generator hosted-by hosted-with microsoftofficewebserver microsoftsharepointteamservices ms-author-via powered-by server-name serverid servlet-engine via x-aspnet-version x-blackboard-product x-cocoon-version x-compressed-by x-dmuser x-gallery-version x-hosted-at x-hostname x-isp x-powered-by x-responding-server x-served-by x-server x-server-name x-webserver x-owa-version access-control-allow-origin/;
 
     foreach my $header (@interesting_headers) {
         nikto_headers_check($mark, $result, $header, 'Retrieved ' . $header . ' header:', 999986, $request);
@@ -249,27 +249,36 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my %locheaders, %locflags;
-    $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
-    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/;
+    my %locheaders, %locflags, $cl, $l, $wa; 
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/; 
     $locflags{'noclean'} = 1;
+    $locflags{'nohost'} = 1;
+    $cl = $l = $wa = 0;
 
-     my ($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0");
+	foreach my $uri ('/', '/images', '/Autodiscover/Autodiscover.xml', '/Autodiscover/', '/Microsoft-Server-ActiveSync', '/Microsoft-Server-ActiveSync/default.css', '/ECP', '/EWS', '/EWS/Exchange.asmx','/Exchange', '/OWA', '/Microsoft-Server-ActiveSync/default.eas', '/Rpc', '/EWS/Services.wsdl', '/ecp', '/OAB', '/aspnet_client', '/PowerShell') {
+		my ($res, $content, $errors, $request, $result) =  nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP", "1.0"); 
 
-     if (   ($result->{'content-location'} ne "")
-         && ($result->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)
-         && ($result->{'content-location'} !~ /$mark->{'ip'}/)) {
-        	add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request to the root file. The value is \"$result->{'content-location'}\".", 999989, "OSVDB-630", "GET", "/", $request, $result);
-    }
-
-         ($res, $content, $errors, $request, $result) =  nfetch($mark, '/images', "GET", "", \%locheaders, \%flags, "headers: IIS internal IP", "1.0");
-
-     if (   ($result->{'location'} ne "")
-         && ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)
-         && ($result->{'location'} !~ /$mark->{'ip'}/)) {
-        add_vulnerability($mark, "IIS may reveal its internal or real IP in the Location header via a request to the /images directory. The value is \"$result->{'location'}\".", 999988, "OSVDB-630", "GET", "/images", $request, $result);
-    }
-
+		if (!$cl && ($result->{'content-location'} ne "") 
+			&& ($result->{'content-location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+			&& ($result->{'content-location'} !~ /$mark->{'ip'}/)) { 
+				$cl=1;
+				add_vulnerability($mark, "IIS may reveal its internal IP or real IP in the Content-Location header via a request over HTTP/1.0. The value is \"$result->{'content-location'}\".", 999989, "OSVDB-630", "GET", "$uri", $request, $result);
+		}  
+		if (!$l && ($result->{'location'} ne "") 
+			&& ($result->{'location'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+			&& ($result->{'location'} !~ /$mark->{'ip'}/)) { 
+				$l=1;
+				add_vulnerability($mark, "The webserver may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$result->{'location'}\".", 999988, "OSVDB-630", "GET", "$uri", $request, $result);
+		}
+		if (!$wa && ($result->{'www-authenticate'} ne "") 
+			&& ($result->{'www-authenticate'} =~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/) 
+			&& ($result->{'www-authenticate'} !~ /$mark->{'ip'}/)) { 
+				$wa=1;
+				add_vulnerability($mark, "Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request over HTTP/1.0. The value is \"$result->{'www-authenticate'}\".", 999986, 630, "GET", "$uri", $request, $result);
+		}
+	}
+	
     #######################################################################
     # Location header in WebLogic
     # Clear out locheaders

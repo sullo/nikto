@@ -1,0 +1,137 @@
+#VERSION,2.1.6
+###############################################################################
+#  Copyright (C) 2016 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Perform IBM/Lotus Domino specific tests to identify files
+# accessible without authentication and the version of the server
+# TBD: Also report files with authentication?
+###############################################################################
+sub nikto_domino_init {
+    my $id = { name        => "domino",
+               full_name   => "IBM/Lotus Domino Specific Tests",
+               author      => "RealRancor",
+               description => "Performs a selection of IBM/Louts Domino specific tests to identify Domino specific files accessible without authentication and the version of the server",
+               hooks       => { scan => { method => \&nikto_domino, }, 
+                                start => { method => \&nikto_domino_load, },
+                              },
+               copyright   => "2016 Chris Sullo"
+               };
+    use vars qw/$DOMINODB/;
+    return $id;
+}
+
+sub nikto_domino_load {
+    # load up the database here so we don't redo it each time
+    $DOMINODB = init_db("db_domino");
+}
+
+sub nikto_domino {
+    # load mark from plugin caller
+    my ($mark) = @_;
+    my $ver, $tmpver, $finaluri, $finalmark, $finalreq, $finalres;
+
+    # quit if user is terminating - this is a catch all and we should never execute it
+    return if $mark->{'terminate'};
+
+    # check domcfg.nsf which should be always there
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/domcfg.nsf", "GET", "", "", "", "Domino detection");
+
+    # quit if banner is not from IBM/Lotus Domino
+    if ($mark->{'banner'} !~ /lotus domino/i &&
+        $mark->{'banner'} !~ /lotus-domino/i &&
+        ( $res ne "200" && $content !~ /src="\/domcfg.nsf\// ) ) {
+        nprint("+ nikto_domino.plugin: No IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected.", "d");
+        return;
+    }
+
+    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected, try to identifiy files accessible without authentication.");
+ 
+    # Identify version of the Domino Server, some files have lower versions than others
+    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf') {
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        if ($res eq "200" && $content =~ /Version=([0-9.]+)/ ) {
+            if ($ver eq "") {
+                $ver = $1;
+                $finaluri = $uri;
+                $finalmark = $mark;
+                $finalreq = $request;
+                $finalres = $response;
+            }
+
+            $tmpver = $1;
+            nprint("+ nikto_domino.plugin: Current detected version in '$uri' : '$tmpver' , previous version: '$ver'", "d");
+
+            if ($tmpver gt $ver) {
+                $ver = $tmpver;
+                $finaluri = $uri;
+                $finalmark = $mark;
+                $finalreq = $request;
+                $finalres = $response;
+            }
+        }
+    }
+
+    if ($ver ne "") {
+        nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d");
+
+        add_vulnerability(
+        $finalmark,                                           # mark structure to identify target
+        "nikto_domino.plugin: $finaluri: IBM/Lotus Domino Version $ver detected.", # message
+        520000,                                               # tid
+        0,                                                    # OSVDB reference
+        $finaluri,                                            # URI
+        $finalreq,                                            # Request structure for full output
+        $finalres);                                           # Response structure for full output
+    }
+
+    # Now the main meat: we shall enumerated through the database and attempt to look for the
+    # .nsf files which are accessible without authentication
+    foreach my $item (@$DOMINODB) {
+        # $item will contain the entry in db_domino, made into a hash pointer
+
+        # Check if the user is terminating the current mark
+        return if $mark->{'terminate'};
+
+        # Set up URI
+        my $uri = "/$item->{'file'}";
+
+        # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
+        my ($res, $content, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+
+        # We're looking for a 200 response
+        if (($res eq "200") && !(is_404($item->{'file'}, $content, $res, $response->{'location'}))) {
+            # We could assume we've got a validate result here, but we may as well check the
+            # data if the fetched database file is password protected.
+            if ($content !~ /Please identify yourself/ &&
+                $content !~ /type="password"/ &&
+                $content !~ /<TITLE>Server Login<\/TITLE>/ ) {
+                # Looks like a match - raise this up to the front end
+                add_vulnerability(
+                    $mark,                                     # mark structure to identify target
+                    "$item->{'file'}: $item->{'description'}", # message
+                    $item->{'nikto_id'},                       # tid
+                    523,                                       # OSVDB reference
+                    $uri,                                      # URI
+                    $request,                                  # Request structure for full output
+                    $response);                                # Response structure for full output
+            }
+        }
+    }
+}
+
+1;
