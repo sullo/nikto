@@ -1942,7 +1942,6 @@
 "001948","3092","1","/wwwthreads/w3tvars.pm","GET","200","","","","","This might be interesting...","",""
 "001949","3092","1","/zipfiles/","GET","200","","","","","This might be interesting...","",""
 "001950","3268","2","/_pages","GET","[Ii]ndex [Oo]f ","[Dd]irectory [Ll]isting ([Oo]f|[Ff]or) ","","","","Directory indexing found.","",""
-"001951","3092","1","@CGIDIRS","GET","200","","","","","This might be interesting... possibly a system shell found.","",""
 "001952","3092","1","@CGIDIRS.fhp","GET","200","","","","","This might be interesting...","",""
 "001953","3092","1","@CGIDIRSadd_ftp.cgi","GET","200","","","","","This might be interesting...","",""
 "001954","3092","1","@CGIDIRSadmin.cgi","GET","200","","","","","This might be interesting...","",""
