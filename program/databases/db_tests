@@ -7031,3 +7031,6 @@
 "007087","","b","@SYMPHONYREADME.markdown","GET","http://getsymphony.com","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
 "007088","","b","@SYMPHONYREADME","GET","Symphony\s([0-9.]+)","","200","","","Symphony CMS README file found containing the version of the CMS.","",""
 "007089","","3b","@AXIS2services/Version?method=getVersion","GET","Apache\sAxis\sversion","The\sAXIS\sengine\scould\snot\sfind\sa\starget\sservice\sto\sinvoke!","","","","Apache Axis identified. This URL might also expose the running version of Axis.","",""
+"007090","","3b","@CKEDITORckeditor.js","GET","CKSource","","CKEDITOR","","","CKEditor identified. This file might also expose the version of CKEditor.","",""
+"007091","","3b","@CKEDITORCHANGES.md","GET","CKEditor","","Changelog","","","CKEditor Changelog identified.","",""
+"007092","","4","@CKEDITORsamples/sample_posteddata.php","POST","<script>alert\('XSS'\)</script>","","ckeditor.com","","","CKEditor 4.0.1 and below is vulnerable to a Cross-Site Scripting (XSS) vulnerability.","<script>alert('XSS')</script>[]=PATH DISCLOSURE",""

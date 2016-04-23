@@ -51,3 +51,4 @@
 @VBULLETIN=/ /forum/ /forums/
 @PAGESPEED=/ngx_pagespeed_statistics /ngx_pagespeed_global_statistics /ngx_pagespeed_message /mod_pagespeed_statistics /mod_pagespeed_global_statistics /mod_pagespeed_message /pagespeed_console /pagespeed_admin/ /pagespeed_global_admin/
 @SYMPHONY=/ /cms/ /symphony/
+@CKEDITOR=/ /ckeditor/ /admin/ckeditor/ /sites/all/modules/ckeditor/ /resources/ckeditor/ /clientscript/ckeditor/ /wp-content/plugins/ckeditor-for-wordpress/ckeditor/
