@@ -1625,7 +1625,7 @@
 "001628","3268","2","/counter/","GET","[Ii]ndex [Oo]f ","[Dd]irectory [Ll]isting ([Oo]f|[Ff]or) ","","","","Directory indexing found.","",""
 "001629","3268","2","/credit/","GET","[Ii]ndex [Oo]f ","[Dd]irectory [Ll]isting ([Oo]f|[Ff]or) ","","","","Directory indexing found.","",""
 "001630","3092","1","/crypto/","GET","200","","","","","This might be interesting...","",""
-"001631","3092","1","/css","GET","200","","","","","This might be interesting...","",""
+"001631","3092","1","/css/","GET","200","","","","","This might be interesting...","",""
 "001632","3092","1","/cuenta/","GET","200","","","","","This might be interesting...","",""
 "001633","3092","1","/cuentas/","GET","200","","","","","This might be interesting...","",""
 "001634","3268","2","/customers/","GET","[Ii]ndex [Oo]f ","[Dd]irectory [Ll]isting ([Oo]f|[Ff]or) ","","","","Directory indexing found.","",""
