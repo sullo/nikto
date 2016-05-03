@@ -56,7 +56,7 @@ sub is_404 {
     my ($uri, $content, $rescode, $loc_header) = @_;
     $ext = get_ext($uri);
 
-    if (($FoF{$ext}{'mode'} eq "STD") && ($rescode =~ /4[0-9][0-9]/)) {
+    if ((($FoF{$ext}{'mode'} eq "STD") || ($FoF{$ext}{'mode'} eq '')) && ($rescode =~ /4[0-9][0-9]/)) {
         return 1;
     }
     elsif ($FoF{$ext}{'mode'} eq "REDIR") {
