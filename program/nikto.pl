@@ -88,6 +88,9 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));
 }
 
+# Open reporting
+report_head($CLI{'format'}, $CLI{'file'});
+
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
     $mark->{'test'} = 1;
@@ -120,9 +123,6 @@ foreach my $mark (@MARKS) {
         $mark->{'cert'} = $CLI{'cert'};
     }
 }
-
-# Open reporting
-report_head($CLI{'format'}, $CLI{'file'});
 
 # Load db_tests
 set_scan_items();

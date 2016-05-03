@@ -1644,7 +1644,7 @@ sub port_check {
         }
     }
 
-    nprint("+ No web server found on " . ($hostname || $ip) . ":$port");
+    add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", '000029', '', '', '/', $request, $response, "No HTTP response");
     nprint("---------------------------------------------------------------------------");
 
     return 0;
@@ -1930,6 +1930,7 @@ sub report_summary {
 ###############################################################################
 sub report_item {
     my ($mark, $item) = @_;
+    if ($item->{'uri'} == 'undef') { $item->{'uri'} = '/'; }
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
