@@ -24,8 +24,9 @@ sub nikto_drupal_init {
              full_name   => "Drupal Specific Tests",
              author      => "Tautology",
              description => "Performs a selection of drupal specific tests",
-             hooks       => { scan => { method => \&nikto_drupal, },
-                              start => { method => \&nikto_drupal_load, },
+             hooks       => {
+                             scan => { method => \&nikto_drupal, },
+                             start => { method => \&nikto_drupal_load, },
                             },
              options     => {
                              enum-modules => "Flag to tell plugin to enumerate modules",
@@ -80,7 +81,7 @@ sub nikto_drupal {
       # data for the text LICENSE [sic] to ensure that we have a real match
 
       if ($content =~ /LICENSE/) {
-                                # Looks like a match - raise this up to the front end
+        # Looks like a match - raise this up to the front end
         add_vulnerability(
                           $mark, # mark structure to identify target
                           "Drupal module $item->{'module'} found", # message
@@ -88,7 +89,8 @@ sub nikto_drupal {
                           0,                   # OSVDB reference
                           $uri,                # URI
                           $request, # Request structure for full output
-                          $response); # Response structure for full output
+                          $response # Response structure for full output
+                         );
       }
     }
   }
