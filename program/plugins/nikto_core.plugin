@@ -2519,6 +2519,9 @@ sub set_scan_items {
 
     # now load checks
     foreach my $line (@DBFILE) {
+        chomp($line);
+        $line =~ s/^\s+//;
+        if ($line =~ /^\#|^$/) { next; }
         if ($line =~ /^\"/)    # check
         {
             chomp($line);
