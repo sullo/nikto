@@ -6792,5 +6792,5 @@
 "007091","0","3b","@CKEDITORCHANGES.md","GET","CKEditor","","Changelog","","","CKEditor Changelog identified.","",""
 "007092","0","4","@CKEDITORsamples/sample_posteddata.php","POST","<script>alert\('XSS'\)</script>","","ckeditor.com","","","CKEditor 4.0.1 and below is vulnerable to a Cross-Site Scripting (XSS) vulnerability.","<script>alert('XSS')</script>[]=PATH DISCLOSURE",""
 "007093","0","3","/app/plugins/php_plugin/phpinfo.php","GET","PHP Version","","","","","Android PAW Server PHP plugin phpinfo.php script reveals system information.","",""
-"007094","0","2","/composer.json","GET","require","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
-"007095","0","2","/composer.lock","GET","require","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
+"007094","0","2","/composer.json","GET","\"require\"","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
+"007095","0","2","/composer.lock","GET","\"require\"","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
