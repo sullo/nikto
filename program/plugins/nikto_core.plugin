@@ -1349,7 +1349,9 @@ sub check_dbs {
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
             foreach my $line (<IN>) {
-                if ($line !~ /^\"/) { next; }
+                chomp($line);
+                $line =~ s/^\s+//;
+                if ($line =~ /^\#|^$/) { next; }
                 my @L = parse_csv($line);
                 if (   ($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
                     && ($L[0] ne '006433')) {
