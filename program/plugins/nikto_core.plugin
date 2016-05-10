@@ -914,7 +914,6 @@ sub check_input {
     my $key = readkey();
     if ($key eq '') { return; }
 
-    $key=lc($key);
     if ($key eq ' ') {
         status_report($mark);
     }
