@@ -12,6 +12,8 @@
 #######################################################################
 # Notes:
 # Strings to be used for 404 content match
+# An HTTP response can be forced to 404 with a line like:
+# @CODE=200
 #######################################################################
 Access Failed
 an error

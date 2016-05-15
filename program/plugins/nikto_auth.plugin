@@ -155,7 +155,6 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        #if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
         if ($response->{'whisker'}->{'code'} !~ /40[13]/ &&
 			$response->{'whisker'}->{'code'} ne "500" &&
 			!defined $response->{'whisker'}->{'error'}) {

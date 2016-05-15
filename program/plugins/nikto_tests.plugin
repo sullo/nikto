@@ -33,7 +33,7 @@ sub nikto_tests_init {
                          passfiles => "Flag to indicate whether to check for common password files",
                          all => "Flag to indicate whether to check all files with all directories",
                          report => "Report a status after the passed number of tests",
-						 tids => "A range of testids that will only be run",
+                         tids => "A range of testids that will only be run",
                          }
                  };
     return $id;
@@ -75,7 +75,6 @@ sub nikto_tests {
                      \%flags,
                      $checkid);
 
-            # NOTE: auth is now done in nfetch
             if ($OUTPUT{'show_ok'} && ($res eq 200)) {
                 nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}");
             }
@@ -86,7 +85,7 @@ sub nikto_tests {
 
             # If user puts a @CODE= string in db_404_strings, let it take precedence
             foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
-                if ($res =~ /$code/) {
+                if ($res eq $code) {
                     return;
                 }
             }
