@@ -6794,5 +6794,5 @@
 "007093","0","3","/app/plugins/php_plugin/phpinfo.php","GET","PHP Version","","","","","Android PAW Server PHP plugin phpinfo.php script reveals system information.","",""
 "007094","0","2","/composer.json","GET","\"require\"","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
 "007095","0","2","/composer.lock","GET","\"require\"","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
-"007096","0","2","/install.sql","GET","200","","","","","Installation SQL file found.","",""
-"007097","0","2","/setup.sql","GET","200","","","","","Setup SQL file found.","",""
+"007096","0","2","/install.sql","GET","(CREATE TABLE|create table|INSERT INTO|insert into)","","","","","Installation SQL file found.","",""
+"007097","0","2","/setup.sql","GET","(CREATE TABLE|create table|INSERT INTO|insert into)","","","","","Setup SQL file found.","",""
