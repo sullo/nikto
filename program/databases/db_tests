@@ -6796,3 +6796,5 @@
 "007095","0","2","/composer.lock","GET","\"require\"","","","","","PHP Composer configuration file reveals configuration information - https://getcomposer.org/","",""
 "007096","0","2","/install.sql","GET","(CREATE TABLE|create table|INSERT INTO|insert into)","","","","","Installation SQL file found.","",""
 "007097","0","2","/setup.sql","GET","(CREATE TABLE|create table|INSERT INTO|insert into)","","","","","Setup SQL file found.","",""
+"007098","0","1","/.well-known/browserid","GET","public-key","provisioning","","","","Mozilla Persona may leak additional URLs on the server.","",""
+"007099","0","1","/.well-known/acme-challenge","GET","Index of /","","","","","Letsencrypt.org key information may be available in this directory.","",""
