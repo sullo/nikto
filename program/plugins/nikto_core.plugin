@@ -2748,8 +2748,8 @@ sub send_updates {
 
     # set up our mark
     my %mark = ('ident' => 'cirt.net',
-                'ssl'   => 0,
-                'port'  => 80
+                'ssl'   => 1,
+                'port'  => 443 
                 );
 
     for (my $i = 0 ; $i <= $#ARGV ; $i++) {
