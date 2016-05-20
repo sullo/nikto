@@ -85,7 +85,7 @@ sub nikto_clientaccesspolicy {
                 $DISCTR++;
 				my $domain = $line;
 				$domain =~ s/^(.*allow-access-from domain=\")//;
-				$domain =~ s/\" \/>$//;
+				$domain =~ s/\" ?\/\>.*$//;
 				$domainlist .= "$domain ";
             }
         }    # end foreach my $line
