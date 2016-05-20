@@ -6802,3 +6802,4 @@
 "007101","0","1","/.well-known/assetlinks.json","GET","namespace\"","","","","","Google Asset Links Specification file may contain server info, per RFC-5785. See https://github.com/google/digitalassetlinks/blob/master/well-known/details.md","",""
 "007102","0","1","/.well-known/caldav","GET","current-user-principal","","","","","CalDAV file may contain server info, per RFC-5785. See http://tools.ietf.org/html/rfc6764","",""
 "007103","0","1","/.well-known/carddav","GET","principal","","","","","CardDAV file may contain server info, per RFC-5785. See http://tools.ietf.org/html/rfc6764","",""
+"007104","3093","23","@TYPO3ChangeLog","GET","Release\sof\sTYPO3","","","","","TYPO3 ChangeLog file found.","",""
