@@ -6802,6 +6802,6 @@
 "007101","0","1","/.well-known/assetlinks.json","GET","namespace\"","","","","","Google Asset Links Specification file may contain server info, per RFC-5785. See https://github.com/google/digitalassetlinks/blob/master/well-known/details.md","",""
 "007102","0","1","/.well-known/caldav","GET","current-user-principal","","","","","CalDAV file may contain server info, per RFC-5785. See http://tools.ietf.org/html/rfc6764","",""
 "007103","0","1","/.well-known/carddav","GET","principal","","","","","CardDAV file may contain server info, per RFC-5785. See http://tools.ietf.org/html/rfc6764","",""
-"007104","3093","23","@TYPO3ChangeLog","GET","Release\sof\sTYPO3","","","","","TYPO3 ChangeLog file found.","",""
+"007104","3093","23","@TYPO3/ChangeLog","GET","Release\sof\sTYPO3","","","","","TYPO3 ChangeLog file found.","",""
 "007105","0","1","/.well-known/core","GET","rt=","if=","","","","core file may contain server info/links, per RFC-6690. See http://tools.ietf.org/html/rfc6690","",""
 "007106","0","1","/.well-known/csvm","GET","csv-metadata\.json","csvm\.json","","","","csvm file may contain server links. See https://www.w3.org/TR/2015/CR-tabular-data-model-20150716/","",""
