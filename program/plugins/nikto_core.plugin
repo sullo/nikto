@@ -1931,7 +1931,7 @@ sub report_summary {
 ###############################################################################
 sub report_item {
     my ($mark, $item) = @_;
-    if ($item->{'uri'} == 'undef') { $item->{'uri'} = '/'; }
+    if ($item->{'uri'} eq 'undef') { $item->{'uri'} = '/'; }
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
