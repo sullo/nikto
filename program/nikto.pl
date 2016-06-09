@@ -281,7 +281,7 @@ sub load_modules {
 	}
 
 	@modules = ();
-	push(@modules,"Time::HiRes qw(ualarm gettimeofday tv_interval)");
+	push(@modules,"Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
 	push(@modules,"POSIX qw(:termios_h)");
 	foreach my $mod (@modules) { 
 		eval "use $mod";
