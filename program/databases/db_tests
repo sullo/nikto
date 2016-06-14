@@ -76,7 +76,7 @@
 "000042","","3","/ganglia/","GET","Cluster","","","","","Ganglia Cluster reports reveal detailed information.","",""
 "000043","","3","/guestbook/guestbookdat","GET","200","","","","","PHP-Gastebuch 1.60 Beta reveals sensitive information about its configuration.","",""
 "000044","","3","/guestbook/pwd","GET","200","","","","","PHP-Gastebuch 1.60 Beta reveals the md5 hash of the admin password.","",""
-"000045","","3","/help/","GET","200","","","","","Help directory should not be accessible","",""
+"000045","","3","/help/","GET","200","","","","","Help directory found.","",""
 "000046","OSVDB-2411","3","/hola/admin/cms/htmltags.php?datei=./sec/data.php","GET","200","","","","","hola-cms-1.2.9-10 may reveal the administrator ID and password.","",""
 "000047","","3","/horde/imp/test.php","GET","Horde Versions","","","","","Horde script reveals detailed system/Horde information.","",""
 "000048","OSVDB-3233","3","/horde/test.php?mode=phpinfo","GET","PHP Version","","","","","Horde allows phpinfo() to be run, which gives detailed system information.","",""
