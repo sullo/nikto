@@ -6802,3 +6802,4 @@
 "007105","0","1","/.well-known/core","GET","rt=","if=","","","","core file may contain server info/links, per RFC-6690. See http://tools.ietf.org/html/rfc6690","",""
 "007106","0","1","/.well-known/csvm","GET","csv-metadata\.json","csvm\.json","","","","csvm file may contain server links. See https://www.w3.org/TR/2015/CR-tabular-data-model-20150716/","",""
 "007107","3092","b","@PHPMYADMINREADME","GET","phpMyAdmin\s-\sReadme","","200","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.","",""
+"007108","","23","/v1/credentials","GET","secretValue:\s\"","","","","","Rancher Docker manager appears to be available without authentication. It has built in remote shell functionality. Have fun.","",""
