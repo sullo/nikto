@@ -106,3 +106,4 @@
 "access-control-max-age"
 "x-clacks-overhead"
 "x-page-speed"
+"x-permitted-cross-domain-policies"
