@@ -313,6 +313,18 @@ sub nikto_headers {
 			}
 		}
 	}
-}
 
+    # Jetty CVE-2015-2080
+    for (keys %locheaders) { 
+        delete $locheaders{$_}; 
+    } 
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'}; 
+    $locheaders{'Nikto'} = "\x1f";
+
+    ($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: Jetty CVE-2015-2080", "1.0"); 
+
+    if (( $res eq "400") && ($result->{'whisker'}->{'message'} =~ /x1f<<</)) { 
+        add_vulnerability($mark, "Jetty > 9.2.3 and < 9.2.9 may reveal the contents of internal memory if illegal characters are passed.", 999976, 0, "GET", ".", $request, $result);
+    }
+}
 1;
