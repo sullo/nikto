@@ -6810,3 +6810,4 @@
 "007113","0","d","@AXIS2EchoHeaders.jws?method=list","GET","<soapenv:Envelope","","","","","Apache Axis EchoHeaders default webservice.","",""
 "007114","0","b","@AXIS2index.jsp","GET","Apache-AXIS</h1>","<title>Apache-Axis</title>","","","","Apache Axis Web Application identified.","",""
 "007115","0","23","@AXIS2servlet/AxisServlet","GET","And now\.\.\.\sSome\sServices","","","","","Apache Axis web services reveals information about all installed web services. See http://ws.apache.org/axis/java/security.html to secure Axis.","",""
+"007116","0","be","/workarea/login.aspx","GET","ektron.javascript","","","","","Ektron CMS administrative interface found.","",""
