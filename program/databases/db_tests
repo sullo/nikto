@@ -6813,3 +6813,4 @@
 "007116","0","be","/workarea/login.aspx","GET","ektron.javascript","","","","","Ektron CMS administrative interface found.","",""
 "007117","0","1","/composer.json","GET","\"name\":","","","","","Composer Dependency Manager for PHP information found. See https://getcomposer.org/.","",""
 "007118","0","1","/composer.lock","GET","getcomposer.org","","","","","Composer Dependency Manager for PHP lock file found. See https://getcomposer.org/.","",""
+"007119","0","3","/core/modules/config/config.info.yml","GET","version:","","","","","Drupal version number revealed in config.info.yml","",""
