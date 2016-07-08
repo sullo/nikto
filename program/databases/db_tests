@@ -6821,3 +6821,5 @@
 "007124","3093","3","/.ssh/id_dsa.pub","GET","ssh-dsa","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007125","3093","3","/.ssh/id_dss","GET","-----BEGIN\sDSS\sPRIVATE\sKEY-----","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007126","3093","3","/.ssh/id_dss.pub","GET","ssh-dss","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
+"007127","0","e","/phpLiteAdmin/","GET","phpliteadmin.php","","","","","phpLiteAdmin console found.","",""
+"007127","0","e","/MAMP/phpLiteAdmin/","GET","phpliteadmin.php","","","","","phpLiteAdmin console found.","",""
