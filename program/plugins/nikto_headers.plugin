@@ -292,15 +292,23 @@ sub nikto_headers {
 
     ($res, $content, $errors, $request, $result) =  nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "headers: WebLogic internal IP", "1.0"); 
  
-    if (($result->{'location'} ne "") && ($result->{'location'} =~ /http:\/\//)) { 
-        add_vulnerability($mark, "WebLogic may reveal its internal IP or hostname in the Location header. The value is \"$result->{'location'}\".", 999987, 5737, "GET", ".", $request, $result);
-    }
+     my @ips=get_ips($result->{'location'});
+     if ($ips[0] ne '') { 
+     	my ($valid, $internal, $loopback) = is_ip($ips[0]);
+             if ($valid && !$loopback && ($ips[0] ne $mark->{'ip'})) {
+             	my $msg="WebLogic may reveal ";
+             	if ($internal) { $msg .= "an RFC-1918 "; }
+		else { $msg .= "a different IP in the Location header."; }
+                $msg .= "The IP is \"$ips[0]\".";
+        	add_vulnerability($mark, $msg, 999987, 5737, "GET", ".", $request, $result);
+		}
+	}
 	
-	
-	# BREACH Checks
-	for (keys %locheaders) { 
+      for (keys %locheaders) { 
         delete $locheaders{$_}; 
-    } 
+    	} 
+
+    # BREACH Checks
     $locheaders{'Accept-Encoding'} = "deflate, gzip";
 	($res, $content, $errors, $request, $result) =  nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: BREACH Test", "1.1");
 	
