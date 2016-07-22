@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -26,7 +26,7 @@ sub nikto_domino_init {
                full_name   => "IBM/Lotus Domino Specific Tests",
                author      => "RealRancor",
                description => "Performs a selection of IBM/Louts Domino specific tests to identify Domino specific files accessible without authentication and the version of the server",
-               hooks       => { scan => { method => \&nikto_domino, }, 
+               hooks       => { scan => { method => \&nikto_domino, },
                                 start => { method => \&nikto_domino_load, },
                               },
                copyright   => "2016 Chris Sullo"
@@ -54,27 +54,28 @@ sub nikto_domino {
 
     # quit if banner is not from IBM/Lotus Domino
     if (($mark->{'banner'} !~ /lotus-?domino/i) && ($response->{'server'} !~ /lotus-?domino/i) && ( $res ne "200" && $content !~ /src="\/domcfg.nsf\// ) ) {
-	$is_domino=0;
-	}
+        $is_domino=0;
+    }
     else {
-    	foreach my $uri ('/admin.nsf','/admin4.nsf','admin5.nsf','webadmin.nsf') {
-        	my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
-        	if ($res eq "200" && ($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/)) {
-			$is_domino=1;
-                	add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
-                    		$uri, $request, $response);
-			last;
-			}
-		}
+        foreach my $uri ('/admin.nsf','/admin4.nsf','/admin5.nsf','/webadmin.nsf') {
+            my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+            if ($res eq "200" && ($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/)) {
+            $is_domino=1;
+                    add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
+                            $uri, $request, $response);
+            last;
+            }
+        }
     }
     if (!$is_domino) { return; }
 
     nprint("+ IBM/Lotus Domino: Domino server detected based on banner or nsf retrieval.");
- 
+
     # Identify version of the Domino Server, some files have lower versions than others
-    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf') {
+    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf',
+                     '/iNotes/Forms5.nsf', '/iNotes/Forms6.nsf', '/iNotes/Forms7.nsf') {
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
-        if ($res eq "200" && $content =~ /Version=([0-9.]+)/ ) {
+        if ($res eq "200" && ( $content =~ /Version=([0-9.]+)/ || $content =~ /<!--\sDomino\sRelease\s([0-9A-Z.]+)/ ) ) {
             if ($ver eq "") {
                 $ver = $1;
                 $finaluri = $uri;
