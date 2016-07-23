@@ -52,30 +52,41 @@ sub nikto_domino {
     my ($res, $content, $error, $request, $response) = nfetch($mark, "/domcfg.nsf", "GET", "", "", "", "Domino detection");
     my $is_domino=0;
 
-    # quit if banner is not from IBM/Lotus Domino
-    if (($mark->{'banner'} !~ /lotus-?domino/i) && ($response->{'server'} !~ /lotus-?domino/i) && ( $res ne "200" && $content !~ /src="\/domcfg.nsf\// ) ) {
-        $is_domino=0;
+    # Detect IBM/Lotus Domino from banner
+    if (($mark->{'banner'} =~ /lotus(-| )domino/i) || ($response->{'server'} =~ /lotus(-| )domino/i)) {
+        $is_domino=1;
     }
-    else {
-        foreach my $uri ('/admin.nsf','/admin4.nsf','/admin5.nsf','/webadmin.nsf') {
-            my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
-            if ($res eq "200" && ($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/)) {
+
+    # Detect IBM/Lotus Domino from domcfg.nsf
+    if ($res eq "200" && $content =~ /src="\/domcfg.nsf\// && ($content =~ /self._domino_name/ || $content =~ /Web\sServer\sConfiguration/)) {
+        $is_domino=1;
+    }
+
+    # Detect IBM/Lotus Domino from login page
+    foreach my $uri ('/admin.nsf','/admin4.nsf','/admin5.nsf','/webadmin.nsf') {
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
             $is_domino=1;
-                    add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
-                            $uri, $request, $response);
-            last;
-            }
+            add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
+                $uri, $request, $response);
         }
     }
+
+    # check nonexistent .nsf file for error message
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/nonexistent.nsf", "GET", "", "", "", "Domino detection");
+    if ($res eq "404" && $content =~ /HTTP\sWeb\sServer:\sIBM\sNotes\sException\s-\sFile\sdoes\snot\sexist/) {
+        $is_domino=1;
+    }
+
     if (!$is_domino) { return; }
 
-    nprint("+ IBM/Lotus Domino: Domino server detected based on banner or nsf retrieval.");
+    nprint("+ IBM/Lotus Domino: Server detected based on banner or nsf retrieval.");
 
     # Identify version of the Domino Server, some files have lower versions than others
     foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf',
                      '/iNotes/Forms5.nsf', '/iNotes/Forms6.nsf', '/iNotes/Forms7.nsf') {
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
-        if ($res eq "200" && ( $content =~ /Version=([0-9.]+)/ || $content =~ /<!--\sDomino\sRelease\s([0-9A-Z.]+)/ ) ) {
+        if ($res eq "200" && ($content =~ /Version=([0-9.]+)/ || $content =~ /<!--\sDomino\sRelease\s([0-9A-Z.]+)/)) {
             if ($ver eq "") {
                 $ver = $1;
                 $finaluri = $uri;
@@ -101,13 +112,13 @@ sub nikto_domino {
         nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d");
 
         add_vulnerability(
-        $finalmark,                                           # mark structure to identify target
-        "nikto_domino.plugin: $finaluri: IBM/Lotus Domino Version $ver detected.", # message
-        520000,                                               # tid
-        0,                                                    # OSVDB reference
-        $finaluri,                                            # URI
-        $finalreq,                                            # Request structure for full output
-        $finalres);                                           # Response structure for full output
+        $finalmark,                                              # mark structure to identify target
+        "IBM/Lotus Domino: Version $ver detected at $finaluri.", # message
+        520000,                                                  # tid
+        0,                                                       # OSVDB reference
+        $finaluri,                                               # URI
+        $finalreq,                                               # Request structure for full output
+        $finalres);                                              # Response structure for full output
     }
 
     # Now the main meat: we shall enumerated through the database and attempt to look for the
