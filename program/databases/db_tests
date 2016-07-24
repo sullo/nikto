@@ -6824,3 +6824,4 @@
 "007127","0","e","/phpLiteAdmin/","GET","phpliteadmin.php","","","","","phpLiteAdmin console found.","",""
 "007128","0","e","/MAMP/phpLiteAdmin/","GET","phpliteadmin.php","","","","","phpLiteAdmin console found.","",""
 "007129","3092","1","/.sqlite_history","GET","^(tables|quit|databases|INSERT|insert|delete|DELETE|drop|DROP|grant|GRANT|select|SELECT)","","200","","","This might be interesting...","",""
+"007130","","9","@FORUMforumrunner/request.php?cmd=get_spam_data&postids='1","GET","database\shas\sencountered\sa\sproblem","","","","","vBulletin contains a SQL injection in the forumrunner addon. See https://enumerated.wordpress.com/2016/07/11/1/","",""
