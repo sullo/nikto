@@ -6825,3 +6825,6 @@
 "007129","3092","1","/.sqlite_history","GET","^(tables|quit|databases|INSERT|insert|delete|DELETE|drop|DROP|grant|GRANT|select|SELECT)","","200","","","This might be interesting...","",""
 "007130","0","9","@FORUMforumrunner/request.php?cmd=get_spam_data&d=1&postids='1","GET","(database\shas\sencountered\sa\sproblem|/image.php\?type=dberror)","","","","","vBulletin contains a SQL injection in the forumrunner addon. See https://enumerated.wordpress.com/2016/07/11/1/","",""
 "007131","0","9","@VBULLETINforumrunner/request.php?cmd=get_spam_data&d=1&postids='1","GET","(database\shas\sencountered\sa\sproblem|/image.php\?type=dberror)","","","","","vBulletin contains a SQL injection in the forumrunner addon. See https://enumerated.wordpress.com/2016/07/11/1/","",""
+"007132","0","b","/sitecore/shell/webservice/service.asmx","GET","Visual Sitecore Service","","","","","The SiteCore CMS shell webservice is running which could allow an attacker to brute force account information or execute API commands","",""
+"007133","0","b","/sitecore/admin/login.aspx","GET","Log into Sitecore","","","","","The SiteCore CMS administrative login interface is available which could allow brute force or unauthorized access","",""
+"007134","0","b","/sitecore/debug","GET","Default page","","","","","The SiteCore CMS debug interface was identified as accessible","",""
