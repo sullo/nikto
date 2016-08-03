@@ -149,8 +149,6 @@ sub nikto_httpoptions {
         }
     }
 
-    $request{'whisker'}->{'version'} = $NIKTOCONFIG{'DEFAULTHTTPVER'};
-
     # Now release memory for the dbarray
     undef @$dbarray;
     return;
