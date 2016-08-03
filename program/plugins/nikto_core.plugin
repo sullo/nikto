@@ -2280,6 +2280,7 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
     $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
+    $reqhash->{'whisker'}->{'version'}                    = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
     if ($CLI{'evasion'} ne '') {
         $reqhash->{'whisker'}->{'anti_ids'} = $CLI{'evasion'};
     }
@@ -2393,13 +2394,11 @@ sub nfetch {
     }
 
     # over-ride HTTP version
-    my $httpver_old = $request{'whisker'}->{'version'};
     if ($httpver ne '') {
         $request{'whisker'}->{'version'} = $httpver;
     }
 
     if ($flags->{'nohost'}) { 
-		#$request->{'Host'} = $mark->{'ip'};
 		$request{'whisker'}->{'host'} = $mark->{'ip'};
 	}
 
@@ -2497,9 +2496,6 @@ sub nfetch {
     unless ($flags->{'nopostfetch'}) {
         ($request, %$result) = run_hooks($mark, "postfetch", \%request, \%result);
     }
-
-    # set version back
-    $request{'whisker'}->{'version'} = $httpver_old;
 
     return $result{'whisker'}->{'code'}, $result{'whisker'}->{'data'},
       $result{'whisker'}->{'error'}, \%request, \%result;
