@@ -308,7 +308,7 @@ sub nikto_headers {
                         }
                 }
 
-        if (!$l && ($result->{'www-authenticate'} ne "")) {
+        if (!$wa && ($result->{'www-authenticate'} ne "")) {
                 my @ips=get_ips($result->{'www-authenticate'});
                 my ($valid, $internal, $loopback) = is_ip($ips[0]);
                 if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
