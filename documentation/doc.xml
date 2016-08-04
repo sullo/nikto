@@ -150,6 +150,7 @@
 
      <para>Perl modules</para>
 
+      <itemizedlist>
         <listitem>
           <para>JSON::PP - Saving requests and responses in a parseable format (optional). Required for -Savedir usage. May require additional modules.</para>
         </listitem>
