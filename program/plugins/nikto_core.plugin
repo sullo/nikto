@@ -2208,8 +2208,7 @@ sub proxy_check {
 
             # test it...
             LW2::http_close(\%request);    # force-close any old connections
-            LW2::auth_set("proxy-basic", \%request, $CONFIGFILE{PROXYUSER}, $CONFIGFILE{PROXYPASS})
-              ;                            # set auth
+            LW2::auth_set("proxy-basic", \%request, $CONFIGFILE{PROXYUSER}, $CONFIGFILE{PROXYPASS}); # set auth
             LW2::http_fixup_request(\%request);
             sleeper();
             LW2::http_do_request_timeout(\%request, \%result);
