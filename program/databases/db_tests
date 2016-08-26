@@ -6257,7 +6257,7 @@
 "006483","0","3","/en-US/debug/sso","GET","SSO Enabled","","","","","Splunk's SSO debug may reveal sensitive info, such as internal IPs/hostnames.","",""
 "006484","0","3","/default.htm","GET","Behind Every Great Web Site","","","","","Default EPiServer file found","",""
 "006486","59001","7","@AXIS2services/Version?xsd=../../../../../../../../../../../etc/passwd","GET","root:","","","","","Apache Axis2 contains a directory traversal in the Version program.","",""
-"006487","0","b","/Util/login.aspx","GET","EPiServer CMS","","","","","EPiServer admin login page found.","",""
+"006487","0","b","/Util/login.aspx","GET","EPiServer CMS","epi\-(login|button)","","","","EPiServer admin login page found.","",""
 "006488","3092","b","@PHPMYADMINsetup","GET","index\.php\?phpMyAdmin=","","","","","phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts. The /setup/ directory may reveal details about the install application and databases.","",""
 "006489","0","1","/jsp/","GET","[Ii]ndex [Oo]f ","[Dd]irectory [Ll]isting ([Oo]f|[Ff]or) ","","","","JSP directory has indexing enabled.","",""
 "006490","0","be","/portal/console/","GET","function\sfindTopWindow","","","","","Vignette Server admin console located.","",""
