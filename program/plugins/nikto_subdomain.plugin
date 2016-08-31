@@ -70,6 +70,7 @@ sub nikto_subdomain {
             add_vulnerability($mark, "Subdomain $item->{'subdomain'} found", $item->{'nikto_id'}, 0, "GET", "/", $request, $response);
         }
 
+        $mark->{'hostname'} = $host;
     }    # End foreach
 }    # End sub
 
