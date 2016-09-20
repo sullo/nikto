@@ -1064,7 +1064,7 @@
 "001052","0","8","@CGIDIRSperl.exe","GET","200","","","","","Perl is installed in the CGI directory. This essentially gives attackers a system shell. Remove Perl from the CGI dir.","",""
 "001053","0","8","@CGIDIRSperl","GET","200","","","","","Perl is installed in the CGI directory. This essentially gives attackers a system shell. Remove Perl from the CGI dir.","",""
 "001054","0","8","@CGIDIRSplusmail","GET","200","","","","","This CGI may allow attackers to execute commands remotely.","",""
-"001055","10944","8","@CGIDIRSscripts/slxweb.dll/getfile?type=Library&file=[invalid filename]","GET","200","","","","","SalesLogix WebClient may allow attackers to execute arbitrary commands on the host.","",""
+"001055","10944","8","@CGIDIRSscripts/slxweb.dll/getfile?type=Library&file=invalidfilename","GET","200","","","","","SalesLogix WebClient may allow attackers to execute arbitrary commands on the host. See http://www.securityfocus.com/archive/1/378637","",""
 "001056","0","8","@CGIDIRSsmartsearch.cgi?keywords=|/bin/cat%20/etc/passwd|","GET","200","root:","","","","To check for remote execution vulnerability use ?keywords=|/bin/ls| or your favorite command","",""
 "001057","0","8","@CGIDIRSsmartsearch/smartsearch.cgi?keywords=|/bin/cat%20/etc/passwd|","GET","200","root:","","","","To check for remote execution vulnerability use ?keywords=|/bin/ls| or your favorite command","",""
 "001058","54034","8","@CGIDIRSspin_client.cgi?aaaaaaaa","GET","200","","","","","This CGI may be vulnerable to remote execution by sending 8000 x 'a' characters (check to see if you get a 500 error message)","",""
