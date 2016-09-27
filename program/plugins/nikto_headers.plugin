@@ -135,7 +135,7 @@ sub nikto_headers_postfetch {
                 my $allowed = $result->{'x-frame-options'};
                 $allowed =~ s/^.* //g;
                 add_vulnerability( $mark,
-                    "X-Frame-Options header is set to allow framing from $allowed. This is only supported in Internet Explorer and may lead to the header being ignored.",
+                    "X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
                     999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             }
         }
