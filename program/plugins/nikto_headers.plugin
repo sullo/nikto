@@ -129,7 +129,7 @@ sub nikto_headers_postfetch {
     }
 
     # Look for X-Frame-Options
-    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
+    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'code'}) {
         if (defined $result->{'x-frame-options'}) {
             if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
                 my $allowed = $result->{'x-frame-options'};
@@ -147,7 +147,7 @@ sub nikto_headers_postfetch {
     }
 
     # X-XSS-Protection
-    if (!$XSSPROTECTION{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
+    if (!$XSSPROTECTION{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'code'}) {
         if (defined $result->{'x-xss-protection'}) {
 
             # Parse this and see whether it's set to 0
@@ -160,7 +160,7 @@ sub nikto_headers_postfetch {
     }
 
     # And for if it's not defined
-    if (!$HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
+    if (!$HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'code'}) {
         if (!defined $result->{'x-xss-protection'}) {
             add_vulnerability( $mark, "The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS",
                 999102, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
@@ -197,7 +197,7 @@ sub nikto_headers_postfetch {
         $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
-    if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
+    if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'code'}) {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability( $mark,
                 "The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type",
@@ -206,7 +206,7 @@ sub nikto_headers_postfetch {
         $HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
-    if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
+    if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'code'}) {
         if (defined $result->{'x-clacks-overhead'}) {
             add_vulnerability( $mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0,
                 $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
