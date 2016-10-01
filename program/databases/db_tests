@@ -6834,3 +6834,4 @@
 "007139","3093","3","/.ssh/id_ed25519.pub","GET","^(ssh-ed25519)","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007140","3093","3","/.ssh/id_ed25519","GET","^-----((BEGIN|END)\sENCRYPTED\sPRIVATE\sKEY|(BEGIN|END)\sOPENSSH\sPRIVATE\sKEY)-----","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007141","3093","3","/.ssh/identity","GET","^SSH PRIVATE KEY FILE FORMAT","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
+"007142","0","2","/user_guide/","GET","CodeIgniter User Guide","","","","","CodeIgniter User Guide exposes installed version number.","",""
