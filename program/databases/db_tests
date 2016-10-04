@@ -6835,3 +6835,8 @@
 "007140","3093","3","/.ssh/id_ed25519","GET","^-----((BEGIN|END)\sENCRYPTED\sPRIVATE\sKEY|(BEGIN|END)\sOPENSSH\sPRIVATE\sKEY)-----","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007141","3093","3","/.ssh/identity","GET","^SSH PRIVATE KEY FILE FORMAT","","200","","","A user's home directory may be set to the web root, an ssh file was retrieved. This should not be accessible via the web.","",""
 "007142","0","2","/user_guide/","GET","CodeIgniter User Guide","","","","","CodeIgniter User Guide exposes installed version number.","",""
+"007143","0","3","/.idea/misc.xml","GET","ProjectRootManager","","","","","JetBrains project IDE reveals application information.","",""
+"007144","0","3","/.idea/modules.xml","GET","module\sfileurl","","","","","JetBrains project IDE reveals application information.","",""
+"007145","0","3","/.idea/vcs.xml","GET","mapping\sdirectory","","","","","JetBrains project IDE reveals application information.","",""
+"007146","0","3","/.idea/workspace.xml","GET","project\sversion","","","","","JetBrains project IDE reveals application information.","",""
+"007147","0","3","/.idea/scopes/scope_settings.xml","GET","DependencyValidationManager","","","","","JetBrains project IDE reveals application information.","",""
