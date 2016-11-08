@@ -1250,7 +1250,7 @@
 "001247","1210","7","/scripts/samples/search/qsumrhit.htw","GET","QUERY","","","","","Server may be vulnerable to a Webhits.dll arbitrary file retrieval. MS00-006.","",""
 "001248","1210","7","/JUNK(5).htw","GET","QUERY","","","","","Server may be vulnerable to a Webhits.dll arbitrary file retrieval. Ensure Q252463i, Q252463a or Q251170 is installed. MS00-006.","",""
 #"001251","787","28a","http://127.0.0.1:2301/ HTTP/1.0","GET","Compaq WBEM Device","","","","","The Compaq WBEM interface can act as an HTTP proxy, which can allow firewall or web proxy bypass. http://www.compaq.com/products/servers/management/SSRT0758.html","",""
-"001252","847","37","/file/../../../../../../../../etc/","GET","200","","","","","The Icecast server allows the file system to be probed for directory structure, but does not allow arbitrary file retrieval.","",""
+"001252","847","37","/file/../../../../../../../../etc/","GET","passwd","","hosts","","","The Icecast server allows the file system to be probed for directory structure, but does not allow arbitrary file retrieval.","",""
 "001253","578","8","/level/16/exec/-///pwd","GET","200","","","","","CISCO HTTP service allows remote execution of commands","",""
 "001254","578","8","/level/16/exec/-///show/configuration","GET","200","","","","","CISCO HTTP service allows remote execution of commands","",""
 "001255","578","8","/level/16","GET","200","","","","","CISCO HTTP service allows remote execution of commands","",""
