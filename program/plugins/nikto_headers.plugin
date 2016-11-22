@@ -72,7 +72,7 @@ sub nikto_headers_postfetch {
         elsif ($header eq 'x-page-speed')    { next; }
         elsif (defined $HFOUND{$header}) { next; }
 	
-	next if ($header eq 'server' && substr($result->{$header}, 0, 8) eq 'WebSEAL/');
+	next if $header eq 'server' && substr($result->{$header}, 0, 8) eq 'WebSEAL/';
 
         foreach my $ip (get_ips($result->{$header})) {
             my ($valid, $internal, $loopback) = is_ip($ip);
