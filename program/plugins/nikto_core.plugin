@@ -2402,7 +2402,10 @@ sub nfetch {
 	}
 
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
-
+    
+    # Fix: port on Host header prevents Nikto from scanning certain sites behind BigIPs
+    $request{'Host'}=~s/:.*//;
+    
     # Run pre hooks
     unless ($flags->{'noprefetch'}) {
         (%$request, %$result) = run_hooks($mark, "prefetch", \%request, \%result);
