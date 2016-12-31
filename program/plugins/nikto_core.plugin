@@ -1169,7 +1169,7 @@ sub load_databases {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
 	nprint("- Loading DB: $filename","d");
-        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$@\n");
 
         # db_tests
         if ($file =~ /u?db_tests/) { push(@DBFILE, <IN>); next; }
@@ -2678,7 +2678,7 @@ sub version {
     foreach my $FILE (sort keys %NIKTOFILES) {
         next if $FILE eq 'LW2.pm';
         open(FI, "<$NIKTOFILES{$FILE}")
-          || die print STDERR "+ ERROR: Unable to open '$NIKTOFILES{$FILE}': $!\n";
+          || die print STDERR "+ ERROR: Unable to open '$NIKTOFILES{$FILE}': $@\n";
         my @F = <FI>;
         close(FI);
         my @VERS = grep(/^#VERSION/, @F);
@@ -2924,7 +2924,7 @@ sub init_db {
 
         # Check that the database exists
         unless (open(IN, "<$filename")) {
-            nprint("+ ERROR: Unable to open database file $dbname: $!.");
+            nprint("+ ERROR: Unable to open database file $dbname: $@.");
             return $dbarray;
         }
 
