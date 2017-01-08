@@ -151,9 +151,9 @@ foreach my $mark (@MARKS) {
         $mark->{'cookiejar'} = LW2::cookie_new_jar();
 
         # parse conf line into name/value pairs
-        foreach my $p (split(/;/, $CONFIGFILE{'STATIC-COOKIE'})) {
+        foreach my $p (split(/"/, $CONFIGFILE{'STATIC-COOKIE'})) {
             $p =~ s/(?:^\s+|\s+$)//;
-            $p =~ s/"(?:[ ]+)?=(?:[ ]+)?"/","/g;
+            $p =~ s/"?(?:[ ]+)?=(?:[ ]+)?"/","/g;
             my @cv = parse_csv($p);
 
             # Set into the jar
