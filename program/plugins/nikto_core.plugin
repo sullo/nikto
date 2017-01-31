@@ -1679,7 +1679,7 @@ sub load_plugins {
     # populate plugin macros
     $CONFIGFILE{'@@NONE'} = "";
 
-    # Check if running plugins is NONE - if so, don't bother initalising plugins
+    # Check if running plugins is NONE - if so, don't bother initialising plugins
     if ($CLI{'plugins'} eq '@@NONE') {
         return;
     }
