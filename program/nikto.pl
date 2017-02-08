@@ -105,6 +105,16 @@ foreach my $mark (@MARKS) {
         next;
     }
 
+    # Read cookies from conf & set into the cookie jar
+    if (defined $CONFIGFILE{'STATIC-COOKIE'}) {
+        $mark->{'cookiejar'} = LW2::cookie_new_jar();
+        foreach my $p (split(/;/, $CONFIGFILE{'STATIC-COOKIE'})) {
+            if ($p =~ /"([^=]+)=(.+)"/) {
+                LW2::cookie_set(\%{ $mark->{'cookiejar'} }, $1, $2);
+                }
+       }
+    }
+
     # Check that the port is open
     my $open =
       port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'});
@@ -144,21 +154,6 @@ foreach my $mark (@MARKS) {
     if ($CLI{'saveresults'} ne '') {
         $mark->{'save_dir'} = save_createdir($CLI{'saveresults'}, $mark);
         $mark->{'save_prefix'} = save_getprefix($mark);
-    }
-
-    # Cookies
-    if (defined $CONFIGFILE{'STATIC-COOKIE'}) {
-        $mark->{'cookiejar'} = LW2::cookie_new_jar();
-
-        # parse conf line into name/value pairs
-        foreach my $p (split(/"/, $CONFIGFILE{'STATIC-COOKIE'})) {
-            $p =~ s/(?:^\s+|\s+$)//;
-            $p =~ s/"?(?:[ ]+)?=(?:[ ]+)?"/","/g;
-            my @cv = parse_csv($p);
-
-            # Set into the jar
-            LW2::cookie_set(\%{ $mark->{'cookiejar'} }, $cv[0], $cv[1]);
-        }
     }
 
     $mark->{'total_vulns'}  = 0;
