@@ -250,7 +250,7 @@
 "500642","7c7b66d305e9377fa1fce9f9a74464d9","spe (0.8.4.h)"
 "500643","0e2503a23068aac350f16143d30a1273","sql-ledger (2.8.15)"
 "500644","1fd3fafc1d461a3d19e91dbbba03d0aa","tea (17.6.1)"
-"500645","4644f2d45601037b8423d45e13194c93","Apache Tomcat (5.5.26), Alfresco Community"
+"500645","4644f2d45601037b8423d45e13194c93","Apache Tomcat (possibly 5.5.26 through 8.0.15), Alfresco Community"
 "500646","1de863a5023e7e73f050a496e6b104ab","torrentflux (2.4)"
 "500647","83dea3d5d8c6feddec84884522b61850","torrentflux (2.4) - themes/G4E/"
 "500648","d1bc9681dce4ad805c17bd1f0f5cee97","torrentflux (2.4) - themes/BlueFlux/"
