@@ -29,3 +29,4 @@
 "750509","0","However, we found documents with names similar to the one you requested","The mod_speling module can reveal otherwise 'hidden' files in directories."
 "750510","0","makes use of the Zend Scripting Language","Output from the phpinfo() function was found."
 "750511","0","SQLSTATE\[","A database error may reveal internal details about the running database."
+"750512","0","jetty-dir.css\" REL=\"stylesheet\" TYPE=\"text/css\"\/><TITLE>Directory: \/","Directory indexing found (Jetty)."
