@@ -1220,13 +1220,13 @@ DOCDIR=EXECDIR/docs</screen>
     <section>
       <title>Development Source</title>
 
-      <para>The Nikto development source code is located in a Subversion (SVN)
-      repository which is publicly accessible. To download the source code,
-      install Subversion and issue the following command:</para>
+      <para>The Nikto source code is located in a Git 
+      repository which is publicly accessible on github.com. To download the source code
+      or to keep track of open tickets, development efforts, etc., please visit:</para>
 
       <itemizedlist>
         <listitem>
-          <para>svn co http://svn2.assembla.com/svn/Nikto_2</para>
+          <para>https://github.com/sullo/nikto</para>
         </listitem>
       </itemizedlist>
 
