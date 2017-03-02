@@ -1954,6 +1954,16 @@ sub report_close {
 
 ###############################################################################
 sub check_updates {
+    # check for git version
+    use Cwd;
+    
+    my $cwd = getcwd;
+
+    if ( -e "../.git" && $cwd =~ /nikto\/program/){
+	system("git pull");
+	exit;
+    } else {
+
     $CLI{'nointeractive'}=1;
     LW2::http_init_request(\%request);
     my (%REMOTE, %LOCAL, @DBTOGET) = ();
@@ -1961,7 +1971,8 @@ sub check_updates {
     my $code_updates = 0;
     my $serverdir    = "/nikto/UPDATES/$VARIABLES{'version'}";
     my $server       = "CIRT.net";
-
+	
+    
     # set up our mark
     my %mark = ('ident' => $server,
                 'ssl'   => 1,
@@ -2092,6 +2103,7 @@ sub check_updates {
     if ($#DBTOGET < 0) { nprint("+ No updates required."); }
     if ($remotemsg ne "") { nprint("+ $server message: $remotemsg"); }
     exit;
+    }
 }
 
 ###############################################################################
