@@ -1962,6 +1962,8 @@ sub check_updates {
     my $serverdir    = "/nikto/UPDATES/$VARIABLES{'version'}";
     my $server       = "CIRT.net";
 
+	nprint("-update is deprecated in git versions of Nikto; please pull directly from git.");
+	
     # set up our mark
     my %mark = ('ident' => $server,
                 'ssl'   => 1,
