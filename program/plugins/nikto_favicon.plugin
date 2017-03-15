@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -40,11 +40,11 @@ sub nikto_favicon_load {
 }
 
 sub nikto_favicon {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
 
     # Check /favicon.ico
-    foreach my $ext (split(/,/,"ico,gif,png")) { 
+    foreach my $ext (split(/,/,"ico,gif,png")) {
 	foreach my $path (split/,/,",/favicons") {
     		my ($res, $content, $error, $request, $response) = nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
@@ -52,7 +52,7 @@ sub nikto_favicon {
         		my $hash = LW2::md5($content);
         		$hash =~ s/^.*://;
         		nprint("Got /favicon.$ext hash:$hash", "d", "");
-        		favicon_matchhash($hash, $mark->{'root'} . "/favicon.$ext", $request, $response);
+        		favicon_matchhash($mark, $hash, $mark->{'root'} . "/favicon.$ext", $request, $response);
     		}
 	}
      }
@@ -63,13 +63,13 @@ sub nikto_favicon {
         my %tags;
         $tags{'link'} = 1;
         LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);
-	foreach my $icon (keys %LINKICONS) { 
+	foreach my $icon (keys %LINKICONS) {
             ($res, $content, $error, $request, $response) = nfetch($mark, $icon, "GET", "", "", "", "favicon");
             if (($res eq "200") && ($content ne "")) {
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
                 nprint("Got $icon hash:$hash", "d", "");
-                favicon_matchhash($hash, $icon, $request, $response);
+                favicon_matchhash($mark, $hash, $icon, $request, $response);
             }
         }
     }
@@ -88,10 +88,8 @@ sub favicon_checkhash {
 }
 
 sub favicon_matchhash {
-    my $hash = $_[0] || return;
-    my $icon = $_[1] || return;
-    my $request = $_[2];
-    my $response = $_[3];
+    my ($mark, $hash, $icon, $request, $response) = @_;
+    return if (($hash eq "") || ($icon eq ""));
     foreach my $item (@$FAVICONDB) {
         if ($item->{'md5hash'} eq $hash) {
             if ($FOUND{$hash} eq 1) { last; }
