@@ -22,7 +22,7 @@
 sub nikto_strutshock_init {
     my $id = { name        => "strutshock",
                full_name   => "strutshock",
-               author      => "sullo",
+               author      => "Jeremy Bae",
                description => "Look for the 'strutshock' vulnerability.",
                hooks       => { scan => { method => \&nikto_strutshock, weight => 20 }, },
                copyright   => "2017 Chris Sullo",
