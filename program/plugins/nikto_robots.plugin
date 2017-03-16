@@ -100,9 +100,6 @@ sub nikto_robots {
 	    my $raw  = $dir;
             $raw =~ s/\\//g;
 	    $dir = validate_and_fix_regex($dir);
-            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@MUTATEDIRS"} .= " $raw";
-            }
             
             # Add to variables
             if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
@@ -135,9 +132,6 @@ sub nikto_robots {
             my $raw = $file;
             $raw =~ s/\\//g;
 	    $file = validate_and_fix_regex($file);
-            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
-                $VARIABLES{"\@MUTATEFILES"} .= " $raw";
-            }
             
             # Add to variables
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {

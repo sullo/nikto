@@ -317,8 +317,7 @@ sub load_config {
 
     # Check for necessary config items
     check_config_defined("CHECKMETHODS", "HEAD");
-    check_config_defined('@@MUTATE',     'dictionary;subdomain');
-    check_config_defined('@@DEFAULT',    '@@ALL,-@@MUTATE');
+    check_config_defined('@@DEFAULT',    '@@ALL');
 
     return "";
 }
