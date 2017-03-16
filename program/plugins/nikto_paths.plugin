@@ -82,13 +82,18 @@ sub nikto_paths {
             }
         }
 
+	# Process whole link
+        if ($link =~ /\.action(\?|$)/i) {
+                $VARIABLES{"\@STRUTSACTIONS"} .= " $link";
+	}
+
         # Now actually check the unique dirs/files
         foreach my $file (keys %FILES) {
             $file = validate_and_fix_regex($file);
-            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
-                $VARIABLES{"\@MUTATEFILES"} .= " $file";
-            }
 
+            if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
+                $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
+            }
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
                 $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
             }
@@ -96,11 +101,6 @@ sub nikto_paths {
 
         foreach my $dir (keys %DIRS) {
             $dir = validate_and_fix_regex($dir);
-
-            # Mutate
-            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@MUTATEDIRS"} .= " $dir";
-            }
 
             # Other vars
             if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {

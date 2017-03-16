@@ -770,8 +770,7 @@ Documentation - Apache HTTP Server&lt;/title&gt;
       <para>Macros for commonly run plugin sets can also be defined in
       nikto.conf, the default ones are:</para>
 
-      <screen>@@MUTATE=dictionary;subdomain
-@@DEFAULT=@@ALL;-@@MUTATE;tests(report:500)</screen>
+      <screen>@@DEFAULT=@@ALL;tests(report:500)</screen>
 
       <para>These are expanded by using -list-plugins and can be overridden
       through -Plugins.</para>

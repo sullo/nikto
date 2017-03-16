@@ -19,8 +19,6 @@
 #######################################################################
 @CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/ /cgi-bin-sdb/ /cgi-mod/
 @NUKE=/ /postnuke/ /postnuke/html/ /modules/ /phpBB/ /forum/
-@MUTATEDIRS=/....../ /members/ /porn/ /restricted/ /xxx/
-@MUTATEFILES=xxx.htm xxx.html porn.htm porn.html
 @ADMIN=/admin/ /adm/ /administrator/
 @USERS=adm bin daemon ftp guest listen lp mysql noaccess nobody nobody4 nuucp operator root smmsp smtp sshd sys test unknown uucp web www
 @PASSWORDDIRS=/ /admin/ /clients/ /pass/ /password/ /passwords/ /store/ /users/ /access/ /members/ /private/ /ccbill/ /dmr/ /mastergate/ /dmr/ /epoch/ /netbilling/ /webcash/ /wwwjoin/ /etc/security/
@@ -55,3 +53,4 @@
 @PAGESPEED=/ngx_pagespeed_statistics /ngx_pagespeed_global_statistics /ngx_pagespeed_message /mod_pagespeed_statistics /mod_pagespeed_global_statistics /mod_pagespeed_message /pagespeed_console /pagespeed_admin/ /pagespeed_global_admin/
 @SYMPHONY=/ /cms/ /symphony/
 @CKEDITOR=/ /ckeditor/ /admin/ckeditor/ /sites/all/modules/ckeditor/ /resources/ckeditor/ /clientscript/ckeditor/ /wp-content/plugins/ckeditor-for-wordpress/ckeditor/
+@STRUTSACTIONS=/ /index.action /login.action
