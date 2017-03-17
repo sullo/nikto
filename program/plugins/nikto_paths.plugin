@@ -94,9 +94,6 @@ sub nikto_paths {
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
                 $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
             }
-            if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
-                $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
-            }
         }
 
         foreach my $dir (keys %DIRS) {
