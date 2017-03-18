@@ -1,2 +1,3 @@
 *.komodoproject
 /.komodotools/
+/*.bbprojectd/
