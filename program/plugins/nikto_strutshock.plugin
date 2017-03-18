@@ -17,7 +17,7 @@
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
-# Check for the bash 'strutshock' vulnerability
+# Check for the Apache Struts2 RCE 'strutshock' vulnerability
 ###############################################################################
 sub nikto_strutshock_init {
     my $id = { name        => "strutshock",
