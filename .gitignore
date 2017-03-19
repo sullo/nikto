@@ -1,2 +1,5 @@
 *.komodoproject
 /.komodotools/
+/*.bbprojectd/
+*.sublime-project
+*.sublime-workspace
