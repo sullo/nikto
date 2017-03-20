@@ -6843,3 +6843,4 @@
 "007152","0","5","//WEB-INF/web.xml","GET","j2ee","","","","","A web.xml file was retrieved from the WEB-INF directory by prepending an additional slash.","",""
 "007153","0","e","/webconsole/vsplogin.action","GET","Avaya","","Web Console","","","Avaya web console found. Default credential is admin:admin01","",""
 "007154","0","e","/cgi-bin/common/login/webLogin","GET","Avaya","","System Management Interface","","","Avaya management interface found. Default credential is admin:admin01","",""
+"007155","0","e","/php/login.php","GET","Creating administrative session","","bug fix 2157","","","Palo Alto firewall web admin page found","",""
