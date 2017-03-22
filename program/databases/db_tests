@@ -6845,3 +6845,4 @@
 "007154","0","e","/cgi-bin/common/login/webLogin","GET","Avaya","","System Management Interface","","","Avaya management interface found. Default credential is admin:admin01","",""
 "007155","0","e","/php/login.php","GET","Creating administrative session","","bug fix 2157","","","Palo Alto Networks firewall web admin page found","",""
 "007156","0","e","/ui/","GET","Infoblox System Manager","","Infoblox WebUI Login Page ID","","","Infoblox web console found. Default credential is admin:infoblox","",""
+"007157","0","e","/WebLM/","GET","Web License Manager (WebLM)","","Avaya","","","Avaya license managing console found. Default credential is admin:weblmadmin","",""
