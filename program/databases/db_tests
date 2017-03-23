@@ -6847,3 +6847,4 @@
 "007156","0","e","/ui/","GET","Infoblox System Manager","","Infoblox WebUI Login Page ID","","","Infoblox web console found. Default credential is admin:infoblox","",""
 "007157","0","e","/WebLM/","GET","Web License Manager (WebLM)","","Avaya","","","Avaya license managing console found. Default credential is admin:weblmadmin","",""
 "007158","0","e","/g450.html","GET","Avaya G450/G350 - Avaya Device Management","","routerIp","","","Avaya web console found. Default SNMP community string is public","",""
+"007159","0","e","/local-login/","GET","Unified Communications Management","","Avaya","","","Avaya System Manager web console found. Default credential is admin:admin","",""
