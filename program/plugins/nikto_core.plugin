@@ -616,7 +616,7 @@ sub general_config {
 
     # options allows overriding of nikto.conf entries on command line
     foreach my $option (@options) {
-        my @optione=split("=", $option);
+        my @optione=split("=", $option, 2);
         $CONFIGFILE{$optione[0]}=$optione[1];
     }
 
