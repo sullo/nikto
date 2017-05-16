@@ -1,0 +1,108 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2016 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# JSON Reporting
+###############################################################################
+sub nikto_report_json_init {
+    my $id = { name              => "report_json",
+               full_name         => "JSON reports",
+               author            => "Gijs Kwakkel",
+               description       => "Produces a JSON report.",
+               report_head       => \&json_open,
+               report_host_start => \&json_host_start,
+               report_host_end   => \&json_host_end,
+               report_close      => \&json_close,
+               report_item       => \&json_item,
+               report_format     => 'json',
+               copyright         => "2016 Chris Sullo"
+               };
+    return $id;
+}
+
+###############################################################################
+# open output file
+sub json_open {
+    my ($file) = @_;
+
+    # Open file and produce header
+    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Write header
+#    print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";
+    return OUT;
+}
+
+###############################################################################
+# start output
+sub json_host_start {
+    my ($handle, $mark) = @_;
+    $mark->{'banner'} =~ s/"/\\"/g;
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    print $handle "{\"host\":\"$hostname\","
+      . "\"ip\":\"$mark->{'ip'}\","
+      . "\"port\":\"$mark->{'port'}\","
+      . "\"banner\":\"$mark->{'banner'}\","
+      . "\"vulnerabilities\":[";
+    return;
+}
+###############################################################################
+# end output
+sub json_host_end {
+    my ($handle, $mark) = @_;
+    print $handle "],";
+    return;
+}                                                                
+###############################################################################
+# close output file
+sub json_close {
+    my ($handle, $mark) = @_;
+    print $handle "}\n";
+    close($handle);
+    return OUT;
+}
+###############################################################################
+# print an item
+sub json_item {
+    my ($handle, $mark, $item) = @_;
+    foreach my $uri (split(' ', $item->{'uri'})) {
+        my $line = '{';
+
+        $line .= "\"id\":" .$item->{'nikto_id'} .",";
+        if ($item->{'osvdb'} ne '') { $line .= "\"OSVDB\":" .$item->{'osvdb'} .","; }
+
+        if ($item->{'method'} ne '') { $line .= "\"method\":\"" .$item->{'method'} ."\","; }
+
+        if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/))
+			{ $line .= "\"url\":\"" .$mark->{'root'} . $uri ."\","; }
+		else { $line .= "\"url\":\"" .$uri ."\","; }
+	
+		my $msg = $item->{'message'};
+		$uri=quotemeta($uri);
+		my $root = quotemeta($mark->{'root'});
+		$msg =~ s/^$uri:\s//;
+		$msg =~ s/^$root$uri:\s//;
+        $msg =~ s/"/\\"/g;
+        $line .= "\"msg\":\"$msg\"";
+        $line .= "},";
+        print $handle "$line";
+    }
+}
+
+1;
+

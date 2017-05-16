@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2012 CIRT, Inc.
+#  Copyright (C) 2012 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ sub nikto_clientaccesspolicy_init {
                                   weight => 49,
                                   },
                          },
-            copyright => "2012 CIRT, Inc. and Dr. Wetter IT-Consulting"
+            copyright => "2012 Chris Sullo and Dr. Wetter IT-Consulting"
             };
     return $id;
 }
@@ -86,7 +86,7 @@ sub nikto_clientaccesspolicy {
                 $DISCTR++;
 				my $domain = $line;
 				$domain =~ s/^(.*allow-access-from domain=\")//;
-				$domain =~ s/\" \/>$//;
+				$domain =~ s/\" ?\/\>.*$//;
 				$domainlist .= "$domain ";
             }
         }    # end foreach my $line 

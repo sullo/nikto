@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2013 CIRT, Inc.
+#  Copyright (C) 2013 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_ms10_070_init {
                                          weight => 20,
                                          },
                             },
-               copyright => "2013 CIRT Inc"
+               copyright => "2013 Chris Sullo"
                };
 
     return $id;
@@ -56,7 +56,7 @@ sub nikto_ms10_070 {
 	$string = LW2::decode_base64($string);
 	if ((length($string) % 8) == 0) {
 		$mark->{'ms100707'}=1;
-        	add_vulnerability($mark, "Server is vulnerable to MS10-070 allowing a cryptographic padding oracle.", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
+        	add_vulnerability($mark, "Server may be vulnerable to MS10-070 (based on numeric calculation), thus allowing a cryptographic padding oracle. This vulnerabilty must be manually validated. See http://blog.gdssecurity.com/labs/2010/9/14/automated-padding-oracle-attacks-with-padbuster.html", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
         	}
 	}
 

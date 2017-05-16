@@ -1,6 +1,6 @@
 #VERSION,2.00
 ###############################################################################
-#  Copyright (C) 2006 CIRT, Inc.
+#  Copyright (C) 2006 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ sub nikto_parked_init {
                       scan   => { method => \&nikto_parked, },
                       weight => 18,
                       },
-           copyright => "2011 CIRT Inc."
+           copyright => "2011 Chris Sullo"
            };
     return $id;
 }

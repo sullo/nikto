@@ -1,7 +1,7 @@
 #VERSION,2.1.6
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2016 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
 # Chris Sullo (csullo@gmail.com)
@@ -290,3 +290,4 @@
 "520271","/sample/site1w4646","This database can be read without authentication, which may reveal sensitive information."
 "520272","/sample/site2w4646","This database can be read without authentication, which may reveal sensitive information."
 "520273","/sample/site3w4646","This database can be read without authentication, which may reveal sensitive information."
+"520274","/?Open","This displays a list of all databases on the server. Disable this capability via server options."

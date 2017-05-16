@@ -150,6 +150,7 @@
 
      <para>Perl modules</para>
 
+      <itemizedlist>
         <listitem>
           <para>JSON::PP - Saving requests and responses in a parseable format (optional). Required for -Savedir usage. May require additional modules.</para>
         </listitem>
@@ -935,6 +936,19 @@ Documentation - Apache HTTP Server&lt;/title&gt;
         </varlistentry>
 
         <varlistentry>
+          <term><varname>USERAGENT</varname></term>
+          <listitem>
+            <para>Define the User-Agent string Nikto will use. This may be
+            helpful for accessing mobile sites or bypassing WAF systems.
+            The variables @VERSION, @EVASIONS and @TESTID will be populated with
+            each test to help track down errors via web server logs.</para>
+            <para>Default Setting</para>
+
+            <screen>USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Evasions:@EVASIONS) (Test:@TESTID)</screen>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><varname>UPDATES</varname></term>
 
           <listitem>
@@ -1102,7 +1116,7 @@ PROXYPASS=</screen>
             for a website. Separate cookies with a semi-colon, for
             example:</para>
 
-            <screen>STATIC-COOKIE="cookie1"="cookie value";"cookie2"="cookie val"</screen>
+            <screen>STATIC-COOKIE="name=value";"something=nothing";</screen>
 
             <para>Default Setting</para>
 
@@ -1219,13 +1233,13 @@ DOCDIR=EXECDIR/docs</screen>
     <section>
       <title>Development Source</title>
 
-      <para>The Nikto development source code is located in a Subversion (SVN)
-      repository which is publicly accessible. To download the source code,
-      install Subversion and issue the following command:</para>
+      <para>The Nikto source code is located in a Git 
+      repository which is publicly accessible on github.com. To download the source code
+      or to keep track of open tickets, development efforts, etc., please visit:</para>
 
       <itemizedlist>
         <listitem>
-          <para>svn co http://svn2.assembla.com/svn/Nikto_2</para>
+          <para>https://github.com/sullo/nikto</para>
         </listitem>
       </itemizedlist>
 

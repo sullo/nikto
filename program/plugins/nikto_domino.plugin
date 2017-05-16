@@ -1,6 +1,6 @@
 #VERSION,2.1.6
 ###############################################################################
-#  Copyright (C) 2016 CIRT, Inc.
+#  Copyright (C) 2016 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -26,10 +26,10 @@ sub nikto_domino_init {
                full_name   => "IBM/Lotus Domino Specific Tests",
                author      => "RealRancor",
                description => "Performs a selection of IBM/Louts Domino specific tests to identify Domino specific files accessible without authentication and the version of the server",
-               hooks       => { scan => { method => \&nikto_domino, }, 
+               hooks       => { scan => { method => \&nikto_domino, },
                                 start => { method => \&nikto_domino_load, },
                               },
-               copyright   => "2016 CIRT Inc."
+               copyright   => "2016 Chris Sullo"
                };
     use vars qw/$DOMINODB/;
     return $id;
@@ -50,21 +50,43 @@ sub nikto_domino {
 
     # check domcfg.nsf which should be always there
     my ($res, $content, $error, $request, $response) = nfetch($mark, "/domcfg.nsf", "GET", "", "", "", "Domino detection");
+    my $is_domino=0;
 
-    # quit if banner is not from IBM/Lotus Domino
-    if ($mark->{'banner'} !~ /lotus domino/i &&
-        $mark->{'banner'} !~ /lotus-domino/i &&
-        ( $res ne "200" && $content !~ /src="\/domcfg.nsf\// ) ) {
-        nprint("+ nikto_domino.plugin: No IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected.", "d");
-        return;
+    # Detect IBM/Lotus Domino from banner
+    if (($mark->{'banner'} =~ /lotus(-| )domino/i) || ($response->{'server'} =~ /lotus(-| )domino/i)) {
+        $is_domino=1;
     }
 
-    nprint("+ nikto_domino.plugin: IBM/Lotus Domino Server based on the banner '$mark->{'banner'}' or /domcfg.nsf detected, try to identifiy files accessible without authentication.");
- 
-    # Identify version of the Domino Server, some files have lower versions than others
-    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf') {
+    # Detect IBM/Lotus Domino from domcfg.nsf
+    if ($res eq "200" && $content =~ /src="\/domcfg.nsf\// && ($content =~ /self._domino_name/ || $content =~ /Web\sServer\sConfiguration/)) {
+        $is_domino=1;
+    }
+
+    # Detect IBM/Lotus Domino from login page
+    foreach my $uri ('/admin.nsf','/admin4.nsf','/admin5.nsf','/webadmin.nsf') {
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
-        if ($res eq "200" && $content =~ /Version=([0-9.]+)/ ) {
+        if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
+            $is_domino=1;
+            add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
+                $uri, $request, $response);
+        }
+    }
+
+    # check nonexistent .nsf file for error message
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/nonexistent.nsf", "GET", "", "", "", "Domino detection");
+    if ($res eq "404" && $content =~ /HTTP\sWeb\sServer:\sIBM\sNotes\sException\s-\sFile\sdoes\snot\sexist/) {
+        $is_domino=1;
+    }
+
+    if (!$is_domino) { return; }
+
+    nprint("+ IBM/Lotus Domino: Server detected based on banner or nsf retrieval.");
+
+    # Identify version of the Domino Server, some files have lower versions than others
+    foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf',
+                     '/iNotes/Forms5.nsf', '/iNotes/Forms6.nsf', '/iNotes/Forms7.nsf') {
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        if ($res eq "200" && ($content =~ /Version=([0-9.]+)/ || $content =~ /<!--\sDomino\sRelease\s([0-9A-Z.]+)/)) {
             if ($ver eq "") {
                 $ver = $1;
                 $finaluri = $uri;
@@ -90,13 +112,13 @@ sub nikto_domino {
         nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d");
 
         add_vulnerability(
-        $finalmark,                                           # mark structure to identify target
-        "nikto_domino.plugin: $finaluri: IBM/Lotus Domino Version $ver detected.", # message
-        520000,                                               # tid
-        0,                                                    # OSVDB reference
-        $finaluri,                                            # URI
-        $finalreq,                                            # Request structure for full output
-        $finalres);                                           # Response structure for full output
+        $finalmark,                                              # mark structure to identify target
+        "IBM/Lotus Domino: Version $ver detected at $finaluri.", # message
+        520000,                                                  # tid
+        0,                                                       # OSVDB reference
+        $finaluri,                                               # URI
+        $finalreq,                                               # Request structure for full output
+        $finalres);                                              # Response structure for full output
     }
 
     # Now the main meat: we shall enumerated through the database and attempt to look for the
@@ -107,11 +129,8 @@ sub nikto_domino {
         # Check if the user is terminating the current mark
         return if $mark->{'terminate'};
 
-        # Set up URI
-        my $uri = "/$item->{'file'}";
-
         # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
-        my ($res, $content, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        my ($res, $content, $request, $response) = nfetch($mark, $item->{'file'}, "GET", "", "", "", "Domino detection");
 
         # We're looking for a 200 response
         if (($res eq "200") && !(is_404($item->{'file'}, $content, $res, $response->{'location'}))) {
@@ -119,14 +138,14 @@ sub nikto_domino {
             # data if the fetched database file is password protected.
             if ($content !~ /Please identify yourself/ &&
                 $content !~ /type="password"/ &&
-                $content !~ /<TITLE>Server Login<\/TITLE>/ ) {
+                $content !~ /<TITLE>Server Login<\/TITLE>/i ) {
                 # Looks like a match - raise this up to the front end
                 add_vulnerability(
                     $mark,                                     # mark structure to identify target
                     "$item->{'file'}: $item->{'description'}", # message
                     $item->{'nikto_id'},                       # tid
                     523,                                       # OSVDB reference
-                    $uri,                                      # URI
+                    $item->{'file'},                           # URI
                     $request,                                  # Request structure for full output
                     $response);                                # Response structure for full output
             }
