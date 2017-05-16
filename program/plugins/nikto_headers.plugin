@@ -294,7 +294,7 @@ sub nikto_headers {
 		if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
             		$cl = 1;
             		add_vulnerability( $mark,
-                	"IIS may reveal its internal or real IP in the Content-Location header via a request over HTTP/1.0. The value is \"$ips[0]\".",
+                	"IIS may reveal its internal or real IP in the Content-Location header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
                 	999989, 630, "GET", $uri, $request, $result);
         		}
 		}
@@ -305,7 +305,7 @@ sub nikto_headers {
                 if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
                         $l = 1;
                         add_vulnerability( $mark,
-                        "The web server may reveal its internal or real IP in the Location header via a request over HTTP/1.0. The value is \"$ips[0]\".",
+                        "The web server may reveal its internal or real IP in the Location header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
                         999988, 630, "GET", $uri, $request, $result);
                         }
                 }
@@ -316,7 +316,7 @@ sub nikto_headers {
                 if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
                         $wa = 1;
                         add_vulnerability( $mark,
-                	"Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request over HTTP/1.0. The value is \"$ips[0]\".", 
+                	"Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".", 
                         999986, 630, "GET", $uri, $request, $result);
                         }
                 }
