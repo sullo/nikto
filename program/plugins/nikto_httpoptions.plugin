@@ -1,6 +1,6 @@
 #VERSION,2.10
 ###############################################################################
-#  Copyright (C) 2006 CIRT, Inc.
+#  Copyright (C) 2006 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ sub nikto_httpoptions_init {
                                     weight => 20,
                                     },
                             },
-               copyright => "2008 CIRT Inc."
+               copyright => "2008 Chris Sullo"
                };
     return $id;
 }
@@ -148,8 +148,6 @@ sub nikto_httpoptions {
             }
         }
     }
-
-    $request{'whisker'}->{'version'} = $NIKTOCONFIG{'DEFAULTHTTPVER'};
 
     # Now release memory for the dbarray
     undef @$dbarray;

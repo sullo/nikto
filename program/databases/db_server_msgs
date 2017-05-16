@@ -1,7 +1,7 @@
 #VERSION,2.006
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2014 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
 # Chris Sullo (csullo@gmail.com)
@@ -277,3 +277,4 @@
 "800257","mod_speling","0","mod_speling can reveal otherwise hidden files via 'misspelled' file names."
 "800259","HttpFileServer\shttpd","0","This server has been known to host malware, see: https://pronto185.com/blog/2014/03/06/slightly-interesting-find-from-sshranking/"
 "800260","Jetty\(9\.2\.[3-8].*","118744","Jetty 9.2.3 to 9.2.8 contains a flaw that is triggered when handling 400 errors in HTTP responses. This may allow a remote attacker to gain access to potentially sensitive information in the memory (CVE-2015-2080)."
+"800261","PAW Server","0","PAW Server default admin id/password is admin/paw. It's worth a try."

@@ -1,7 +1,7 @@
 #VERSION,2.010
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2014 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
 # Chris Sullo (csullo@gmail.com)
@@ -250,7 +250,7 @@
 "500642","7c7b66d305e9377fa1fce9f9a74464d9","spe (0.8.4.h)"
 "500643","0e2503a23068aac350f16143d30a1273","sql-ledger (2.8.15)"
 "500644","1fd3fafc1d461a3d19e91dbbba03d0aa","tea (17.6.1)"
-"500645","4644f2d45601037b8423d45e13194c93","Apache Tomcat (5.5.26), Alfresco Community"
+"500645","4644f2d45601037b8423d45e13194c93","Apache Tomcat (possibly 5.5.26 through 8.0.15), Alfresco Community"
 "500646","1de863a5023e7e73f050a496e6b104ab","torrentflux (2.4)"
 "500647","83dea3d5d8c6feddec84884522b61850","torrentflux (2.4) - themes/G4E/"
 "500648","d1bc9681dce4ad805c17bd1f0f5cee97","torrentflux (2.4) - themes/BlueFlux/"
@@ -375,3 +375,8 @@
 "500768","07e9163f7ca8cfe6c1d773f895fbebad","Apache"
 "500769","aa9b62c9aa50e0bc1f77061e6362d736","Apache"
 "500770","a4eb4e0aa80740db8d7d951b6d63b2a2","ownCloud"
+"500771","56974e6b57c7bd51448c309915ca0d6c","Ghost blog (0.7.x)"
+"500772","91b72b23e7f499d6c09cb18c7b1278f1","Kodi Media Center 16.x (Web Interface)"
+"500773","92c5d340d08c6d33676a41ba8dece857","Android PAW Server"
+"500774","81edeec6e603d73d52bf85a3354fd093","JAMF Software/Casper Suite"
+"500775","c1f20852dd1caf078f49de77a2de8e3f","vBulletin forum"

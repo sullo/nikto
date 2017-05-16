@@ -1,7 +1,7 @@
 #VERSION,2.002
 #######################################################################
 # File Source: https://cirt.net
-# (c) 2001-2014 Chris Sullo, All Rights Reserved.
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
 # Chris Sullo (csullo@gmail.com)
@@ -186,3 +186,4 @@
 "700166","SPIP Configuration","Polycom","456","Polycom SoundStation/SoundPoint IP"
 "700167","@ANY","username","password","ComfortableMexicanSofa CMS Engine"
 "700168","OSGi Management Console","admin","admin","Adobe Experience Manager default password found"
+"700169","Power+ (default: admin/admin)","admin","admin","Gamatronic Power+ default password found"

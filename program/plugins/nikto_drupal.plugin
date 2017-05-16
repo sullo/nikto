@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2006 CIRT, Inc.
+#  Copyright (C) 2006 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_drupal_init {
 								enum-modules => "Flag to tell plugin to enumerate modules",
 								path => "Basic path for modules (can usually be found in page source).",
 							  },
-               copyright   => "2014 CIRT Inc."
+               copyright   => "2014 Chris Sullo"
                };
     use vars qw/$DRUPALMODULESDB/;
     return $id;

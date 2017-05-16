@@ -365,4 +365,10 @@ versions.</para>
         <para>Specify the Host header to be sent to the target.</para>
       </listitem>
     </varlistentry>
+    <varlistentry>
+      <term><option>-404string</option></term>
+      <listitem>
+        <para>Specify a string to match for pages to be considered 404/not found. Can be a regex.</para>
+      </listitem>
+    </varlistentry>
   </variablelist>
