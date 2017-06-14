@@ -195,8 +195,13 @@ sub nikto_headers_postfetch {
         if (!defined $result->{'strict-transport-security'}) {
             add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0,
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-        }
-        $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
+        } else {
+          if ($result->{'strict-transport-security'} =~ /^max-age=0/) {
+            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999970, 0,
+                  $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+          }
+       }
+       $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
     if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
