@@ -2279,6 +2279,7 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'ignore_duplicate_headers'}   = 0;
     $reqhash->{'whisker'}->{'ssl_save_info'}              = 1;
     $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
+    $reqhash->{'whisker'}->{'max_size'}                   = 750000;
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
     $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
     $reqhash->{'whisker'}->{'version'}                    = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
