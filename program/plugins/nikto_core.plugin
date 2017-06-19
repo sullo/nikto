@@ -642,6 +642,12 @@ sub general_config {
         $CONFIGFILE{'PROXYPASS'} = $prox[7];
     }
     elsif (defined($CLI{'useproxy'})) { $CLI{'useproxy'} = 1; }
+    else {
+      undef $CONFIGFILE{'PROXYHOST'};
+      undef $CONFIGFILE{'PROXYPORT'};
+      undef $CONFIGFILE{'PROXYUSER'};
+      undef $CONFIGFILE{'PROXYPASS'};
+    }
 
     # Save Results
     if (defined($CLI{'saveresults'})) {
