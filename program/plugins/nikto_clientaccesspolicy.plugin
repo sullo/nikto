@@ -59,8 +59,7 @@ sub nikto_clientaccesspolicy {
             }
         }    # end foreach my $line 
 
-		$msg =  $mark->{'root'} . "$file contains $DISCTR " . ($DISCTR > 1)?"lines":"line" . \
-				" which should be manually viewed for improper domains or wildcards.";
+		$msg =  $mark->{'root'} . "$file contains $DISCTR " . (($DISCTR > 1)?"lines":"line") . " which should be manually viewed for improper domains or wildcards.";
 
         if ($msg ne '') {
             add_vulnerability($mark, $msg, 999981, 0, "GET", $file, $request, $response);
