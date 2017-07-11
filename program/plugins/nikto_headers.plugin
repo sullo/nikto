@@ -345,8 +345,8 @@ sub nikto_headers {
         my ($valid, $internal, $loopback) = is_ip($ips[0]);
         if ($valid && !$loopback && ($ips[0] ne $mark->{'ip'})) {
             my $msg = "WebLogic may reveal ";
-            if   ($internal) { $msg .= "an RFC-1918 "; }
-            else             { $msg .= "a different IP in the Location header."; }
+            if   ($internal) { $msg .= "an RFC-1918 IP address. "; }
+            else             { $msg .= "a different IP address in the Location header."; }
             $msg .= "The IP is \"$ips[0]\".";
             add_vulnerability($mark, $msg, 999987, 5737, "GET", ".", $request, $result);
         }
