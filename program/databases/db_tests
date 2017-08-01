@@ -6850,3 +6850,7 @@
 "007159","0","e","/local-login/","GET","Unified Communications Management","","Avaya","","","Avaya System Manager web console found. Default credential is admin:admin","",""
 "007160","0","3","@WORDPRESSwp-content/plugins/simply-static/debug.txt","GET","class-ss-archive","","","","","Wordpress Simply Static debug log may reveal site information","",""
 "007161","0","0","/Editor/assetmanager/assetmanager.asp","GET","Upload\sFile","","","","","InnovaStudio file uploader found","",""
+"007162","0","0","/Telerik.Web.UI.DialogHandler.aspx","GET","200","","Loading the dialog","","","Telerik UI for ASP.NET AJAX Dialog Handler: application may allow file uploads","",""
+"007163","0","0","/Telerik.Web.UI.DialogHandler.aspx?dp=////","GET","200","","Base-64","cannot be less than zero","","Telerik UI for ASP.NET AJAX CVE-2017-9248: poor crypto may lead to arbitrary file uploads","",""
+"007164","0","0","/DesktopModules/Admin/RadEditorProvider/DialogHandler.aspx","GET","200","","Loading the dialog","","","Telerik UI for ASP.NET AJAX Dialog Handler: application may allow file uploads","",""
+"007165","0","0","/DesktopModules/Admin/RadEditorProvider/DialogHandler.aspx?dp=////","GET","200","","Base-64","cannot be less than zero","","Telerik UI for ASP.NET AJAX CVE-2017-9248: poor crypto may lead to arbitrary file uploads","",""
