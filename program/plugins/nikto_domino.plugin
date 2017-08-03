@@ -43,7 +43,7 @@ sub nikto_domino_load {
 sub nikto_domino {
     # load mark from plugin caller
     my ($mark) = @_;
-    my $ver, $tmpver, $finaluri, $finalmark, $finalreq, $finalres;
+    my ($ver, $tmpver, $finaluri, $finalmark, $finalreq, $finalres);
 
     # quit if user is terminating - this is a catch all and we should never execute it
     return if $mark->{'terminate'};
@@ -64,16 +64,16 @@ sub nikto_domino {
 
     # Detect IBM/Lotus Domino from login page
     foreach my $uri ('/admin.nsf','/admin4.nsf','/admin5.nsf','/webadmin.nsf') {
-        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
             $is_domino=1;
-            add_vulnerability($mark, "$uri: Domino login page found.", $item->{'nikto_id'}, 523,
+            add_vulnerability($mark, "$uri: Domino login page found.", 52001, 523,
                 $uri, $request, $response);
         }
     }
 
     # check nonexistent .nsf file for error message
-    my ($res, $content, $error, $request, $response) = nfetch($mark, "/nonexistent.nsf", "GET", "", "", "", "Domino detection");
+    ($res, $content, $error, $request, $response) = nfetch($mark, "/nonexistent.nsf", "GET", "", "", "", "Domino detection");
     if ($res eq "404" && $content =~ /HTTP\sWeb\sServer:\sIBM\sNotes\sException\s-\sFile\sdoes\snot\sexist/) {
         $is_domino=1;
     }
@@ -85,7 +85,7 @@ sub nikto_domino {
     # Identify version of the Domino Server, some files have lower versions than others
     foreach my $uri ('/download/filesets/l_LOTUS_SCRIPT.inf', '/download/filesets/n_LOTUS_SCRIPT.inf', '/download/filesets/l_SEARCH.inf', '/download/filesets/n_SEARCH.inf',
                      '/iNotes/Forms5.nsf', '/iNotes/Forms6.nsf', '/iNotes/Forms7.nsf') {
-        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
+        ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && ($content =~ /Version=([0-9.]+)/ || $content =~ /<!--\sDomino\sRelease\s([0-9A-Z.]+)/)) {
             if ($ver eq "") {
                 $ver = $1;
@@ -130,15 +130,16 @@ sub nikto_domino {
         return if $mark->{'terminate'};
 
         # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
-        my ($res, $content, $request, $response) = nfetch($mark, $item->{'file'}, "GET", "", "", "", "Domino detection");
+        ($res, $content, $request, $response) = nfetch($mark, $item->{'file'}, "GET", "", "", "", "Domino detection");
 
         # We're looking for a 200 response
         if (($res eq "200") && !(is_404($item->{'file'}, $content, $res, $response->{'location'}))) {
             # We could assume we've got a validate result here, but we may as well check the
             # data if the fetched database file is password protected.
-            if ($content !~ /Please identify yourself/ &&
+            if ($content !~ /Please\sidentify\syourself/ &&
                 $content !~ /type="password"/ &&
-                $content !~ /<TITLE>Server Login<\/TITLE>/i ) {
+                $content !~ /Domino\sAdministrator\s\d+\sHelp/ &&
+                $content !~ /<TITLE>Server\sLogin<\/TITLE>/i ) {
                 # Looks like a match - raise this up to the front end
                 add_vulnerability(
                     $mark,                                     # mark structure to identify target
