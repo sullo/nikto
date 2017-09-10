@@ -2726,7 +2726,7 @@
 "002888","3233","2","@CGIDIRScgi-test.exe","GET","200","","","","","Default CGI found","",""
 "002934","3233","2","/lcgi/sewse.nlm?sys:/novonyx/suitespot/docs/sewse/misc/allfield.jse","GET","SERVER_SOFTWARE","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
 "002935","3233","2","/lcgi/sys:/novonyx/suitespot/docs/sewse/misc/test.jse","GET","SCRIPT_NAME","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
-"002936","3233","2","/netbasic/websinfo.bas","GET","Company","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
+"002936","3233","2","/netbasic/websinfo.bas","GET","Company:","","Revision:\sNetWare","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed. CVE-2002-1634","",""
 "002937","3233","2","/perl/env.pl","GET","HSERVER_SOFTWARE","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
 "002938","3233","2","/perl/samples/env.pl","GET","HSERVER_SOFTWARE","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
 "002939","3233","2","/perl/samples/lancgi.pl","GET","Lan Boards","","","","","Novell Netware 5.1 contains Novonyx default files which reveal system information. All default files should be removed.","",""
