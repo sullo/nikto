@@ -1,13 +1,15 @@
 #VERSION,2.004
-# $Id$ 
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2007 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 # Variables which will be used as replacements for values in the scan_database.db and user_scan_database.db files. 
@@ -15,15 +17,41 @@
 # 
 # User defined variables should be set in config.txt as this file may be over-written during updates.
 #######################################################################
-@CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/
+@CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/ /cgi-bin-sdb/ /cgi-mod/
 @NUKE=/ /postnuke/ /postnuke/html/ /modules/ /phpBB/ /forum/
-@MUTATEDIRS=/....../ /members/ /porn/ /restricted/ /xxx/
-@MUTATEFILES=xxx.htm xxx.html porn.htm porn.html
 @ADMIN=/admin/ /adm/ /administrator/
 @USERS=adm bin daemon ftp guest listen lp mysql noaccess nobody nobody4 nuucp operator root smmsp smtp sshd sys test unknown uucp web www
 @PASSWORDDIRS=/ /admin/ /clients/ /pass/ /password/ /passwords/ /store/ /users/ /access/ /members/ /private/ /ccbill/ /dmr/ /mastergate/ /dmr/ /epoch/ /netbilling/ /webcash/ /wwwjoin/ /etc/security/
 @PASSWORDFILES=admins clients pass password passwords passwd passwd.adjunct store users .htpasswd .passwd
 @PHPMYADMIN=/3rdparty/phpMyAdmin/ /phpMyAdmin/ /3rdparty/phpmyadmin/ /phpmyadmin/ /pma/
 @HTTPFOUND=200 301 302 403
-@FCKEDITOR=/FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/
+@FCKEDITOR=/fckeditor/ /FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/ /js/editor/fckeditor/ /includes/fckeditor/ /include/fckeditor/ /modules/fckeditor/ /plugins/fckeditor/
 @CRYSTALREPORTS=/ /CrystalReports/ /crystal/ /businessobjects/ /crystal/enterprise10/ /crystal/Enterprise10/ePortfolio/en/
+@OWNCLOUD=/ /cloud/ /owncloud/ /ownCloud/ /OwnCloud/
+@OCFILES=data/owncloud.log data/htaccesstest.txt data/owncloud.db
+@SECLORE=/ /filesecure/ /policyserver/
+@SHELLSHOCK= admin.cgi administrator.cgi authLogin.cgi bb-hist.sh banner.cgi book.cgi cgiinfo.cgi cgitest.py cgi_wrapper contact.cgi count.cgi defaultwebpage.cgi download.cgi entropysearch.cgi env.cgi environment.cgi ezmlm-browse formmail.cgi FormMail-clone.cgi guestbook.cgi helpdesk.cgi index.cgi index.php index.pl info.cgi info.sh loadpage.cgi login.cgi login.php login.pl pathtest.pl php php4 php5 php-cgi php.cgi php.fcgi printenv restore_config.cgi ruby.rb search search.cgi server.php status sysinfo.pl test test-cgi test.cgi test_cgi.php test.cgi.php test_cgi.pl test-cgi.pl test.py test.sh tmUnblock.cgi uname.cgi viewcvs.cgi welcome whois.cgi
+@TYPO3=/ /cms/ /site/ /typo/ /typo3/
+@AXIS2=/ /axis/ /axis2/ /imcws/ /WebServiceImpl/ /dswsbobje/ /ws/
+@MODIR=/ /phpmoadmin/ /wu-moadmin/ /moadmin/
+@MOFILE=moadmin.php wu-moadmin.php
+@ADOBEXML=/flex2gateway/ /flex2gateway/http /flex2gateway/httpsecure /flex2gateway/cfamfpoolling /flex2gateway/amf /flex2gateway/amfpolling /messagebroker/http /messagebroker/httpsecure /blazeds/messagebroker/http /blazeds/messagebroker/httpsecure /samples/messagebroker/http /samples/messagebroker/httpsecure /lcds/messagebroker/http /lcds/messagebroker/httpsecure /lcds-samples/messagebroker/http /lcds-samples/messagebroker/httpsecure
+@JENKINS=/ /jenkins/ /hudson/
+@RAINLOOP=/ /rainloop/ /webmail/
+@TOMCATADMIN=/manager/ /jk-manager/ /jk-status/ /admin/ /host-manager/
+@PHPINFODIRS=/ /test/
+@PHPINFOFILES=phpinfo.php phpinfo.php3 test.php info.php index.php php_info.php
+@MANTIS=/ /mantis/ /mantisbt/
+@DOKUWIKI=/ /wiki/ /dokuwiki/
+@ROCKMONGO=/ /rockmongo/ /rock-mongo/
+@MAGENTO=/ /magento/ /shop/
+@MAGMI=/ /magmi/ /magmi-importer/ /magento/magmi/ /magento/magmi-importer/ /shop/magmi/ /shop/magmi-importer/
+@HYBRIS=/ /hmc/ /hac/
+@PIWIK=/ /piwik/ /analytics/
+@FORUM=/ /forum/ /forums/ /forumz/ /htforum/ /board/ /community/
+@VBULLETIN=/vb/ /vbulletin/
+@PAGESPEED=/ngx_pagespeed_statistics /ngx_pagespeed_global_statistics /ngx_pagespeed_message /mod_pagespeed_statistics /mod_pagespeed_global_statistics /mod_pagespeed_message /pagespeed_console /pagespeed_admin/ /pagespeed_global_admin/
+@SYMPHONY=/ /cms/ /symphony/
+@CKEDITOR=/ /ckeditor/ /admin/ckeditor/ /sites/all/modules/ckeditor/ /resources/ckeditor/ /clientscript/ckeditor/ /wp-content/plugins/ckeditor-for-wordpress/ckeditor/
+@STRUTSACTIONS=/ /index.action /login.action
+@WORDPRESS=/ /wordpress

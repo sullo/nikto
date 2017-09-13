@@ -1,0 +1,96 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2013 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Look for interesting files based on site name/ip
+###############################################################################
+sub nikto_sitefiles_init {
+    my $id = { name        => "sitefiles",
+               full_name   => "Site Files",
+               author      => "sullo",
+               description => "Look for interesting files based on the site's IP/name",
+               hooks       => { scan => { method => \&nikto_sitefiles, }, },
+               copyright   => "2014 Chris Sullo"
+               };
+
+    return $id;
+}
+
+sub nikto_sitefiles {
+    my ($mark) = @_;
+    my ($found, @names,);
+
+    $names{ $mark->{'hostname'} } = 1;
+    $names{ $mark->{'vhost'} }    = 1;
+
+    foreach my $n (keys %names) {
+        my $nn = $n;
+        $nn =~ s/^www(?:\d+)?\.//;
+        $names{$nn} = 1;
+        $nn = $n;
+        $nn =~ s/\./_/g;
+        $names{$nn} = 1;
+        my @bits = split(/\./, $n);
+        my ($temp1, $temp2) = '';
+
+        for (my $i = 0 ; $i <= $#bits ; $i++) {
+            $names{ $bits[$i] } = 1;
+            $temp1 .= $bits[$i];
+            $temp2 .= '.' . $bits[$i];
+            $temp2 =~ s/^\.//;
+            $names{$temp1} = 1;
+            $names{$temp2} = 1;
+        }
+    }
+    $names{'backup'}        = 1;
+    $names{'site'}          = 1;
+    $names{ $mark->{'ip'} } = 1;
+
+    my (%flags, %files);
+    $flags{'nohost'} = 1;
+
+    foreach my $item (keys %names) {
+        next if $item eq '';
+        foreach my $ext (qw/jks cer pem zip tar tar.gz tgz tar.bz2 tar.lzma alz egg war/) {
+            $files{"$item\.$ext"} = 1;
+        }
+    }
+
+    foreach my $file (keys %files) {
+        return if $mark->{'terminate'};
+
+        # request by hostname
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "/$file", "HEAD", "", "", "", "sitefiles");
+
+        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) &&
+		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found.", 740001, 0, "HEAD", "/$file", $request, $response);
+        }
+
+        # request by ip
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitefiles");
+        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
+		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found. (NOTE: requested by IP address).", 740002, 0, "HEAD", "/file", $request, $response);
+        }
+    }
+}
+
+1;

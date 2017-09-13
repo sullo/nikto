@@ -1,7 +1,6 @@
-#VERSION,2.03
-# $Id$
+#VERSION,2.05
 ###############################################################################
-#  Copyright (C) 2010 CIRT, Inc.
+#  Copyright (C) 2010 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -27,7 +26,7 @@ sub nikto_cookies_init {
          author      => "Sullo",
          description => "Looks for internal IP addresses in cookies returned from an HTTP request.",
          hooks       => { postfetch => { method => \&nikto_cookies_postfetch, }, },
-         copyright   => "2010 CIRT Inc."
+         copyright   => "2010 Chris Sullo"
          };
 
 	# Store cookies to ensure we don't report multiple times.
@@ -47,13 +46,11 @@ sub nikto_cookies_postfetch {
 		$c =~ /^([^=]+)/;
 		my $cname = $1;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
-		if ($c !~ /secure/ && $mark->{ssl}) {
-			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0,
-				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+		if ($c !~ /secure/i && $mark->{ssl}) {
+			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
-		if ($c !~ /httponly/) {
-			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999960, 0,
-				$request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+		if ($c !~ /httponly/i) {
+			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
         my @ips = get_ips($c);
         foreach my $ip (@ips) {

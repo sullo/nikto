@@ -1,7 +1,6 @@
 #VERSION,2.07
-# $Id$
 ###############################################################################
-#  Copyright (C) 2006 CIRT, Inc.
+#  Copyright (C) 2006 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -37,7 +36,7 @@ sub nikto_msgs_init {
                                     weight => 20,
                                     },
                             },
-               copyright => "2008 CIRT Inc."
+               copyright => "2008 Chris Sullo"
                };
     return $id;
 }
@@ -68,10 +67,10 @@ sub nikto_msgs {
         	$name =~ s#(^.*<ComputerName>)([^<]+)(</ComputerName>.*$)#$2#;
         	my $eposerver = $content;
         	$eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
-        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 80100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 980100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
  	else { 
-        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 80100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
+        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 980100, 0, "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
     }
 

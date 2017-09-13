@@ -126,10 +126,6 @@
       Windows support for SSL is dependent on the installation package, but is
       rumored to exist for ActiveState's Perl.</para>
 
-      <para>For support for logging to Metasploit, the RPC::XML and
-      RPC::XML::Client modules must be installed. Nikto will operate without
-      these modules, but the functionality will not be available.</para>
-
       <itemizedlist>
         <listitem>
           <para>Perl: <ulink
@@ -150,17 +146,23 @@
           <para>OpenSSL: <ulink
           url="http://www.openssl.org/">http://www.openssl.org/</ulink></para>
         </listitem>
+      </itemizedlist>
 
+     <para>Perl modules</para>
+
+      <itemizedlist>
         <listitem>
-          <para>Perl modules RPC::XML::Client and RPC::XML for Metasploit
-          logging integration</para>
+          <para>JSON::PP - Saving requests and responses in a parseable format (optional). Required for -Savedir usage. May require additional modules.</para>
         </listitem>
 
         <listitem>
-          <para>For convenience, the JSON::PP module is included in the
-          distribution. This is used for saving requests and responses in a
-          parseable format.</para>
+          <para>MIME::Base64 - Speed up base64 operations (optional).</para>
         </listitem>
+
+        <listitem>
+          <para>MD5 - Speed up MD5 operations (optional).</para>
+        </listitem>
+
       </itemizedlist>
     </section>
 
@@ -934,6 +936,19 @@ Documentation - Apache HTTP Server&lt;/title&gt;
         </varlistentry>
 
         <varlistentry>
+          <term><varname>USERAGENT</varname></term>
+          <listitem>
+            <para>Define the User-Agent string Nikto will use. This may be
+            helpful for accessing mobile sites or bypassing WAF systems.
+            The variables @VERSION, @EVASIONS and @TESTID will be populated with
+            each test to help track down errors via web server logs.</para>
+            <para>Default Setting</para>
+
+            <screen>USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Evasions:@EVASIONS) (Test:@TESTID)</screen>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><varname>UPDATES</varname></term>
 
           <listitem>
@@ -1101,7 +1116,7 @@ PROXYPASS=</screen>
             for a website. Separate cookies with a semi-colon, for
             example:</para>
 
-            <screen>STATIC-COOKIE="cookie1"="cookie value";"cookie2"="cookie val"</screen>
+            <screen>STATIC-COOKIE="name=value";"something=nothing";</screen>
 
             <para>Default Setting</para>
 
@@ -1166,7 +1181,7 @@ DOCDIR=EXECDIR/docs</screen>
       <title>Export Formats</title>
 
       <para>Nikto allows output to be saved in a variety of formats, including
-      text, CSV, HTML, XML, NBE and exporting to metasploit. When using
+      text, CSV, HTML, XML, and NBE. When using
       <parameter>-output</parameter>, an output format may be specified with
       <parameter>-Format</parameter>.</para>
 
@@ -1218,13 +1233,13 @@ DOCDIR=EXECDIR/docs</screen>
     <section>
       <title>Development Source</title>
 
-      <para>The Nikto development source code is located in a Subversion (SVN)
-      repository which is publicly accessible. To download the source code,
-      install Subversion and issue the following command:</para>
+      <para>The Nikto source code is located in a Git 
+      repository which is publicly accessible on github.com. To download the source code
+      or to keep track of open tickets, development efforts, etc., please visit:</para>
 
       <itemizedlist>
         <listitem>
-          <para>svn co http://svn2.assembla.com/svn/Nikto_2</para>
+          <para>https://github.com/sullo/nikto</para>
         </listitem>
       </itemizedlist>
 
@@ -1235,6 +1250,21 @@ DOCDIR=EXECDIR/docs</screen>
 
   <chapter id="expanding">
     <title>Test and Code Writing</title>
+
+    <section>
+      <title>Scan Database Syntax</title>
+
+      <para>The scan database is a CSV delimited file which contains most of
+      the tests. Fields are enclosed by quotes and separated by commas. The
+      field order is:</para>
+
+      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
+      Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
+
+      <para>Here is an example test:</para>
+
+      <screen>"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</screen>
+    </section>
 
     <section>
       <title>Scan Database Field Values</title>
@@ -1264,7 +1294,7 @@ DOCDIR=EXECDIR/docs</screen>
             <row>
               <entry>Server Type</entry>
 
-              <entry>Generic server matching type</entry>
+              <entry>Check tuning types</entry>
             </row>
 
             <row>
@@ -1293,7 +1323,7 @@ DOCDIR=EXECDIR/docs</screen>
             </row>
 
             <row>
-              <entry>Match1 (And)</entry>
+              <entry>Match 1 (And)</entry>
 
               <entry>String or code to also match for successful test</entry>
             </row>
@@ -1331,6 +1361,17 @@ DOCDIR=EXECDIR/docs</screen>
           </tbody>
         </tgroup>
       </table>
+
+      <para>Variables from the db_variables or udb_variables files can be
+      replaced in the URI field. These can be used to expand single checks
+      into multiple locations, such as typical software install
+      directories.</para>
+
+      <para>The Match 1, Match 1 (Or), Match 1 (And), Fail 1 and Fail 2 fields
+      can have three types of values: numeric HTTP code, string/regex to match
+      content, or MD5 hash. To use an MD5 hash of the returned content,
+      preface the value with '@MD5', for example
+      '@MD56a6fa5d848ccec771678bf04f2eaf627'.</para>
     </section>
 
     <section>
@@ -1360,21 +1401,6 @@ DOCDIR=EXECDIR/docs</screen>
 
       <para>Please help Nikto's continued success by sending test updates to
       <email>sullo@cirt.net</email>.</para>
-    </section>
-
-    <section>
-      <title>Scan Database Syntax</title>
-
-      <para>The scan database is a CSV delimited file which contains most of
-      the tests. Fields are enclosed by quotes and separated by commas. The
-      field order is:</para>
-
-      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
-      Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
-
-      <para>Here is an example test:</para>
-
-      <screen>"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</screen>
     </section>
 
     <section>

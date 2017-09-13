@@ -14,7 +14,7 @@
 nikto \- Scan web server for known vulnerabilities
 .SH "SYNOPSIS"
 .HP 21
-\fB/usr/local/bin/nikto\fR [options...]
+\fBnikto\fR [options...]
 .SH "DESCRIPTION"
 .PP
 Examine a web server to find potential problems and security vulnerabilities, including:
@@ -42,12 +42,12 @@ Below are all of the Nikto command line options and explanations\&. A brief vers
 .PP
 \fB\-Cgidirs\fR
 .RS 4
-Scan these CGI directories\&. Special words "none" or "all" may be used to scan all CGI directories or none, (respectively)\&. A literal value for a CGI directory such as "/cgi\-test/" may be specified (must include trailing slash)\&. If this is option is not specified, all CGI directories listed in config\&.txt will be tested\&.
+Scan these CGI directories\&. Special words "none" or "all" may be used to scan all CGI directories or none, (respectively)\&. A literal value for a CGI directory such as "/cgi\-test/" may be specified (must include trailing slash)\&. If this is option is not specified, all CGI directories listed in nikto\&.conf will be tested\&.
 .RE
 .PP
 \fB\-config\fR
 .RS 4
-Specify an alternative config file to use instead of the config\&.txt located in the install directory\&.
+Specify an alternative config file to use instead of the nikto\&.conf located in the install directory\&.
 .RE
 .PP
 \fB\-dbcheck\fR
@@ -269,7 +269,7 @@ The given string will be parsed from left to right, any x characters will apply 
 .PP
 \fB\-useproxy\fR
 .RS 4
-Use the HTTP proxy defined in the configuration file\&.
+Use the HTTP proxy defined in the configuration file, or given as argument in the format http://server:port\&.
 .RE
 .PP
 \fB\-update\fR

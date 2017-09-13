@@ -1,7 +1,6 @@
 #VERSION,2.09
-# $Id$
 ###############################################################################
-#  Copyright (C) 2006 CIRT, Inc.
+#  Copyright (C) 2006 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -14,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -25,7 +24,7 @@ sub nikto_outdated_init {
                full_name   => "Outdated",
                author      => "Sullo",
                description => "Checks to see whether the web server is the latest version.",
-               copyright   => "2008 CIRT Inc.",
+               copyright   => "2008 Chris Sullo",
                hooks       => { scan => { method => \&nikto_outdated, }, },
                };
     return $id;
@@ -59,6 +58,12 @@ sub nikto_outdated {
     elsif ($mark->{'banner'} =~ /sitescope/i) {
         my @T = split(/ /, $mark->{'banner'});
         $mark->{'components'}->{ $T[0] } = 1;
+    }
+
+    # Jetty: strip the ( ) away:
+    elsif ($mark->{'banner'} =~ /jetty\(/i) {
+        $mark->{'banner'} =~ /Jetty\(([0-9a-zA-Z.\-]+)\)/i;
+        $mark->{'components'}->{ 'Jetty/' . $1 } = 1;
     }
 
     # Some, like WEBrick, have multiple items but no spaces
@@ -119,7 +124,7 @@ sub nikto_outdated {
                     $msg =~ s/\@RUNNING_VER/$BI/g;
                     $msg =~ s/\@CURRENT_VER/$v/g;
                     chomp($msg);
-                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, 0, "HEAD");
+                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, 0, "HEAD", "/");
                 }
             }
         }

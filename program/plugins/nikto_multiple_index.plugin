@@ -1,7 +1,6 @@
 #VERSION,2.03
-# $Id$
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -23,10 +22,10 @@
 sub nikto_multiple_index_init {
     my $id = { name        => "mutiple_index",
                full_name   => "Multiple Index",
-               author      => "deity",
+               author      => "Tautology",
                description => "Checks for multiple index files",
                hooks       => { scan => { method => \&nikto_multiple_index, }, },
-               copyright   => "2009 CIRT Inc"
+               copyright   => "2009 Chris Sullo"
                };
 
     return $id;
@@ -43,9 +42,9 @@ sub nikto_multiple_index {
         my ($res, $content, $error, $request, $response) = nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
         if ($res == 200) {
-            $content = rm_active_content($content, "/$item->{'index'}");
+            $content = rm_active_content($content, "$mark->{'root'}/$item->{'index'}");
             my $hash = LW2::md4($content);
-            $found{ $item->{'index'} } = $hash;
+            $found{ "$mark->{'root'}/$item->{'index'}" } = $hash;
             $hashes{$hash}++;
         }
 

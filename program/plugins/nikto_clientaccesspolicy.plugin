@@ -1,7 +1,6 @@
 #VERSION,1.00
-# $Id$
 ###############################################################################
-#  Copyright (C) 2012 CIRT, Inc.
+#  Copyright (C) 2012 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +30,7 @@ sub nikto_clientaccesspolicy_init {
                                   weight => 49,
                                   },
                          },
-            copyright => "2012 CIRT, Inc. and Dr. Wetter IT-Consulting"
+            copyright => "2012 Chris Sullo and Dr. Wetter IT-Consulting"
             };
     return $id;
 }
@@ -41,10 +40,10 @@ sub nikto_clientaccesspolicy {
     my $msg;
     my $file = "/clientaccesspolicy.xml";
 	
-    my ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $file, "GET", "", "", "", "clientaccesspolicy");
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "clientaccesspolicy");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
-        if (is_404($file, $content, $res, $headers_recv->{'location'})) { return; }
+        if (is_404($file, $content, $res, $response->{'location'})) { return; }
 
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {
@@ -53,15 +52,14 @@ sub nikto_clientaccesspolicy {
             if ($line eq "") { next; }
             elsif (($line =~ /<domain\suri="(?:http:\/\/)?\*"/) || 
             	($line =~ /<allow-http-request-headers-from\sdomain="\*"/)) {
-                add_vulnerability($mark, "$file contains a full wildcard entry. See http://msdn.microsoft.com/en-us/library/cc197955(v=vs.95).aspx", 999982, 0, "GET", $file, $request, $response);
+                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://msdn.microsoft.com/en-us/library/cc197955(v=vs.95).aspx", 999982, 0, "GET", $file, $request, $response);
             }
             else {
                 $DISCTR++;
             }
         }    # end foreach my $line 
 
-		$msg =  "$file contains $DISCTR " . ($DISCTR > 1)?"lines":"line" . \
-				" which should be manually viewed for improper domains or wildcards.";
+		$msg =  $mark->{'root'} . "$file contains $DISCTR " . (($DISCTR > 1)?"lines":"line") . " which should be manually viewed for improper domains or wildcards.";
 
         if ($msg ne '') {
             add_vulnerability($mark, $msg, 999981, 0, "GET", $file, $request, $response);
@@ -69,30 +67,35 @@ sub nikto_clientaccesspolicy {
     }
 	
     my $file = "/crossdomain.xml" ;
-    ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
+    ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
-        if (is_404($file, $content, $res, $headers_recv->{'location'})) { return; }
+        if (is_404($file, $content, $res, $response->{'location'})) { return; }
 
+		my $domainlist="";
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {
             chomp($line);
             $line =~ s/\#.*$//;
             if ($line eq "") { next; }
             elsif ($line =~ /allow-access-from\sdomain="\*"/) {
-                add_vulnerability($mark, "$file contains a full wildcard entry. See http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", 999975, 0, "GET", $file, $request, $response);
+                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", 999975, 0, "GET", $file, $request, $response);
             }
-            elsif ($line =~ /allow-access-from/) {
+            elsif ($line =~ /allow-access-from/ && $line =~ /\*\./ ) {
                 $DISCTR++;
+				my $domain = $line;
+				$domain =~ s/^(.*allow-access-from domain=\")//;
+				$domain =~ s/\" ?\/\>.*$//;
+				$domainlist .= "$domain ";
             }
         }    # end foreach my $line 
 
-	$msg =  "$file contains $DISCTR ";
-	$msg .= ($DISCTR > 1)?"lines":"line";
-	$msg .= " which should be manually viewed for improper domains or wildcards.";
+		$msg =  $mark->{'root'} . "$file contains $DISCTR ";
+		$msg .= ($DISCTR > 1)?"lines":"line";
+		$msg .= " which include the following domains: $domainlist";
 
-        if ($msg ne '') {
-            add_vulnerability($mark, $msg, 999974, 0, "GET", $file, $request, $response);
+        if ($DISCTR > 0) {
+            add_vulnerability($mark, $msg, 999956, 0, "GET", $file, $request, $response);
         }
     }
 }

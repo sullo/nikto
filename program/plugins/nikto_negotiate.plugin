@@ -1,0 +1,57 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2013 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to 
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Check for mod_negotiation indexing
+###############################################################################
+
+sub nikto_negotiate_init {
+    my $id = { name        => "negotiate",
+               full_name   => "Negotiate",
+               author      => "Sullo",
+               description => "Checks the mod_negotiation MultiViews.",
+               copyright   => "2013 Chris Sullo",
+               hooks       => {
+                          scan  => { method => \&nikto_negotiate, },
+                          },
+                 };
+    return $id;
+}
+
+sub nikto_negotiate {
+    return if $mark->{'terminate'};
+    my ($mark) = @_;
+    my %headers = ('Accept', 'application/whatever; q=1.0');
+
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/index", "GET", "", \%headers, "", "negotiate");
+
+    if ($response->{'alternates'} =~ /\{\"/)  {
+	my $message = "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. See http://www.wisec.it/sectou.php?id=4698ebdc59d15. The following alternatives for 'index' were found: ";
+	my @alts = split(/,/, $response->{'alternates'});
+	foreach my $h (@alts) { 
+		$h =~ /\s?\{"([^"]+)"/;
+		$message .= $1 .", ";
+		}
+	$message =~ s/, $//;
+		
+        add_vulnerability($mark, $message, 999965, 0, GET, "/index", $request, $response);
+    }
+
+}
+
+1;

@@ -1,7 +1,6 @@
-#VERSION,2.05
-# $Id: nikto_reports.plugin 125 2009-07-20 21:59:00Z deity $
+#VERSION,2.06
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -14,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -32,7 +31,7 @@ sub nikto_report_xml_init {
                report_summary    => \&xml_summary,
                report_close      => \&xml_close,
                report_format     => 'xml',
-               copyright         => "2008 CIRT Inc."
+               copyright         => "2008 Chris Sullo"
                };
 
     # load up the templates now
@@ -42,6 +41,7 @@ sub nikto_report_xml_init {
 
 sub xml_head {
     my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # check for xml headers
     $header_present = 0;
@@ -129,21 +129,23 @@ sub xml_change_vars {
     my %variables;
     my $protocol = "http";
     if ($mark->{ssl}) { $protocol .= "s"; }
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
 
     $variables{"#TEMPL_HCTR#"}        = $VARIABLES{'TEMPL_HCTR'};
     $variables{"#TEMPL_END#"}         = date_disp($mark->{'end_time'});
-    $variables{"#TEMPL_HOSTNAME#"}    = hex_enc($mark->{'hostname'});
-    $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($mark->{'hostname'});
+    $variables{"#TEMPL_HOSTNAME#"}    = hex_enc($hostname);
+    $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($hostname);
     if (defined $mark->{vhost}) {
         $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($mark->{'vhost'});
     }
 
     $variables{"#TEMPL_SSL_INFO#"} = "";
     if (defined $mark->{'ssl_cipher'}) {
-        $variables{"#TEMPL_SSL_INFO#"} = 
-          "<ssl ciphers=\"" . hex_enc($mark->{ssl_cipher}) . "\" issuers=\"" . 
-		  hex_enc($mark->{ssl_cert_issuer}) . "\" info=\"" . 
-		  hex_enc($mark->{ssl_cert_subject}) . "\" />";
+        $variables{"#TEMPL_SSL_INFO#"} =
+          "<ssl ciphers=\"" . hex_enc($mark->{ssl_cipher}) . "\" issuers=\"" .
+		  hex_enc($mark->{ssl_cert_issuer}) . "\" info=\"" .
+		  hex_enc($mark->{ssl_cert_subject}) . "\" altnames=\"" .
+                  hex_enc($mark->{ssl_cert_altnames}) . "\" />";
     }
 
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
@@ -159,6 +161,7 @@ sub xml_change_vars {
     $variables{"#TEMPL_ELAPSED#"}            = $mark->{'end_time'} - $mark->{'start_time'};
     $variables{"#TEMPL_LINK_IP#"} =
       $protocol . "://" . $mark->{'ip'} . ":" . $mark->{'port'} . $mark->{'root'};
+    if ($variables{"#TEMPL_LINK_IP#"} !~ /\/$/) { $variables{"#TEMPL_LINK_IP#"} .= '/'; }
     $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
     $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
@@ -166,25 +169,17 @@ sub xml_change_vars {
     $variables{"#TEMPL_ERRORS#"}       = $mark->{'total_errors'};
 
     $variables{"#TEMPL_LINK_NAME#"} = "N/A";
-    if ($mark->{hostname} ne "") {
+    if ($hostname ne "") {
         $variables{"#TEMPL_LINK_NAME#"} =
-          $protocol . "://" . $mark->{'hostname'} . ":" . $mark->{'port'} . $mark->{'root'};
+          $protocol . "://" . $hostname . ":" . $mark->{'port'} . $mark->{'root'};
     }
-
-    # do now in case we return early
-    foreach my $var (keys %variables) {
-        $template =~ s/$var/$variables{$var}/g;
-    }
-
-    if ($item->{'uri'} eq '') { return $template; }
-
+    if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # OSVDB info
     my $OSVDB = $item->{'osvdb'};
     if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    $OSVDB_LINK                      = "http://osvdb.org/$OSVDB";
-    $variables{"#TEMPL_OSVDB_LINK#"} = $OSVDB_LINK;
+    $variables{"#TEMPL_OSVDB_LINK#"} = "http://osvdb.org/$OSVDB";
     $variables{"#TEMPL_OSVDB#"}      = $OSVDB;
 
     # Scanner Messages Handling
@@ -192,16 +187,18 @@ sub xml_change_vars {
 
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
-        $variables{"#TEMPL_URI#"}         = simple_enc($mark->{'root'} . $item->{'uri'});
+	my $uri = $item->{'uri'};
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
+        	{ $line .= $mark->{'root'} . ${'uri'} . ": " }
+        $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $item->{'message'};
         $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
 
         $variables{"#TEMPL_ITEM_IP_LINK#"} =
           "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
         $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
-        if ($mark->{'hostname'} ne "") {
-            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
-              "$protocol://$variables{\"#TEMPL_HOSTNAME#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
+        if ($hostname ne "") {
+            $variables{"#TEMPL_ITEM_NAME_LINK#"} = "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
         }
     }
 

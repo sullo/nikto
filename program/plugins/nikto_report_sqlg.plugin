@@ -1,0 +1,157 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2013 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# SQL Reporting
+# Sample table create (mysql): 
+#	create table nikto_table (testid varchar(6) not null, ip varchar(15), 
+#	hostname text, port int(5), usessl tinyint(1), osvdb int, httpmethod text, 
+#	uri text, message text, request blob, response blob);
+###############################################################################
+sub nikto_report_sqlg_init {
+    my $id = { name              => "report_sqlg",
+               full_name         => "Generic SQL reports",
+               author            => "Sullo",
+               description       => "Produces SQL inserts into a generic database.",
+               report_head       => \&sqlg_open,
+               report_host_start => \&sqlg_host_start,
+               report_item       => \&sqlg_item,
+               report_format     => 'sql',
+               copyright         => "2013 Chris Sullo"
+               };
+    return $id;
+}
+
+###############################################################################
+# open output file
+sub sqlg_open {
+    my ($file) = @_;
+    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+
+    # Open file and produce header
+    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Write header
+    my $opt = $CLI{'all_options'};
+    $opt =~ s/'/\\'/g;
+    print OUT "# $VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
+    print OUT "# Options:       $opt\n";
+	print OUT "# Start Time:    " . localtime($COUNTERS{'scan_start'}) . "\n";
+	print OUT "# End Time:      " . localtime($COUNTERS{'scan_end'}) . "\n";
+	print OUT "\n";
+	
+    return OUT;
+}
+
+###############################################################################
+# start output
+sub sqlg_host_start {
+    my ($handle, $mark) = @_;
+    my $banner = $mark->{'banner'};
+    $banner =~ s/"/\\'/g;
+    my $ssl=0;
+    if (defined $mark->{'ssl_cipher'}) { $ssl=1; }
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message) values(";
+    $sql .= "'999958','$mark->{'ip'}','$hostname','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
+	print $handle $sql;
+    
+    if (defined $mark->{'ssl_cipher'}) {
+    	my $ciphers = $mark->{'ssl_cipher'};
+    	my $issuer = $mark->{'ssl_cert_issuer'};
+    	my $subj = $mark->{'ssl_cert_subject'};
+    	my $alt = $mark->{'ssl_cert_altnames'};
+    	$ciphers =~ s/'/\\'/g;
+    	$issuer =~ s/'/\\'/g;
+    	$subj =~ s/'/\\'/g;
+    	$alt =~ s/'/\\'/g;
+	print OUT "# SSL Ciphers: $ciphers\n";
+	print OUT "# SSL Altnames: $alt\n";
+	print OUT "# SSL Issuer:  $issuer\n";
+	print OUT "# SSL Info:    $subj\n";
+    }
+    
+    return;
+}
+
+###############################################################################
+# print an item
+sub sqlg_item {
+    my ($handle, $mark, $item) = @_;  
+    foreach my $uri (split(' ', $item->{'uri'})) {
+        my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+ 	$hostname = quotemeta($hostname);
+    	my $httpmethod = quotemeta($item->{'method'});
+	my $msg = quotemeta($item->{'message'});
+        my $root = quotemeta($mark->{'root'});
+	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
+        $uri = quotemeta($uri);
+        my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
+
+    	my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message, request, response) values(";
+		$sql .= "'$item->{'nikto_id'}','$item->{'mark'}->{'ip'}','$hostname','$item->{'mark'}->{'port'}','$ssl',";
+		$sql .= "'$item->{'osvdb'}','$httpmethod',";
+
+        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/)) { 
+		$sql .= "'" . $root . $uri . "',"; }
+	else { 
+		$sql .= "'$uri',"; 
+		}
+
+	$msg =~ s/^$uri:\s//;
+	$msg =~ s/^$rootq$uri:\s//;
+        $sql .= "'$msg',";
+        
+        # Rebuild the request from the hash -- no need to escape as it's base64 encoded
+        my $req = $$item{'request'};
+    	if ($req->{'whisker'}{'method'} eq '') { 
+		$sql .= "'',";
+		}
+    	else { 
+    		my $rstring = $req->{'whisker'}{'method'} . " "
+      			. $req->{'whisker'}{'uri'} . " "
+      			. $req->{'whisker'}{'protocol'} . "/"
+				. $req->{'whisker'}{'version'} . "\n";
+
+    		foreach my $header (keys %{$req}) {
+        		next if $header eq 'whisker';
+        		$rstring .= $header . ": " . $req->{$header} . "\n";
+    			}
+        	$sql .= "'" . LW2::encode_base64($rstring,'') . "',";
+			}
+
+	# response content
+        my $response = $$item{'response'};
+	$rstring='';
+    	if ($response->{'whisker'}{'protocol'} ne '') {
+    		$rstring = $response->{'whisker'}{'protocol'} . "/"
+      		. $response->{'whisker'}{'version'} . " "
+      		. $response->{'whisker'}{'code'} . " "
+      		. $response->{'whisker'}{'message'} . "\n";
+    		foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
+        		$rstring .= $header . ": " . $response->{$header} . "\n";
+    			}
+    		$rstring .= "\n" . $response->{'whisker'}{'data'} . "\n";
+    		}
+
+        $sql .= "'" . LW2::encode_base64($rstring,'') . "');";
+        print $handle "$sql\n";
+    }
+}
+
+1;

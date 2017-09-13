@@ -1,15 +1,20 @@
 #VERSION,2.008
-# $Id$ 
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2009 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
+# - Use lower case letters
+# - Keep list alphabetically (for readability and easy human lookup)
+# Example to get the server headers: $ curl -I www.example.com
 #######################################################################
 "header"
 "accept"
@@ -17,10 +22,18 @@
 "accept-encoding"
 "accept-language"
 "accept-ranges"
+"access-control-allow-credentials"
+"access-control-allow-headers"
+"access-control-allow-methods"
+"access-control-allow-origin"
+"access-control-expose-headers"
+"access-control-max-age"
 "age"
 "allow"
+"alternates"
 "authorization"
 "cache-control"
+"commerce-server-software"
 "connection"
 "content-encoding"
 "content-language"
@@ -28,31 +41,43 @@
 "content-location"
 "content-md5"
 "content-range"
+"content-security-policy"
+"content-security-policy-report-only"
 "content-type"
+"dasl"
 "date"
+"dav"
 "etag"
 "expect"
 "expires"
 "from"
-"keep-alive"
 "host"
 "if-match"
 "if-modified-since"
 "if-none-match"
 "if-range"
 "if-unmodified-since"
+"keep-alive"
 "last-modified"
 "location"
 "max-forwards"
+"mime-version"
+"nncoection"
 "p3p"
+"persistent-auth"
 "pragma"
 "proxy-authenticate"
 "proxy-authorization"
+"proxy-connection"
+"public"
 "range"
 "referer"
+"referrer-policy"
 "retry-after"
 "server"
 "set-cookie"
+"status"
+"strict-transport-security"
 "te"
 "trailer"
 "transfer-encoding"
@@ -61,15 +86,27 @@
 "vary"
 "via"
 "warning"
-"www-authenticate"
 "whisker"
+"www-authenticate"
+"x-aspnetmvc-version"
 "x-aspnet-version"
-"x-powered-by"
+"x-cache-hits"
+"x-clacks-overhead"
+"x-cnection"
+"x-content-security-policy"
+"x-content-type-options"
+"x-download-options"
+"x-frame-options"
+"x-id"
+"xmlns"
+"x-mod-pagespeed"
 "x-pad"
-"dasl"
-"nncoection"
-"dav"
-"public"
-"status"
-"proxy-connection"
-"mime-version"
+"x-page-speed"
+"x-permitted-cross-domain-policies"
+"x-pingback"
+"x-powered-by"
+"x-robots-tag"
+"x-ua-compatible"
+"x-varnish"
+"x-webkit-csp"
+"x-xss-protection"

@@ -1,6 +1,6 @@
 #VERSION,2.00
 ###############################################################################
-#  Copyright (C) 2012 CIRT, Inc.
+#  Copyright (C) 2012 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ sub nikto_paths_init {
                                      weight => 20,
                                      },
                             },
-               copyright => "2012 CIRT Inc."
+               copyright => "2012 Chris Sullo"
                };
     return $id;
 }
@@ -38,7 +38,7 @@ sub nikto_paths {
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
-    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "robots");
+    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
 
     if ($res eq 200) {
 
@@ -82,12 +82,14 @@ sub nikto_paths {
             }
         }
 
+	# Process whole link
+        if ($link =~ /\.action(\?|$)/i) {
+                $VARIABLES{"\@STRUTSACTIONS"} .= " $link";
+	}
+
         # Now actually check the unique dirs/files
         foreach my $file (keys %FILES) {
             $file = validate_and_fix_regex($file);
-            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
-                $VARIABLES{"\@MUTATEFILES"} .= " $file";
-            }
 
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
                 $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
@@ -96,11 +98,6 @@ sub nikto_paths {
 
         foreach my $dir (keys %DIRS) {
             $dir = validate_and_fix_regex($dir);
-
-            # Mutate
-            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@MUTATEDIRS"} .= " $dir";
-            }
 
             # Other vars
             if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {

@@ -1,7 +1,6 @@
 #VERSION,2.04
-# $Id$
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -24,7 +23,7 @@
 sub nikto_auth_init {
     my $id = { name        => 'auth',
                full_name   => 'Guess authentication',
-               author      => 'Sullo/Deity',
+               author      => 'Sullo/Tautology',
                description => 'Attempt to guess authentication realms',
                hooks       => {
                           start => { method => \&nikto_auth_load,
@@ -32,13 +31,13 @@ sub nikto_auth_init {
                                      },
                           postfetch => { method => \&nikto_auth,
                                          weight => 19,
-                                         cond   => '$response->{whisker}->{code} eq 401',
+                                         cond   => '$result->{whisker}->{code} eq 401',
                                          },
                           prefetch => { method => \&nikto_auth_pre,
                                         weight => 19,
                                         },
                             },
-               copyright => "2010 CIRT Inc"
+               copyright => "2010 Chris Sullo"
                };
 
     use vars qw/$REALMS/;
@@ -86,7 +85,7 @@ sub split_auth_header {
     my ($realm, $authtype);
     my @authenticate = split(/=/, $header);
     if ($authenticate[0] =~ /^ntlm/i) {
-        $realm = $authtype = 'NTLM';
+        $realm = $authtype = 'ntlm';
     }
     else {
         $realm = $authenticate[1];
@@ -103,41 +102,38 @@ sub split_auth_header {
 }
 
 # Actual authentication and retry takes place here.
-# User-supplied credentials will be tried first if present
+# If present, user-supplied credentials will be tried first
 sub nikto_auth {
     my ($mark, $parameters, $request, $response) = @_;
-    my ($authtype) = 'basic';
-    my ($body)     = $response->{'whisker'}->{'data'};
-    my ($uri)      = $response->{'whisker'}->{'uri'};
-    my ($method)   = $response->{'whisker'}->{'method'} || "GET";
-    my ($realm, $save_auth);
-
-    unless (defined $response->{'www-authenticate'}) {
-        nprint("+ ERROR: No authentication header defined: $uri","v");
-        return $request, $response;
-    }
-
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
-
-    nprint("+ $uri - Requires Authentication for realm '$realm'")
-      if ($OUTPUT{'show_auth'} || $uri =~ /^$CLI{'root'}\/?$/);
 
     # did we already test this realm?
     if (exists $mark->{'realms'}{$realm}{'status'}) {
         return $request, $response;
     }
 
+    $authtype = 'basic' if $authtype eq '';
+    my ($body)     = $response->{'whisker'}->{'data'};
+    my ($uri)      = $response->{'whisker'}->{'uri'};
+    my ($method)   = $response->{'whisker'}->{'method'} || "GET";
+
+    unless (defined $response->{'www-authenticate'}) {
+        nprint("+ ERROR: No authentication header defined: $uri","v");
+        return $request, $response;
+    }
+
+    nprint("+ $uri - Requires Authentication for realm '$realm'")
+      if ($OUTPUT{'show_auth'} || $uri =~ /^$CLI{'root'}\/?$/);
+
     # Save to revert
-    $save_auth = $response{'www-authenticate'};
+    $save_auth = $response->{'www-authenticate'};
+
+    nprint("- : Testing default credentials against '$realm'","v");
 
     # Now we have this we can try guessing the password
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
         unless ($realm =~ /$entry->{'realm'}/i || $entry->{'realm'} eq '@ANY') { next; }
-
-        if ($response->{'www-authenticate'} =~ /^ntlm/i) {
-            $authtype = 'ntlm';
-        }
 
         # Set up LW hash
         LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
@@ -146,31 +142,27 @@ sub nikto_auth {
         $request->{'whisker'}->{'allow_short_reads'} = 1;
         LW2::http_fixup_request($request);
 
+        if ($authtype eq 'ntlm') { 
+            $request->{'whisker'}->{'allow_short_reads'} = 1;
+        }
+
         sleeper();
         LW2::http_do_request_timeout($request, $response);    # test auth
         $COUNTERS{'totalrequests'}++;
         dump_var("Auth Request",  $request);
         dump_var("Auth Response", $response);
+	nprint("- Tested credentials: " . $entry->{'id'} . "/" . $entry->{'password'} . "- result: " . $response->{'whisker'}->{'code'} ,"v");
 
         $mark->{'realms'}{$realm}{'status'}   = 0;
         $mark->{'realms'}{$realm}{'id'}       = $entry->{'id'};
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        if ($response{'www-authenticate'} =~ /^ntlm/i) {
 
-            # NTLM is different...
-            my @ntlm_x = split(/ /, $response{'www-authenticate'});
-            if ($#ntlm_x == 1) {
-                sleeper();
-                $request->{'whisker'}->{'allow_short_reads'} = 1;
-                LW2::http_fixup_request($request);
-                LW2::http_do_request_timeout(\%request, \%response);
-                $COUNTERS{'totalrequests'}++;
-            }
-        }
-
-        if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
+        #if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
+        if ($response->{'whisker'}->{'code'} !~ /40[13]/ &&
+			$response->{'whisker'}->{'code'} ne "500" &&
+			!defined $response->{'whisker'}->{'error'}) {
             unless ($entry->{'checked'} == 1) {
                 my $message;
                 if ($entry->{'message'} eq "Credentials provided by CLI.") {
@@ -186,7 +178,7 @@ sub nikto_auth {
                       "Default account found for '$realm' at $request->{'whisker'}->{'uri'} (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
                 }
 
-                add_vulnerability($mark, $message, $entry->{tid}, 0, "GET", $request{whisker}->{uri}, $request, $response);
+                add_vulnerability($mark, $message, $entry->{'nikto_id'}, 0, "GET", $request{'whisker'}->{'uri'}, $request, $response);
 
                 # Mark it successful
                 $entry->{'checked'}                 = 1;

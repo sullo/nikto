@@ -1,7 +1,6 @@
 #VERSION,2.06
-# $Id: nikto_cgi.plugin 41 2008-05-06 03:36:38Z jabra $
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -26,7 +25,7 @@ sub nikto_cgi_init {
                author      => "Sullo",
                description => "Enumerates possible CGI directories.",
                hooks       => { recon => { method => \&nikto_cgi, }, },
-               copyright   => "2008 CIRT Inc.",
+               copyright   => "2008 Chris Sullo",
                };
     return $id;
 }
@@ -60,7 +59,7 @@ sub nikto_cgi {
             return if $mark->{'terminate'};
             ($res, $content) = nfetch($mark, $possiblecgidir, "GET", "", "", "", "cgi dir check");
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res", "d");
-            if (content_present($res) eq TRUE) {
+            if ((content_present($res) eq TRUE) || ($res eq 403)) {
                 $gotvalid++;
                 push(@POSSIBLECGI, $possiblecgidir);
             }

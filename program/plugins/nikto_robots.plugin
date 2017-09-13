@@ -1,7 +1,6 @@
 #VERSION,2.06
-# $Id$
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +30,7 @@ sub nikto_robots_init {
                               weight => 49,
                               },
                      },
-        copyright => "2008 CIRT Inc.",
+        copyright => "2008 Chris Sullo",
 		options     => {
 					 nocheck => "Flag to disable checking entries in robots file.",
 					 }		
@@ -42,10 +41,11 @@ sub nikto_robots_init {
 sub nikto_robots {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my ($code, $content, $errors, $request, $response, $headers_recv) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
-
+    my ($code, $content, $errors, $request, $response) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
+    my $onlyroot=1;
+	
     if (($code eq 200) || ($code eq $FoF{'okay'}{'response'})) {
-        if (is_404("robots.txt", $content, $code, $headers_recv->{'location'})) { return; }
+        if (is_404("robots.txt", $content, $code, $response->{'location'})) { return; }
 
         my ($DIRS, $RFILES) = "";
         my $DISCTR = 0;
@@ -55,6 +55,8 @@ sub nikto_robots {
             $line = quotemeta($line);
             if ($line =~ /allow/i) {
                 chomp($line);
+				# Report if Allow
+				if ($line =~ /^allow/i) { $onlyroot = 0; }
                 $line =~ s/\#.*$//;
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
@@ -77,13 +79,19 @@ sub nikto_robots {
                 nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d");
                 if (($realdir  ne "") && ($realdir  ne "/")) { $DIRS{$realdir}++; }
                 if (($realfile ne "") && ($realfile ne "/")) { $RFILES{$realfile}++; }
+                $DISCTR++;
+
+				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0; }
+				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0;}				
+				next if (($realdir eq "/" && $realfile eq "") ||
+				         ($realfile eq "/" && $realdir eq ""));
 				if (!defined($parameters->{'nocheck'})) {
 					my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
 					if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
-						add_vulnerability($mark, "File/dir '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999996, 0, "GET", "/$line", $request, $response);
+						add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
 					}
 				}
-                $DISCTR++;
+
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
 
@@ -92,9 +100,6 @@ sub nikto_robots {
 	    my $raw  = $dir;
             $raw =~ s/\\//g;
 	    $dir = validate_and_fix_regex($dir);
-            if ($VARIABLES{"\@MUTATEDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@MUTATEDIRS"} .= " $raw";
-            }
             
             # Add to variables
             if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
@@ -127,9 +132,6 @@ sub nikto_robots {
             my $raw = $file;
             $raw =~ s/\\//g;
 	    $file = validate_and_fix_regex($file);
-            if ($VARIABLES{"\@MUTATEFILES"} !~ /$file/) {
-                $VARIABLES{"\@MUTATEFILES"} .= " $raw";
-            }
             
             # Add to variables
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
@@ -142,7 +144,9 @@ sub nikto_robots {
         elsif ($DISCTR > 1) { $msg = "contains $DISCTR entries which should be manually viewed."; }
         else { $msg = "retrieved but it does not contain any 'disallow' entries (which is odd)."; }
 
-        add_vulnerability($mark, "\"robots.txt\" $msg", 999996, 0, "GET", "/robots.txt", $request, $response);
+		if ($onlyroot eq 0) {
+			add_vulnerability($mark, "\"robots.txt\" $msg", 999996, 0, "GET", "/robots.txt", $request, $response);
+		}
     }
 }
 

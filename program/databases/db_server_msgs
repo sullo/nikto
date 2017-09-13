@@ -1,16 +1,20 @@
 #VERSION,2.006
-# $Id$
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2007 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 # NiktoDB 1.0
+# Example to get the server-message:
+#   ~$ curl --head --silent www.example.com | grep --ignore-case server
 #######################################################################
 "nikto_id","server","osvdb","message"
 "800000","4D_WebSTAR_S\/5\.([0-2]|3\.[0-2])","7794","May be vulnerable to multiple flaws. http://secunia.com/advisories/12063/"
@@ -145,7 +149,7 @@
 "800129","mod_auth_pgsql\/0\.(([0-8]\..*)|(9\.[0-5].*))","0","This version allows an SQL insertion attack that could allow attackers to execute arbitrary SQL commands."
 "800130","mod_python\/(1.*|2\.([0-6]\..*|7\.[0-6]))","0","mod_python 2.7.6 or older may allow attackers to execute functions remotely."
 "800131","mod_security\/1\.7([0-1]|RC.*)","0","mod_security 1.7RC1 to 1.7.1 are vulnerable to a buffer overflow, see http://adsystems.com.pl/adg-mod_security171.txt for details. Upgrade to 1.7.2 or higher."
-"800132","mod_ssl\/(1.*|2\.([0-7]\..*|8\.[0-6]))","0","mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell (difficult to exploit). CVE-2002-0082, OSVDB-756."
+"800132","mod_ssl\/(1.*|2\.([0-7]\..*|8\.[0-6]))","0","mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell. CVE-2002-0082, OSVDB-756."
 "800133","mod_survey\/[0-3]\.0\.((9|1[0-3])|(14[a-d])|(15\-pre[0-5]))","0","mod_survey is vulnerable to a remote buffer overflow. It should be upgraded to the latest version."
 "800134","mofet simple","0","Mofet Simple HTTP Server, often an embedded device like a Nortel MIPCD"
 "800135","Monkey\/0\.([0-5].*|6\.[0-2]{1})","0","Monkey server is vulnerable to a remote buffer overflow, it should be upgraded at http://monkeyd.sourceforge.net/get_monkey.php?ver=4"
@@ -270,3 +274,7 @@
 "800254","HP System Management Homepage\/([0-2]|3\.0\.(0|1\.([0-6]|7[0-2])))","54608","HP System Management Homepage version contains multiple vulnerabilities."
 "800255","cp-sw-server","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800256","cpservd","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
+"800257","mod_speling","0","mod_speling can reveal otherwise hidden files via 'misspelled' file names."
+"800259","HttpFileServer\shttpd","0","This server has been known to host malware, see: https://pronto185.com/blog/2014/03/06/slightly-interesting-find-from-sshranking/"
+"800260","Jetty\(9\.2\.[3-8].*","118744","Jetty 9.2.3 to 9.2.8 contains a flaw that is triggered when handling 400 errors in HTTP responses. This may allow a remote attacker to gain access to potentially sensitive information in the memory (CVE-2015-2080)."
+"800261","PAW Server","0","PAW Server default admin id/password is admin/paw. It's worth a try."

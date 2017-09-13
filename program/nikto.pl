@@ -1,16 +1,13 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
-
-#VERSION,2.1.5
-# $Id$
-use Getopt::Long;
-use Time::Local;
-Getopt::Long::Configure('no_ignore_case');
-
+#VERSION,2.1.6
+###############################################################################
+# Modules are now loaded in a function so errors can be trapped and evaluated
+load_modules();
 ###############################################################################
 #                               Nikto                                         #
 ###############################################################################
-#  Copyright (C) 2001 CIRT, Inc.
+#  Copyright (C) 2001 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -43,10 +40,11 @@ use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions/;
 use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup
+Getopt::Long::Configure('no_ignore_case');
 $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
-$VARIABLES{'version'}    = "2.1.5";
+$VARIABLES{'version'}    = "2.1.6";
 $VARIABLES{'configfile'} = "/etc/nikto.conf";    ### Change if it's having trouble finding it
 
 # signal trap so we can close down reports properly
@@ -57,7 +55,6 @@ setup_dirs();
 require "$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin";
 nprint("T:" . localtime($COUNTERS{'scan_start'}) . ": Starting", "d");
 require "$CONFIGFILE{'PLUGINDIR'}/LW2.pm";
-require "$CONFIGFILE{'PLUGINDIR'}/JSON-PP.pm";
 $VARIABLES{'GMTOFFSET'} = gmt_offset();
 
 # use LW2;                   ### Change this line to use a different installed version
@@ -91,9 +88,13 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));
 }
 
+# Open reporting
+report_head($CLI{'format'}, $CLI{'file'});
+
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
     $mark->{'test'} = 1;
+    $mark->{'failures'} = 0;
 
     # Try to resolve the host
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}) = resolve($mark->{'ident'});
@@ -104,9 +105,19 @@ foreach my $mark (@MARKS) {
         next;
     }
 
+    # Read cookies from conf & set into the cookie jar
+    if (defined $CONFIGFILE{'STATIC-COOKIE'}) {
+        $mark->{'cookiejar'} = LW2::cookie_new_jar();
+        foreach my $p (split(/;/, $CONFIGFILE{'STATIC-COOKIE'})) {
+            if ($p =~ /"([^=]+)=(.+)"/) {
+                LW2::cookie_set(\%{ $mark->{'cookiejar'} }, $1, $2);
+                }
+       }
+    }
+
     # Check that the port is open
     my $open =
-      port_check($mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'});
+      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'});
     if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
     if ($open == 0) {
         $mark->{'test'} = 0;
@@ -122,9 +133,6 @@ foreach my $mark (@MARKS) {
         $mark->{'cert'} = $CLI{'cert'};
     }
 }
-
-# Open reporting
-report_head($CLI{'format'}, $CLI{'file'});
 
 # Load db_tests
 set_scan_items();
@@ -146,21 +154,6 @@ foreach my $mark (@MARKS) {
     if ($CLI{'saveresults'} ne '') {
         $mark->{'save_dir'} = save_createdir($CLI{'saveresults'}, $mark);
         $mark->{'save_prefix'} = save_getprefix($mark);
-    }
-
-    # Cookies
-    if (defined $CONFIGFILE{'STATIC-COOKIE'}) {
-        $mark->{'cookiejar'} = LW2::cookie_new_jar();
-
-        # parse conf line into name/value pairs
-        foreach my $p (split(/;/, $CONFIGFILE{'STATIC-COOKIE'})) {
-            $p =~ s/(?:^\s+|\s+$)//;
-            $p =~ s/"(?:[ ]+)?=(?:[ ]+)?"/","/g;
-            my @cv = parse_csv($p);
-
-            # Set into the jar
-            LW2::cookie_set(\%{ $mark->{'cookiejar'} }, $cv[0], $cv[1]);
-        }
     }
 
     $mark->{'total_vulns'}  = 0;
@@ -193,7 +186,7 @@ foreach my $mark (@MARKS) {
     if (!$CLI{'findonly'}) {
         if (!$mark->{'terminate'}) {
             nprint(
-                "+ $COUNTERS{'total_checks'} items checked: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+                "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
                 );
         }
         else {
@@ -269,6 +262,33 @@ sub config_init {
     return;
 }
 
+###############################################################################
+sub load_modules {
+        my $errors=0;
+	my @modules = qw/Getopt::Long Time::Local IO::Socket/;
+	push(@modules,"List::Util qw(sum)");
+	foreach my $mod (@modules) { 
+		eval "use $mod";
+        	if ($@) { 
+			print "ERROR: Required module not found: $mod\n"; 
+			$errors=1; 
+		}
+	}
+
+	@modules = ();
+	push(@modules,"Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
+	push(@modules,"POSIX qw(:termios_h)");
+	foreach my $mod (@modules) { 
+		eval "use $mod";
+		if ($@ && $^O !~ /MSWin32/) {
+			# Allow this to work on Windows
+			if ($@) { print "ERROR: Required module not found: $mod\n"; $errors=1; }
+		}
+	}
+
+	if ($errors) { exit; }
+}
+
 #################################################################################
 # load config file
 # error=load_config(FILENAME)
@@ -297,8 +317,7 @@ sub load_config {
 
     # Check for necessary config items
     check_config_defined("CHECKMETHODS", "HEAD");
-    check_config_defined('@@MUTATE',     'dictionary;subdomain');
-    check_config_defined('@@DEFAULT',    '@@ALL,-@@MUTATE');
+    check_config_defined('@@DEFAULT',    '@@ALL');
 
     return "";
 }
@@ -332,8 +351,8 @@ sub setup_dirs {
     unless (defined $CONFIGFILE{'TEMPLATEDIR'}) {
         $CONFIGFILE{'TEMPLATEDIR'} = "$CONFIGFILE{'EXECDIR'}/templates";
     }
-    unless (defined $CONFIGFILE{'DOCUMENTDIR'}) {
-        $CONFIGFILE{'DOCUMENTDIR'} = "$CONFIGFILE{'EXECDIR'}/docs";
+    unless (defined $CONFIGFILE{'DOCDIR'}) {
+        $CONFIGFILE{'DOCDIR'} = "$CONFIGFILE{'EXECDIR'}/docs";
     }
     unless (defined $CONFIGFILE{'DBDIR'}) {
         $CONFIGFILE{'DBDIR'} = "$CONFIGFILE{'EXECDIR'}/databases";

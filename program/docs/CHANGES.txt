@@ -1,3 +1,25 @@
+2013-xx-xx Nikto 2.1.6 release
+	- Add -Option to override nikto.conf settings
+	- Removed JSON-PP.pm in favor of requiring JSON::PP be installed for -Savedir usage
+	- Added check_modules() to check for required/optional perl modules in help output, version check, etc.
+	- Added running average of last 10/100 requests to STATUS line output
+	- Cleanup of load_modules to remove duplicate code
+	- Added nikto.conf variable FAILURES, and nikto now terminate host scanning after this many HTTP request failures (not response codes, complete fails).
+	- Added nikto_ms10070.plugin to check for MS10-070
+	- Load modules inside a sub routine so errors can be reported
+	- No longer optionally load some modules, namely POSIX, Time::Local and Time::HiRes--require them
+	- Mask passwords from -id in report output, thanks to Iggy "I want a cameo" Frankovic
+	- mtime is no longer mangled in inode output, thanks to Anna at qcic.nl
+	- Moved development to Github (note new ticket numbers): https://github.com/sullo/nikto/
+	- Added nikto_sitezip.plugin to look for compressed archives of sites
+	- Fix Anti-IDS encoding
+	- Added 'admin console' category to db_tests
+	- Issue #106: Report total requests instead of total checks loaded
+	- Issue #82: Added plugin to check for Apache mod_negotiation bruteforcing
+        - Issue #46: Double directory names in report
+	- Issue #24: Don't return headers distinctly from nfetch
+	- Issue #22: Add location to db_favicon
+	- Issue #11: Alert on HTTP PATCH available
 2012-09-16 Nikto 2.1.5 release
 	- Ticket 261: Update CSV report to include banner info and put data into proper columns
 	- Ticket 247: Move etag header check to postfetch so no additional requests are made
@@ -25,7 +47,6 @@
 	- Ticket 57: nfetch no longer uses global request/response hashes
 	- Ticket 1: Save full response on positive, plaintext & JSON
 	- Completely remove cache functionality as it was near worthless and added a lot of overhead
-	- Change cache to include full request and response
 	- Including JSON-PP source to not require JSON installation. http://search.cpan.org/~makamaka/JSON-2.53/lib/JSON/backportPP.pm
 	- Add IP address to CSV output. NOTE: this changes a parse-able report format!
 	- add_vulnerability now takes in %request and %response for saving of data
@@ -34,7 +55,6 @@
 	- Output file name now takes '.' which will auto-generate output filename like nikto_hostname_port.EXT
 	- Fix -root not appearing in report output, reported by Cédric Michel
 	- nikto_favicon.plugin checks for icons in <link> tags
-	- Add check for non-empty OPTIONS response body, which could be related to something like http://zacstewart.com/2012/04/14/http-options-method.html
 	- Add nikto_paths.plugin to look for things to add to db_variables values
 	- Items found in robots.txt are now added to values from db_variables
 	- Keep tokens from getting into %db_extensions, thanks to Erik Cabetas

@@ -1,19 +1,24 @@
 #VERSION,2.005
-# $Id$ 
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2009 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 #######################################################################
 "index"
 "index.php"
 "index.php3"
+"index.php4"
+"index.php5"
+"index.php7"
 "index.html"
 "index.htm"
 "index.shtml"
@@ -27,3 +32,5 @@
 "default.htm"
 "index.do"
 "index.jhtml"
+"index.jsp"
+"index.xml"

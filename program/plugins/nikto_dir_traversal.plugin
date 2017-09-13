@@ -1,0 +1,111 @@
+#VERSION,2.1.6
+###############################################################################
+#  Copyright (C) 2016 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Check applications / servers for directory traversal vulnerabilities
+###############################################################################
+sub nikto_dir_traversal_init {
+    my $id = { name        => "dir_traversal",
+               full_name   => "Directory Traversal",
+               author      => "RealRancor",
+               description => "Check applications / servers for directory traversal vulnerabilities.",
+               hooks       => { scan => { method => \&nikto_dir_traversal, }, 
+                                start => { method => \&nikto_dir_traversal_load, },
+                              },
+               copyright   => "2016 Chris Sullo"
+               };
+    use vars qw/$DIRTRAVERSALDB/;
+    return $id;
+}
+
+sub nikto_dir_traversal_load {
+    # load up the database here so we don't redo it each time
+    $DIRTRAVERSALDB = init_db("db_dir_traversal");
+
+    %TRAVWIN;
+    $TRAVWIN{'boot.ini'} = '\[boot loader\]';
+    $TRAVWIN{'winnt/win.ini'} = '; for 16-bit app support';
+    $TRAVWIN{'windows/win.ini'} = '; for 16-bit app support';
+
+    %TRAVLIN;
+    $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
+    $TRAVLIN{'etc/hosts'} = '127\.0\.0\.1.*localhost';
+
+    %TRAVALL;
+    $TRAVALL{'boot.ini'} = '\[boot loader\]';
+    $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
+    $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';
+    $TRAVALL{'etc/passwd'} = 'root:.*:0:[01]:';
+    $TRAVALL{'etc/hosts'} = '127\.0\.0\.1.*localhost';
+}
+
+sub nikto_dir_traversal {
+    # load mark from plugin caller
+    my ($mark) = @_;
+
+    # quit if user is terminating - this is a catch all and we should never execute it
+    return if $mark->{'terminate'};
+
+    foreach my $item (@$DIRTRAVERSALDB) {
+        # $item will contain the entry in db_dir_traversal, made into a hash pointer
+
+        # Check if the user is terminating the current mark
+        return if $mark->{'terminate'};
+
+        # Set up URI
+        my $uri = "/$item->{'file'}";
+
+        # Check / replace placeholder with pattern
+        if ($uri =~ "\@TRAVWIN") {
+            dir_trav_check(TRAVWIN, $item, $uri, $mark);
+        } elsif ($uri =~ "\@TRAVLIN") {
+            dir_trav_check(TRAVLIN, $item, $uri, $mark);
+        } elsif ($uri =~ "\@TRAVALL") {
+            dir_trav_check(TRAVALL, $item, $uri, $mark);
+        } else {
+            next;
+        }
+    }
+}
+
+sub dir_trav_check {
+    my $type = $_[0] || return;
+    my $item = $_[1] || return;
+    my $uri = $_[2] || return;
+    my $mark = $_[3] || return;
+
+    for my $key (keys %{$type}) {
+        my $value = ${$type}{$key};
+        (my $newuri = $uri) =~ s/\@$type/$key/;
+        # Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
+        my ($res, $content, $request, $response) = nfetch($mark, $newuri, "GET", "", "", "", "Directory traversal check");
+        if ($content =~ /$value/) {
+            # Looks like a match - raise this up to the front end
+            add_vulnerability(
+                $mark,                                     # mark structure to identify target
+                "$newuri: $item->{'description'}",         # message
+                $item->{'nikto_id'},                       # tid
+                $item->{'osvdb_id'},                       # OSVDB reference
+                $newuri,                                   # URI
+                $request,                                  # Request structure for full output
+                $response);                                # Response structure for full output
+        }
+    }
+}
+
+1;

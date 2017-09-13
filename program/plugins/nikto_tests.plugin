@@ -1,7 +1,6 @@
 #VERSION,2.04
-# $Id: nikto_tests.plugin 79 2008-09-21 15:34:39Z deity $
 ###############################################################################
-#  Copyright (C) 2007 CIRT, Inc.
+#  Copyright (C) 2007 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -14,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -23,9 +22,9 @@
 sub nikto_tests_init {
     my $id = { name        => "tests",
                full_name   => "Nikto Tests",
-               author      => "Sullo, Deity",
+               author      => "Sullo, Tautology",
                description => "Test host with the standard Nikto tests",
-               copyright   => "2008 CIRT Inc.",
+               copyright   => "2008 Chris Sullo",
                hooks       => {
                           scan => { method => \&nikto_tests,
                                     weight => 99,
@@ -35,6 +34,7 @@ sub nikto_tests_init {
                          passfiles => "Flag to indicate whether to check for common password files",
                          all => "Flag to indicate whether to check all files with all directories",
                          report => "Report a status after the passed number of tests",
+						 tids => "A range of testids that will only be run",
                          }
                  };
     return $id;
@@ -43,59 +43,122 @@ sub nikto_tests_init {
 sub nikto_tests {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+	my @tids;
+	
+	if (defined $parameters->{'tids'}) {
+		@tids = expand_range($parameters->{'tids'});
+	}
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
         return if $mark->{'terminate'};
         if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
                                              # replace variables in the uri
+	my $intcheck=int($checkid);
+	if ((scalar(@tids) > 0) && !grep(/^$intcheck$/, @tids)) { next; }
         my @urilist = change_variables($TESTS{$checkid}{'uri'});
 
         # Now repeat for each uri
         foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
-            my ($res, $content, $error, $request, $response, $headers_recv) = nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $TESTS{$checkid}{'data'}, "", "", $checkid);
-
-            # auth is now done in nfetch
-            if ($res eq 200) {
-                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}")
-                  if $OUTPUT{'show_ok'};
+            my %headrs;
+            my %flags;
+            if ($TESTS{$checkid}{'headers'}) {
+                %headrs=split /: /, $TESTS{$checkid}{'headers'};
+                $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
+                $flags{'noclean'} = 1;
             }
-            elsif ($res =~ /30(?:[0-3]|7)/) {
+            my ($res, $content, $error, $request, $response) =
+              nfetch($mark, $uri,
+                     $TESTS{$checkid}{'method'},
+                     $TESTS{$checkid}{'data'},
+                     \%headrs,
+                     \%flags, 
+                     $checkid);
+
+            # NOTE: auth is now done in nfetch
+            if ($OUTPUT{'show_ok'} && ($res eq 200)) {
+                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}");
+            }
+            elsif ($OUTPUT{'show_redirects'} && ($res =~ /30(?:[0-3]|7)/)) {
                 nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
-                       . $headers_recv->{'location'}
-                       . " , $TESTS{$checkid}{'message'}")
-                  if $OUTPUT{'show_redirects'};
+                       . $response->{'location'} . " , " . $TESTS{$checkid}{'message'});
             }
 
-	   # If user puts a @CODE= string in db_404_strings, let it take precedence
-	   foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
-        	if ($res =~ /$code/) {
-			return;
-        		}
-    		}
+            # If user puts a @CODE= string in db_404_strings, let it take precedence
+            foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
+                if ($res =~ /$code/) {
+                    return;
+                }
+            }
 
             my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
               "content";
-            my $positive = 0;
+            my ($positive, $hashme) = 0;
+            my ($hash, $reason) = '';
 
             # how to check each conditional
-            if ($TESTS{$checkid}{'match_1'}     =~ /^[0-9]{3}$/) { $m1_method  = "code"; }
-            if ($TESTS{$checkid}{'match_1_or'}  =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
+            if ($TESTS{$checkid}{'match_1'} =~ /^[0-9]{3}$/) { $m1_method = "code"; }
+            elsif ($TESTS{$checkid}{'match_1'} =~ /^\@MD5/) {
+                $m1_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'match_1'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'match_1_or'} =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
+            elsif ($TESTS{$checkid}{'match_1_or'} =~ /^\@MD5/) {
+                $m1o_method = "md5";
+                $hashme     = 1;
+                $TESTS{$checkid}{'match_1_or'} =~ s/^\@MD5//;
+            }
+
             if ($TESTS{$checkid}{'match_1_and'} =~ /^[0-9]{3}$/) { $m1a_method = "code"; }
-            if ($TESTS{$checkid}{'fail_1'}      =~ /^[0-9]{3}$/) { $f1_method  = "code"; }
-            if ($TESTS{$checkid}{'fail_2'}      =~ /^[0-9]{3}$/) { $f2_method  = "code"; }
+            elsif ($TESTS{$checkid}{'match_1_and'} =~ /^\@MD5/) {
+                $m1a_method = "md5";
+                $hashme     = 1;
+                $TESTS{$checkid}{'match_1_and'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'fail_1'} =~ /^[0-9]{3}$/) { $f1_method = "code"; }
+            elsif ($TESTS{$checkid}{'fail_1'} =~ /^\@MD5/) {
+                $f1_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'fail_1'} =~ s/^\@MD5//;
+            }
+
+            if ($TESTS{$checkid}{'fail_2'} =~ /^[0-9]{3}$/) { $f2_method = "code"; }
+            elsif ($TESTS{$checkid}{'fail_2'} =~ /^\@MD5/) {
+                $f2_method = "md5";
+                $hashme    = 1;
+                $TESTS{$checkid}{'fail_2'} =~ s/^\@MD5//;
+            }
+
+            if ($hashme) {
+                $hash = LW2::md5($content);
+            }
 
             # basic match for positive response
             if ($m1_method eq "content") {
                 if ($content =~ /$TESTS{$checkid}{'match_1'}/) {
                     $positive = 1;
+                    $reason = 'Content Match';
+                }
+            }
+            elsif ($m1_method eq "md5") {
+                if ($hash eq $TESTS{$checkid}{'match_1'}) {
+                    $positive = 1;
+                    $reason = 'MD5 Hash';
                 }
             }
             else {
-                if (($res eq $TESTS{$checkid}{'match_1'}) || ($res eq $FoF{'okay'}{'response'})) {
+                if ($res eq $TESTS{$checkid}{'match_1'}) {
                     $positive = 1;
+                    $reason = 'Response Code Match';
                 }
+                elsif ($res eq $FoF{'okay'}{'response'}) {
+                    $positive = 1;
+                    $reason = 'Response Code Match - FoF OK Response)';
+		}
             }
 
             # no match, check optional match
@@ -103,11 +166,23 @@ sub nikto_tests {
                 if ($m1o_method eq "content") {
                     if ($content =~ /$TESTS{$checkid}{'match_1_or'}/) {
                         $positive = 1;
+                    	$reason = 'Content Match - Match 1 (Or)';
+                    }
+                }
+                elsif ($m1o_method eq "md5") {
+                    if ($hash eq $TESTS{$checkid}{'match_1_or'}) {
+                        $positive = 1;
+                    	$reason = 'MD5 Hash - Match 1 (Or)';
                     }
                 }
                 else {
-                    if (($res eq $TESTS{$checkid}{'match_1_or'}) || ($res eq $FoF{'okay'}{'response'})) {
+                    if ($res eq $TESTS{$checkid}{'match_1_or'}) {
                         $positive = 1;
+                        $reason = 'Response Code Match - Match 1 (Or)';
+			}
+                   elsif ($res eq $FoF{'okay'}{'response'}) {
+                        $positive = 1;
+                        $reason = 'Response Code Match - FoF OK Response / Match 1 (Or)';
                     }
                 }
             }
@@ -118,6 +193,11 @@ sub nikto_tests {
                     if ($f1_method eq "content") {
                         if ($content =~ /$TESTS{$checkid}{'fail_1'}/) { next; }
                     }
+                    elsif ($f1_method eq "md5") {
+                        if ($hash eq $TESTS{$checkid}{'fail_1'}) {
+                            next;
+                        }
+                    }
                     else {
                         if ($res eq $TESTS{$checkid}{'fail_1'}) { next; }
                     }
@@ -126,6 +206,11 @@ sub nikto_tests {
                     if ($f2_method eq "content") {
                         if ($content =~ /$TESTS{$checkid}{'fail_2'}/) { next; }
                     }
+                    elsif ($f2_method eq "md5") {
+                        if ($hash eq $TESTS{$checkid}{'fail_2'}) {
+                            next;
+                        }
+                    }
                     else {
                         if ($res eq $TESTS{$checkid}{'fail_2'}) { next; }
                     }
@@ -133,9 +218,17 @@ sub nikto_tests {
                 if ($TESTS{$checkid}{'match_1_and'} ne "") {
                     if ($m1a_method eq "content") {
                         if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
+			else { $reason .= ' and content Match1 (And)'; }
+                    }
+                    elsif ($m1a_method eq "md5") {
+                        if ($hash ne $TESTS{$checkid}{'match_1_and'}) {
+                            next;
+                        }
+			else { $reason .= ' and MD5 Match1 (And)'; }
                     }
                     else {
                         if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
+			else { $reason .= ' and Response Code Match1 (And)'; }
                     }
                 }
 
@@ -147,11 +240,25 @@ sub nikto_tests {
 
                 # lastly check for a false positive based on file extension or type
                 if (($m1_method eq "code") || ($m1o_method eq "code")) {
-                    	if (is_404($mark->{'root'} . $uri, $content, $res, $headers_recv->{'location'})) { next; }
-                	}
+                    if (is_404($mark->{'root'} . $uri, $content, $res, $response->{'location'}))
+                    {
+                        next;
+                    }
+                }
 
                 $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
-                add_vulnerability($mark, "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}", $checkid, $TESTS{$checkid}{'osvdb'}, $TESTS{$checkid}{'method'}, $mark->{'root'} . $uri, $request, $response);
+		if ($positive) {
+                	add_vulnerability($mark,
+                                  "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
+                                  $checkid,
+                                  $TESTS{$checkid}{'osvdb'},
+                                  $TESTS{$checkid}{'method'},
+                                  $mark->{'root'} . $uri,
+                                  $request,
+                                  $response,
+                                  $reason
+                                  );
+		}
             }
         }
 
@@ -262,7 +369,8 @@ sub allchecks {
 sub testfile {
     return if $mark->{'terminate'};
     my ($mark, $uri, $name, $tid) = @_;
-    my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
     nprint("- $res for $uri (error: $error)", "v");
     if ($error) {
         $mark->{'total_errors'}++;

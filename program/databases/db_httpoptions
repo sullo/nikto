@@ -1,22 +1,25 @@
 #VERSION,2.002
-# $Id$
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2009 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 # NiktoDB 1.0
 #######################################################################
 "nikto_id","method","osvdb","message"
-"999976","DELETE","5646","HTTP method ('@TYPE@' Header): 'DELETE' may allow clients to remove files on the web server."
-"999978","PUT","397","HTTP method ('@TYPE@' Header): 'PUT' method could allow clients to save files on the web server."
-"999982","MOVE","5647","HTTP method ('@TYPE@' Header): 'MOVE' may allow clients to change file locations on the web server."
-"999983","CONNECT","0","HTTP method ('@TYPE@' Header): 'CONNECT' may allow server to proxy client requests."
+"400000","DELETE","5646","HTTP method ('@TYPE@' Header): 'DELETE' may allow clients to remove files on the web server."
+"400001","PUT","397","HTTP method ('@TYPE@' Header): 'PUT' method could allow clients to save files on the web server."
+"400002","MOVE","5647","HTTP method ('@TYPE@' Header): 'MOVE' may allow clients to change file locations on the web server."
+"400003","CONNECT","0","HTTP method ('@TYPE@' Header): 'CONNECT' may allow server to proxy client requests."
+"400004","PATCH","0","HTTP method: 'PATCH' may allow client to issue patch commands to server. See RFC-5789."
 # WebDAV methods - "0" in nikto_id tells the code to treat it differently
 "0","PROPFIND","0","webdav"
 "0","PROPPATCH","0","webdav"

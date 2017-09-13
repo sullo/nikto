@@ -1,7 +1,6 @@
 #VERSION,2.04
-# $Id$
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -23,14 +22,18 @@
 sub nikto_dictionary_attack_init {
     my $id = { name        => "dictionary",
                full_name   => "Dictionary attack",
-               author      => "Deity",
+               author      => "Tautology",
                description => "Attempts to dictionary attack commonly known directories/files",
                hooks       => {
                           recon => { method => \&nikto_dictionary_attack,
                                      weight => 20,
                                      },
                             },
-               copyright => "2009 CIRT Inc"
+               options     => {
+                          dictionary => "Dictionary of paths to look for.",
+                          method => "Method to use to enumerate.",
+                          },
+               copyright => "2009 Chris Sullo"
                };
 
     return $id;
@@ -39,6 +42,8 @@ sub nikto_dictionary_attack_init {
 sub nikto_dictionary_attack {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+
+    my $method="HEAD";
 
     my $dictfile = "";
     if (   defined $parameters
@@ -51,6 +56,11 @@ sub nikto_dictionary_attack {
     else {
         nprint("- No dictionary file given in plugin options, skipping check", "v");
         return;
+    }
+
+    if (   defined $parameters
+        && defined $parameters->{'method'}) {
+        $method=$parameters->{'method'};
     }
     my $ctr = 0;
 
@@ -74,12 +84,12 @@ sub nikto_dictionary_attack {
         s/\#.*$//;
         next if ($_ eq "");
         my $dir = $_;
-        if (($ctr % 100) == 0) { nprint("- Directory enumeration guess $ctr ($dir): /$dir/", "v"); }
-        my ($code, $content, $error, $request, $response) = nfetch($mark, "/$dir/", "HEAD", "", "", "", "dictionary_attack");
+        if (($ctr % 100) == 0) { nprint("- File enumeration guess $ctr ($dir): /$dir/", "v"); }
+        my ($code, $content, $error, $request, $response) = nfetch($mark, "/$dir", "${method}", "", "", "", "dictionary_attack");
         foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
 
             if ($code eq $found) {
-                add_vulnerability($mark, "Found directory /$dir/", 999969, "0", "HEAD", "/$dir/", $request, $response);
+                add_vulnerability($mark, "Found file /$dir", 999969, "0", "HEAD", "/$dir", $request, $response);
             }
         }
         $ctr++;

@@ -1,7 +1,6 @@
 #VERSION,1.00
-# $Id: nikto_siebel.plugin 600 2011-01-03 05:06:27Z deity $
 ###############################################################################
-#  Copyright (C) 2004 CIRT, Inc.
+#  Copyright (C) 2004 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -25,14 +24,14 @@ sub nikto_siebel_init {
     my $id = {
             name        => "siebel",
             full_name   => "Siebel Checks",
-            author      => "Deity",
+            author      => "Tautology",
             description => "Performs a set of checks against an installed Siebel application",
             hooks       => {
                               scan => {
                                  method => \&nikto_siebel,
                               },
                            },
-            copyright   => "2011 CIRT Inc.",
+            copyright   => "2011 Chris Sullo",
             options     => {
                               enumerate    => "Flag to indicate whether we shall attempt to enumerate known apps",
                               applications => "List of applications",

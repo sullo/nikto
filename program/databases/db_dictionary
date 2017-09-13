@@ -1,13 +1,15 @@
 #VERSION,1.0
-# $Id: db_dictionary 773 2012-07-04 16:59:21Z jay.bahn $ 
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2012 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 #######################################################################
@@ -156,6 +158,7 @@ ascii
 asdf
 asset
 assets
+atlassian
 atom
 attach
 attachment
@@ -842,6 +845,7 @@ javax
 jboss
 jdbc
 jigsaw
+jira
 jj
 jmx-console
 job

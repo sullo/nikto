@@ -1,5 +1,5 @@
 #!perl
-# LW2 version 2.5
+# LW2 version 2.5.1
 #   LW2 Copyright (c) 2009, Jeff Forristal (wiretrip.net)
 #   All rights reserved.
 #
@@ -26,6 +26,9 @@
 #   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
 #   ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 #   POSSIBILITY OF SUCH DAMAGE.
+#
+#   Note that this file has been updated as part of the Nikto project,
+#   and is technically a fork of LibWhisker 2.5.
 
 =head1 NAME
 
@@ -1010,8 +1013,12 @@ Returns the number of URLs actually crawled (not including those skipped).
         # we know this is defined, due to our tagmap
         my $t = $_crawl_linktags{$TAG};
 
+	# lowercase tags for normalization to prevent undefined behavior
+	# See: https://github.com/sullo/nikto/issues/142
+	$hr = { map lc, %$hr };
+
         while ( my ( $key, $val ) = each %$hr ) {    # normalize element values
-            $$hr{ lc($key) } = $val;
+            $$hr{ $key } = $val;
         }
 
         # all of this just to catch meta refresh URLs
@@ -2629,6 +2636,7 @@ sub _http_do_request_ex {
             $$hout{whisker}->{message}     = $6;
             $$hout{whisker}->{http_eol}    = $7;
             $$hout{whisker}->{'100_continue'}++ if ( $4 == 100 );
+            $$hout{whisker}->{'uri_requested'} = $$W{'uri'}; 
 
             @H = http_read_headers( $stream, $hin, $hout );
             if ( !$H[0] ) {
@@ -2920,7 +2928,7 @@ sub http_fixup_request {
             if(!defined $host || $host eq '');
         $$hin{'Host'} .= ':' . $$hin{whisker}->{'port'}
           if ( index($$hin{'Host'},':') == -1 && 
-          	( $$hin{whisker}->{port} != 80 || ( $$hin{whisker}->{ssl}==1 &&
+               ( $$hin{whisker}->{port} != 80 && ( $$hin{whisker}->{ssl}==1 &&
               $$hin{whisker}->{port} != 443 ) ) );
         my ($conn) = utils_find_lowercase_key($hin,'connection');
         $$hin{'Connection'} = 'Keep-Alive' 
@@ -3028,6 +3036,8 @@ sub _ssl_save_info {
             $hr->{whisker}->{ssl_cert_issuer} =
               Net::SSLeay::X509_NAME_oneline(
                 Net::SSLeay::X509_get_issuer_name($cert) );
+            $hr->{whisker}->{ssl_cert_altnames} =
+              [ Net::SSLeay::X509_get_subjectAltNames($cert) ];
         }
         return;
     }

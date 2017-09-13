@@ -1,13 +1,15 @@
 #VERSION,2.002
-# $Id$
 #######################################################################
-# Source: http://cirt.net
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
-# This file may not be used with any software product without written permission from CIRT, Inc.
-# (c) 2007 CIRT, Inc., All Rights Reserved.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
 #
-# NOTE: By sending any database updates to CIRT, Inc., it is assumed that you
-# grant CIRT, Inc., the unlimited, non-exclusive right to reuse, modify and relicense the changes.
+# Note:
+# By submitting updates to this file you are transfering any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
 #######################################################################
 # Notes:
 # format: realm,id,password,message
@@ -117,7 +119,7 @@
 "700099","@ANY","root","calvin","Dell Remote Access Card"
 "700100","@ANY","root","changeme","Sun Microsystems ILOM/X4100"
 "700101","@ANY","root","changethis","Apache Tomcat"
-"700102","@ANY","root","changethis","Apache Tomcat"
+"700102","@ANY","tomcat","s3cret","Apache Tomcat"
 "700103","@ANY","root","Cisco","Cisco device"
 "700104","@ANY","root","nsi","NSI vmXfw"
 "700105","@ANY","root","pass","Axis Webcams"
@@ -168,4 +170,20 @@
 "700150","Topaz Prism Site","admin","admin","Topaz Prism monitoring from Mercurity Interactive"
 "700151","Topaz Site Realm","admin","admin","Mercury Interactive Topaz administrator"
 "700152","UpgradeAdministrator","admin","ncr","NCR's Terradata server, Parallel Upgrade Tool (PUT)"
-"700153","@ANY","manager","manager","3com switch"
+"700153","@ANY","manager","manager","3com switch/Apache Tomcat"
+"700154","Linksys WAG160N ","","admin","Wireless-N ADSL2+ Gateway WAG160N"
+"700155","@ANY","tomcat","","Apache Tomcat"
+"700156","@ANY","j2deployer","j2deployer","Apache Tomcat"
+"700157","@ANY","ovwebusr","OvW*busr1","Apache Tomcat"
+"700158","@ANY","cxsdk","kdsxc","Apache Tomcat"
+"700159","@ANY","root","owaspbwa","Apache Tomcat"
+"700160","@ANY","ADMIN","ADMIN","Apache Tomcat"
+"700161","@ANY","xampp","xampp","Apache Tomcat"
+"700162","@ANY","QCC","QLogic66","Apache Tomcat"
+"700163","@ANY","both","tomcat","Apache Tomcat"
+"700164","@ANY","role1","tomcat","Apache Tomcat"
+"700165","@ANY","admin","changethis","Apache Tomcat"
+"700166","SPIP Configuration","Polycom","456","Polycom SoundStation/SoundPoint IP"
+"700167","@ANY","username","password","ComfortableMexicanSofa CMS Engine"
+"700168","OSGi Management Console","admin","admin","Adobe Experience Manager default password found"
+"700169","Power+ (default: admin/admin)","admin","admin","Gamatronic Power+ default password found"

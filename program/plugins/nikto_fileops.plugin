@@ -1,7 +1,6 @@
 #VERSION,1.00
-# $Id$
 ###############################################################################
-#  Copyright (C) 2012 CIRT, Inc.
+#  Copyright (C) 2012 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -15,7 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
 # Various file operations
@@ -25,73 +24,88 @@ sub nikto_fileops_init {
                full_name   => "File Operations",
                author      => "Sullo",
                description => "Saves results to a text file.",
-               copyright   => "2012 CIRT Inc.",
-                 };
+               copyright   => "2012 Chris Sullo",
+               };
     return $id;
 }
 
 ###############################################################################
 # save a result to text file
 sub save_item {
+    require JSON::PP;
     my ($resulthash, $message, $request, $response) = @_;
     return if $resulthash->{'mark'}->{'save_prefix'} eq '';
     my $fn =
         $resulthash->{'mark'}->{'save_dir'} . "/"
       . $resulthash->{'mark'}->{'save_prefix'}
       . $resulthash->{'nikto_id'} . ".txt";
-    my $json_request = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($request);
-    my $json_response = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
+    my $json_request    = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($request);
+    my $json_response   = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
+    my $cookies_written = 0;
 
-    open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $!\n";
+    open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $@\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Information\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
     print SAVEFILE "OSVDB ID: \t" . $resulthash->{'osvdb'} . "\n";
     print SAVEFILE "Message:  \t" . $message . "\n";
+    print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Request\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($request->{'whisker'}{'method'} eq '') { 
-	print SAVEFILE "Not Applicable\n";
-	}
-    else { 
-    print SAVEFILE $request->{'whisker'}{'method'} . " "
-      . $request->{'whisker'}{'uri'} . " "
-      . $request->{'whisker'}{'protocol'} . "/"
-      . $request->{'whisker'}{'version'} . "\n";
 
-    foreach my $header (keys %{$request}) {
-        next if $header eq 'whisker';
-        print SAVEFILE $header . ": " . $request->{$header} . "\n";
+    if ($request->{'whisker'}{'method'} eq '') {
+        print SAVEFILE "Not Applicable\n";
     }
-	}
+    else {
+        print SAVEFILE $request->{'whisker'}{'method'} . " "
+          . $request->{'whisker'}{'uri'} . " "
+          . $request->{'whisker'}{'protocol'} . "/"
+          . $request->{'whisker'}{'version'} . "\n";
+
+        foreach my $header (keys %{$request}) {
+            next if $header eq 'whisker';
+            print SAVEFILE $header . ": " . $request->{$header} . "\n";
+        }
+    }
     print SAVEFILE "\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Response\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($response->{'whisker'}{'protocol'} eq '') { 
-	print SAVEFILE "Not Applicable\n";
-	}
-    else { 
-    print SAVEFILE $response->{'whisker'}{'protocol'} . "/"
-      . $response->{'whisker'}{'version'} . " "
-      . $response->{'whisker'}{'code'} . " "
-      . $response->{'whisker'}{'message'} . "\n";
-    foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
-        print SAVEFILE $header . ": " . $response->{$header} . "\n";
+    if ($response->{'whisker'}{'protocol'} eq '') {
+        print SAVEFILE "Not Applicable\n";
     }
-    print SAVEFILE "\n" . $response->{'whisker'}{'data'} . "\n";
+    else {
+        print SAVEFILE $response->{'whisker'}{'protocol'} . "/"
+          . $response->{'whisker'}{'version'} . " "
+          . $response->{'whisker'}{'code'} . " "
+          . $response->{'whisker'}{'message'} . "\n";
+        foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
+
+            # Handle multiple headers with same name, e.g. set-cookie
+            if (ref($response->{$header}) eq ARRAY) {
+                if ($cookies_written && ($header eq 'set-cookie')) { next; }
+                elsif ($header eq 'set-cookie') { $cookies_written = 1; }
+                foreach my $v (@{ $response->{$header} }) {
+                    print SAVEFILE $header . ": " . $v . "\n";
+                }
+            }
+            else {
+                print SAVEFILE $header . ": " . $response->{$header} . "\n";
+            }
+        }
+        print SAVEFILE "\n" . $response->{'whisker'}{'data'} . "\n";
     }
     print SAVEFILE "-----------------------------------------------------------------------\n";
     print SAVEFILE "			  Data Objects\n";
     print SAVEFILE "-----------------------------------------------------------------------\n";
-    if ($request->{'whisker'}{'method'} ne '') { 
-    	print SAVEFILE "REQUEST:$json_request\n";
-	}
-    if ($response->{'whisker'}{'protocol'} ne '') { 
-    	print SAVEFILE "RESPONSE:$json_response\n";
-	}
+    if ($request->{'whisker'}{'method'} ne '') {
+        print SAVEFILE "REQUEST:$json_request\n";
+    }
+    if ($response->{'whisker'}{'protocol'} ne '') {
+        print SAVEFILE "RESPONSE:$json_response\n";
+    }
     close(SAVEFILE);
 }
 
@@ -112,29 +126,29 @@ sub save_getprefix {
 ###############################################################################
 # get mark's save file name
 # Note: this is unused right now but keeping for next release
-sub get_report_filename { 
-	my ($in_file, $in_format, $mark) = @_;
-	if ($in_file eq '.') {
-    		my $prefix = "nikto_http";
-		$prefix .= "s" if ($mark->{'ssl'});
-		$prefix .= "_" . $mark->{'display_name'} . '_' . $mark->{'port'};
-    		$prefix =~ s/,/\-/g;
-    		$prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
-    		$prefix =~ s/_+/_/g;
-    		my $now = date_disp(time());
-    		$now =~ s/\s.*$//;
-    		$prefix .= "_" . $now . "." . $in_format;
-		}
-	else { 
-		$prefix = $in_file;
-		if ($in_format eq '') { 
-			$in_format = lc($in_file);
-			$in_format =~ s/(^.*\.)([^.]*$)/$2/g;
-			}
-		}
+sub get_report_filename {
+    my ($in_file, $in_format, $mark) = @_;
+    if ($in_file eq '.') {
+        my $prefix = "nikto_http";
+        $prefix .= "s" if ($mark->{'ssl'});
+        $prefix .= "_" . $mark->{'display_name'} . '_' . $mark->{'port'};
+        $prefix =~ s/,/\-/g;
+        $prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+        $prefix =~ s/_+/_/g;
+        my $now = date_disp(time());
+        $now =~ s/\s.*$//;
+        $prefix .= "_" . $now . "." . $in_format;
+    }
+    else {
+        $prefix = $in_file;
+        if ($in_format eq '') {
+            $in_format = lc($in_file);
+            $in_format =~ s/(^.*\.)([^.]*$)/$2/g;
+        }
+    }
 
-	return $prefix, $in_format;
-	}
+    return $prefix, $in_format;
+}
 
 ###############################################################################
 # Define/create the save directory
