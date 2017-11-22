@@ -72,8 +72,8 @@ nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
 # No targets - quit while we're ahead
-if ($CLI{'host'} eq "") {
-    nprint("+ ERROR: No host specified");
+if ($CLI{'host'} eq '') {
+    nprint("+ ERROR: No host or URL specified");
     usage();
 }
 
