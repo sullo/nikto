@@ -526,16 +526,23 @@ sub general_config {
                "Save=s"           => \$CLI{'saveresults'},
                "timeout=i"        => \$CLI{'timeout'},
                "Tuning=s"         => \$CLI{'tuning'},
+               "until:s"          => \$CLI{'until'},
                "update"           => \&check_updates,
                "Userdbs:s"        => \$CLI{'userdbs'},
                "useproxy:s"       => \$CLI{'useproxy'},
                "useragent=s"      => \$CLI{'useragent'},
-               "until:s"          => \$CLI{'until'},
+               "url=s"            => \$CLI{'host'},
                "Version"          => \&version,
                "vhost=s"          => \$CLI{'vhost'},
                "404string=s"      => \$CLI{'404string'},
                "404code=s"        => \$CLI{'404code'},
                ) or usage();
+
+    # both -host and -url
+    if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) { 
+        nprint("+ ERROR: Cannot use -url and -host at the same time");
+        exit;
+	}
 
     # 404string
     if ($CLI{'404string'} ne '') {
@@ -2840,7 +2847,7 @@ sub usage {
                                xml   XML Format
                                (if not specified the format will be taken from the file extension passed to -output)
        -Help              Extended help information
-       -host+             Target host
+       -host+             Target host/URL
        -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
        -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
        -id+               Host authentication to use, format is id:pass or id:pass:realm
@@ -2891,6 +2898,7 @@ sub usage {
        -useragent         Over-rides the default useragent
        -until             Run until the specified time or duration
        -update            Update databases and plugins from CIRT.net
+       -url+              Target host/URL (alias of -host)
        -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
@@ -2903,7 +2911,7 @@ sub usage {
        -dbcheck            check database and other key files for syntax errors
        -Format+            save file (-o) format
        -Help               Extended help information
-       -host+              target host
+       -host+              target host/URL
        -id+                Host authentication to use, format is id:pass or id:pass:realm
        -list-plugins       List all available plugins
        -output+            Write output to this file
