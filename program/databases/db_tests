@@ -6868,3 +6868,5 @@
 "007166","0","be","/adminer-4.3.1-mysql-en.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
 "007166","0","be","/adminer-4.3.1-mysql.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
 "007166","0","be","/Adminer.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
+"007167","0","be","/livehelp/admin/index.php","GET","<title>Live\sHelp\sWeb\sApp","","","","","Chatstack live chat software admin interface found.","",""
+"007168","0","123","/.config.local.php.swp","GET","db_host","","db_user","","","CS Cart config.local.php swap file found.","",""
