@@ -97,10 +97,10 @@ sub nikto_headers_postfetch {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
-        my $message =
-          "Server may leak inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
-        if ($#fields == 2) {
-
+        # Only report ETags which actuallyleak inodes...
+        if (scalar(@fields) == 3) {
+            my $message =
+              "Server may leak inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
             # check for numbers that are too large
             my $ishex = 1;
             for (my $i = 0 ; $i < 3 ; $i++) {
@@ -119,15 +119,9 @@ sub nikto_headers_postfetch {
               ? sprintf(", inode: %d, size: %d, mtime: %s",
                         hex($inode), hex($size), scalar(localtime($ltime)))
               : sprintf(", inode: %s, size: %s, mtime: %s", $inode, $size, $mtime);
+            add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            $ETAGS{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
-        else {
-            $message .= ", fields: ";
-            foreach my $field (@fields) {
-                $message .= "0x$field ";
-            }
-        }
-        add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-        $ETAGS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
     # Look for X-Frame-Options
