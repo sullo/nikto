@@ -98,7 +98,7 @@ sub nikto_headers_postfetch {
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
         my $message =
-          "Server leaks inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
+          "Server may leak inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
         if ($#fields == 2) {
 
             # check for numbers that are too large
