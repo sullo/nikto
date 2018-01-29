@@ -178,8 +178,16 @@ sub nikto_headers_postfetch {
             my $x = $result->{$header};
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
-            add_vulnerability($mark, "Uncommon header '$header' found, with contents: $result->{$header}", 999100, 0, $request->{'whisker'}->{'method'},
-                              $request->{'whisker'}->{'uri'}, $request, $result);
+            $vuln="Uncommon header '$header' found, with contents: $result->{$header}";
+            if (ref($x) eq 'ARRAY') {
+                $multiheader='(';
+                foreach $k (@{$x}){
+                    $multiheader .= "$k,";
+                }
+                $multiheader.=')';
+                $vuln = "Uncommon header '$header' found, with multiple values: $multiheader";
+            }
+            add_vulnerability($mark, $vuln, 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $reportnum++;
             $HFOUND{$header}{ $mark->{'hostname'} } = 1;
         }
