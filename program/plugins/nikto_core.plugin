@@ -1013,7 +1013,7 @@ sub resolve {
     my ($name, $ip) = "";
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
-        return $ident, '', $ident;
+        return $ident, $ident, $ident;
     }
 
     if ($ident =~ /[^0-9\.]/)    # not an IP, assume name & resolve
@@ -1606,7 +1606,7 @@ sub count_fields {
 
 ###############################################################################
 sub port_check {
-    my ($start_time, $hostname, $ip, $port, $key, $cert, $vhost) = @_;
+    my ($start_time, $hostname, $ip, $port, $key, $cert) = @_;
     my $m = {};
 
     # Check SKIPPORTS
@@ -1616,7 +1616,7 @@ sub port_check {
     }
 
     $m->{start_time} = $start_time;
-    $m->{hostname} = $vhost || $hostname;
+    $m->{hostname} = $hostname;
     $m->{ip}       = $ip;
     $m->{port}     = $port;
     $m->{ssl}      = 0;

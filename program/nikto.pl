@@ -115,16 +115,10 @@ foreach my $mark (@MARKS) {
        }
     }
 
-
     # Check that the port is open
-    my $open = 0;
-    if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
-	$open=1;
-	}
-    else {
-        $open = port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'}, $CLI{'vhost'});
-	}
-
+    my $open =
+      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'});
+    if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
     if ($open == 0) {
         $mark->{'test'} = 0;
         next;
@@ -133,7 +127,6 @@ foreach my $mark (@MARKS) {
         $COUNTERS{'total_targets'}++;
     }
     $mark->{'ssl'} = $open - 1;
-    if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
 
     if ($mark->{'ssl'}) {
         $mark->{'key'}  = $CLI{'key'};
