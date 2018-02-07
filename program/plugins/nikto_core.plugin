@@ -1606,7 +1606,7 @@ sub count_fields {
 
 ###############################################################################
 sub port_check {
-    my ($start_time, $hostname, $ip, $port, $key, $cert) = @_;
+    my ($start_time, $hostname, $ip, $port, $key, $cert, $vhost) = @_;
     my $m = {};
 
     # Check SKIPPORTS
@@ -1615,11 +1615,11 @@ sub port_check {
         return 0;
     }
 
-    $m->{start_time} = $start_time;
-    $m->{hostname} = $hostname;
-    $m->{ip}       = $ip;
-    $m->{port}     = $port;
-    $m->{ssl}      = 0;
+    $m->{'start_time'} = $start_time;
+    $m->{'hostname'} = $vhost || $hostname;
+    $m->{'ip'}       = $ip;
+    $m->{'port'}     = $port;
+    $m->{'ssl'}      = 0;
 
     my @checktypes;
     if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
@@ -1631,7 +1631,7 @@ sub port_check {
         $request{'whisker'}->{'method'} = $method;
         foreach my $checkssl (@checktypes) {
             nprint("- Checking for $checkssl on port "
-                     . ($hostname || $ip)
+                     . ($m->{'hostname'} || $m->{'ip'})
                      . ":$port, using $method",
                    "v",
                    $m
@@ -1654,12 +1654,12 @@ sub port_check {
                     next;
                 }
                 nprint("- $checkssl Server found: "
-                         . ($hostname || $ip)
+                         . ($m->{'hostname'} || $m->{'ip'})
                          . ":$port \t$response->{server}",
                        "d",
                        $m
                        );
-                return $m->{ssl} + 1;
+                return $m->{'ssl'} + 1;
             }
         }
     }
