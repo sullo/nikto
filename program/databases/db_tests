@@ -6870,4 +6870,4 @@
 "007179","0","be","/adminer-4.3.1-mysql-en.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
 "007180","0","be","/adminer-4.3.1-mysql.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
 "007181","0","be","/Adminer.php","GET","<title>Select\sdatabase\s-","","www.adminer.org","","","The Adminer program is a database admin access tool which can allow full administrative access to databases.","",""
-"007182","0","1b","/cgi-bin/filemanager/Manager.pl","GET","iDC File Manager is a powerful multilingual web based system","","","","","iDC File Manager found","",""
+"007182","0","1b","@CGIDIRSfilemanager/Manager.pl","GET","iDC File Manager is a powerful multilingual web based system","","","","","iDC File Manager found","",""
