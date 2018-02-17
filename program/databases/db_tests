@@ -6878,3 +6878,4 @@
 "007186","0","8a","/wls-wsat/RegistrationPortTypeRPC11","GET","200","weblogic.wsee.wstx.wsat.v10.endpoint.RegistrationPortTypeRPC11PortImpl","","","","This application may be vulnerable to CVE-2017-10271.","",""
 "007187","0","8a","/wls-wsat/ParticipantPortType11","GET","200","weblogic.wsee.wstx.wsat.v10.endpoint.ParticipantPortType11PortImpl","","","","This application may be vulnerable to CVE-2017-10271.","",""
 "007188","0","1b","@CGIDIRSfilemanager/Manager.pl","GET","iDC File Manager is a powerful multilingual web based system","","","","","iDC File Manager found","",""
+"007189","0","3b","/common/about","GET","KACE\sSystems","","","","","Dell KACE Systems Management Appliance version information","",""
