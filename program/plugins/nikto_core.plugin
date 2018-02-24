@@ -131,8 +131,7 @@ sub nprint {
     $line =~ s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
     $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/http:\/\/www.cert.org\/advisories\/$1.html/g;
     $line =~ s/BID\-([0-9]{4})/http:\/\/www.securityfocus.com\/bid\/$1/g;
-    $line =~
-      s/(MS[0-9]{2}\-[0-9]{3})/http:\/\/www.microsoft.com\/technet\/security\/bulletin\/$1.asp/gi;
+    $line =~ s/(MS([0-9]{2})\-[0-9]{3})/https\:\/\/docs\.microsoft\.com\/en-us\/security-updates\/securitybulletins\/20$2\/$1/gi;
 
     print $line . "\n";
 
@@ -1606,7 +1605,7 @@ sub count_fields {
 
 ###############################################################################
 sub port_check {
-    my ($start_time, $hostname, $ip, $port, $key, $cert) = @_;
+    my ($start_time, $hostname, $ip, $port, $key, $cert, $vhost) = @_;
     my $m = {};
 
     # Check SKIPPORTS
@@ -1615,11 +1614,11 @@ sub port_check {
         return 0;
     }
 
-    $m->{start_time} = $start_time;
-    $m->{hostname} = $hostname;
-    $m->{ip}       = $ip;
-    $m->{port}     = $port;
-    $m->{ssl}      = 0;
+    $m->{'start_time'} = $start_time;
+    $m->{'hostname'} = $vhost || $hostname;
+    $m->{'ip'}       = $ip;
+    $m->{'port'}     = $port;
+    $m->{'ssl'}      = 0;
 
     my @checktypes;
     if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
@@ -1631,7 +1630,7 @@ sub port_check {
         $request{'whisker'}->{'method'} = $method;
         foreach my $checkssl (@checktypes) {
             nprint("- Checking for $checkssl on port "
-                     . ($hostname || $ip)
+                     . ($m->{'hostname'} || $m->{'ip'})
                      . ":$port, using $method",
                    "v",
                    $m
@@ -1654,12 +1653,12 @@ sub port_check {
                     next;
                 }
                 nprint("- $checkssl Server found: "
-                         . ($hostname || $ip)
+                         . ($m->{'hostname'} || $m->{'ip'})
                          . ":$port \t$response->{server}",
                        "d",
                        $m
                        );
-                return $m->{ssl} + 1;
+                return $m->{'ssl'} + 1;
             }
         }
     }

@@ -115,10 +115,11 @@ foreach my $mark (@MARKS) {
        }
     }
 
+    if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
+
     # Check that the port is open
     my $open =
-      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'});
-    if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
+      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'}, $mark->{'vhost'});
     if ($open == 0) {
         $mark->{'test'} = 0;
         next;
