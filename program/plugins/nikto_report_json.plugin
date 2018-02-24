@@ -83,8 +83,8 @@ sub json_item {
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $line = '{';
 
-        $line .= "\"id\":" .$item->{'nikto_id'} .",";
-        if ($item->{'osvdb'} ne '') { $line .= "\"OSVDB\":" .$item->{'osvdb'} .","; }
+        $line .= "\"id\": \"" .$item->{'nikto_id'} ."\",";
+        if ($item->{'osvdb'} ne '') { $line .= "\"OSVDB\": \"" .$item->{'osvdb'} ."\","; }
 
         if ($item->{'method'} ne '') { $line .= "\"method\":\"" .$item->{'method'} ."\","; }
 
