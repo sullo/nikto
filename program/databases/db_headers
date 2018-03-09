@@ -49,6 +49,7 @@
 "dav"
 "etag"
 "expect"
+"expect-ct"
 "expires"
 "from"
 "host"
