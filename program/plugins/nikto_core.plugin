@@ -1552,7 +1552,7 @@ sub check_dbs {
     nprint("Checking plugins for duplicate test IDs");
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
-	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$file': $@\n";
+	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$pf': $@\n";
 	my @file=<PF>;
 	close(PF);
   	my @adds= grep(/add_vulnerability\(/, @file);

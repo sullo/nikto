@@ -282,7 +282,7 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my %locheaders, %locflags, $cl, $l, $wa;
+    my (%locheaders, %locflags, $cl, $l, $wa);
     $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
     $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/;
     $locflags{'noclean'} = 1;

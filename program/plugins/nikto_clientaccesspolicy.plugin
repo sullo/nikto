@@ -66,7 +66,7 @@ sub nikto_clientaccesspolicy {
         }
     }
 	
-    my $file = "/crossdomain.xml" ;
+    $file = "/crossdomain.xml" ;
     ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {

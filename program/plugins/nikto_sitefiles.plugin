@@ -84,7 +84,7 @@ sub nikto_sitefiles {
         }
 
         # request by ip
-        my ($res, $content, $error, $request, $response) =
+        ($res, $content, $error, $request, $response) =
           nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitefiles");
         if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
 		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
