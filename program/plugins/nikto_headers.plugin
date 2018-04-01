@@ -97,22 +97,30 @@ sub nikto_headers_postfetch {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
-        # Only report ETags which actuallyleak inodes...
+        # Only report ETags which actually leak inodes...
         if (scalar(@fields) == 3) {
             my $message =
               "Server may leak inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
             # check for numbers that are too large
             my $ishex = 1;
             for (my $i = 0 ; $i < 3 ; $i++) {
-                if (length($fields[$i]) > 14) {
+                if ((length($fields[$i]) > 14) || ($fields[$i] !~ /^[0-9A-F]+$/i)) {
                     $ishex = 0;
                 }
             }
             use bignum;
-            my $inode = "0x$fields[0]";
-            my $size  = "0x$fields[1]";
-            my $mtime = "0x$fields[2]";
-            my $ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
+            my ($inode, $size, $mtime, $ltime);
+            if ($ishex) { 
+            	$inode = "0x$fields[0]";
+            	$size  = "0x$fields[1]";
+            	$mtime = "0x$fields[2]";
+            	$ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
+		}
+            else { 
+            	$inode = $fields[0];
+            	$size  = $fields[1];
+            	$mtime = $ltime = $fields[2];
+		}
 
             $message .=
               ($ishex == 1)
@@ -188,7 +196,6 @@ sub nikto_headers_postfetch {
                 $vuln = "Uncommon header '$header' found, with multiple values: $multiheader";
             }
             add_vulnerability($mark, $vuln, 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-            $reportnum++;
             $HFOUND{$header}{ $mark->{'hostname'} } = 1;
         }
     }
