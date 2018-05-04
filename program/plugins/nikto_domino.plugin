@@ -67,7 +67,7 @@ sub nikto_domino {
         ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
             $is_domino=1;
-            add_vulnerability($mark, "$uri: Domino login page found.", 52001, 523,
+            add_vulnerability($mark, "$uri: Domino login page found.", 520010, 523,
                 $uri, $request, $response);
         }
     }

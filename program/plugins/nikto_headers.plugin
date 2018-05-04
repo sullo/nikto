@@ -206,7 +206,7 @@ sub nikto_headers_postfetch {
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         } 
         elsif ($result->{'strict-transport-security'} =~ /max-age="?0"?/i) {
-            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999970, 0,
+            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999971, 0,
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
           }
        
