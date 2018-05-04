@@ -19,9 +19,9 @@
 # PURPOSE:
 # Search content for known bad strings
 ###############################################################################
-use vars qw/$CONTENTSEARCH %CSMATCHED/;
 
 sub nikto_content_search_init {
+    use vars qw/$CONTENTSEARCH %CSMATCHED/;
     my $id = { name        => "content_search",
                full_name   => "Content Search",
                author      => "Sullo",
@@ -61,10 +61,9 @@ sub nikto_content_search {
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
     foreach my $testid (@$CONTENTSEARCH) {
-        if ($body =~ $testid->{'compiled'}
-            && !exists $CSMATCHED{ $mark->{'hostname'} }{$file}) {
+        # Check whether we've already matched it
+        if (($CSMATCHED{ $mark->{'hostname'} }{$file} != 1) && ($body =~ $testid->{'compiled'})) {
 
-            # Check whether we've already matched it
             my $outmessage = "$file: $testid->{'message'}";
             add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'osvdb'}, $method, $file, $request, $response);
             $CSMATCHED{ $mark->{'hostname'} }{$file} = 1;
