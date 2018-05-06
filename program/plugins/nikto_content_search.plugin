@@ -57,7 +57,8 @@ sub nikto_content_search {
     my ($mark, $parameters, $request, $response) = @_;
 
     my $body   = $response->{'whisker'}->{'data'};
-    my $file   = $response->{'whisker'}->{'uri'};
+    my @uri    = LW2::uri_split($response->{'whisker'}->{'uri'});
+    my $file   = $uri[0];
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
     foreach my $testid (@$CONTENTSEARCH) {
