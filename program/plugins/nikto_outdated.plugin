@@ -88,7 +88,7 @@ sub nikto_outdated {
             $sepr = substr($sepr, (length($sepr) - 1), 1);
 
             # break up ID string on $sepr
-            my @T = split(/$sepr/, $mark->{'banner'});
+            my @T = split(/\\$sepr/, $mark->{'banner'});
 
             # assume last is version...
             for ($i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
