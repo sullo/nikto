@@ -56,7 +56,6 @@ sub csv_host_start {
     print $handle "\"" . csv_safecell($hostname) . "\","
       . "\"" . csv_safecell($mark->{'ip'}) . "\","
       . "\"" . csv_safecell($mark->{'port'}) . "\"," . "\"\"," . "\"\"," . "\"\","
-      #. "\"" . $mark->{'banner'} . "\"\n";
       . "\"" . csv_safecell($mark->{'banner'}) . "\"\n";
     return;
 }
@@ -77,7 +76,7 @@ sub csv_item {
         $line .= "\",";
 
         $line .= "\"";
-        if ($item->{'method'} ne '') { $line .= csv_safecell($item->{'method'}); }
+        if ($item->{'method'} ne '') { $line .= $item->{'method'}; }
         $line .= "\",";
 
         $line .= "\"";
