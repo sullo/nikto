@@ -68,7 +68,7 @@ sub csv_item {
         my $line = '';
     	my $hostname = $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
         $line .= "\"" . csv_safecell($hostname) . "\",";
-        $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . \",";
+        $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
         $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
 
         $line .= "\"";
