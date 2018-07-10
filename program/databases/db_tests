@@ -6326,7 +6326,7 @@
 "006613","0","23","/caucho-status","GET","Caucho\sServlet\sEngine","","","","","Caucho Resin status file present","",""
 "006614","0","23","@WORDPRESSwp-content/w3tc/dbcache/","GET","Index\s[oO]f\s/","","","","","W3 Total Cache reveals sensitive information. See http://seclists.org/fulldisclosure/2012/Dec/242","",""
 "006615","0","b","@WORDPRESSwp-content/plugins/portable-phpmyadmin/wp-pma-mod/","GET","<title>phpMyAdmin","","","","","phpMyAdmin (portable) found.","",""
-"006616","0","23","@WORDPRESSwp-content/plugins/portable-phpmyadmin/wp-pma-mod/db_sql.php","GET","Browse ","","","","","phpMyAdmin (portable) found which may allow DB access.","",""
+"006616","0","23","@WORDPRESSwp-content/plugins/portable-phpmyadmin/wp-pma-mod/db_sql.php","GET","browse\">Browse","","","","","phpMyAdmin (portable) found which may allow DB access.","",""
 "006617","0","23","@WORDPRESSwp-content/uploads/dump.sql","GET","WordPress\sMySQL\sdatabase","","","","","A Wordpress MySQL database dump was found.","",""
 "006618","0","23","@WORDPRESSwp-content/plugins/pods/sql/dump.sql","GET","CREATE\sTABLE","INSERT\sINTO","","","","A Wordpress MySQL database dump was found.","",""
 "006619","0","23","@WORDPRESSwp-content/plugins/simplemap/dump.sql","GET","CREATE\sTABLE","INSERT\sINTO","","","","A Wordpress MySQL database dump was found.","",""
