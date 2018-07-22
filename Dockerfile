@@ -8,4 +8,5 @@ RUN git clone https://github.com/sullo/nikto
 ENV PATH /nikto/program:$PATH
 
 WORKDIR /nikto/program
-CMD ["nikto.pl"]
+ENTRYPOINT ["nikto.pl"]
+CMD [ "-Help"]
