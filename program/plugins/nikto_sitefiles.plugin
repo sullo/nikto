@@ -76,18 +76,18 @@ sub nikto_sitefiles {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", "", "sitefiles");
+          nfetch($mark, "/$file", "GET", "", "", "", "sitefiles");
 
-        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) &&
-		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+        if (($response->{'content-type'} =~ '/^application\//i') || 
+            (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && ($response->{'content-type'} !~ '/^text\//i'))) {
             add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found.", 740001, 0, "HEAD", "/$file", $request, $response);
         }
 
         # request by ip
         ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitefiles");
-        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
-		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+          nfetch($mark, "/$file", "GET", "", "", \%flags, "sitefiles");
+        if (($response->{'content-type'} =~ '/^application\//i') || 
+            (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && ($response->{'content-type'} !~ '/^text\//i'))) {
             add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found. (NOTE: requested by IP address).", 740002, 0, "HEAD", "/file", $request, $response);
         }
     }
