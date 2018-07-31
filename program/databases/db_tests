@@ -6904,3 +6904,4 @@
 "007213","0","3","/conn.json","GET","200","","","","","This might be interesting...","",""
 "007214","0","3","/security.json","GET","200","","","","","This might be interesting...","",""
 "007215","0","3","/accounts.json","GET","200","","","","","This might be interesting...","",""
+"007216","0","3","/package.json","GET","\"name\"\:","","","","","Node.js package file found. It may contain sensitive information.","",""
