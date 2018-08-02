@@ -2754,7 +2754,7 @@ sub send_updates {
             "\n
       *********************************************************************
       Portions of the server's headers ($updated_version) are not in
-      the Nikto database or are newer than the known string. Would you like
+      the Nikto " . $VARIABLES{'version'} . " database or are newer than the known string. Would you like
       to submit this information (*no server specific data*) to CIRT.net
       for a Nikto update (or you may email to sullo\@cirt.net) (y/n)? ", ""
         );
@@ -2796,13 +2796,13 @@ sub send_updates {
     }
 
     if ($code != 200) {
-	nprint("+ ERROR $code: Update failed, please notify sullo\@cirt.net of this code.");
+	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.");
 	}
     elsif ($content !~ /SUCCESS/) {
-        nprint("+ ERROR $code: Unable to send update info to CIRT.net. Here was the request result content:\n$content\n");
+        nprint("+ ERROR: Unable to send update info to cirt.net. Here was the request result : Code: $code\n$content\n");
     }
     else {
-        nprint("- Sent updated info to CIRT.net -- Thank you!");
+        nprint("- Sent updated info to cirt.net -- Thank you!");
     }
 
     return;
