@@ -64,9 +64,15 @@ sub nikto_tests {
             my %headrs;
             my %flags;
             if ($TESTS{$checkid}{'headers'}) {
-                %headrs=split /: /, $TESTS{$checkid}{'headers'};
+                foreach my $header (split /\\r\\n/, $TESTS{$checkid}{'headers'}) {
+                    my ($key, $value) = split(/: /, $header);
+                    $headrs{$key} = $value;
+                }
                 $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
+            }
+            if ($TESTS{$checkid}{'data'}) {
+                $headrs{'content-length'} = length($TESTS{$checkid}{'data'});
             }
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
