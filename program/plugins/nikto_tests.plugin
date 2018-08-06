@@ -71,13 +71,15 @@ sub nikto_tests {
                 $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
-            if ($TESTS{$checkid}{'data'}) {
-                $headrs{'content-length'} = length($TESTS{$checkid}{'data'});
+            my $data = $TESTS{$checkid}{'data'};
+            if ($data) {
+                $data =~ s/\\r\\n/\r\n/g;
+                $headrs{'content-length'} = length($data) unless grep(/^transfer-encoding$/i, keys(%headrs));
             }
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
                      $TESTS{$checkid}{'method'},
-                     $TESTS{$checkid}{'data'},
+                     $data,
                      \%headrs,
                      \%flags, 
                      $checkid);
