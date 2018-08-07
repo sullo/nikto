@@ -51,6 +51,23 @@ sub change_variables {
     return @subtests;
 }
 
+sub unslash {
+
+    my $line = $_[0];    # $line is the slash-escaped variable
+    my @line = split(/\\\\/, $line);
+    foreach (@line) {
+        $_ =~ s/\\a/\a/g;
+        $_ =~ s/\\b/\b/g;
+        $_ =~ s/\\e/\e/g;
+        $_ =~ s/\\f/\f/g;
+        $_ =~ s/\\n/\n/g;
+        $_ =~ s/\\r/\r/g;
+        $_ =~ s/\\t/\t/g;
+        $_ =~ s/\\x([[:xdigit:]]2)/chr(hex($1))/ge;
+    }
+    return join("\\", @line);
+}
+
 ###############################################################################
 sub is_404 {
     my ($uri, $content, $rescode, $loc_header) = @_;

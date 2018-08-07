@@ -34,7 +34,7 @@ sub nikto_tests_init {
                          passfiles => "Flag to indicate whether to check for common password files",
                          all => "Flag to indicate whether to check all files with all directories",
                          report => "Report a status after the passed number of tests",
-						 tids => "A range of testids that will only be run",
+                         tids => "A range of testids that will only be run",
                          }
                  };
     return $id;
@@ -43,11 +43,11 @@ sub nikto_tests_init {
 sub nikto_tests {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
-	my @tids;
-	
-	if (defined $parameters->{'tids'}) {
-		@tids = expand_range($parameters->{'tids'});
-	}
+    my @tids;
+
+    if (defined $parameters->{'tids'}) {
+        @tids = expand_range($parameters->{'tids'});
+    }
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
@@ -63,18 +63,18 @@ sub nikto_tests {
             return if $mark->{'terminate'};
             my %headrs;
             my %flags;
-            if ($TESTS{$checkid}{'headers'}) {
-                foreach my $header (split /\\r\\n/, $TESTS{$checkid}{'headers'}) {
+            my $header = unslash($TESTS{$checkid}{'headers'});
+            if ($header) {
+                foreach $header (split /\r\n/, $header) {
                     my ($key, $value) = split(/: /, $header);
                     $headrs{$key} = $value;
                 }
                 $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
-            my $data = $TESTS{$checkid}{'data'};
+            my $data = unslash($TESTS{$checkid}{'data'});
             if ($data) {
-                $data =~ s/\\r\\n/\r\n/g;
-                $headrs{'content-length'} = length($data) unless grep(/^transfer-encoding$/i, keys(%headrs));
+                $headrs{'content-length'} = length($data) unless grep(/^transfer-encoding$/i, keys %headrs);
             }
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
@@ -100,8 +100,7 @@ sub nikto_tests {
                 }
             }
 
-            my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
-              "content";
+            my ($m1_method, $m1o_method, $m1a_method, $f2_method, $f1_method) = "content";
             my ($positive, $hashme) = 0;
             my ($hash, $reason) = '';
 
@@ -166,7 +165,7 @@ sub nikto_tests {
                 elsif ($res eq $FoF{'okay'}{'response'}) {
                     $positive = 1;
                     $reason = 'Response Code Match - FoF OK Response)';
-		}
+                }
             }
 
             # no match, check optional match
@@ -187,8 +186,8 @@ sub nikto_tests {
                     if ($res eq $TESTS{$checkid}{'match_1_or'}) {
                         $positive = 1;
                         $reason = 'Response Code Match - Match 1 (Or)';
-			}
-                   elsif ($res eq $FoF{'okay'}{'response'}) {
+                    }
+                    elsif ($res eq $FoF{'okay'}{'response'}) {
                         $positive = 1;
                         $reason = 'Response Code Match - FoF OK Response / Match 1 (Or)';
                     }
@@ -226,17 +225,15 @@ sub nikto_tests {
                 if ($TESTS{$checkid}{'match_1_and'} ne "") {
                     if ($m1a_method eq "content") {
                         if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
-			else { $reason .= ' and content Match1 (And)'; }
+                        else { $reason .= ' and content Match1 (And)'; }
                     }
                     elsif ($m1a_method eq "md5") {
-                        if ($hash ne $TESTS{$checkid}{'match_1_and'}) {
-                            next;
-                        }
-			else { $reason .= ' and MD5 Match1 (And)'; }
+                        if ($hash ne $TESTS{$checkid}{'match_1_and'}) { next; }
+                        else { $reason .= ' and MD5 Match1 (And)'; }
                     }
                     else {
                         if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
-			else { $reason .= ' and Response Code Match1 (And)'; }
+                        else { $reason .= ' and Response Code Match1 (And)'; }
                     }
                 }
 
@@ -255,8 +252,8 @@ sub nikto_tests {
                 }
 
                 $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
-		if ($positive) {
-                	add_vulnerability($mark,
+                if ($positive) {
+                    add_vulnerability($mark,
                                   "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
                                   $checkid,
                                   $TESTS{$checkid}{'osvdb'},
@@ -266,7 +263,7 @@ sub nikto_tests {
                                   $response,
                                   $reason
                                   );
-		}
+                }
             }
         }
 
