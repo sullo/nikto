@@ -6910,3 +6910,5 @@
 "007219","0","3","/redis/config.json","GET","mount\"(\s+)?\:","","","","","Redis config file found. It may contain sensitive information.","",""
 "007220","0","3","/config/redis.json","GET","host\"(\s+)?\:","","","","","Redis config file found. It may contain sensitive information.","",""
 "007221","0","3","/firebase.json","GET","hosting\"(\s+)?\:","","","","","Firebase config file found. It may contain sensitive information.","",""
+"007222","0","d","/ws.asmx","GET","Web\sService","","","","","Webservice found","",""
+"007223","0","d","/ws/ws.asmx","GET","Web\sService","","","","","Webservice found","",""
