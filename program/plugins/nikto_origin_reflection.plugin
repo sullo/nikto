@@ -17,7 +17,7 @@
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
-# Check for CORS reflection attacks as described in http://blog.portswigger.net/2016/10/exploiting-cors-misconfigurations-for.html
+# Check for CORS reflection attacks as described in https://portswigger.net/blog/exploiting-cors-misconfigurations-for-bitcoins-and-bounties
 ###############################################################################
 sub nikto_origin_reflection_init {
     my $id = {
@@ -41,9 +41,17 @@ sub nikto_origin_reflection {
 
     my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
     if ($response->{'Access-Control-Allow-Origin'} =~ /nikto\.example\.com/) {
-        # TODO: Set the Nikto ID appropriately instead of 999950
-        add_vulnerability($mark, "$path: Site appears vulnerable to the CORS Origin reflection.", 999950, 0, "GET", $path, $request, $response);
+        add_vulnerability($mark, "$path: Site reflects arbitrary CORS Origin headers without validation. See http://ejj.io/misconfigured-cors/", "000429", 0, "GET", $path, $request, $response);
     }
+
+
+    $headers{'Origin'} = $mark{'hostname'} . '.example.com';
+
+    ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
+    if ($response->{'Access-Control-Allow-Origin'} =~ /$mark{'hostname'}\.example\.com/) {
+        add_vulnerability($mark, "$path: Site reflects CORS Origin headers which partially match the domain, without full validation. See http://ejj.io/misconfigured-cors/", "000429", 0, "GET", $path, $request, $response);
+    }
+
 }
 
 1;
