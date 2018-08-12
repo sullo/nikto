@@ -52,8 +52,7 @@ sub change_variables {
 }
 
 sub unslash {
-
-    my $line = $_[0];    # $line is the slash-escaped variable
+    my $line = $_[0] || return;    # $line is the slash-escaped variable
     my @line = split(/\\\\/, $line);
     foreach (@line) {
         $_ =~ s/\\a/\a/g;

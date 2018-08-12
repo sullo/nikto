@@ -43,7 +43,7 @@ sub nikto_tests_init {
 sub nikto_tests {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
-    my @tids;
+    my (@tids, $data);
 
     if (defined $parameters->{'tids'}) {
         @tids = expand_range($parameters->{'tids'});
@@ -63,17 +63,17 @@ sub nikto_tests {
             return if $mark->{'terminate'};
             my %headrs;
             my %flags;
-            my $header = unslash($TESTS{$checkid}{'headers'});
-            if ($header) {
-                foreach $header (split /\r\n/, $header) {
-                    my ($key, $value) = split(/: /, $header);
+            if ($TESTS{$checkid}{'headers'} ne '') {
+            	my $header = unslash($TESTS{$checkid}{'headers'});
+                foreach my $h (split /\r\n/, $header) {
+                    my ($key, $value) = split(/: /, $h);
                     $headrs{$key} = $value;
                 }
                 $headrs{'host'} = $mark->{'hostname'} unless ($headrs{'host'}); # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
-            my $data = unslash($TESTS{$checkid}{'data'});
-            if ($data) {
+            if ($TESTS{$checkid}{'data'} ne '') {
+            	$data = unslash($TESTS{$checkid}{'data'});
                 $headrs{'content-length'} = length($data) unless grep(/^transfer-encoding$/i, keys %headrs);
             }
             my ($res, $content, $error, $request, $response) =
