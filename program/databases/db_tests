@@ -6909,3 +6909,5 @@
 "007221","0","3","/firebase.json","GET","hosting\"(\s+)?\:","","","","","Firebase config file found. It may contain sensitive information.","",""
 "007222","0","d","/ws.asmx","GET","Web\sService","","","","","Webservice found","",""
 "007223","0","d","/ws/ws.asmx","GET","Web\sService","","","","","Webservice found","",""
+"007224","0","23","/.gitignore","GET","200","","","","",".gitignore file found. It is possible to grasp the directory structure.","",""
+"007225","0","23","/.hgignore","GET","200","","","","",".hgignore file found. It is possible to grasp the directory structure.","",""
