@@ -6924,4 +6924,5 @@
 "007236","0","3","/currentsetting.htm","GET","Model=","","","","","Netgear information disclosure.","",""
 "007237","0","3","/device_description.xml","GET","modelDescription","","","","","Sonos information disclosure.","",""
 "007238","0","3","/evox/about","GET","serverName","","","","","Trane Tracer information disclosure.","",""
-"007239","0","3","/.well-known/security.txtt","GET","contact:","","","","","Potential .well-known information disclosure.","",""
+"007239","0","3","/.well-known/security.txt","GET","contact:","","","","","Potential .well-known information disclosure.","",""
+"007240","0","7","/WEBACCOUNT.CGI?OkBtn=++Ok++&RESULTPAGE=..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2FWindows%2Fsystem.ini&USEREDIRECT=1&WEBACCOUNTID=&WEBACCOUNTPASSWORD=","GET","wave=","","","","","Argus Surveillance DVR 4.0.0.0 contains a local file retrieval vulnerability","",""
