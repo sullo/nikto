@@ -62,6 +62,7 @@ sub unslash {
         $_ =~ s/\\n/\n/g;
         $_ =~ s/\\r/\r/g;
         $_ =~ s/\\t/\t/g;
+        $_ =~ s/\\"/\"/g;
         $_ =~ s/\\x([[:xdigit:]]2)/chr(hex($1))/ge;
     }
     return join("\\", @line);
@@ -2411,7 +2412,6 @@ sub nfetch {
     $request{'whisker'}->{'method'} = $method;
 
     if ($data ne "") {
-        $data =~ s/\\\"/\"/g;
         $request{'whisker'}->{'data'} = $data;
     }
 
