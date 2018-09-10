@@ -774,7 +774,7 @@
 "600765","Sun-ONE-ASP/","4.0.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600766","Sun-ONE-Web-Server/","6.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600767","SunOS/","5.8","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600768","SVN/","1.7.4","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600768","SVN/","1.10.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600769","sw/","1.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600770","swcd/","5.2.0032","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600771","SWS-","2.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
