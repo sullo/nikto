@@ -29,6 +29,7 @@
 # c - Remote source inclusion
 # d - WebService
 # e - Administrative Console
+# f - XML Injection
 #
 # Field order:
 # Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1 Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers
@@ -6288,8 +6289,8 @@
 "006520","0","b","@WORDPRESSwp-login.php?action=register","GET","Register\sFor\sThis\sSite","","","registration\sis\scurrently\snot","","Wordpress registration enabled","",""
 "006521","0","7","/../../windows/dvr2.ini","GET","\[generic\]","","","","","Tibetsystem DVR allows arbitrary file retrieval. See http://packetstormsecurity.org/files/109547/tibetsystem-traversal.txt","",""
 "006522","18255","7","/htdocs/../../../../../../../../../../../etc/passwd","GET","root:","","","","","SAP Internet Graphics Server (IGS) directory traversal","",""
-"006523","0","38","/?-s","GET","\"\>\&lt\;\?php","<\?php","","","","PHP allows retrieval of the source code via the -s parameter, and may allow command execution. See http://www.kb.cert.org/vuls/id/520827","",""
-"006524","0","38","/login.php?-s","GET","\"\>\&lt\;\?php","<\?php","","","","PHP allows retrieval of the source code via the -s parameter, and may allow command execution. See http://www.kb.cert.org/vuls/id/520827","",""
+"006523","0","38","/?-s","GET","\">\&lt\;\?php","<\?php","","","","PHP allows retrieval of the source code via the -s parameter, and may allow command execution. See http://www.kb.cert.org/vuls/id/520827","",""
+"006524","0","38","/login.php?-s","GET","\">\&lt\;\?php","<\?php","","","","PHP allows retrieval of the source code via the -s parameter, and may allow command execution. See http://www.kb.cert.org/vuls/id/520827","",""
 "006525","0","b","@TOMCATADMINhtml","GET","<tt>conf/tomcat-users.xml</tt>","","","","","Default Tomcat Manager / Host Manager interface found","",""
 "006526","0","b3","/getstatus","GET","License ID:","","","","","Chaos Software V-Ray status information available","",""
 "006527","0","b","/platform/","GET","\.\.\/base\/index\.jsp","","","","","Platform Management Console found","",""
@@ -6926,3 +6927,4 @@
 "007238","0","3","/evox/about","GET","serverName","","","","","Trane Tracer information disclosure.","",""
 "007239","0","3","/.well-known/security.txt","GET","contact:","","","","","Potential .well-known information disclosure.","",""
 "007240","0","7","/WEBACCOUNT.CGI?OkBtn=++Ok++&RESULTPAGE=..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2FWindows%2Fsystem.ini&USEREDIRECT=1&WEBACCOUNTID=&WEBACCOUNTPASSWORD=","GET","wave=","","","","","Argus Surveillance DVR 4.0.0.0 contains a local file retrieval vulnerability","",""
+"007240","0","f","/util/xmlrpc/Handler.ashx","GET","EPiServer.Blog 7.0(\.([0-4]|5([0-7]|8[1-5])))?","","","","","EpiServer Blog 7.0.586 and below may contain an XXE vulnerability in the blog module, which is accessible even if the module is not activated. See https://seclists.org/fulldisclosure/2018/Sep/17","",""
