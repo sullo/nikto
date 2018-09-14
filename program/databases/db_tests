@@ -6928,3 +6928,4 @@
 "007239","0","3","/.well-known/security.txt","GET","contact:","","","","","Potential .well-known information disclosure.","",""
 "007240","0","7","/WEBACCOUNT.CGI?OkBtn=++Ok++&RESULTPAGE=..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2FWindows%2Fsystem.ini&USEREDIRECT=1&WEBACCOUNTID=&WEBACCOUNTPASSWORD=","GET","wave=","","","","","Argus Surveillance DVR 4.0.0.0 contains a local file retrieval vulnerability","",""
 "007240","0","f","/util/xmlrpc/Handler.ashx","GET","EPiServer.Blog 7.0(\.([0-4]|5([0-7]|8[1-5])))?","","","","","EpiServer Blog 7.0.586 and below may contain an XXE vulnerability in the blog module, which is accessible even if the module is not activated. See https://seclists.org/fulldisclosure/2018/Sep/17","",""
+"007241","0","1","/util/xmlrpc/Handler.ashx","GET","EPiServer XMLRPC","","","","","EpiServer API discovered","",""
