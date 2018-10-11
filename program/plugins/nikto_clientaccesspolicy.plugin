@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -39,25 +39,26 @@ sub nikto_clientaccesspolicy {
     my ($mark) = @_;
     my $msg;
     my $file = "/clientaccesspolicy.xml";
-	
+
     my ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "clientaccesspolicy");
 
     if (($res eq 200) || ($res eq $FoF{'okay'}{'response'})) {
         if (is_404($file, $content, $res, $response->{'location'})) { return; }
+        if ($content !~ /access-policy/) { return; }
 
         my $DISCTR = 0;
         foreach my $line (split(/\n/, $content)) {
             chomp($line);
             $line =~ s/\#.*$//;
             if ($line eq "") { next; }
-            elsif (($line =~ /<domain\suri="(?:http:\/\/)?\*"/) || 
+            elsif (($line =~ /<domain\suri="(?:http:\/\/)?\*"/) ||
             	($line =~ /<allow-http-request-headers-from\sdomain="\*"/)) {
                 add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://msdn.microsoft.com/en-us/library/cc197955(v=vs.95).aspx", 999982, 0, "GET", $file, $request, $response);
             }
             else {
                 $DISCTR++;
             }
-        }    # end foreach my $line 
+        }    # end foreach my $line
 
 		$msg =  $mark->{'root'} . "$file contains $DISCTR " . (($DISCTR > 1)?"lines":"line") . " which should be manually viewed for improper domains or wildcards.";
 
@@ -65,7 +66,7 @@ sub nikto_clientaccesspolicy {
             add_vulnerability($mark, $msg, 999981, 0, "GET", $file, $request, $response);
         }
     }
-	
+
     $file = "/crossdomain.xml" ;
     ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "crossdomain");
 
@@ -88,7 +89,7 @@ sub nikto_clientaccesspolicy {
 				$domain =~ s/\" ?\/\>.*$//;
 				$domainlist .= "$domain ";
             }
-        }    # end foreach my $line 
+        }    # end foreach my $line
 
 		$msg =  $mark->{'root'} . "$file contains $DISCTR ";
 		$msg .= ($DISCTR > 1)?"lines":"line";

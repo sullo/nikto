@@ -52,3 +52,4 @@ More about this error					# MS Lync 2010
 No target SAP system for request			# SAP web server
 no valid destination server available for		# SAP web server
 unauthorized public IP address				# BigIP
+<TITLE>Invalid URL</TITLE>                              # AkamaiGhost
