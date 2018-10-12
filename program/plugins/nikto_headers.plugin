@@ -255,7 +255,7 @@ sub nikto_headers_check {
 
     if (exists $result->{$header}) {
         my $key =
-          LW2::md4(  $mark->{'ip'}
+          LW2::md5(  $mark->{'ip'}
                    . $mark->{'hostname'}
                    . $mark->{'port'}
                    . $mark->{'ssl'}
