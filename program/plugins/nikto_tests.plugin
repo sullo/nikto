@@ -100,7 +100,7 @@ sub nikto_tests {
                 }
             }
 
-            my ($m1_method, $m1o_method, $m1a_method, $f2_method, $f1_method) = "content";
+            my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method = "content";
             my ($positive, $hashme) = 0;
             my ($hash, $reason) = '';
 
