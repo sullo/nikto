@@ -101,8 +101,8 @@ sub nikto_tests {
             }
 
             my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method = "content";
-            my ($positive, $hashme) = 0;
-            my ($hash, $reason) = '';
+            my $positive = my $hashme = 0;
+            my $hash = $reason = '';
 
             # how to check each conditional
             if ($TESTS{$checkid}{'match_1'} =~ /^[0-9]{3}$/) { $m1_method = "code"; }
