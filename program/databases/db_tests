@@ -6931,3 +6931,4 @@
 "007241","0","1","/util/xmlrpc/Handler.ashx","GET","EPiServer XMLRPC","","","","","EpiServer API discovered","",""
 "007242","0","3","/.well-known/openid-configuration","GET","issuer","","","","","OpenID Provider Configuration Information.","",""
 "007243","0","3","/.well-known/oauth-authorization-server","GET","issuer","","","","","OAuth 2.0 Authorization Server Metadata.","",""
+"007244","0","e","/ibm/console/logon.jsp","GET","action=\"/ibm/console/j_security_check","","","","","IBM WebSphere admin console","",""
