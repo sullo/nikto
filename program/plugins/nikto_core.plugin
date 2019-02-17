@@ -1,4 +1,5 @@
 #VERSION,2.1.5
+
 ###############################################################################
 #  Copyright (C) 2006 Chris Sullo
 #
@@ -1661,10 +1662,10 @@ sub port_check {
 
             if ($res) {
 
-      # this will fix for some Apaches that are smart enough to answer non ssl reqs on an ssl server
+      # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
                 if (defined $content
                     && ( $content =~ /plain HTTP to an SSL/ ||
-					     $content =~ /The plain HTTP request was sent to HTTPS port/ )) {
+					     $content =~ /plain HTTP request was sent to HTTPS/ )) {
                     dump_var("Result Hash", \%result);
                     next;
                 }
