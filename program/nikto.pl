@@ -233,42 +233,33 @@ sub config_init {
         if (defined $optcfg{'config'}) { $VARIABLES{'configfile'} = $optcfg{'config'}; }
     }
 
-    # Read the config files in appropriate order
+    # Read the config files in order
     my ($error, $home);
     my $config_exists = 0;
     $error = load_config("$VARIABLES{'configfile'}");
     $config_exists = 1 if ($error eq "");
 
     # Guess home directory -- to support Windows
-    if (!$config_exists) {
-    	foreach my $var (split(/ /, "HOME USERPROFILE")) {
-        	$home = $ENV{$var} if ($ENV{$var});
-    	}
-        $error = load_config("$home/nikto.conf");
-    	$config_exists = 1 if ($error eq "");
+    foreach my $var (split(/ /, "HOME USERPROFILE")) {
+        $home = $ENV{$var} if ($ENV{$var});
     }
+    $error = load_config("$home/nikto.conf");
+    $config_exists = 1 if ($error eq "");
 
     # Guess Nikto current directory
     my $NIKTODIR = $0;
     chomp($NIKTODIR);
     $NIKTODIR =~ s#[\\/]nikto.pl$##;
+    $error = load_config("$NIKTODIR/nikto.conf");
+    $config_exists = 1 if ($error eq "");
 
-    if ($config_exists) {
-    	$error = load_config("$NIKTODIR/nikto.conf");
-    	$config_exists = 1 if ($error eq "");
-    }
+    $error = load_config("nikto.conf");
+    $config_exists = 1 if ($error eq "");
 
-    if (!$config_exists) {
-    	$error = load_config("nikto.conf");
-    	$config_exists = 1 if ($error eq "");
-    }
+    $error = load_config("$NIKTODIR/nikto.conf.default");
+    $config_exists = 1 if ($error eq "");
 
-    if (!$config_exists) {
-    	$error = load_config("$NIKTODIR/nikto.conf.default");
-    	$config_exists = 1 if ($error eq "");
-    }
-
-    if (!$config_exists) {
+    if ($config_exists == 0) {
         die "- Could not find a valid nikto config file.\n";
     }
 
