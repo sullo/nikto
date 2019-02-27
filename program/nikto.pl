@@ -260,7 +260,7 @@ sub config_init {
     $config_exists = 1 if ($error eq "");
 
     if ($config_exists == 0) {
-        print "- Could not find a valid nikto config file.\n";
+        die "- Could not find a valid nikto config file.\n";
     }
 
     return;
