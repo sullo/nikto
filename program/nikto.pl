@@ -256,8 +256,11 @@ sub config_init {
     $error = load_config("nikto.conf");
     $config_exists = 1 if ($error eq "");
 
+    $error = load_config("$NIKTODIR/nikto.conf.default");
+    $config_exists = 1 if ($error eq "");
+
     if ($config_exists == 0) {
-        die "- Could not find a valid nikto config file\n";
+        print "- Could not find a valid nikto config file.\n";
     }
 
     return;
