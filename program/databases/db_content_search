@@ -33,3 +33,6 @@
 "750513","0","404-server!!","This string is associated with the 'meuhy.php' backdoor file uploader/downloader."
 "750514","0","Brazilians Defacers","This string is associated with pages tagged by HackerBrasilll group."
 "750515","0","HackerBrasilll","This string is associated with pages tagged by HackerBrasilll group."
+"750516","0","plain HTTP to an SSL","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect.."
+"750517","0","plain HTTP request was sent to HTTPS","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect."
+"750518","0","password e-?mailed","Possible cleartext emailing of stored password."
