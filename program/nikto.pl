@@ -45,7 +45,6 @@ $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
 $VARIABLES{'version'}    = "2.1.6";
-$VARIABLES{'configfile'} = "/etc/nikto.conf";    ### Change if it's having trouble finding it
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
@@ -223,6 +222,8 @@ exit;
 #################################################################################
 # Load config files in order
 sub config_init {
+    my (@CF, $home);
+    my $config_exists = 0;
 
     # read just the --config option
     {
@@ -233,34 +234,33 @@ sub config_init {
         if (defined $optcfg{'config'}) { $VARIABLES{'configfile'} = $optcfg{'config'}; }
     }
 
-    # Read the config files in order
-    my ($error, $home);
-    my $config_exists = 0;
-    $error = load_config("$VARIABLES{'configfile'}");
-    $config_exists = 1 if ($error eq "");
-
-    # Guess home directory -- to support Windows
-    foreach my $var (split(/ /, "HOME USERPROFILE")) {
-        $home = $ENV{$var} if ($ENV{$var});
-    }
-    $error = load_config("$home/nikto.conf");
-    $config_exists = 1 if ($error eq "");
-
     # Guess Nikto current directory
     my $NIKTODIR = $0;
     chomp($NIKTODIR);
     $NIKTODIR =~ s#[\\/]nikto.pl$##;
-    $error = load_config("$NIKTODIR/nikto.conf");
-    $config_exists = 1 if ($error eq "");
 
-    $error = load_config("nikto.conf");
-    $config_exists = 1 if ($error eq "");
+    # Guess user's home directory -- to support Windows
+    foreach my $var (split(/ /, "HOME USERPROFILE")) {
+        $home = $ENV{$var} if ($ENV{$var});
+    }
 
-    $error = load_config("$NIKTODIR/nikto.conf.default");
-    $config_exists = 1 if ($error eq "");
+    # Read the conf files in order (previous values are over-written with each, if multiple found)
+    push(@CF,"$NIKTODIR/nikto.conf.default");
+    push(@CF,"/etc/nikto.conf");
+    push(@CF,"$home/nikto.conf");
+    push(@CF,"$NIKTODIR/nikto.conf");
+    push(@CF,"nikto.conf");
+    push(@CF,"$VARIABLES{'configfile'}");
 
+    # load in order, over-writing values as we go
+    for (my $i=0;$i<=$#CF;$i++) {
+        my $error = load_config($CF[$i]);
+        $config_exists = 1 if ($error eq ""); # any loaded is good
+    }
+
+    # Couldn't find any
     if ($config_exists == 0) {
-        die "- Could not find a valid nikto config file.\n";
+        die "- Could not find a valid nikto config file. Tried: @CF\n";
     }
 
     return;
