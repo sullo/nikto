@@ -3040,7 +3040,7 @@ sub add_vulnerability {
                     nikto_id => $nikto_id,
                     osvdb    => $osvdb,
                     method   => $method,
-                    uri      => $response->{whisker}->{uri_requested},
+                    uri      => $response->{whisker}->{uri_requested} || '/',
                     result   => $result,
                     request  => $request,
                     response => $response,
