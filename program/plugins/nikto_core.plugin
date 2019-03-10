@@ -463,6 +463,14 @@ sub dump_target_info {
                 }
             }
         }
+
+	if (defined $mark->{'messages'}) {
+		my @msgs = @{ $mark->{'messages'} };
+		foreach my $m (@msgs) { 
+        		nprint("+ Message:            $m");
+		}
+	}
+
         my $time = date_disp($mark->{start_time});
         nprint("+ Start Time:         $time (GMT$VARIABLES{'GMTOFFSET'})");
         nprint($VARIABLES{'DIV'});
@@ -1025,8 +1033,9 @@ sub readkey {
 
 ###############################################################################
 sub resolve {
-    my $ident = $_[0] || return;
-    my ($name, $ip) = "";
+    my $ident = $_[0] or return;
+    my ($ip, $name, $ipcache) = "";
+    my @addresses;
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
         return $ident, $ident, $ident;
@@ -1039,21 +1048,28 @@ sub resolve {
             exit;
         }
 
-        $ip = gethostbyname($ident);
-        if ($ip eq "") {
-            nprint("+ ERROR: Cannot resolve hostname '$ident'\n");
-            return;
-        }
+    if ($hent = gethostbyname($ident)) {
+         # my $name      = $hent->name;  ## Future--report multiple names
+         my $addr_ref  = $hent->addr_list;
+         @addresses = map { inet_ntoa($_) } @$addr_ref;
+    }
 
-        # inet_ntoa will throw errors if something is wrong
-        $ip = inet_ntoa($ip);
-        if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-            nprint("+ ERROR: Invalid IP: $ip\n\n");
-            exit;
-        }
+    $ip = $addresses[0];
+    if ($addresses[1] != "") { 
+	$ipcache = "Multiple IP addresses found: $ip, ";
+	for (my $i=1; $i<=$#addresses; $i++) {
+		$ipcache .= "$addresses[$i], ";
+	}
+        $ipcache =~ s/, $//;
+    }
+
+   if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
+       nprint("+ ERROR: Invalid IP: $ip\n\n");
+       exit;
+   }
        $name = $ident;
      }
-    else    # ident is IP
+   else    # ident is IP
     {
         if ($ident !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
             nprint("+ ERROR: Invalid IP: $ident\n\n");
@@ -1064,7 +1080,7 @@ sub resolve {
     }
 
     my $displayname = ($name) ? $name : $ip;
-    return $name, $ip, $displayname;
+    return $name, $ip, $displayname, $ipcache;
 }
 
 ###############################################################################

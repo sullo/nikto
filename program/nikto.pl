@@ -92,11 +92,17 @@ report_head($CLI{'format'}, $CLI{'file'});
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
+    $mark->{'messages'} =  ();
     $mark->{'test'} = 1;
     $mark->{'failures'} = 0;
 
     # Try to resolve the host
-    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}) = resolve($mark->{'ident'});
+    my $msgs;
+    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
+    if ($msgs ne "") { 
+	push(@{ $mark->{'messages'} }, $msgs);
+	#push ($mark->{'messages'}, $msgs);
+    }
 
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'}) {
@@ -269,7 +275,7 @@ sub config_init {
 ###############################################################################
 sub load_modules {
         my $errors=0;
-	my @modules = qw/Getopt::Long Time::Local IO::Socket/;
+	my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
 	push(@modules,"List::Util qw(sum)");
 	foreach my $mod (@modules) { 
 		eval "use $mod";
