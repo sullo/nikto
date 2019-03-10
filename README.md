@@ -5,6 +5,14 @@ Nikto web server scanner  - https://cirt.net/Nikto2
 
 Full documentation - https://cirt.net/nikto2-docs/
 
+Run from Docker container:
+
+~~~bash
+# from the nikto directory
+docker build -t sullo/nikto .
+docker run -it --rm sullo/nikto -h http://www.example.com
+~~~
+
 Basic usage:
 
 ```
