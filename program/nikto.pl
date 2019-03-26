@@ -241,7 +241,7 @@ sub config_init {
     }
 
     # Guess Nikto current directory
-    my $NIKTODIR = $0;
+    my $NIKTODIR = abs_path($0);
     chomp($NIKTODIR);
     $NIKTODIR =~ s#[\\/]nikto.pl$##;
 
@@ -277,6 +277,7 @@ sub load_modules {
         my $errors=0;
 	my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
 	push(@modules,"List::Util qw(sum)");
+	push(@modules,"Cwd 'abs_path'");
 	foreach my $mod (@modules) { 
 		eval "use $mod";
         	if ($@) { 
@@ -334,7 +335,7 @@ sub load_config {
 #################################################################################
 # find plugins directory
 sub setup_dirs {
-    my $CURRENTDIR = $0;
+    my $CURRENTDIR = abs_path($0);
     chomp($CURRENTDIR);
     $CURRENTDIR =~ s#[\\/]nikto.pl$##;
     $CURRENTDIR = "." if $CURRENTDIR =~ /^nikto.pl$/;
