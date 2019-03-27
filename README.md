@@ -11,7 +11,12 @@ Run as a Docker container:
 git clone https://github.com/sullo/nikto.git
 cd nikto
 docker build -t sullo/nikto .
-docker run -it --rm sullo/nikto -h http://www.example.com
+# Call it without arguments to display the full help
+docker run --rm sullo/nikto
+# Basic usage
+docker run --rm sullo/nikto -h http://www.example.com
+# To save the report in a specific format, mount /tmp as a volume:
+docker run --rm -v $(pwd):/tmp nikto -h http://www.example.com -o /tmp/out.json
 ~~~
 
 Basic usage:
