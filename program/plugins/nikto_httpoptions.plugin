@@ -113,7 +113,7 @@ sub nikto_httpoptions {
     return if $mark->{'terminate'};
     ($res, $content, $error, $request, $response) = nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
     if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
-        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information.", 999972, 0, "DEBUG", '/', $request, $response);
+        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information. See https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017 for details.", 999972, 0, "DEBUG", '/', $request, $response);
     }
 
     # IIS PROPFIND HEADER
