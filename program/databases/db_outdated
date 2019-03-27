@@ -635,7 +635,7 @@
 "600622","PEWG/","1.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600623","Phantom/","2.2.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600624","PHP-CGI/","0.9","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600625","PHP/","7.2.12","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). PHP 5.6.33, 7.0.27, 7.1.13, 7.2.1 may also current release for each branch."
+"600625","PHP/","7.2.16","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER) or PHP 7.1.27 for the 7.1.x branch."
 "600626","PHP/FI-","2.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600627","PI/","7.5","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600628","Pi3Web/","2.0.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
