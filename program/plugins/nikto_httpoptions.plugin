@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -57,7 +57,7 @@ sub nikto_httpoptions {
 
     # Odd case here, but maybe... http://zacstewart.com/2012/04/14/http-options-method.html
     # lots of FP on this one; disabling for now
-    #if (($content ne '') && ($res !~ /^3\d\d$/)) { 
+    #if (($content ne '') && ($res !~ /^3\d\d$/)) {
     #    add_vulnerability($mark, "Response body of OPTIONS / request is not empty--this may describe additonal REST/API services", 999980, 0, "OPTIONS", "/", $request, $response);
     #	}
 
@@ -113,7 +113,7 @@ sub nikto_httpoptions {
     return if $mark->{'terminate'};
     ($res, $content, $error, $request, $response) = nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
     if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
-        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information. See http://msdn.microsoft.com/en-us/library/e8z01xdh%28VS.80%29.aspx for details.", 999972, 0, "DEBUG", '/', $request, $response);
+        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information. See https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017 for details.", 999972, 0, "DEBUG", '/', $request, $response);
     }
 
     # IIS PROPFIND HEADER
