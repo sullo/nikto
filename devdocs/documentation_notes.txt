@@ -4,15 +4,15 @@ doc_short.xml -  Trimmed documentation as included in the Nikto source distribut
 manpage.xml   -  Man page
 
 - Editing -
-These file were written in DocBook format with the XML Mind editor, though any 
-editor that can properly handle DocBook should work fine. If changes are made in 
+These file were written in DocBook format with the XML Mind editor, though any
+editor that can properly handle DocBook should work fine. If changes are made in
 one file, it is possible they should be made in both--please check!
 
-- Updates - 
+- Updates -
 The doc_short.xml should be exported in HTML one page with table of contents, and then
 committed to the Nikto 2 trunk space. The updated xml should be committed as well.
 
-Updates to the full documentation should be committed in xml format, and a notification 
+Updates to the full documentation should be committed in xml format, and a notification
 sent to sullo@cirt.net for update to the web site.
 
 - Links -
