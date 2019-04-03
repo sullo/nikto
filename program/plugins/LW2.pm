@@ -5208,6 +5208,8 @@ sub _stream_ssl_open {
 
     return _stream_err( $xr, 0, 'ssl create new' )
       if ( !( $xr->{sslobj} = Net::SSLeay::new( $xr->{ctx} ) ) );
+    # SNI stuff
+	 Net::SSLeay::set_tlsext_host_name($xr->{sslobj}, $W->{host});
     if ( defined $W->{ssl_ciphers} ) {
         if (
             !(
