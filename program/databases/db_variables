@@ -54,4 +54,4 @@
 @SYMPHONY=/ /cms/ /symphony/
 @CKEDITOR=/ /ckeditor/ /admin/ckeditor/ /sites/all/modules/ckeditor/ /resources/ckeditor/ /clientscript/ckeditor/ /wp-content/plugins/ckeditor-for-wordpress/ckeditor/
 @STRUTSACTIONS=/ /index.action /login.action
-@WORDPRESS=/ /wordpress
+@WORDPRESS=/ /wordpress/
