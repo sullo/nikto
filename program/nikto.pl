@@ -45,7 +45,6 @@ $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
 $VARIABLES{'version'}    = "2.1.6";
-$VARIABLES{'configfile'} = "/etc/nikto.conf";    ### Change if it's having trouble finding it
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
@@ -93,11 +92,17 @@ report_head($CLI{'format'}, $CLI{'file'});
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
+    $mark->{'messages'} =  ();
     $mark->{'test'} = 1;
     $mark->{'failures'} = 0;
 
     # Try to resolve the host
-    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}) = resolve($mark->{'ident'});
+    my $msgs;
+    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
+    if ($msgs ne "") { 
+	push(@{ $mark->{'messages'} }, $msgs);
+	#push ($mark->{'messages'}, $msgs);
+    }
 
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'}) {
@@ -223,6 +228,8 @@ exit;
 #################################################################################
 # Load config files in order
 sub config_init {
+    my (@CF, $home);
+    my $config_exists = 0;
 
     # read just the --config option
     {
@@ -233,31 +240,33 @@ sub config_init {
         if (defined $optcfg{'config'}) { $VARIABLES{'configfile'} = $optcfg{'config'}; }
     }
 
-    # Read the config files in order
-    my ($error, $home);
-    my $config_exists = 0;
-    $error = load_config("$VARIABLES{'configfile'}");
-    $config_exists = 1 if ($error eq "");
+    # Guess Nikto current directory
+    my $NIKTODIR = abs_path($0);
+    chomp($NIKTODIR);
+    $NIKTODIR =~ s#[\\/]nikto.pl$##;
 
-    # Guess home directory -- to support Windows
+    # Guess user's home directory -- to support Windows
     foreach my $var (split(/ /, "HOME USERPROFILE")) {
         $home = $ENV{$var} if ($ENV{$var});
     }
-    $error = load_config("$home/nikto.conf");
-    $config_exists = 1 if ($error eq "");
 
-    # Guess Nikto current directory
-    my $NIKTODIR = $0;
-    chomp($NIKTODIR);
-    $NIKTODIR =~ s#[\\/]nikto.pl$##;
-    $error = load_config("$NIKTODIR/nikto.conf");
-    $config_exists = 1 if ($error eq "");
+    # Read the conf files in order (previous values are over-written with each, if multiple found)
+    push(@CF,"$NIKTODIR/nikto.conf.default");
+    push(@CF,"/etc/nikto.conf");
+    push(@CF,"$home/nikto.conf");
+    push(@CF,"$NIKTODIR/nikto.conf");
+    push(@CF,"nikto.conf");
+    push(@CF,"$VARIABLES{'configfile'}");
 
-    $error = load_config("nikto.conf");
-    $config_exists = 1 if ($error eq "");
+    # load in order, over-writing values as we go
+    for (my $i=0;$i<=$#CF;$i++) {
+        my $error = load_config($CF[$i]);
+        $config_exists = 1 if ($error eq ""); # any loaded is good
+    }
 
+    # Couldn't find any
     if ($config_exists == 0) {
-        die "- Could not find a valid nikto config file\n";
+        die "- Could not find a valid nikto config file. Tried: @CF\n";
     }
 
     return;
@@ -266,8 +275,9 @@ sub config_init {
 ###############################################################################
 sub load_modules {
         my $errors=0;
-	my @modules = qw/Getopt::Long Time::Local IO::Socket/;
+	my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
 	push(@modules,"List::Util qw(sum)");
+	push(@modules,"Cwd 'abs_path'");
 	foreach my $mod (@modules) { 
 		eval "use $mod";
         	if ($@) { 
@@ -325,7 +335,7 @@ sub load_config {
 #################################################################################
 # find plugins directory
 sub setup_dirs {
-    my $CURRENTDIR = $0;
+    my $CURRENTDIR = abs_path($0);
     chomp($CURRENTDIR);
     $CURRENTDIR =~ s#[\\/]nikto.pl$##;
     $CURRENTDIR = "." if $CURRENTDIR =~ /^nikto.pl$/;

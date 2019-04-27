@@ -1,0 +1,57 @@
+#VERSION,2.01
+###############################################################################
+#  Copyright (C) 2017 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Check for CORS reflection attacks as described in https://portswigger.net/blog/exploiting-cors-misconfigurations-for-bitcoins-and-bounties
+###############################################################################
+sub nikto_origin_reflection_init {
+    my $id = {
+        name        => "origin_reflection",
+        full_name   => "CORS Origin Reflection",
+        author      => "ss23",
+        description => "Check whether a given Origin header is reflected back in a Access-Control-Allow-Origin header",
+        hooks       => {
+                   scan      => { method => \&nikto_origin_reflection, },
+                   },
+        copyright => "2017 Chris Sullo"
+        };
+    return $id;
+}
+
+sub nikto_origin_reflection {
+    my ($mark, $parameters) = @_;
+    my %headers;
+
+    $headers{'Origin'} = 'nikto.example.com';
+
+    my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
+    if ($response->{'Access-Control-Allow-Origin'} =~ /nikto\.example\.com/) {
+        add_vulnerability($mark, "$path: Site reflects arbitrary CORS Origin headers without validation. See http://ejj.io/misconfigured-cors/", "000429", 0, "GET", $path, $request, $response);
+    }
+
+
+    $headers{'Origin'} = $mark{'hostname'} . '.example.com';
+
+    ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
+    if ($response->{'Access-Control-Allow-Origin'} =~ /$mark{'hostname'}\.example\.com/) {
+        add_vulnerability($mark, "$path: Site reflects CORS Origin headers which partially match the domain, without full validation. See http://ejj.io/misconfigured-cors/", "000429", 0, "GET", $path, $request, $response);
+    }
+
+}
+
+1;

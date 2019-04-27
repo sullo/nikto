@@ -66,7 +66,7 @@ sub nikto_sitefiles {
 
     foreach my $item (keys %names) {
         next if $item eq '';
-        foreach my $ext (qw/jks cer pem zip tar tar.gz tgz tar.bz2 tar.lzma alz egg war/) {
+        foreach my $ext (qw/jks cer pem zip tar tar.gz tgz tar.bz2 tar.lzma alz egg war sql/) {
             $files{"$item\.$ext"} = 1;
         }
     }
@@ -76,20 +76,22 @@ sub nikto_sitefiles {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", "", "sitefiles");
+          nfetch($mark, "/$file", "GET", "", "", "", "sitefiles");
 
-        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) &&
-		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+        if (($response->{'content-type'} =~ '/^application\//i') ||
+            (($res == 200) && ($response->{'content-length'} > 0) && (!is_404("/$file", $content, $res, $response->{'location'})) && (defined($response->{'content-type'})) &&
+            ($response->{'content-type'} !~ '/^text\//i'))) {
             add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found.", 740001, 0, "HEAD", "/$file", $request, $response);
         }
 
         # request by ip
-        my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "HEAD", "", "", \%flags, "sitefiles");
-        if (($res == 200) && (!is_404("/$file", $content, $res, $response->{'location'})) && 
-		($content !~ /<html/i) && ($response->{'content-type'} ne 'text/html')) {
+        ($res, $content, $error, $request, $response) = nfetch($mark, "/$file", "GET", "", "", \%flags, "sitefiles");
+        if (($response->{'content-type'} =~ '/^application\//i') ||
+            (($res == 200) && ($response->{'content-length'} > 0) && (!is_404("/$file", $content, $res, $response->{'location'})) && (defined($response->{'content-type'})) &&
+            ($response->{'content-type'} !~ '/^text\//i'))) {
             add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found. (NOTE: requested by IP address).", 740002, 0, "HEAD", "/file", $request, $response);
         }
+
     }
 }
 

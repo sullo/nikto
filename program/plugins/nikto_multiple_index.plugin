@@ -20,7 +20,7 @@
 # Look for multiple unique index files
 ###############################################################################
 sub nikto_multiple_index_init {
-    my $id = { name        => "mutiple_index",
+    my $id = { name        => "multiple_index",
                full_name   => "Multiple Index",
                author      => "Tautology",
                description => "Checks for multiple index files",
@@ -43,7 +43,7 @@ sub nikto_multiple_index {
 
         if ($res == 200) {
             $content = rm_active_content($content, "$mark->{'root'}/$item->{'index'}");
-            my $hash = LW2::md4($content);
+            my $hash = LW2::md5($content);
             $found{ "$mark->{'root'}/$item->{'index'}" } = $hash;
             $hashes{$hash}++;
         }

@@ -37,16 +37,16 @@ sub nikto_dir_traversal_load {
     # load up the database here so we don't redo it each time
     $DIRTRAVERSALDB = init_db("db_dir_traversal");
 
-    %TRAVWIN;
+    %TRAVWIN={};
     $TRAVWIN{'boot.ini'} = '\[boot loader\]';
     $TRAVWIN{'winnt/win.ini'} = '; for 16-bit app support';
     $TRAVWIN{'windows/win.ini'} = '; for 16-bit app support';
 
-    %TRAVLIN;
+    %TRAVLIN={};
     $TRAVLIN{'etc/passwd'} = 'root:.*:0:[01]:';
     $TRAVLIN{'etc/hosts'} = '127\.0\.0\.1.*localhost';
 
-    %TRAVALL;
+    %TRAVALL={};
     $TRAVALL{'boot.ini'} = '\[boot loader\]';
     $TRAVALL{'winnt/win.ini'} = '; for 16-bit app support';
     $TRAVALL{'windows/win.ini'} = '; for 16-bit app support';

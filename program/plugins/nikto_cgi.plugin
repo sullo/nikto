@@ -13,7 +13,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -37,18 +37,18 @@ sub nikto_cgi {
     my @CFGCGI = (split(/ /, $VARIABLES{'@CGIDIRS'}));
     my ($res, $content, $possiblecgidir, $found) = "";
 
-    if (defined $CLI{'forcecgi'} && $CLI{'forcecgi'} eq "all")  # all possible CGI dirs to be "true"
+    if (defined $CLI{'forcecgi'} && $CLI{'forcecgi'} eq "all")  # force all possible CGI dirs to be "true"
     {
         nprint("Using all known CGI directories\n", "d");
         $VARIABLES{'@CGIDIRS'} = join(" ", @CFGCGI);
     }
-    elsif (defined $CLI{'forcecgi'} && $CLI{'forcecgi'} eq "none")    # scan no CGI directories
+    elsif (defined $CLI{'forcecgi'} && $CLI{'forcecgi'} eq "none")    # force no CGI directories
     {
-        nprint("Using no CGI directories\n", "d");
+        nprint("- No CGI directories are set\n", "v");
         $VARIABLES{'@CGIDIRS'} = "";
     }
     elsif (defined $CLI{'forcecgi'}
-           && $CLI{'forcecgi'} =~ /[a-zA-Z0-9]/)                      # scan a specific directory
+           && $CLI{'forcecgi'} =~ /[a-zA-Z0-9]/)                      # force a specific directory
     {
         nprint("Using CGI dir \'$CLI{'forcecgi'}\'\n", "d");
         $VARIABLES{'@CGIDIRS'} = $CLI{'forcecgi'};

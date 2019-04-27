@@ -73,6 +73,7 @@ sub nikto_headers_postfetch {
         elsif (defined $HFOUND{$header}) { next; }
 	
 	next if $header eq 'server' && substr($result->{$header}, 0, 8) eq 'WebSEAL/';
+	next if $header eq 'x-powered-by' && $result->{$header} =~ /Oracle GlassFish Server [0-9]/;
 
         foreach my $ip (get_ips($result->{$header})) {
             my ($valid, $internal, $loopback) = is_ip($ip);
@@ -97,22 +98,30 @@ sub nikto_headers_postfetch {
         my $etag = $result->{'etag'};
         $etag =~ s/"//g;
         my @fields = split("-", $etag);
-        # Only report ETags which actuallyleak inodes...
+        # Only report ETags which actually leak inodes...
         if (scalar(@fields) == 3) {
             my $message =
               "Server may leak inodes via ETags, header found with file " . $request->{'whisker'}->{'uri'};
             # check for numbers that are too large
             my $ishex = 1;
             for (my $i = 0 ; $i < 3 ; $i++) {
-                if (length($fields[$i]) > 14) {
+                if ((length($fields[$i]) > 14) || ($fields[$i] !~ /^[0-9A-F]+$/i)) {
                     $ishex = 0;
                 }
             }
             use bignum;
-            my $inode = "0x$fields[0]";
-            my $size  = "0x$fields[1]";
-            my $mtime = "0x$fields[2]";
-            my $ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
+            my ($inode, $size, $mtime, $ltime);
+            if ($ishex) { 
+            	$inode = "0x$fields[0]";
+            	$size  = "0x$fields[1]";
+            	$mtime = "0x$fields[2]";
+            	$ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
+		}
+            else { 
+            	$inode = $fields[0];
+            	$size  = $fields[1];
+            	$mtime = $ltime = $fields[2];
+		}
 
             $message .=
               ($ishex == 1)
@@ -188,7 +197,6 @@ sub nikto_headers_postfetch {
                 $vuln = "Uncommon header '$header' found, with multiple values: $multiheader";
             }
             add_vulnerability($mark, $vuln, 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-            $reportnum++;
             $HFOUND{$header}{ $mark->{'hostname'} } = 1;
         }
     }
@@ -199,13 +207,28 @@ sub nikto_headers_postfetch {
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         } 
         elsif ($result->{'strict-transport-security'} =~ /max-age="?0"?/i) {
-            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999970, 0,
+            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999971, 0,
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
           }
        
        $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
+    # Look for Expect-CT
+    if($mark->{'ssl'} && !$EXPECTCT{ $mark->{hostname} }{$mark->{port} } && defined $result->{'whisker'}->{'code'}) {
+        if(defined $result->{'expect-ct'}) {
+            unless($result->{'expect-ct'} =~ /^enforce/) {
+                add_vulnerability( $mark, "Expect-CT is not enforced, upon receiving an invalid Certificate Transparency Log, the connection will not be dropped.",
+                    999954, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            }
+        }
+        else {
+            add_vulnerability($mark, "The site uses SSL and Expect-CT header is not present.",
+                999955, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        }
+        $EXPECTCT{ $mark->{hostname} }{ $mark->{port} } = 1;
+    }
+    
     if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability( $mark,
@@ -232,7 +255,7 @@ sub nikto_headers_check {
 
     if (exists $result->{$header}) {
         my $key =
-          LW2::md4(  $mark->{'ip'}
+          LW2::md5(  $mark->{'ip'}
                    . $mark->{'hostname'}
                    . $mark->{'port'}
                    . $mark->{'ssl'}
@@ -275,7 +298,7 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my %locheaders, %locflags, $cl, $l, $wa;
+    my (%locheaders, %locflags, $cl, $l, $wa);
     $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
     $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/;
     $locflags{'noclean'} = 1;

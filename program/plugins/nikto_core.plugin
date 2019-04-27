@@ -1,4 +1,5 @@
 #VERSION,2.1.5
+
 ###############################################################################
 #  Copyright (C) 2006 Chris Sullo
 #
@@ -49,6 +50,22 @@ sub change_variables {
     }
 
     return @subtests;
+}
+
+sub unslash {
+    my $line = $_[0] || return;    # $line is the slash-escaped variable
+    my @line = split(/\\\\/, $line);
+    foreach (@line) {
+        $_ =~ s/\\a/\a/g;
+        $_ =~ s/\\b/\b/g;
+        $_ =~ s/\\e/\e/g;
+        $_ =~ s/\\f/\f/g;
+        $_ =~ s/\\n/\n/g;
+        $_ =~ s/\\r/\r/g;
+        $_ =~ s/\\t/\t/g;
+        $_ =~ s/\\x([[:xdigit:]]2)/chr(hex($1))/ge;
+    }
+    return join("\\", @line);
 }
 
 ###############################################################################
@@ -446,6 +463,14 @@ sub dump_target_info {
                 }
             }
         }
+
+	if (defined $mark->{'messages'}) {
+		my @msgs = @{ $mark->{'messages'} };
+		foreach my $m (@msgs) { 
+        		nprint("+ Message:            $m");
+		}
+	}
+
         my $time = date_disp($mark->{start_time});
         nprint("+ Start Time:         $time (GMT$VARIABLES{'GMTOFFSET'})");
         nprint($VARIABLES{'DIV'});
@@ -1008,8 +1033,9 @@ sub readkey {
 
 ###############################################################################
 sub resolve {
-    my $ident = $_[0] || return;
-    my ($name, $ip) = "";
+    my $ident = $_[0] or return;
+    my ($ip, $name, $ipcache) = "";
+    my @addresses;
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
         return $ident, $ident, $ident;
@@ -1022,21 +1048,28 @@ sub resolve {
             exit;
         }
 
-        $ip = gethostbyname($ident);
-        if ($ip eq "") {
-            nprint("+ ERROR: Cannot resolve hostname '$ident'\n");
-            return;
-        }
+    if ($hent = gethostbyname($ident)) {
+         # my $name      = $hent->name;  ## Future--report multiple names
+         my $addr_ref  = $hent->addr_list;
+         @addresses = map { inet_ntoa($_) } @$addr_ref;
+    }
 
-        # inet_ntoa will throw errors if something is wrong
-        $ip = inet_ntoa($ip);
-        if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-            nprint("+ ERROR: Invalid IP: $ip\n\n");
-            exit;
-        }
+    $ip = $addresses[0];
+    if ($addresses[1] != "") { 
+	$ipcache = "Multiple IP addresses found: $ip, ";
+	for (my $i=1; $i<=$#addresses; $i++) {
+		$ipcache .= "$addresses[$i], ";
+	}
+        $ipcache =~ s/, $//;
+    }
+
+   if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
+       nprint("+ ERROR: Invalid IP: $ip\n\n");
+       exit;
+   }
        $name = $ident;
      }
-    else    # ident is IP
+   else    # ident is IP
     {
         if ($ident !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
             nprint("+ ERROR: Invalid IP: $ident\n\n");
@@ -1047,7 +1080,7 @@ sub resolve {
     }
 
     my $displayname = ($name) ? $name : $ip;
-    return $name, $ip, $displayname;
+    return $name, $ip, $displayname, $ipcache;
 }
 
 ###############################################################################
@@ -1401,7 +1434,7 @@ sub check_dbs {
                 else {
                     $ALL_IDS{$L[0]}=1;
                 }
-                if ($L[2] =~ /[^a-e0-9]/) {
+                if ($L[2] =~ /[^a-f0-9]/) {
                     nprint("\t+ ERROR: Invalid Tuning Type: $line");
                 }
                 if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i) {
@@ -1552,7 +1585,7 @@ sub check_dbs {
     nprint("Checking plugins for duplicate test IDs");
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
-	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$file': $@\n";
+	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$pf': $@\n";
 	my @file=<PF>;
 	close(PF);
   	my @adds= grep(/add_vulnerability\(/, @file);
@@ -1645,10 +1678,10 @@ sub port_check {
 
             if ($res) {
 
-      # this will fix for some Apaches that are smart enough to answer non ssl reqs on an ssl server
+      # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
                 if (defined $content
                     && ( $content =~ /plain HTTP to an SSL/ ||
-					     $content =~ /The plain HTTP request was sent to HTTPS port/ )) {
+					     $content =~ /plain HTTP request was sent to HTTPS/ )) {
                     dump_var("Result Hash", \%result);
                     next;
                 }
@@ -2754,7 +2787,7 @@ sub send_updates {
             "\n
       *********************************************************************
       Portions of the server's headers ($updated_version) are not in
-      the Nikto database or are newer than the known string. Would you like
+      the Nikto " . $VARIABLES{'version'} . " database or are newer than the known string. Would you like
       to submit this information (*no server specific data*) to CIRT.net
       for a Nikto update (or you may email to sullo\@cirt.net) (y/n)? ", ""
         );
@@ -2796,13 +2829,13 @@ sub send_updates {
     }
 
     if ($code != 200) {
-	nprint("+ ERROR $code: Update failed, please notify sullo\@cirt.net of this code.");
+	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.");
 	}
     elsif ($content !~ /SUCCESS/) {
-        nprint("+ ERROR $code: Unable to send update info to CIRT.net. Here was the request result content:\n$content\n");
+        nprint("+ ERROR: Unable to send update info to cirt.net. Here was the request result : Code: $code\n$content\n");
     }
     else {
-        nprint("- Sent updated info to CIRT.net -- Thank you!");
+        nprint("- Sent updated info to cirt.net -- Thank you!");
     }
 
     return;
@@ -3023,7 +3056,7 @@ sub add_vulnerability {
                     nikto_id => $nikto_id,
                     osvdb    => $osvdb,
                     method   => $method,
-                    uri      => $response->{whisker}->{uri_requested},
+                    uri      => $response->{whisker}->{uri_requested} || '/',
                     result   => $result,
                     request  => $request,
                     response => $response,
