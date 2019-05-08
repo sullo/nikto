@@ -6933,4 +6933,4 @@
 "007244","0","e","/ibm/console/logon.jsp","GET","action=\"/ibm/console/j_security_check","","","","","IBM WebSphere admin console","",""
 "007245","0","f","/util/xmlrpc/Handler.ashx","GET","EPiServer.Blog 7.0(\.([0-4]|5([0-7]|8[1-5])))?","","","","","EpiServer Blog 7.0.586 and below may contain an XXE vulnerability in the blog module, which is accessible even if the module is not activated. See https://seclists.org/fulldisclosure/2018/Sep/17","",""
 "007246","0","23","/cgi-bin/config.exp","GET","sysconfig","","","","","Cisco RV320/RV325 router is vulnerable to CVE-2019-1653","",""
-
+"007247","0","8a","/_async/AsyncResponseServiceJms?WSDL","GET","200","www.bea.com/async/AsyncResponseService","","","","This application may be vulnerable to CNVD-C-2019-48814.","",""
