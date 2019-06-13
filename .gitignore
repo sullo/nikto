@@ -4,3 +4,4 @@
 *.sublime-project
 *.sublime-workspace
 tags
+nikto.conf
