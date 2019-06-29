@@ -891,7 +891,7 @@
 "600882","WISE_Homepage/","1.0.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600883","WN/","2.4.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600884","Worldgroup/","3.30","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600885","WSGIServer/","0.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600885","WSGIServer/","0.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600886","wti-httpd/","1.0.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600887","WWW Server/","1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600888","WWWServer/","1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
