@@ -65,7 +65,7 @@ sub json_host_start {
 # end output
 sub json_host_end {
     my ($handle, $mark) = @_;
-    print $handle "],";
+    print $handle "]";
     return;
 }                                                                
 ###############################################################################
