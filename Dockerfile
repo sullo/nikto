@@ -6,14 +6,13 @@ LABEL version="2.1.6" \
       docker_run_basic="docker run --rm sullo/nikto:2.1.6 -h http://www.example.com" \
       docker_run_advanced="docker run --rm -v $(pwd):/tmp sullo/nikto:2.1.6 -h http://www.example.com -o /tmp/out.json"
 
-COPY [".", "/nikto"]
+COPY ["program/", "/nikto"]
 
-ENV  PATH=${PATH}:/nikto/program
+ENV  PATH=${PATH}:/nikto
 
 RUN echo 'Selecting packages to Nikto.' \
   && apk update \
   && apk add --no-cache --virtual .build-deps \
-     make \
      perl \
      perl-net-ssleay \
   && echo 'Cleaning cache from APK.' \
@@ -21,9 +20,9 @@ RUN echo 'Selecting packages to Nikto.' \
   && echo 'Creating the nikto group.' \
   && addgroup nikto \
   && echo 'Creating the user nikto.' \
-  && adduser -G nikto -g "Nikto user"  -s /bin/sh -D nikto \
-  && echo 'Changing the permissions.' \
-  && chown -R nikto /nikto \
+  && adduser -G nikto -g "Nikto user" -s /bin/sh -D nikto \
+  && echo 'Changing the ownership.' \
+  && chown -R nikto.nikto /nikto \
   && echo 'Creating a random password for root.' \
   && export RANDOM_PASSWORD=`tr -dc A-Za-z0-9 < /dev/urandom | head -c44` \
   && echo "root:$RANDOM_PASSWORD" | chpasswd \
