@@ -15,7 +15,8 @@ SKIPPORTS=21 111
  # @VERSION 	- Nikto version
  # @TESTID 	- Test identifier
  # @EVASIONS 	- List of active evasions
-USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Evasions:@EVASIONS) (Test:@TESTID)
+ # Example: USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Evasions:@EVASIONS) (Test:@TESTID)
+USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
 
 # RFI URL. This remote file should return a phpinfo call, for example: <?php phpinfo(); ?>
 # You may use the one below, if you like.
