@@ -6677,7 +6677,7 @@
 "006980","0","3","/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
 "006981","0","3","/paypal/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
 "006983","0","3","/psystems/paypal/ipn_log.txt","GET","payer_email","","","","","PayPal log file found and may contain sensitive information.","",""
-"006984","0","3be","/_profile/","GET","symfony","No\sroute","","","","Symfony Profiler may reveal sensitive application information.","",""
+"006984","0","3be","/_profiler/","GET","symfony","No\sroute","","","","Symfony Profiler may reveal sensitive application information.","",""
 "006985","0","3b","/CSCOSSLC/config-auth","GET","<version who=[^>]+>.+<\/version>","","","","","Cisco ASA Web VPN may reval sensitive version info (CVE-2014-3398).","",""
 "006986","0","d","@MAGENTOapi/soap/?wsdl=1","GET","<definitions xmlns:typens=\"urn:Magento\"","","","","","Magento Shop WebService identified.","",""
 "006987","0","123b","@MAGENTORELEASE_NOTES.txt","GET","==== ([0-9\.]+) ====","","","","","Magento Shop Changelog identified.","",""
