@@ -32,7 +32,7 @@
 # f - XML Injection
 #
 # Field order:
-# Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1 Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers
+# Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1 Or, Match 1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers
 #
 #######################################################################
 "000001","0","b","/TiVoConnect?Command=QueryServer","GET","Calypso Server","","","","","The Tivo Calypso server is running. This page will display the version and platform it is running on. Other URLs may allow download of media.","",""
