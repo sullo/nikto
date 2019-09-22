@@ -164,6 +164,13 @@ sub nikto_headers_postfetch {
         }
     }
 
+    # Incapsula WAF
+    if (defined $result->{'x-cdn'} && ($result->{'x-cdn'} == "Incapsula")) {
+            add_vulnerability( $mark, "Incapsula WAF is in use.",
+                    999976, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            $HFOUND{$header} = 1;
+            }
+    
     # And for if it's not defined
     if (!$HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
         if (!defined $result->{'x-xss-protection'}) {
@@ -246,6 +253,15 @@ sub nikto_headers_postfetch {
         }
     }
 
+    # CSP Report URLs
+      if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
+        if (defined $result->{'x-clacks-overhead'}) {
+            add_vulnerability( $mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0,
+                $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
+        }
+    }
+ 
     return $request, $result;
 }
 
