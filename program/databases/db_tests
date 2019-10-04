@@ -270,7 +270,7 @@
 "000235","0","1b","/vgn/login","GET","200","","","","","Vignette server may allow user enumeration based on the login attempts to this file.","",""
 "000236","0","2","/webtop/wdk/samples/index.jsp","GET","WDK Fusion Samples","","","","","Documentum Webtop Example Code","",""
 "000237","0","2","@CGIDIRS.cobalt","GET","200","","","","","May allow remote admin of CGI scripts.","",""
-"000238","0","2","/WEB-INF/web.xml","GET","<web-app","","200","","","JRUN default file found.","",""
+"000238","0","2","/WEB-INF/web.xml","GET","<web-app","\<servlet","200","","","JRUN default file found.","",""
 "000239","35707","23","/forum/admin/wwforum.mdb","GET","200","","","","","Web Wiz Forums password database found.","",""
 "000240","0","23","/fpdb/shop.mdb","GET","200","","","","","MetaCart2 is an ASP shopping cart. The database of customers is available via the web.","",""
 "000241","52975","23","/guestbook/admin/o12guest.mdb","GET","200","","","","","Ocean12 ASP Guestbook Manager allows download of SQL database which contains admin password.","",""
