@@ -76,12 +76,19 @@ sub json_close {
     close($handle);
     return OUT;
 }
+
+my $json_item_count = 0;
 ###############################################################################
 # print an item
 sub json_item {
     my ($handle, $mark, $item) = @_;
     foreach my $uri (split(' ', $item->{'uri'})) {
-        my $line = '{';
+        my $line = '';
+        if ( $json_item_count ne 0 ) {
+            $line .= ",";
+        }
+        $json_item_count++;
+        $line .= "{";
 
         $line .= "\"id\": \"" .$item->{'nikto_id'} ."\",";
         if ($item->{'osvdb'} ne '') { $line .= "\"OSVDB\": \"" .$item->{'osvdb'} ."\","; }
@@ -99,7 +106,7 @@ sub json_item {
 		$msg =~ s/^$root$uri:\s//;
         $msg =~ s/"/\\"/g;
         $line .= "\"msg\":\"$msg\"";
-        $line .= "},";
+        $line .= "}";
         print $handle "$line";
     }
 }
