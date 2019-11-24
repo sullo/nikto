@@ -6942,3 +6942,6 @@
 "007253","0","23","@WORDPRESSwp-config.php_bak","GET","200","","","","","wp-config.php_bak file found. This file contains the credentials.","",""
 "007254","0","","http://100.100.100.200/latest/meta-data/","GET","user-data","","","","","The Alibaba Cloud host is configured as a reverse proxy (SSRF) which allows access to the Meta-Data service. This could allowow significant access to the host/infrastructure.","","Host: 100.100.100.200\r\naccept: */*\r\nProxy-Connection: Keep-Alive\r\n"
 "007255","0","1","/.tools/webmail","GET","200","","webmail","","","Webmail Found. Possibly on Media Temple/Gridserver.","",""
+"007256","0","3","/apple-app-site-association","GET","200","","applinks","","","Apple Universal Links.","",""
+"007257","0","3","/.well-known/apple-app-site-association","GET","200","","applinks","","","Apple Universal Links.","",""
+"007258","0","3","/.well-known/assetlinks.json","GET","200","","relation","","","Android App Links.","",""
