@@ -23,7 +23,7 @@
 @USERS=adm bin daemon ftp guest listen lp mysql noaccess nobody nobody4 nuucp operator root smmsp smtp sshd sys test unknown uucp web www
 @PASSWORDDIRS=/ /admin/ /clients/ /pass/ /password/ /passwords/ /store/ /users/ /access/ /members/ /private/ /ccbill/ /dmr/ /mastergate/ /dmr/ /epoch/ /netbilling/ /webcash/ /wwwjoin/ /etc/security/
 @PASSWORDFILES=admins clients pass password passwords passwd passwd.adjunct store users .htpasswd .passwd
-@PHPMYADMIN=/3rdparty/phpMyAdmin/ /phpMyAdmin/ /3rdparty/phpmyadmin/ /phpmyadmin/ /pma/
+@PHPMYADMIN=/3rdparty/phpMyAdmin/ /phpMyAdmin/ /3rdparty/phpmyadmin/ /phpmyadmin/ /pma/ /.tools/phpMyAdmin/current/
 @HTTPFOUND=200 301 302 403
 @FCKEDITOR=/fckeditor/ /FCKeditor/ /Script/fckeditor/ /sites/all/modules/fckeditor/fckeditor/ /modules/fckeditor/fckeditor/ /class/fckeditor/ /inc/fckeditor/ /sites/all/libraries/fckeditor/ /js/editor/fckeditor/ /includes/fckeditor/ /include/fckeditor/ /modules/fckeditor/ /plugins/fckeditor/
 @CRYSTALREPORTS=/ /CrystalReports/ /crystal/ /businessobjects/ /crystal/enterprise10/ /crystal/Enterprise10/ePortfolio/en/

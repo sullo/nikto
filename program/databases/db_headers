@@ -114,3 +114,5 @@
 "timing-allow-origin"
 "cf-cache-status"
 "cf-ray"
+"x-cdn"
+"link"
