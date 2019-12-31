@@ -269,7 +269,7 @@ sub map_codes {
         $FoF{'okay'}{'match'} = LW2::md4($cooked);
     }
 
-    # these are some used in mutate that may not be in the db_tests
+    # these are some used that may not be in the db_tests
     if (defined $CLI{'mutate'}) {
         $db_extensions{'bak'}  = 1;
         $db_extensions{'data'} = 1;
@@ -277,6 +277,14 @@ sub map_codes {
         $db_extensions{'dbf'}  = 1;
         $db_extensions{'lst'}  = 1;
         $db_extensions{'htx'}  = 1;
+        $db_extensions{'htm'}  = 1;
+        $db_extensions{'html'}  = 1;
+        $db_extensions{'ini'}  = 1;
+        $db_extensions{'lst'}  = 1;
+        $db_extensions{'txt'}  = 1;
+        $db_extensions{'xml'}  = 1;
+        $db_extensions{'php'}  = 1;
+        $db_extensions{'php3'}  = 1;
     }
 
     foreach my $ext (keys %db_extensions) {

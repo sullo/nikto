@@ -291,7 +291,7 @@ sub passchecks {
     my ($mark) = @_;
     my @DIRS   = (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
     my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
-    my @EXTS = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3 phtml);
+    my @EXTS = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
     nprint("- Performing passfiles mutation", "v");
 
