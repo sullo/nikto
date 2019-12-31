@@ -170,6 +170,14 @@ sub nikto_headers_postfetch {
                     999976, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HFOUND{$header} = 1;
             }
+
+    # NetIQ
+    if (defined $result->{'x-mag'}) {
+            add_vulnerability( $mark, "NetIQ debug information is enabled. See https://www.netiq.com/documentation/netiqaccessmanager32/accessgatewayhelp/data/agsglobaladv.html.",
+                    999946, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            $HFOUND{$header} = 1;
+            }
+x-mag
     
     # And for if it's not defined
     if (!$HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
