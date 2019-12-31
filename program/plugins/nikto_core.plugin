@@ -2657,7 +2657,7 @@ sub max_test_id {
 sub get_ips {
     my $string = $_[0] || return;
     my @ips;
-    while ($string =~ /(?:\b|[^0-9])([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(?:\b|[^0-9])/g) {
+    while ($string =~ /(?:\b|[^0-9v])([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(?:\b|[^0-9])/g) {
         push(@ips, $1);
     }
     return @ips;
