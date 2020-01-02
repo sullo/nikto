@@ -2510,9 +2510,7 @@ sub nfetch {
                 && ($mark->{'banner'} ne $result{'server'})
 		&& ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
 		) {
-                nprint(
-                    "+ Server banner has changed from '$mark->{banner}' to '$result{server}' which may suggest a WAF, load balancer or proxy is in place"
-                    );
+		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999961, 0, $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
             }
         }
