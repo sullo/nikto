@@ -128,7 +128,7 @@ sub nprint {
     # don't print debug & verbose to output file...
     if ($mode ne '') {
         if ($mode eq "d" && $OUTPUT{'debug'}) {
-            print "D:" . localtime() . " $line\n";
+            print STDERR "D:" . localtime() . " $line\n";
         }
         if ($mode eq "v" && $OUTPUT{'verbose'}) {
             print "V:" . localtime() . " $line\n";
