@@ -33,7 +33,7 @@ sub nikto_sitefiles_init {
 
 sub nikto_sitefiles {
     my ($mark) = @_;
-    my ($found, @names,);
+    my (%flags, %files, %names);
 
     $names{ $mark->{'hostname'} } = 1;
     $names{ $mark->{'vhost'} }    = 1;
@@ -59,37 +59,44 @@ sub nikto_sitefiles {
     }
     $names{'backup'}        = 1;
     $names{'site'}          = 1;
+    $names{'archive'}       = 1;
+    $names{'database'}      = 1;
+    $names{'dump'}          = 1;
     $names{ $mark->{'ip'} } = 1;
-
-    my (%flags, %files);
-    $flags{'nohost'} = 1;
 
     foreach my $item (keys %names) {
         next if $item eq '';
-        foreach my $ext (qw/jks cer pem zip tar tar.gz tgz tar.bz2 tar.lzma alz egg war sql/) {
+        foreach my $ext (qw/jks cer pem zip tar tar.gz gz tgz tar.bz2 tar.lzma alz egg war sql/) {
             $files{"$item\.$ext"} = 1;
         }
     }
 
-    foreach my $file (keys %files) {
-        return if $mark->{'terminate'};
+    foreach my $f (keys %files) {
+        # trickery to test with both host header and without
+        foreach my $flag (0 .. 1) {
+            return if $mark->{'terminate'};
+            my $msg = "";
+            $flags{'nohost'} = $flag;
+            if ($flag) {
+                $msg = "(NOTE: requested by IP address).";
+            }
 
-        # request by hostname
-        my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/$file", "GET", "", "", "", "sitefiles");
+            # request. flags passed will determine if hostname is used or not
+            my ($res, $content, $error, $request, $response) =
+              nfetch($mark, "/$f", "GET", "", "", \%flags, "sitefiles");
 
-        if (($response->{'content-type'} =~ '/^application\//i') ||
-            (($res == 200) && ($response->{'content-length'} > 0) && (!is_404("/$file", $content, $res, $response->{'location'})) && (defined($response->{'content-type'})) &&
-            ($response->{'content-type'} !~ '/^text\//i'))) {
-            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found.", 740001, 0, "HEAD", "/$file", $request, $response);
-        }
+            if (($response->{'content-type'} =~ '/^application\//i')
+                || (   ($res == 200)
+                    && ($response->{'content-length'} > 0)
+                    && (!is_404("/$f", $content, $res, $response->{'location'})))
+                    ) {
 
-        # request by ip
-        ($res, $content, $error, $request, $response) = nfetch($mark, "/$file", "GET", "", "", \%flags, "sitefiles");
-        if (($response->{'content-type'} =~ '/^application\//i') ||
-            (($res == 200) && ($response->{'content-length'} > 0) && (!is_404("/$file", $content, $res, $response->{'location'})) && (defined($response->{'content-type'})) &&
-            ($response->{'content-type'} !~ '/^text\//i'))) {
-            add_vulnerability($mark, "/$file: Potentially interesting archive/cert file found. (NOTE: requested by IP address).", 740002, 0, "HEAD", "/file", $request, $response);
+                # alert
+                add_vulnerability($mark,
+                                  "/$f: Potentially interesting backup/cert file found. $msg",
+                                  740001, 0, "HEAD", "/$f", $request, $response);
+                last;
+            }
         }
 
     }
