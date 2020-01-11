@@ -1411,7 +1411,7 @@ sub check_dbs {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
                 my @L = parse_csv($line);
-                if (   ($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
+                if (($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
                     && ($L[0] ne '006433')) {
                     nprint("\t+ ERROR: Possibly invalid method: $L[4] on ($line)");
                 }
@@ -1442,7 +1442,7 @@ sub check_dbs {
                 else {
                     $ALL_IDS{$L[0]}=1;
                 }
-                if ($L[2] =~ /[^a-f0-9]/) {
+                if ($L[2] eq "" || $L[2] =~ /[^a-f0-9]/) {
                     nprint("\t+ ERROR: Invalid Tuning Type: $line");
                 }
                 if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i) {
