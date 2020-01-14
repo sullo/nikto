@@ -474,7 +474,7 @@ sub dump_target_info {
 
 	if (defined $mark->{'messages'}) {
 		my @msgs = @{ $mark->{'messages'} };
-		foreach my $m (@msgs) { 
+		foreach my $m (@msgs) {
         		nprint("+ Message:            $m");
 		}
 	}
@@ -571,7 +571,7 @@ sub general_config {
                ) or usage();
 
     # both -host and -url
-    if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) { 
+    if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) {
         nprint("+ ERROR: Cannot use -url and -host at the same time");
         exit;
 	}
@@ -1063,7 +1063,7 @@ sub resolve {
     }
 
     $ip = $addresses[0];
-    if ($addresses[1] != "") { 
+    if ($addresses[1] != "") {
 	$ipcache = "Multiple IP addresses found: $ip, ";
 	for (my $i=1; $i<=$#addresses; $i++) {
 		$ipcache .= "$addresses[$i], ";
@@ -1150,7 +1150,7 @@ sub set_targets {
         # is it a URL?
         if ($host =~ /^https?:\/\//) {
 
-            if ($CLI{'ports'} ne '') { 
+            if ($CLI{'ports'} ne '') {
 		nprint("- ERROR: The -port option cannot be used with a full URI");
 		exit;
 		}
@@ -2510,7 +2510,7 @@ sub nfetch {
                 && ($mark->{'banner'} ne $result{'server'})
 		&& ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
 		) {
-		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999961, 0, $method, $uri, $request, $response);
+		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999962, 0, $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
             }
         }
