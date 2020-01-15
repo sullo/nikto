@@ -474,7 +474,7 @@ sub dump_target_info {
 
 	if (defined $mark->{'messages'}) {
 		my @msgs = @{ $mark->{'messages'} };
-		foreach my $m (@msgs) { 
+		foreach my $m (@msgs) {
         		nprint("+ Message:            $m");
 		}
 	}
@@ -571,7 +571,7 @@ sub general_config {
                ) or usage();
 
     # both -host and -url
-    if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) { 
+    if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) {
         nprint("+ ERROR: Cannot use -url and -host at the same time");
         exit;
 	}
@@ -1063,7 +1063,7 @@ sub resolve {
     }
 
     $ip = $addresses[0];
-    if ($addresses[1] != "") { 
+    if ($addresses[1] != "") {
 	$ipcache = "Multiple IP addresses found: $ip, ";
 	for (my $i=1; $i<=$#addresses; $i++) {
 		$ipcache .= "$addresses[$i], ";
@@ -1150,7 +1150,7 @@ sub set_targets {
         # is it a URL?
         if ($host =~ /^https?:\/\//) {
 
-            if ($CLI{'ports'} ne '') { 
+            if ($CLI{'ports'} ne '') {
 		nprint("- ERROR: The -port option cannot be used with a full URI");
 		exit;
 		}
@@ -1411,7 +1411,7 @@ sub check_dbs {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
                 my @L = parse_csv($line);
-                if (   ($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
+                if (($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
                     && ($L[0] ne '006433')) {
                     nprint("\t+ ERROR: Possibly invalid method: $L[4] on ($line)");
                 }
@@ -1442,7 +1442,7 @@ sub check_dbs {
                 else {
                     $ALL_IDS{$L[0]}=1;
                 }
-                if ($L[2] =~ /[^a-f0-9]/) {
+                if ($L[2] eq "" || $L[2] =~ /[^a-f0-9]/) {
                     nprint("\t+ ERROR: Invalid Tuning Type: $line");
                 }
                 if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i) {
@@ -2510,7 +2510,7 @@ sub nfetch {
                 && ($mark->{'banner'} ne $result{'server'})
 		&& ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
 		) {
-		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999961, 0, $method, $uri, $request, $response);
+		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999962, 0, $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
             }
         }
