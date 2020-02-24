@@ -270,7 +270,7 @@ sub nikto_headers_check {
     return if $mark->{'terminate'};
     my ($mark, $result, $header, $tid, $request) = @_;
     my @interesting_headers = 
-    qw /commerce-server-software daap-server dasl datacenter dav generator hosted-by hosted-with microsoftofficewebserver microsoftsharepointteamservices ms-author-via powered-by server-name serverid servlet-engine via x-aspnet-version x-blackboard-product x-cocoon-version x-compressed-by x-dmuser x-gallery-version x-hosted-at x-hostname x-isp x-powered-by x-responding-server x-served-by x-server x-server-name x-webserver x-owa-version access-control-allow-origin x-application-context cneonction nncoection xxx-real-ip bae-env-addr-sql-ip bae-env-addr-sql-port cf-connecting-ip fastly-client-ip incap-client-ip real-ip rlnclientipaddr true-client-ip x-clientip x-client-ip x-cluster-client-ip  x-ip x-nokia-ipaddress x-real-ip x-wap-network-client-ip/;
+    qw /commerce-server-software daap-server dasl datacenter dav generator hosted-by hosted-with microsoftofficewebserver microsoftsharepointteamservices ms-author-via powered-by server-name serverid servlet-engine via x-aspnet-version x-blackboard-product x-cocoon-version x-compressed-by x-dmuser x-gallery-version x-hosted-at x-hostname x-isp x-powered-by x-responding-server x-served-by x-server x-server-name x-webserver x-owa-version access-control-allow-origin x-application-context cneonction nncoection xxx-real-ip bae-env-addr-sql-ip bae-env-addr-sql-port cf-connecting-ip fastly-client-ip incap-client-ip real-ip rlnclientipaddr true-client-ip x-clientip x-client-ip x-cluster-client-ip  x-ip x-nokia-ipaddress x-real-ip x-wap-network-client-ip reason-code/;
 
     foreach my $header (@interesting_headers) {
     	if (exists $result->{$header}) {
