@@ -779,8 +779,8 @@ sub general_config {
     }
 
     # verify readable dtd
-    if ($CLI{'format'} eq 'xml' && !-r $CONFIGFILE{'NIKTODTD'}) {
-        nprint("+ ERROR: reading DTD");
+    if ($CLI{'format'} eq 'xml' && $CONFIGFILE{'NIKTODTD'} != "") {
+        nprint("+ ERROR: DTD not defined");
         exit;
     }
 
