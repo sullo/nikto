@@ -115,7 +115,7 @@ sub nikto_domino {
         $finalmark,                                              # mark structure to identify target
         "IBM/Lotus Domino: Version $ver detected at $finaluri.", # message
         520000,                                                  # tid
-        0,                                                       # OSVDB reference
+        0,                                                       # Reference
         $finaluri,                                               # URI
         $finalreq,                                               # Request structure for full output
         $finalres);                                              # Response structure for full output
@@ -145,7 +145,7 @@ sub nikto_domino {
                     $mark,                                     # mark structure to identify target
                     "$item->{'file'}: $item->{'description'}", # message
                     $item->{'nikto_id'},                       # tid
-                    523,                                       # OSVDB reference
+                    523,                                       # Reference
                     $item->{'file'},                           # URI
                     $request,                                  # Request structure for full output
                     $response);                                # Response structure for full output

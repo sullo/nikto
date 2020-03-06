@@ -1427,7 +1427,7 @@ sub check_dbs {
                 if (($L[3] =~ /^\@CG/) && ($L[3] !~ /^\@CGIDIRS/)) {
                     nprint("\t+ ERROR: Possible \@CGIDIRS misspelling: $line");
                 }
-                if (($L[1] =~ /[^0-9]/) || ($L[1] eq "")) { nprint("\t+ ERROR: Invalid OSVDB ID: $line"); }
+
                 $ENTRIES{"$L[3],$L[4],$L[5],$L[6],$L[7],$L[8],$L[9],$L[11],$L[12]"}++;
                 if ((count_fields($line, 1) ne 12) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
