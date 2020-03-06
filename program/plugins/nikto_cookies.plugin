@@ -46,12 +46,17 @@ sub nikto_cookies_postfetch {
 		$c =~ /^([^=]+)/;
 		my $cname = $1;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
+
+		# secure flag
 		if ($c !~ /secure/i && $mark->{ssl}) {
 			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
+
+		# httponly flag
 		if ($c !~ /httponly/i) {
 			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
+
         my @ips = get_ips($c);
         foreach my $ip (@ips) {
             my ($valid, $internal, $loopback) = is_ip($ip);
