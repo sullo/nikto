@@ -1,3 +1,7 @@
+*** NOTE ***
+This file is no longer actively maintained. Please see the Github commit log detailed information:
+  https://github.com/sullo/nikto/commits/master
+
 2013-xx-xx Nikto 2.1.6 release
 	- Add -Option to override nikto.conf settings
 	- Removed JSON-PP.pm in favor of requiring JSON::PP be installed for -Savedir usage
