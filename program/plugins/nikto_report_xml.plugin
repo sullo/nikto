@@ -177,10 +177,20 @@ sub xml_change_vars {
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # OSVDB info
+    my $refs = "";
     my $OSVDB = $item->{'osvdb'};
     if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    $variables{"#TEMPL_OSVDB_LINK#"} = "http://osvdb.org/$OSVDB";
-    $variables{"#TEMPL_OSVDB#"}      = $OSVDB;
+    if ($OSVDB != 0) { 
+        $refs = "https://vulners.com/osvdb/OSVDB:" . $OSVDB; 
+        }
+
+    $variables{"#TEMPL_OSVDB#"} = $OSVDB; 
+    $variables{"#TEMPL_OSVDB_LINK#"} = $refs; 
+
+    # For future XML modification
+    #<references><![CDATA[#TEMPL_REFERENCES#]]></references>
+    #$variables{"#TEMPL_REFERENCES#"} = $refs; 
+
 
     # Scanner Messages Handling
     $variables{"#TEMPL_SMMSG#"} = $item->{'message'};
