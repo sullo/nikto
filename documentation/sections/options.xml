@@ -71,16 +71,6 @@ purposes. Use the reference number to specify the type, multiple may be used:</p
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-findonly</option></term>
-      <listitem>
-        <para>Only discover the HTTP(S) ports, do not perform a security scan.
-This will attempt to connect with HTTP or HTTPS, and report the
-Server header. Note that as of version 2.1.4, -findonly has been deprecated and
-simply sets '-Plugins "@@NONE"' which will override any command line or config file
-settings for -Plugins.</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-Format</option></term>
       <listitem>
         <para>Save the output file specified with -o (-output) option in
@@ -149,33 +139,6 @@ style output</para>
       </listitem>
     </varlistentry>
 
-    <varlistentry>
-      <term><option>-mutate</option></term>
-      <listitem>
-        <para>Specify mutation technique. A mutation will cause Nikto to
-combine tests or attempt to guess values. These techniques may cause
-a tremendous amount of tests to be launched against the target. Use
-the reference number to specify the type, multiple may be
-used:</para>
-        <para>1 - Test all files with all root directories</para>
-        <para>2 - Guess for password file names</para>
-        <para>3 - Enumerate user names via Apache (/~user type
-requests)</para>
-        <para>4 - Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user
-type requests)</para>
-        <para>5 - Attempt to brute force sub-domain names, assume that
-        the host name is the parent domain</para>
-        <para>6 - Attempt to guess directory names from the supplied
-        dictionary file</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-mutate-options</option></term>
-      <listitem>
-        <para>Provide extra information for mutates, e.g. a dictionary
-        file</para>
-      </listitem>
-    </varlistentry>
     <varlistentry>
       <term><option>-nolookup</option></term>
       <listitem>

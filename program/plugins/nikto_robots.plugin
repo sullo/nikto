@@ -94,7 +94,7 @@ sub nikto_robots {
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
 
-        # add them  to mutate dir/file
+        # add them to variables
         foreach my $dir (sort keys %DIRS) {
 	    my $raw  = $dir;
             $raw =~ s/\\//g;

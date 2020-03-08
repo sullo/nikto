@@ -267,24 +267,6 @@ sub map_codes {
         $FoF{'okay'}{'match'} = LW2::md4($cooked);
     }
 
-    # these are some used that may not be in the db_tests
-    if (defined $CLI{'mutate'}) {
-        $db_extensions{'bak'}  = 1;
-        $db_extensions{'data'} = 1;
-        $db_extensions{'dbc'}  = 1;
-        $db_extensions{'dbf'}  = 1;
-        $db_extensions{'lst'}  = 1;
-        $db_extensions{'htx'}  = 1;
-        $db_extensions{'htm'}  = 1;
-        $db_extensions{'html'}  = 1;
-        $db_extensions{'ini'}  = 1;
-        $db_extensions{'lst'}  = 1;
-        $db_extensions{'txt'}  = 1;
-        $db_extensions{'xml'}  = 1;
-        $db_extensions{'php'}  = 1;
-        $db_extensions{'php3'}  = 1;
-    }
-
     foreach my $ext (keys %db_extensions) {
         if (   $ext ne "DIRECTORY"
             && $ext ne "NONE"
@@ -462,13 +444,6 @@ sub dump_target_info {
                 }
             }
         }
-        if (defined $NIKTO{'mutate_opts'} && defined $CLI{'mutate'}) {
-            for (my $i = 1 ; $i <= (keys %{ $NIKTO{'mutate_opts'} }) ; $i++) {
-                if ($CLI{'mutate'} =~ /$i/) {
-                    nprint("+ Using Mutation:     $NIKTO{'mutate_opts'}{$i}");
-                }
-            }
-        }
 
 	if (defined $mark->{'messages'}) {
 		my @msgs = @{ $mark->{'messages'} };
@@ -511,14 +486,6 @@ sub general_config {
     $NIKTO{'anti_ids'}{'A'} = "Use a carriage return (0x0d) as a request spacer";
     $NIKTO{'anti_ids'}{'B'} = "Use binary value 0x0b as a request spacer";
 
-    # This is used in dump_target_info(), not just help output
-    $NIKTO{'mutate_opts'}{'1'} = "Test all files with all root directories";
-    $NIKTO{'mutate_opts'}{'2'} = "Guess for password file names";
-    $NIKTO{'mutate_opts'}{'3'} = "Enumerate user names via Apache (/~user type requests)";
-    $NIKTO{'mutate_opts'}{'4'} = "Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)";
-    $NIKTO{'mutate_opts'}{'5'} = "Attempt to brute force sub-domain names, assume that the host name is the parent domain";
-    $NIKTO{'mutate_opts'}{'6'} = "Attempt to guess directory names from the supplied dictionary file";
-
     ### CLI STUFF
     $CLI{'pause'} = $CLI{'html'} = $OUTPUT{'verbose'} = $CLI{'skiplookup'} =
       $COUNTERS{'totalrequests'} = $OUTPUT{'debug'} = $OUTPUT{'scrub'} = $OUTPUT{'errors'} = 0;
@@ -532,14 +499,12 @@ sub general_config {
                "Display=s"        => \$CLI{'display'},
                "evasion=s"        => \$CLI{'evasion'},
                "Format=s"         => \$CLI{'format'},
-               "Help"             => usage(),
+               "Help"             => \&usage,
                "host=s"           => \$CLI{'host'},
                "id=s"             => \$CLI{'hostauth'},
                "key=s"            => \$CLI{'key'},
                "list-plugins"     => \&list_plugins,
                "maxtime=s"        => \$CLI{'maxtime'},
-               "mutate-options=s" => \$CLI{'mutate-options'},
-               "mutate=s"         => \$CLI{'mutate'},
                "no404"            => \$CLI{'nofof'},
                "nointeractive"    => \$CLI{'nointeractive'},
                "nolookup"         => \$CLI{'skiplookup'},
@@ -813,37 +778,6 @@ sub general_config {
 
     if (!defined $CLI{'plugins'} || $CLI{'plugins'} eq "") {
         $CLI{'plugins'} = '@@DEFAULT';
-    }
-
-    # Mapping for mutate for plugins
-    if (defined $CLI{'mutate'}) {
-        if ($CLI{'mutate'} =~ /1/ || $CLI{'mutate'} =~ /2/) {
-            my $parameters;
-            $parameters = "passfiles" if ($CLI{'mutate'} =~ /2/);
-            $parameters .= ",all" if ($CLI{'mutate'} =~ /1/);
-            $CLI{'plugins'} .= ';tests(' . $parameters . ')';
-        }
-        if ($CLI{'mutate'} =~ /3/ || $CLI{'mutate'} =~ /4/) {
-            my $parameters;
-            $parameters = "enumerate";
-            $parameters .= ",home"    if ($CLI{'mutate'} =~ /3/);
-            $parameters .= ",cgiwrap" if ($CLI{'mutate'} =~ /4/);
-            $parameters .= ",dictionary:" . $CLI{'mutate-options'}
-              if (defined $CLI{'mutate-options'});
-            $CLI{'plugins'} .= ';apacheusers(' . $parameters . ')';
-        }
-        if ($CLI{'mutate'} =~ /5/) {
-            $CLI{'plugins'} .= ";subdomain";
-        }
-        if ($CLI{'mutate'} =~ /6/) {
-            $CLI{'plugins'} .= ';dictionary(dictionary:' . $CLI{'mutate-options'} . ')';
-        }
-        nprint(
-            "- Mutate is deprecated, use -Plugins instead. The following option can be used in future: -Plugin $CLI{'plugins'}"
-            );
-    }
-    else {
-        undef $NIKTO{'mutate_opts'};    # we don't need this any more
     }
 
     # Asking questions?
@@ -2703,13 +2637,6 @@ sub usage {
        -key+              Client certificate key file
        -list-plugins      List all available plugins, perform no testing
        -maxtime+          Maximum testing time per host (e.g., 1h, 60m, 3600s)
-       -mutate+           Guess additional file names:\n";
-
-        foreach my $k (sort keys %{ $NIKTO{'mutate_opts'} }) {
-            print "                               $k     $NIKTO{'mutate_opts'}{$k}\n";
-        }
-
-        print "       -mutate-options    Provide information for mutates
        -nointeractive     Disables interactive features
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
@@ -2751,9 +2678,9 @@ sub usage {
        -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
-   		+ requires a value\n\n";
+   		+ requires a value\n";
 
-    nprint($_[0]);
+    if ($_[0] ne "Help") { nprint($_[0]); }
     exit;
 }
 

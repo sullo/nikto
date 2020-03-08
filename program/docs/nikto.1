@@ -93,11 +93,6 @@ Specify the LibWhisker IDS evasion technique to use (see the LibWhisker docs for
 8 \- Use Windows directory separator (\e)
 .RE
 .PP
-\fB\-findonly\fR
-.RS 4
-Only discover the HTTP(S) ports, do not perform a security scan\&. This will attempt to connect with HTTP or HTTPS, and report the Server header\&.
-.RE
-.PP
 \fB\-Format\fR
 .RS 4
 Save the output file specified with \-o (\-output) option in this format\&. If not specified, the default will be taken from the file extension specified in the \-output option\&. Valid formats are:
@@ -142,33 +137,6 @@ Plugin
 \ \&Written by
 \fIauthor\fR, Copyright (C)
 \fIcopyright\fR
-.RE
-.PP
-\fB\-mutate\fR
-.RS 4
-Specify mutation technique\&. A mutation will cause Nikto to combine tests or attempt to guess values\&. These techniques may cause a tremendous amount of tests to be launched against the target\&. Use the reference number to specify the type, multiple may be used:
-.sp
-1 \- Test all files with all root directories
-.sp
-2 \- Guess for password file names
-.sp
-3 \- Enumerate user names via Apache (/~user type requests)
-.sp
-4 \- Enumerate user names via cgiwrap (/cgi\-bin/cgiwrap/~user type requests)
-.sp
-5 \- Attempt to brute force sub\-domain names, assume that the host name is the parent domain
-.sp
-6 \- Attempt to guess directory names from the supplied dictionary file
-.RE
-.PP
-\fB\-mutate\-options\fR
-.RS 4
-Provide extra information for mutates, e\&.g\&. a dictionary file
-.RE
-.PP
-\fB\-nolookup\fR
-.RS 4
-Do not perform name lookups on IP addresses\&.
 .RE
 .PP
 \fB\-nossl\fR

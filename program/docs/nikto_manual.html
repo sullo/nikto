@@ -72,16 +72,9 @@ version data back to the maintainers.</p><p>The name "Nikto" is taken from the m
       443:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443</pre><p>Hosts, ports and protocols may also be specified by using a full
       URL syntax, and it will be scanned:</p><pre class="screen">perl nikto.pl -h https://192.168.0.1:443/</pre><p>There is no need to specify that port 443 may be SSL, as Nikto
       will first test regular HTTP and if that fails, HTTPS. If you are sure
-      it is an SSL server, specifying -s (-ssl) will speed up the test.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p><em class="parameter"><code>-mutate</code></em> 1 increases the number of tests so
-      that all filenames are tested against all databases inc 
-      <code class="filename">db_tests</code>. This will produce over 2,000,000 extra
-      tests, which will use up a massive amount of resource.</p></td></tr></table></div><p>More complex tests can be performed using the
-      <em class="parameter"><code>-mutate</code></em> parameter, as detailed later. This can
-      produce extra tests, some of which may be provided with extra parameters
-      through the <em class="parameter"><code>-mutate-options</code></em> parameter. For example,
-      using <em class="parameter"><code>-mutate</code></em> 3, with or without a file attempts
-      to brute force usernames if the web server allows
-      ~<em class="replaceable"><code>user</code></em> URIs:</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -mutate 3 -mutate-options user-list.txt</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238384"></a>Multiple Port Testing</h2></div></div></div><p>Nikto can scan multiple ports in the same scanning session. To
+      it is an SSL server, specifying -s (-ssl) will speed up the test.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+</div>
+<div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238384"></a>Multiple Port Testing</h2></div></div></div><p>Nikto can scan multiple ports in the same scanning session. To
       test more than one port on the same host, specify the list of ports in
       the -p (-port) option. Ports can be specified as a range (i.e., 80-90),
       or as a comma-delimited list, (i.e., 80,88,90). This will scan the host
@@ -115,7 +108,9 @@ http://192.168.0.1:8080/
       Ensure Nikto works properly, then place the directory containing
       nikto.pl in root's PATH environment variable. When nessusd starts, it
       should see the nikto.pl program and enable usage through the
-      GUI.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="options"></a>Chapter 4. Command Line Options</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt><dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238858"></a>All Options</h2></div></div></div><p>Below are all of the Nikto command line options and explanations. A
+      GUI.</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="options"></a>Chapter 4. Command Line Options</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id238858">All Options</a></span></dt>
+
+<dt><span class="section"><a href="#id286918">Mutation Techniques</a></span></dt><dt><span class="section"><a href="#id287020">Display</a></span></dt><dt><span class="section"><a href="#id287094">Scan Tuning</a></span></dt><dt><span class="section"><a href="#id287290">Single Request Mode</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id238858"></a>All Options</h2></div></div></div><p>Below are all of the Nikto command line options and explanations. A
 brief version of this text is available by running Nikto with the -h
 (-help) option.</p><div class="variablelist"><dl><dt><span class="term"><code class="option">-Cgidirs</code></span></dt><dd><p>Scan these CGI directories. Special words "none" or "all" may
 be used to scan all CGI directories or none, (respectively). A
@@ -127,9 +122,8 @@ config.txt located in the install directory.</p></dd><dt><span class="term"><cod
 detailed information on these options. Use the reference number or
 letter to specify the type, multiple may be used:</p><p>1 - Show redirects</p><p>2 - Show cookies received</p><p>3 - Show all 200/OK responses</p><p>4 - Show URLs which require authentication</p><p>D - Debug Output</p><p>V - Verbose Output</p></dd><dt><span class="term"><code class="option">-evasion</code></span></dt><dd><p>Specify the LibWhisker IDS evasion technique to use (see the
 LibWhisker docs for detailed information on these). Use the
-reference number to specify the type, multiple may be used:</p><p>1 - Random URI encoding (non-UTF8)</p><p>2 - Directory self-reference (/./)</p><p>3 - Premature URL ending</p><p>4 - Prepend long random string</p><p>5 - Fake parameter</p><p>6 - TAB as request spacer</p><p>7 - Change the case of the URL</p><p>8 - Use Windows directory separator (\)</p></dd><dt><span class="term"><code class="option">-findonly</code></span></dt><dd><p>Only discover the HTTP(S) ports, do not perform a security scan.
-This will attempt to connect with HTTP or HTTPS, and report the
-Server header.</p></dd><dt><span class="term"><code class="option">-Format</code></span></dt><dd><p>Save the output file specified with -o (-output) option in
+reference number to specify the type, multiple may be used:</p><p>1 - Random URI encoding (non-UTF8)</p><p>2 - Directory self-reference (/./)</p><p>3 - Premature URL ending</p><p>4 - Prepend long random string</p><p>5 - Fake parameter</p><p>6 - TAB as request spacer</p><p>7 - Change the case of the URL</p><p>8 - Use Windows directory separator (\)</p></dd>
+<dt><span class="term"><code class="option">-Format</code></span></dt><dd><p>Save the output file specified with -o (-output) option in
 this format. If not specified, the default will be taken from the file
 extension specified in the -output option. Valid formats are:</p><p>csv - a comma-seperated list</p><p>htm - an HTML report</p><p>txt - a text report</p><p>xml - an XML report</p></dd><dt><span class="term"><code class="option">-host</code></span></dt><dd><p>Host(s) to target. Can be an IP address, hostname or text file
 of hosts. A single dash (-) maybe used for stdout. Can also parse nmap -oG
@@ -138,16 +132,9 @@ Format is "id:password".</p></dd><dt><span class="term"><code class="option">-li
 		then will exit without performing a scan. These can be tuned for a
 		session using the -plugins option.</p><p>The output format is:</p><p>Plugin <code class="varname">name</code></p><p> <code class="varname">full name</code> - <code class="varname">description</code>
 		</p><p> Written by <code class="varname">author</code>, Copyright (C)
-		<code class="varname">copyright</code></p></dd><dt><span class="term"><code class="option">-mutate</code></span></dt><dd><p>Specify mutation technique. A mutation will cause Nikto to
-combine tests or attempt to guess values. These techniques may cause
-a tremendous amount of tests to be launched against the target. Use
-the reference number to specify the type, multiple may be
-used:</p><p>1 - Test all files with all root directories</p><p>2 - Guess for password file names</p><p>3 - Enumerate user names via Apache (/~user type
-requests)</p><p>4 - Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user
-type requests)</p><p>5 - Attempt to brute force sub-domain names, assume that
-        the host name is the parent domain</p><p>6 - Attempt to guess directory names from the supplied
-        dictionary file</p></dd><dt><span class="term"><code class="option">-mutate-options</code></span></dt><dd><p>Provide extra information for mutates, e.g. a dictionary
-        file</p></dd><dt><span class="term"><code class="option">-nolookup</code></span></dt><dd><p>Do not perform name lookups on IP addresses.</p></dd><dt><span class="term"><code class="option">-nossl</code></span></dt><dd><p>Do not use SSL to connect to the server.</p></dd><dt><span class="term"><code class="option">-no404</code></span></dt><dd><p>Disable 404 (file not found) checking. This will reduce
+
+		<code class="varname">copyright</code></p></dd>
+<dt><span class="term"><code class="option">-nolookup</code></span></dt><dd><p>Do not perform name lookups on IP addresses.</p></dd><dt><span class="term"><code class="option">-nossl</code></span></dt><dd><p>Do not use SSL to connect to the server.</p></dd><dt><span class="term"><code class="option">-no404</code></span></dt><dd><p>Disable 404 (file not found) checking. This will reduce
         the total number of requests made to the webserver and may be
         preferable when checking a server over a slow link, or an embedded
         device. This will generally lead to more false positives being
@@ -177,31 +164,9 @@ specified)</p><p>The given string will be parsed from left to right, any x
         characters will apply to all characters to the right of the
         character.</p></dd><dt><span class="term"><code class="option">-useproxy</code></span></dt><dd><p>Use the HTTP proxy defined in the configuration file.</p></dd><dt><span class="term"><code class="option">-update</code></span></dt><dd><p>Update the plugins and databases directly from
 cirt.net.</p></dd><dt><span class="term"><code class="option">-Version</code></span></dt><dd><p>Display the Nikto software, plugin and database
-versions.</p></dd><dt><span class="term"><code class="option">-vhost</code></span></dt><dd><p>Specify the Host header to be sent to the target.</p></dd></dl></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id286918"></a>Mutation Techniques</h2></div></div></div><p>A mutation will cause Nikto to combine tests or attempt to guess
-      values. These techniques may cause a tremendous amount of tests to be
-      launched against the target. Use the reference number to specify the
-      type, multiple may be combined.</p><div class="orderedlist"><ol type="1"><li><p>Test all files with all root directories. This takes each test
-            and splits it into a list of files and directories. A scan list is
-            then created by combining each file with each directory.</p></li><li><p>Guess for password file names. Takes a list of common password
-            file names (such as "passwd", "pass", "password") and file
-            extensions ("txt", "pwd", "bak", etc.) and builds a list of files
-            to check for.</p></li><li><p>Enumerate user names via Apache (/~user type requests).
-            Exploit a misconfiguration with Apache UserDir setups which allows
-            valid user names to be discovered. This will attempt to brute-force
-            guess user names. A file of known users can also be supplied by
-            supplying the file name in the
-            <em class="parameter"><code>-mutate-options</code></em> parameter.</p></li><li><p>Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user
-            type requests). Exploit a flaw in cgiwrap which allows valid user
-            names to be discovered. This will attempt to brute-force guess user
-            names. A file of known users can also be supplied by supplying the
-            file name in the <em class="parameter"><code>-mutate-options</code></em>
-            parameter.</p></li><li><p>Attempt to brute force sub-domain names. This will
-            attempt to brute force know domain names, it will assume the given
-            host (without a www) is the parent domain.</p></li><li><p>Attempt to brute directory names. This is the only mutate
-            option that requires a file to be passed in the
-            <em class="parameter"><code>-mutate-options</code></em> parameter. It will use the
-            given file to attempt to guess directory names. Lists of common
-            directories may be found in the OWASP DirBuster project.</p></li></ol></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287020"></a>Display</h2></div></div></div><p>By default only some basic information about the target and
+versions.</p></dd><dt><span class="term"><code class="option">-vhost</code></span></dt><dd><p>Specify the Host header to be sent to the target.</p></dd></dl></div></div>
+
+<div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id287020"></a>Display</h2></div></div></div><p>By default only some basic information about the target and
       vulnerabilities is shown. Using the <em class="parameter"><code>-Display</code></em>
       parameter can produce more information for debugging issues.</p><div class="itemizedlist"><ul type="disc"><li><p>1 - Show redirects. This will display all requests which
             elicit a "redirect" response from the server.</p></li><li><p>2 - Show cookies received. This will display all cookies that
@@ -538,7 +503,6 @@ DOCDIR=EXECDIR/docs</pre></dd></dl></div></div></div><div class="chapter" lang="
       author       =&gt; "Deity",
       description  =&gt; "Attempts to dictionary attack commonly known directories/files",
       recon_method =&gt; \&amp;nikto_dictionary_attack,
-      recon_cond   =&gt; '$CLI{mutate} =~ /6/',
       recon_weight =&gt; 20,
       copyright    =&gt; "2009 Chris Sullo"
    };

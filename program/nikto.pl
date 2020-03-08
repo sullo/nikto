@@ -72,7 +72,7 @@ nprint($VARIABLES{'DIV'});
 # No targets: quit
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host or URL specified");
-    exit;
+    exit
 }
 
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
@@ -196,12 +196,10 @@ $COUNTERS{'scan_elapsed'} = ($COUNTERS{'scan_end'} - $COUNTERS{'scan_start'});
 report_summary();
 report_close();
 
-if (!$CLI{'findonly'}) {
-    nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
-    nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds", "v");
+nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
+nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds", "v");
 
-    send_updates(@MARKS);
-}
+send_updates(@MARKS);
 
 nprint("T:" . localtime() . ": Ending", "d");
 

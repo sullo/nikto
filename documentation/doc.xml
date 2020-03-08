@@ -220,21 +220,11 @@
       <note>
         <para>The <parameter>-mutate</parameter> and
         <parameter>-mutate-options</parameter> parameters have been deprecated
-        in nikto 2.1.2. Plugin selections, using the
+        as of Nikto 2.1.2. Plugin selections, using the
         <parameter>-Plugin</parameter> parameter, should be used instead.
-        Nikto will automagically turn a mutate option into the appropriate
-        selection string.</para>
+        </para>
       </note>
 
-      <para>More complex tests can be performed using the
-      <parameter>-mutate</parameter> parameter, as detailed later. This can
-      produce extra tests, some of which may be provided with extra parameters
-      through the <parameter>-mutate-options</parameter> parameter. For
-      example, using <parameter>-mutate</parameter> 3, with or without a file
-      attempts to brute force usernames if the web server allows
-      ~<replaceable>user</replaceable> URIs:</para>
-
-      <screen>perl nikto.pl -h 192.168.0.1 -mutate 3 -mutate-options user-list.txt</screen>
     </section>
 
     <section>
@@ -425,70 +415,6 @@ http://192.168.0.1:8080/
       <title>All Options</title>
 
       &options;
-    </section>
-
-    <section>
-      <title>Mutation Techniques</title>
-
-      <note>
-        <para>The <parameter>-mutate</parameter> and
-        <parameter>-mutate-options</parameter> parameters have been deprecated
-        in nikto 2.1.2. Plugin selections, using the
-        <parameter>-Plugin</parameter> parameter, should be used instead.
-        Nikto will automagically turn a mutate option into the appropriate
-        selection string.</para>
-      </note>
-
-      <para>A mutation will cause Nikto to combine tests or attempt to guess
-      values. These techniques may cause a tremendous amount of tests to be
-      launched against the target. Use the reference number to specify the
-      type, multiple may be combined.</para>
-
-      <orderedlist>
-        <listitem>
-          <para>Test all files with all root directories. This takes each test
-          and splits it into a list of files and directories. A scan list is
-          then created by combining each file with each directory.</para>
-        </listitem>
-
-        <listitem>
-          <para>Guess for password file names. Takes a list of common password
-          file names (such as "passwd", "pass", "password") and file
-          extensions ("txt", "pwd", "bak", etc.) and builds a list of files to
-          check for.</para>
-        </listitem>
-
-        <listitem>
-          <para>Enumerate user names via Apache (/~user type requests).
-          Exploit a misconfiguration with Apache UserDir setups which allows
-          valid user names to be discovered. This will attempt to brute-force
-          guess user names. A file of known users can also be supplied by
-          supplying the file name in the
-          <parameter>-mutate-options</parameter> parameter.</para>
-        </listitem>
-
-        <listitem>
-          <para>Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type
-          requests). Exploit a flaw in cgiwrap which allows valid user names
-          to be discovered. This will attempt to brute-force guess user names.
-          A file of known users can also be supplied by supplying the file
-          name in the <parameter>-mutate-options</parameter> parameter.</para>
-        </listitem>
-
-        <listitem>
-          <para>Attempt to brute force sub-domain names. This will attempt to
-          brute force know domain names, it will assume the given host
-          (without a www) is the parent domain.</para>
-        </listitem>
-
-        <listitem>
-          <para>Attempt to brute directory names. This is the only mutate
-          option that requires a file to be passed in the
-          <parameter>-mutate-options</parameter> parameter. It will use the
-          given file to attempt to guess directory names. Lists of common
-          directories may be found in the OWASP DirBuster project.</para>
-        </listitem>
-      </orderedlist>
     </section>
 
     <section>
@@ -735,9 +661,9 @@ Documentation - Apache HTTP Server&lt;/title&gt;
 
       <screen>./nikto.pl -list-plugins</screen>
 
-      <para>This also means that we deprecate the mutate options and replace
-      them with parameters passed to plugins, so the mutate options now
-      internally translate to:</para>
+      <para>This also means that when we deprecated the mutate options, 
+      they are replaced with parameters passed to plugins. So the old mutate 
+      options are now:</para>
 
       <orderedlist>
         <listitem>
@@ -767,9 +693,6 @@ Documentation - Apache HTTP Server&lt;/title&gt;
 
       <para>Macros for commonly run plugin sets can also be defined in
       nikto.conf, the default ones are:</para>
-
-      <screen>@@MUTATE=dictionary;subdomain
-@@DEFAULT=@@ALL;-@@MUTATE;tests(report:500)</screen>
 
       <para>These are expanded by using -list-plugins and can be overridden
       through -Plugins.</para>
