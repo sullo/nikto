@@ -1,4 +1,3 @@
-#VERSION,2.00
 ###############################################################################
 #  Copyright (C) 2016 Chris Sullo
 #
@@ -44,7 +43,7 @@ sub json_open {
     open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
 
     # Write header
-#    print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";
+#    print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}\"\n";
     return OUT;
 }
 

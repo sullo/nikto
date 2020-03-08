@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 use strict;
-#VERSION,2.1.6
 ###############################################################################
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
@@ -44,7 +43,7 @@ Getopt::Long::Configure('no_ignore_case');
 $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
-$VARIABLES{'version'}    = "2.1.6";
+$VARIABLES{'version'}    = "2.2.0";
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;

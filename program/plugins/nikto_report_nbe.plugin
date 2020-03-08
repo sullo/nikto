@@ -1,4 +1,3 @@
-#VERSION,2.02
 ###############################################################################
 #  Copyright (C) 2010 Chris Sullo
 #
@@ -41,7 +40,7 @@ sub nbe_open {
 
     # Write header
     print OUT
-      "timestamps|network|host|port|nikto_id|prio|$VARIABLES{'name'} v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
+      "timestamps|network|host|port|nikto_id|prio|$VARIABLES{'name'} v$VARIABLES{'version'}\n";
     return OUT;
 }
 

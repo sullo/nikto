@@ -1,4 +1,3 @@
-#VERSION,2.00
 ###############################################################################
 #  Copyright (C) 2013 Chris Sullo
 #
@@ -49,7 +48,7 @@ sub sqlg_open {
     # Write header
     my $opt = $CLI{'all_options'};
     $opt =~ s/'/\\'/g;
-    print OUT "# $VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
+    print OUT "# $VARIABLES{'name'} - v$VARIABLES{'version'}\n";
     print OUT "# Options:       $opt\n";
 	print OUT "# Start Time:    " . localtime($COUNTERS{'scan_start'}) . "\n";
 	print OUT "# End Time:      " . localtime($COUNTERS{'scan_end'}) . "\n";
