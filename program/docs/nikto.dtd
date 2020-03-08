@@ -26,14 +26,13 @@
 
 <!ELEMENT item (description,uri?,namelink?,iplink?)>
 <!ATTLIST item id CDATA #REQUIRED>
-<!ATTLIST item osvdbid CDATA #IMPLIED>
-<!ATTLIST item osvdblink CDATA #IMPLIED>
 <!ATTLIST item method CDATA #IMPLIED>
 
 <!ELEMENT description ANY>
 <!ELEMENT uri ANY>
 <!ELEMENT namelink ANY>
 <!ELEMENT iplink ANY>
+<!ELEMENT references ANY>
 
 <!ELEMENT statistics EMPTY>
 <!ATTLIST statistics itemstested CDATA #IMPLIED>

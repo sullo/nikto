@@ -91,7 +91,7 @@ sub favicon_matchhash {
     return if (($hash eq "") || ($icon eq ""));
     foreach my $item (@$FAVICONDB) {
         if ($item->{'md5hash'} eq $hash) {
-            add_vulnerability($mark, "$icon file identifies this app/server as: $item->{'description'}", $item->{'nikto_id'}, 39272, "GET", $icon, $request, $response);
+            add_vulnerability($mark, "$icon file identifies this app/server as: $item->{'description'}", $item->{'nikto_id'}, "OSVDB-39272", "GET", $icon, $request, $response);
         }
     }
 }

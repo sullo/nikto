@@ -93,7 +93,7 @@ sub nikto_sitefiles {
                 # alert
                 add_vulnerability($mark,
                                   "/$f: Potentially interesting backup/cert file found. $msg",
-                                  740001, 0, "HEAD", "/$f", $request, $response);
+                                  740001, "https://cwe.mitre.org/data/definitions/530.html", "HEAD", "/$f", $request, $response);
                 last;
             }
         }

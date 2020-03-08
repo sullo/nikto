@@ -2401,7 +2401,7 @@ sub set_scan_items {
 
                 $COUNTERS{total_checks}++;
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
-                $TESTS{ $item[0] }{'osvdb'}       = $item[1];
+                $TESTS{ $item[0] }{'refs'}        = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
                 $TESTS{ $item[0] }{'match_1'}     = $item[5];
                 $TESTS{ $item[0] }{'match_1_or'}  = $item[6];
@@ -2745,10 +2745,13 @@ sub init_db {
 
 #######################################################################
 sub add_vulnerability {
-    my ($mark, $message, $nikto_id, $osvdb, $method, $uri, $request, $response, $reason) = @_;
+    my ($mark, $message, $nikto_id, $refs, $method, $uri, $request, $response, $reason) = @_;
     $uri    = "/"   unless (defined $uri);
     $method = "GET" unless (defined $method);
-    $osvdb  = "0"   unless (defined $osvdb);
+
+    if ($message !~ /\.$/) {
+        $message .= ".";
+    }
 
     # check to see if we've alerted already (can be from content search, etc.)
     foreach my $r (@RESULTS) {
@@ -2770,7 +2773,7 @@ sub add_vulnerability {
     %$resulthash = (mark     => $mark,
                     message  => $message,
                     nikto_id => $nikto_id,
-                    osvdb    => $osvdb,
+                    refs     => $refs,
                     method   => $method,
                     uri      => $response->{whisker}->{uri_requested} || '/',
                     result   => $result,
@@ -2782,9 +2785,10 @@ sub add_vulnerability {
     push(@RESULTS, $resulthash);
     $mark->{total_vulns}++;
 
-    unless (($osvdb eq "0") || ($osvdb eq "")) {
-        $message = "OSVDB-$osvdb: $message";
-    }
+    if ($refs ne "") {
+        $message .= " See: $refs";
+        }
+
     nprint("+ $message");
 
     # Save it

@@ -65,7 +65,7 @@ sub nikto_content_search {
         if (($CSMATCHED{ $mark->{'hostname'} }{$file} != 1) && ($body =~ $testid->{'compiled'})) {
 
             my $outmessage = "$file: $testid->{'message'}";
-            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'osvdb'}, $method, $file, $request, $response);
+            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'refs'}, $method, $file, $request, $response);
             $CSMATCHED{ $mark->{'hostname'} }{$file} = 1;
         }
     }

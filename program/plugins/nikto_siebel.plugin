@@ -74,20 +74,20 @@ sub nikto_siebel {
         chomp($appver);
         $hotfix = $content;
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
-        add_vulnerability($mark, "Siebel version $siebelver found, application version $appver, applied hostfixes are $hotfix", 999901, 0, "GET", $path, $request, $response);
+        add_vulnerability($mark, "Siebel version $siebelver found, application version $appver, applied hostfixes are $hotfix", 999901, "", "GET", $path, $request, $response);
     }
         
     $path = $application . "/_stats.swe";
     ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
     if ($res eq "200") {
-        add_vulnerability($mark, "Siebel stats page found at $path", 999902, 0, "GET", $path, $request, $response);
+        add_vulnerability($mark, "Siebel stats page found at $path", 999902, "", "GET", $path, $request, $response);
     }
     
     foreach my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm")) {
         $path = $application . "/$page";
         ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
         if ($res eq "200") {
-            add_vulnerability($mark, "Siebel default file $path found", 999903, 0, "GET", $path, $request, $response);
+            add_vulnerability($mark, "Siebel default file $path found", 999903, "", "GET", $path, $request, $response);
         }
     }
 
@@ -118,7 +118,7 @@ sub nikto_siebel_enumerate {
             ($res, $content, $error, $request, $response) = nfetch( $mark, $startname, "GET", "", "", "", "siebel: enumerate application");
             if ($res eq "200") {
                 # We've found an app
-                add_vulnerability($mark, "Enumerated Siebel application: " . $appname, 999900, 0, "GET", $startname, $request, $response);
+                add_vulnerability($mark, "Enumerated Siebel application: " . $appname, 999900, "", "GET", $startname, $request, $response);
                 push(@foundapps, $appname);
             }
         }

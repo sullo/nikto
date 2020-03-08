@@ -58,11 +58,12 @@ sub text_item {
 
     foreach my $uri (split(' ', $item->{uri})) {
         my $line = "+ ";
-        if ($item->{osvdb})  { $line .= "OSVDB-" . $item->{osvdb} . ": " }
         if ($item->{method}) { $line .= $item->{method} . " " }
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))             
-        	{ $line .= $mark->{'root'} . ${'uri'} . ": " }
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) {
+           $line .= $mark->{'root'} . ${'uri'} . ": " 
+        }
         $line .= $item->{message};
+        if ($item->{refs} ne "")  { $line .= " See: " . $item->{refs} . ": " }
         print $handle "$line\n";
     }
 }

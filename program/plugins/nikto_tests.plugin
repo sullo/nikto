@@ -251,12 +251,11 @@ sub nikto_tests {
                     }
                 }
 
-                $TESTS{$checkid}{'osvdb'} =~ s/\s+/ OSVDB\-/g;
                 if ($positive) {
                     add_vulnerability($mark,
                                   "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
                                   $checkid,
-                                  $TESTS{$checkid}{'osvdb'},
+                                  $TESTS{$checkid}{'refs'},
                                   $TESTS{$checkid}{'method'},
                                   $mark->{'root'} . $uri,
                                   $request,
@@ -383,7 +382,7 @@ sub testfile {
         return;
     }
     if ($res == 200) {
-        add_vulnerability($mark, "$uri: file found during $name mutation", "$tid", "0", "GET", $uri, $request, $response);
+        add_vulnerability($mark, "$uri: file found during $name mutation", "$tid", "", "GET", $uri, $request, $response);
     }
 }
 

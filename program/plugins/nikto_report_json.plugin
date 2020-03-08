@@ -90,7 +90,7 @@ sub json_item {
         $line .= "{";
 
         $line .= "\"id\": \"" .$item->{'nikto_id'} ."\",";
-        if ($item->{'osvdb'} ne '') { $line .= "\"OSVDB\": \"" .$item->{'osvdb'} ."\","; }
+        if ($item->{'refs'} ne '') { $line .= "\"references\": \"" .$item->{'refs'} ."\","; }
 
         if ($item->{'method'} ne '') { $line .= "\"method\":\"" .$item->{'method'} ."\","; }
 

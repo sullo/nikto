@@ -48,12 +48,12 @@ sub nikto_cookies_postfetch {
 
 		# secure flag
 		if ($c !~ /secure/i && $mark->{ssl}) {
-			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, "https://owasp.org/www-community/controls/SecureFlag", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
 
 		# httponly flag
 		if ($c !~ /httponly/i) {
-			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, "https://owasp.org/www-community/HttpOnly", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
 
         my @ips = get_ips($c);
@@ -62,12 +62,12 @@ sub nikto_cookies_postfetch {
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {
                     my $msg   = "";
-                    my $osvdb = 0;
+                    my $refs = "";
 
                     if ($cname eq 'ARPT') {
                         $msg =
                           "Cisco content switch reveals internal IP address found in the '$cname' cookie. The IP is \"$ip\".";
-                        $osvdb = 28121;
+                        $refs = "CVE-2006-4352";
                     }
                     else {
 
@@ -76,7 +76,7 @@ sub nikto_cookies_postfetch {
                         if ($internal) { $int = "RFC-1918 "; }
                         $msg = $int . "IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
-                    add_vulnerability($mark, $msg, 999991, $osvdb, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+                    add_vulnerability($mark, $msg, 999991, $refs, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
                 }
             }
         }

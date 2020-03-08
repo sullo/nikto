@@ -123,7 +123,7 @@ sub nikto_outdated {
                     $msg =~ s/\@RUNNING_VER/$BI/g;
                     $msg =~ s/\@CURRENT_VER/$v/g;
                     chomp($msg);
-                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, 0, "HEAD", "/");
+                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, "", "HEAD", "/");
                 }
             }
         }

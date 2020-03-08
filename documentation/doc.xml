@@ -602,8 +602,8 @@ $ ./replay -file savedir_host_80_2012-09-11-00-07-42/host_80_2012-09-11_002114.t
 --------------------------------------------  Info
 Request to:     http://host:80/manual/
 Test ID:        002114
-OSVDB ID:       3092
-Message:        OSVDB-3092: /manual/: Web server manual found.
+References:     CWE-306
+Message:        /manual/: Web server manual found.
 --------------------------------------------  Response
 date: Tue, 11 Sep 2012 04:14:20 GMT
 server: Apache/2.2.21 (Unix) mod_ssl/2.2.21 OpenSSL/0.9.8r DAV/2 PHP/5.3.10 with Suhosin-Patch
@@ -1181,7 +1181,7 @@ DOCDIR=EXECDIR/docs</screen>
       the tests. Fields are enclosed by quotes and separated by commas. The
       field order is:</para>
 
-      <para>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
+      <para>Test-ID, References, Tuning Type, URI, HTTP Method, Match 1, Match 1
       Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</para>
 
       <para>Here is an example test:</para>
@@ -1208,10 +1208,9 @@ DOCDIR=EXECDIR/docs</screen>
             </row>
 
             <row>
-              <entry>OSVDB-ID</entry>
+              <entry>References</entry>
 
-              <entry>Corresponding vulnerability entry number for
-              osvdb.org</entry>
+              <entry>Corresponding vulnerability references</entry>
             </row>
 
             <row>
@@ -1310,12 +1309,6 @@ DOCDIR=EXECDIR/docs</screen>
       same time <filename>databases/db_tests</filename> is loaded. These files
       will also be checked for syntax when <parameter>-dbcheck</parameter> is
       used.</para>
-
-      <para>For tests which require a "private" OSVDB ID, use the OSVDB ID 0
-      (zero). This should be used for all vulnerabilities that do not (or
-      should not) exist in OSVDB, as ID 0 is for testing only. You are
-      encouraged to send missing information to OSVDB at
-      moderators@osvdb.org.</para>
 
       <para>For the "Test ID", it is recommended you use unique numbers
       between 400000 and 499999 to allow for growth of the Nikto database
@@ -2078,11 +2071,9 @@ DOCDIR=EXECDIR/docs</screen>
                   </row>
 
                   <row>
-                    <entry>osvdb</entry>
+                    <entry>references</entry>
 
-                    <entry>OSVDB reference to the vulnerability in the Open
-                    Source Vulnerability Database. This may be 0 if an OSVDB
-                    reference is not relevant or doesn't exist.</entry>
+                    <entry>Additional vulnerability information</entry>
                   </row>
 
                   <row>
@@ -2339,7 +2330,7 @@ array[0]-&gt;{description}</screen>
 
             <paramdef>string <parameter>nikto_id</parameter></paramdef>
 
-            <paramdef>string <parameter>osvdb</parameter></paramdef>
+            <paramdef>string <parameter>refs</parameter></paramdef>
 
             <paramdef>string <parameter>method</parameter></paramdef>
 
@@ -2622,15 +2613,15 @@ array[0]-&gt;{description}</screen>
       <para>As much data as possible in the <varname>%TESTS</varname> hash
       should be populated for each new test that is defined in code (plugins).
       These fields include URI for the test, message to print on success, HTTP
-      method and OSVDB ID. Without a 'message' value in
+      method, and References. Without a 'message' value in
       <varname>%TESTS</varname> output will not be saved in HTML or XML
-      reports. Not all tests are expected to have a uri, method or OSVDB ID.
+      reports. Not all tests are expected to have a URI, Method or References.
       Here is an example of setting those fields:</para>
 
       <screen>$TESTS{999999}{uri}="/~root";
 $TESTS{999999}{message}="Enumeration of users is possible by requesting ~username";
 $TESTS{999999}{method}="GET";
-$TESTS{999999}{osvdb}=637;</screen>
+$TESTS{999999}{refs}=637;</screen>
     </section>
 
     <section>
@@ -2723,8 +2714,8 @@ $TESTS{999999}{osvdb}=637;</screen>
         </listitem>
 
         <listitem>
-          <para>Jericho (attrition.org/OSVDB/OSF).
-          Support/ideas/tests/corrections/spam and help matching OSVDB IDs to
+          <para>Jericho (attrition.org).
+          Support/ideas/tests/corrections/spam and help matching references to
           tests.</para>
         </listitem>
 
@@ -2737,7 +2728,7 @@ $TESTS{999999}{osvdb}=637;</screen>
         </listitem>
 
         <listitem>
-          <para>Jake Kouns (OSVDB/OSF).</para>
+          <para>Jake Kouns.</para>
         </listitem>
 
         <listitem>

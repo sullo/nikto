@@ -192,7 +192,7 @@ style output</para>
 		tested. Note that the -Format option is required when this is used. The 
 		scheme is: nikto_HOSTNAME_PORT_TIMESTAMP.FORMAT</para>
 	<para>For '-Format sql' a sample MySQL table create might look like:
-		create table nikto_table (testid varchar(6) not null, ip varchar(15), hostname text, port int(5), usessl tinyint(1), osvdb int, httpmethod text, uri text, message text, request blob, response blob);</para>
+		create table nikto_table (testid varchar(6) not null, ip varchar(15), hostname text, port int(5), usessl tinyint(1), references text, httpmethod text, uri text, message text, request blob, response blob);</para>
       </listitem>
     </varlistentry>
 	<varlistentry>
