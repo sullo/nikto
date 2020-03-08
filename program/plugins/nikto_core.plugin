@@ -2557,34 +2557,25 @@ sub parse_csv {
     return @new;
 }
 #######################################################################
-sub check_modules {
-    # Check dependencies
+sub version {
+
+    nprint("Nikto $VARIABLES{'version'} (LibWhisker $LW2::VERSION)");
+
+    # Do config checking while here
+    load_modules();
+
+    # Check for JSON::PP for replay.pl
     eval "require JSON::PP";
     if ($@) {
         nprint("+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used.");
     }
+
+    # Initialize SSL to be sure it works
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
     if (!$avail) {
         nprint("+ WARNING: SSL: support not available.");
     }
-
-}
-
-#######################################################################
-sub version {
-
-    nprint("|--------------------------|");
-    nprint("|           Nikto          |");
-    nprint("|--------------------------|");
-    nprint("| File        |  Version   |");
-    nprint("|-------------|------------|");
-    nprint("| Nikto Core  |  $VARIABLES{'version'}     |");
-    nprint("| LibWhisker  |  $LW2::VERSION       |\n");
-    nprint("|--------------------------|");
-
-    # Check dependencies
-    check_modules();
 
     exit;
 }
