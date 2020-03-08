@@ -531,9 +531,8 @@ sub general_config {
                "dbcheck"          => \&check_dbs,
                "Display=s"        => \$CLI{'display'},
                "evasion=s"        => \$CLI{'evasion'},
-               "findonly"         => \$CLI{'findonly'},
                "Format=s"         => \$CLI{'format'},
-               "Help"             => \&usage,
+               "Help"             => usage(),
                "host=s"           => \$CLI{'host'},
                "id=s"             => \$CLI{'hostauth'},
                "key=s"            => \$CLI{'key'},
@@ -655,12 +654,6 @@ sub general_config {
     foreach my $option (@options) {
         my @optione=split("=", $option, 2);
         $CONFIGFILE{$optione[0]}=$optione[1];
-    }
-
-    # deprecated -findonly overrides -Plugins
-    if ($CLI{'findonly'}) {
-        $CLI{'plugins'} =
-          '@@NONE;report_csv;report_json;report_sqlg;report_html;report_text;report_xml;report_nbe';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -2668,9 +2661,8 @@ sub send_updates {
 
 #######################################################################
 sub usage {
-    if ($_[0] eq "Help") {
-        print "
-   Options:
+   nprint("   Nikto $VARIABLES{'version'} (LibWhisker $LW2::VERSION)");
+   print "   Options:
        -ask+               Whether to ask about submitting updates
                                yes   Ask about each (default)
                                no    Don't ask, don't send
@@ -2760,36 +2752,8 @@ sub usage {
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
    		+ requires a value\n\n";
-    }
-    else {
-        print "
-       -config+            Use this config file
-       -Display+           Turn on/off display outputs
-       -dbcheck            check database and other key files for syntax errors
-       -Format+            save file (-o) format
-       -Help               Extended help information
-       -host+              target host/URL
-       -id+                Host authentication to use, format is id:pass or id:pass:realm
-       -list-plugins       List all available plugins
-       -output+            Write output to this file
-       -nossl              Disables using SSL
-       -no404              Disables 404 checks
-       -Plugins+           List of plugins to run (default: ALL)
-       -port+              Port to use (default 80)
-       -root+              Prepend root value to all requests, format is /directory
-       -ssl                Force ssl mode on port
-       -Tuning+            Scan tuning
-       -timeout+           Timeout for requests (default 10 seconds)
-       -update             Update databases and plugins from CIRT.net
-       -Version            Print plugin and database versions
-       -vhost+             Virtual host (for Host header)
-   		+ requires a value
 
-	Note: This is the short help output. Use -H for full help text.\n\n";
-    }
-
-    check_modules();
-
+    nprint($_[0]);
     exit;
 }
 

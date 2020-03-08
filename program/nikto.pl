@@ -69,10 +69,10 @@ load_databases('u');
 nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
-# No targets - quit while we're ahead
+# No targets: quit
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host or URL specified");
-    usage();
+    exit;
 }
 
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
@@ -169,40 +169,23 @@ foreach my $mark (@MARKS) {
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
 
     report_host_start($mark);
-    if ($CLI{'findonly'}) {
-        my $protocol = "http";
-        if ($mark->{'ssl'}) { $protocol .= "s"; }
-        if ($mark->{'banner'} eq "") {
-            $mark->{'banner'} = "(no identification possible)";
-        }
-
-        add_vulnerability($mark,
-                   "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}",
-                   0);
-    }
-    else {
-        dump_target_info($mark);
-        unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
-        run_hooks($mark, "recon");
-        run_hooks($mark, "scan");
-    }
+    dump_target_info($mark);
+    unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
+    run_hooks($mark, "recon");
+    run_hooks($mark, "scan");
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
-    if (!$CLI{'findonly'}) {
-        if (!$mark->{'terminate'}) {
+    if (!$mark->{'terminate'}) {
             nprint(
                 "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
                 );
         }
-        else {
-            nprint(
-                "+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
-                );
+    else {
+        nprint("+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host");
         }
-        nprint(  "+ End Time:           "
+    nprint(  "+ End Time:           "
                . date_disp($mark->{'end_time'})
                . " (GMT$VARIABLES{'GMTOFFSET'}) ($mark->{'elapsed'} seconds)");
-    }
     nprint($VARIABLES{'DIV'});
 
     $COUNTERS{'hosts_completed'}++;
