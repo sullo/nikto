@@ -79,7 +79,7 @@ if ($CLI{'host'} eq '') {
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
 load_plugins();
 
-my $is_failure;
+my $is_failure = 0;
 
 # Parse the supplied list of targets
 my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
@@ -230,11 +230,7 @@ if (!$CLI{'findonly'}) {
 
 nprint("T:" . localtime() . ": Ending", "d");
 
-if ($is_failure) {
-  exit 1;    
-}
-
-exit;
+exit $is_failure;
 
 #################################################################################
 # Load config files in order
