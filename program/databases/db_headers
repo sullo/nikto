@@ -100,6 +100,7 @@
 "x-frame-options"
 "x-id"
 "xmlns"
+"x-dns-prefetch-control"
 "x-mod-pagespeed"
 "x-pad"
 "x-page-speed"
