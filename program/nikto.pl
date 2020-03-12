@@ -73,7 +73,7 @@ nprint($VARIABLES{'DIV'});
 # No targets - quit while we're ahead
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host or URL specified");
-    usage();
+    usage(1);
 }
 
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
@@ -304,7 +304,7 @@ sub load_modules {
 		}
 	}
 
-	if ($errors) { exit; }
+	if ($errors) { exit 1; }
 }
 
 #################################################################################
