@@ -12,8 +12,8 @@
 @ECHO RUNNING UPDATE...
 @ECHO -----------------------------------
 git clone https://github.com/sullo/nikto.git D:\Nikto
-cd D:\nikto_cpy
-git pull
+cd D:\Nikto
+git pull D:\nikto_cpy
 @ECHO -----------------------------------
 ECHO SETTING THINGS Right...
 @ECHO -----------------------------------
