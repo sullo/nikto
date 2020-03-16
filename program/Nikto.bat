@@ -18,7 +18,7 @@ cd D:\Nikto
 git pull D:\nikto_cpy
 cd D:\nikto_cpy
 @ECHO -----------------------------------
-ECHO SETTING THINGS UP...
+@ECHO SETTING THINGS UP...
 @ECHO -----------------------------------
 SET FOLDER=%D:\Nikto%
 CD /
