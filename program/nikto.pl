@@ -73,11 +73,13 @@ nprint($VARIABLES{'DIV'});
 # No targets - quit while we're ahead
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host or URL specified");
-    usage();
+    usage(1);
 }
 
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
 load_plugins();
+
+my $is_failure = 0;
 
 # Parse the supplied list of targets
 my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
@@ -187,6 +189,11 @@ foreach my $mark (@MARKS) {
         run_hooks($mark, "recon");
         run_hooks($mark, "scan");
     }
+
+    if ($mark->{'total_errors'} > 0 || $mark->{'total_vulns'} > 0) {
+        $is_failure = 1;
+    }
+
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
     if (!$CLI{'findonly'}) {
@@ -223,7 +230,7 @@ if (!$CLI{'findonly'}) {
 
 nprint("T:" . localtime() . ": Ending", "d");
 
-exit;
+exit $is_failure;
 
 #################################################################################
 # Load config files in order
@@ -297,7 +304,7 @@ sub load_modules {
 		}
 	}
 
-	if ($errors) { exit; }
+	if ($errors) { exit 1; }
 }
 
 #################################################################################

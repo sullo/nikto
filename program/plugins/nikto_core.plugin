@@ -573,7 +573,7 @@ sub general_config {
     # both -host and -url
     if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) {
         nprint("+ ERROR: Cannot use -url and -host at the same time");
-        exit;
+        exit 1;
 	}
 
     # 404string
@@ -587,7 +587,7 @@ sub general_config {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
             if ($code =~ /[^\d]/) {
                  nprint("+ ERROR: Invalid 404code, must be an integer");
-                 exit;
+                 exit 1;
                  }
             $VARIABLES->{'ERRCODES'}->{$code} = 1;
         }
@@ -598,7 +598,7 @@ sub general_config {
         $CLI{'maxtime'} = time_to_seconds($CLI{'maxtime'});
         if ($CLI{'maxtime'} eq '') {
             nprint("+ ERROR: Invalid maxtime value, must be a valid time (e.g., 3600s, 60m, 1h)");
-            exit;
+            exit 1;
         }
     }
 
@@ -614,7 +614,7 @@ sub general_config {
                 nprint(
                     "+ ERROR: Invalid until value, must be a valid time (e.g., 3600s, 60m, 1h) or a time (e.g., 03:00)"
                     );
-                exit;
+                exit 1;
             }
 
             # convert to a pausetime
@@ -644,7 +644,7 @@ sub general_config {
 
         if ($now > $pausetime) {
             nprint("+ ERROR: Pause time is in the past.");
-            exit;
+            exit 1;
         }
         $CLI{'until'} = $pausetime;
     }
@@ -692,12 +692,12 @@ sub general_config {
     if (defined($CLI{'saveresults'})) {
         if ($CLI{'saveresults'} eq '') {
             nprint("+ ERROR: -Save must have a directory name or '.' for auto-generated");
-            exit;
+            exit 1;
         }
         eval "require JSON::PP";
         if ($@) {
             nprint("+ ERROR: Module JSON::PP missing.");
-            exit;
+            exit 1;
         }
     }
 
@@ -707,14 +707,14 @@ sub general_config {
         $CLI{'ports'} =~ s/\s+$//;
         if ($CLI{'ports'} =~ /[^0-9\-\, ]/) {
             nprint("+ ERROR: Invalid port option '$CLI{'ports'}'");
-            exit;
+            exit 1;
         }
     }
 
     # auto-generate file name
     if (($CLI{'file'} eq '.') && ($CLI{'format'} eq '')) {
             nprint("+ ERROR: Output format must be used with auto file naming");
-            exit;
+            exit 1;
         }
 
     if ($CLI{'file'} eq '.') {
@@ -765,23 +765,23 @@ sub general_config {
 
     if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) {
         nprint("+ ERROR: Invalid output format");
-        exit;
+        exit 1;
 	}
 
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
         nprint("+ERROR: Output file specified without a format");
-        exit;
+        exit 1;
     }
 
     if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "none")) {
         nprint("+ERROR: Output file format specified without a name");
-        exit;
+        exit 1;
     }
 
     # verify readable dtd
     if ($CLI{'format'} eq 'xml' && $CONFIGFILE{'NIKTODTD'} != "") {
         nprint("+ ERROR: DTD not defined");
-        exit;
+        exit 1;
     }
 
     # screen output
@@ -809,7 +809,7 @@ sub general_config {
             nprint(
                 "+ ERROR: \'$CLI{'hostauth'}\' (-i option) syntax is 'user:password' or 'user:password:domain' for host authentication."
                 );
-            exit;
+            exit 1;
         }
     }
 
@@ -1053,7 +1053,7 @@ sub resolve {
     {
         if ($CLI{'skiplookup'}) {
             print("+ ERROR: -nolookup set, but given name\n");
-            exit;
+            exit 1;
         }
 
     if ($hent = gethostbyname($ident)) {
@@ -1073,7 +1073,7 @@ sub resolve {
 
    if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
        nprint("+ ERROR: Invalid IP: $ip\n\n");
-       exit;
+       exit 1;
    }
        $name = $ident;
      }
@@ -1152,7 +1152,7 @@ sub set_targets {
 
             if ($CLI{'ports'} ne '') {
 		nprint("- ERROR: The -port option cannot be used with a full URI");
-		exit;
+		exit 1;
 		}
             my @hostdata = LW2::uri_split($host);
 
@@ -1220,7 +1220,7 @@ sub load_databases {
     for my $file (@dbs) {
         if (!-r "$CONFIGFILE{'DBDIR'}/$file") {
             nprint("+ ERROR: Can't find/read required file \"$CONFIGFILE{'DBDIR'}/$file\"");
-            exit;
+            exit 1;
         }
     }
 
@@ -1628,7 +1628,7 @@ sub check_dbs {
     nprint("\nSome (probably) open IDs: " . join(", ",@open) );
 
     nprint("\n");
-    exit;
+    exit 1;
 }
 
 ###############################################################################
@@ -2060,7 +2060,7 @@ sub check_updates {
 
     if ($code ne 200) {
         nprint("+ ERROR ($code): Unable to get $mark{'hostname'}$serverdir/versions.txt");
-        exit;
+        exit 1;
     }
 
     # make hash
@@ -2109,7 +2109,7 @@ sub check_updates {
                 nprint
                   "+ No update has taken place. Please upgrade Nikto by visiting http://$server/\n";
                 if ($remotemsg ne "") { nprint("+ $server message: $remotemsg"); }
-                exit;
+                exit 1;
             }
             push(@DBTOGET, $remotefile);
             if ($remotefile !~ /^db_/) { $code_updates = 1; }
@@ -2122,7 +2122,7 @@ sub check_updates {
         my ($code, $content) = nfetch(\%mark, "$serverdir/$toget", "GET");
         if ($code ne 200) {
             nprint("+ ERROR: Unable to get $server$serverdir/$toget");
-            exit;
+            exit 1;
         }
         if ($content ne "") {
             my $dir = '';
@@ -2152,7 +2152,7 @@ sub check_updates {
 
     if ($#DBTOGET < 0) { nprint("+ No updates required."); }
     if ($remotemsg ne "") { nprint("+ $server message: $remotemsg"); }
-    exit;
+    exit 1;
 }
 
 ###############################################################################
@@ -2264,7 +2264,7 @@ sub proxy_check {
                 nprint(
                     "+ Proxy server uses '$x[0]' rather than 'Basic' authentication. $VARIABLES{'name'} $VARIABLES{'version'} can't do that."
                     );
-                exit;
+                exit 1;
             }
 
             # test it...
@@ -2285,7 +2285,7 @@ sub proxy_check {
                 nprint(
                     "+ Proxy requires authentication for '$pauthinfo[0]' realm '$pauthinfo2[1]', unable to authenticate."
                     );
-                exit;
+                exit 1;
             }
             else { nprint("- Successfully authenticated to proxy.", "v"); }
         }
@@ -2640,7 +2640,7 @@ sub set_scan_items {
     nprint("- $COUNTERS{'total_checks'} server checks loaded", "v");
     if ($COUNTERS{'total_checks'} eq 0 && !defined $CLI{'tuning'}) {
         nprint("+ Unable to load valid checks!");
-        exit;
+        exit 1;
     }
     return;
 }
@@ -2849,6 +2849,8 @@ sub send_updates {
 
 #######################################################################
 sub usage {
+    my $is_failure = shift;
+
     if ($_[0] eq "Help") {
         print "
    Options:
@@ -2971,7 +2973,7 @@ sub usage {
 
     check_modules();
 
-    exit;
+    exit $is_failure;
 }
 
 #######################################################################
