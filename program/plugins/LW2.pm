@@ -155,11 +155,41 @@ $PACKAGE='LW2';
 
     $_SSL_LIBRARY = undef;
 
+    # These IPv4 & IPv6 regexps are from Regexp::IPv6
+    my $IPv4 = "((25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})[.](25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})[.](25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})[.](25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))";
+
+    our $IPv4_re = $IPv4;
+    $IPv4_re =~ s/\(/(?:/g;
+    $IPv4_re = qr/$IPv4_re/;
+
+
+    my $G = "[0-9a-fA-F]{1,4}";
+
+    my @tail = ( ":",
+	    "(:($G)?|$IPv4)",
+        ":($IPv4|$G(:$G)?|)",
+        "(:$IPv4|:$G(:$IPv4|(:$G){0,2})|:)",
+        "((:$G){0,2}(:$IPv4|(:$G){1,2})|:)",
+        "((:$G){0,3}(:$IPv4|(:$G){1,2})|:)",
+        "((:$G){0,4}(:$IPv4|(:$G){1,2})|:)" );
+
+    our $IPv6_re = $G;
+    $IPv6_re = "$G:($IPv6_re|$_)" for @tail;
+    $IPv6_re = qq/:(:$G){0,5}((:$G){1,2}|:$IPv4)|$IPv6_re/;
+    $IPv6_re =~ s/\(/(?:/g;
+    $IPv6_re = qr/$IPv6_re/;
+    
+    our $IPv6_re_inc_zoneid = qr/$IPv6_re(?:[%][a-z0-9]+)?/;
+    
     # check for Socket
-     eval "use Socket";
-     if ( $@ ) {
-	die('You have to install the module Socket');
-     }
+    eval "use Socket qw(:DEFAULT :addrinfo SOCK_STREAM inet_pton pack_sockaddr_in6)"; # Have IPv6-capable Socket.pm?
+    our $LW2_CAN_IPv6 = ( $@) ? 0 : 1;
+    if ($@) { # No IPv6, fallback to older Socket test
+        eval "use Socket";   
+        if ( $@ ) {
+	        die('You have to install the module Socket');
+        }
+    }    
 
     # init SSL with autoconfig first. App can later override this
     init_ssl_engine('auto');
@@ -4711,6 +4741,11 @@ sub stream_key {
     }
 
     return $key if ( !wantarray() );
+    
+    if ($h =~ /:/) { # IPv6 address
+        $h =~ s/[\[\]]//g;
+    }      
+    
     return ( $type, $h, $p, $x, $key );
 }
 
@@ -4762,6 +4797,21 @@ sub stream_setsock {
           if ( $x{streamtype} != 3
             && $x{streamtype} != 6
             && !defined $Socket::VERSION );
+
+        if ( $LW2_CAN_IPv6 ) { # set up any hints for getaddrinfo()
+            # If chost is an IP address, only try
+            # to create sockets of that address family
+            # and don't try to resolve it like a hostname.
+            if ( $x{chost} =~ /^$IPv4_re$/ ) {
+                $x{sock_hints}{family} = AF_INET;
+                $x{sock_hints}{flags} += AI_NUMERICHOST;
+            } elsif ( $x{chost} =~ /^$IPv6_re(?:[%][0-9a-z]+)?$/ ) {
+                $x{sock_hints}{family} = AF_INET6;
+                $x{sock_hints}{flags} += AI_NUMERICHOST;
+            }
+
+            $x{sock_hints}{socktype} = ( $x{streamtype} == 2) ? SOCK_DGRAM : SOCK_STREAM ;
+        }
 
         $x{nonblock} = $LW_NONBLOCK_CONNECT if ( $x{streamtype} == 1 );
         $x{forceclose} = 1 if ( $x{streamtype} == 5 );
@@ -4993,59 +5043,102 @@ sub _stream_ssl_write {
 sub _stream_socket_alloc {
     my ( $xr, $wh ) = @_;
 
-    if ( $xr->{streamtype} == 2 ) {
-        return _stream_err( $xr, 0, 'socket problems (UDP)' )
-          if (
-            !socket(
-                $xr->{sock}, PF_INET,
-                SOCK_DGRAM, getprotobyname('udp') || 0
-            )
-          );
-    }
-    else {
+    if ($LW2_CAN_IPv6) {
+        
+        my ($ip, $port);
+        
+        if ( defined $wh->{whisker}->{bind_socket} ) {
+            $port = $wh->{whisker}->{bind_port} || 0;
+            
+            $port = 0 if ( $port eq '*'); # most OS will find a spare port for us
+            
+            return _stream_err( $xr, 0, 'Bad bind_port value' ) if
+                ( $port !~ /^(?:[0-9]+)$/ );
+                
+            $ip = (defined $wh->{whisker}->{bind_addr}) ?
+                $wh->{whisker}->{bind_addr} :
+                INADDR_ANY ;
+            
+            $xr->{sock_hints}->{flags} += AI_PASSIVE;
+            
+        } else {
+            ($ip,$port) = ($xr->{chost}, $xr->{cport});
+        }
+        
+        my ($err, @results) = getaddrinfo($ip, $port, $xr->{sock_hints} );
+        return _stream_err( $xr, 0, "getaddrinfo problems ($err)" ) if $err;
+        return _stream_err( $xr, 0, 'getaddrinfo problems (no sockets)' )
+          if ( scalar(@results) < 1);
+
+        # Ideally, we should call connect() on each @result
+        # but LW2 isn't currently set up to make that easy...
         return _stream_err( $xr, 0, 'socket() problems' )
           if (
             !socket(
-                $xr->{sock}, PF_INET,
-                SOCK_STREAM, getprotobyname('tcp') || 0
+                $xr->{sock}, $results[0]->{family},
+                $results[0]->{socktype}, $results[0]->{proto} || 0
             )
           );
-    }
+          
+        $xr->{iaton} = $results[0]->{addr};
 
-    if ( defined $wh->{whisker}->{bind_socket} ) {
-        my $p = $wh->{whisker}->{bind_port} || '*';
-        $p =~ tr/0-9*//cd;
-        return _stream_err( $xr, 0, 'Bad bind_port value' )
-          if ( $p eq '' );
-        my $a = INADDR_ANY;
-        $a = inet_aton( $wh->{whisker}->{bind_addr} )
-          if ( defined $wh->{whisker}->{bind_addr} );
-        return _stream_err( $xr, 0, 'Bad bind_addr value' )
-          if ( !defined $a );
-        if ( $p =~ tr/*// ) {
-            for ( $p = 14011 ; $p < 65535 ; $p++ ) {
-                if ( !bind( $xr->{sock}, sockaddr_in( $p, $a ) ) ) {
-                    return _stream_err( $xr, 0, 'bind() on socket failed' )
-                      if ( $! ne 'Address already in use' );
-                }
-                else {
-                    last;
-                }
-            }
-            return _stream_err( $xr, 0, 'bind() cannot find open socket' )
-              if ( $p >= 65535 );
+    } else {
+        if ( $xr->{streamtype} == 2 ) {
+            return _stream_err( $xr, 0, 'socket problems (UDP)' )
+              if (
+                !socket(
+                    $xr->{sock}, PF_INET,
+                    SOCK_DGRAM, getprotobyname('udp') || 0
+                )
+              );
         }
         else {
-            return _stream_err( $xr, 0, 'bind() on socket failed' )
-              if ( !bind( $xr->{sock}, sockaddr_in( $p, $a ) ) );
+            return _stream_err( $xr, 0, 'socket() problems' )
+                if (
+                  !socket(
+                      $xr->{sock}, PF_INET,
+                      SOCK_STREAM, getprotobyname('tcp') || 0
+                  )
+                );
         }
-    }
 
-    if ( !defined $xr->{iaton} ) {
-        $xr->{iaton} = inet_aton( $xr->{chost} );
-        return _stream_err( $xr, 0, 'can\'t resolve hostname' )
-          if ( !defined $xr->{iaton} );
+        if ( defined $wh->{whisker}->{bind_socket} ) {
+            my $p = $wh->{whisker}->{bind_port} || '*';
+            $p =~ tr/0-9*//cd;
+            return _stream_err( $xr, 0, 'Bad bind_port value' )
+              if ( $p eq '' );
+            my $a = INADDR_ANY;
+            $a = inet_aton( $wh->{whisker}->{bind_addr} )
+              if ( defined $wh->{whisker}->{bind_addr} );
+            return _stream_err( $xr, 0, 'Bad bind_addr value' )
+              if ( !defined $a );
+            if ( $p =~ tr/*// ) {
+                for ( $p = 14011 ; $p < 65535 ; $p++ ) {
+                    if ( !bind( $xr->{sock}, sockaddr_in( $p, $a ) ) ) {
+                        return _stream_err( $xr, 0, 'bind() on socket failed' )
+                          if ( $! ne 'Address already in use' );
+                    }
+                    else {
+                        last;
+                    }
+                }
+                return _stream_err( $xr, 0, 'bind() cannot find open socket' )
+                  if ( $p >= 65535 );
+            }
+            else {
+                return _stream_err( $xr, 0, 'bind() on socket failed' )
+                  if ( !bind( $xr->{sock}, sockaddr_in( $p, $a ) ) );
+            }
+        }
+
+        if ( !defined $xr->{iaton} ) {
+            $xr->{iaton} = inet_aton( $xr->{chost} );
+            return _stream_err( $xr, 0, 'can\'t resolve hostname' )
+              if ( !defined $xr->{iaton} );
+        }
+
     }
+    
     $xr->{socket_alloc}++;
     return 1;
 }
@@ -5089,8 +5182,9 @@ sub _stream_socket_open {
             $LW_NONBLOCK_CONNECT = 0;
         }
         else {
-            my $R =
-              connect( $xr->{sock}, sockaddr_in( $xr->{cport}, $xr->{iaton} ) );
+            my $R = ( $LW2_CAN_IPv6 ) ?
+                connect( $xr->{sock}, $xr->{iaton} ) :
+                connect( $xr->{sock}, sockaddr_in( $xr->{cport}, $xr->{iaton} ) ) ;
             if ( !$R ) {
                 return _stream_err( $xr, 1, 'can\'t connect (connect error)' )
                   if ( $! != EINPROGRESS && $! != EWOULDBLOCK );
@@ -5112,11 +5206,12 @@ sub _stream_socket_open {
         eval {
             local $SIG{ALRM} = sub { die "timeout\n" };
             eval { alarm( $xr->{timeout} ) };
-            if (
-                !connect(
-                    $xr->{sock}, sockaddr_in( $xr->{cport}, $xr->{iaton} )
-                )
-              )
+
+            my $R = ( $LW2_CAN_IPv6 ) ?
+                connect( $xr->{sock}, $xr->{iaton} ) :
+                connect( $xr->{sock}, sockaddr_in( $xr->{cport}, $xr->{iaton} ) );
+
+            if ( !$R )
             {
                 eval { alarm(0) };
                 die "connect failed\n";
@@ -5939,12 +6034,31 @@ sub utils_port_open {    # this should be platform-safe
     return 0 if ( !defined $target || !defined $port );
     return 0 if ( !defined $Socket::VERSION );
 
-    if ( !( socket( S, PF_INET, SOCK_STREAM, 0 ) ) ) { return 0; }
-    if ( connect( S, sockaddr_in( $port, inet_aton($target) ) ) ) {
-        close(S);
-        return 1;
+    my $open = 0;
+    
+    if ( $LW2_CAN_IPv6 ) {
+
+        my ($err, @results) =
+            getaddrinfo($target, $port, {
+                socktype => SOCK_STREAM, protocol => IPPROTO_TCP
+                } );
+
+        foreach my $sk (@results) {
+            if ( socket(S, $sk->{family}, $sk->{socktype}, $sk->{proto}) ) {
+                $open = connect(S, $sk->{addr} );
+                last if $open;
+            }
+        }
+        
+    } else {
+        if ( !( socket( S, PF_INET, SOCK_STREAM, 0 ) ) ) { return 0; }
+        $open = ( connect( S, sockaddr_in( $port, inet_aton($target) ) ) );
     }
-    else { return 0; }
+    
+    if ( $open ) {
+        close(S);
+        return 1;        
+    } else { return 0; }
 }
 
 #################################################################

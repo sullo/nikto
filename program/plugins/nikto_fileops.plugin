@@ -205,7 +205,7 @@ sub parse_hostfile {
             my @fields = split("\t", $_);
 
             # Get the host name
-            $fields[0] =~ /Host:\s+([\d\.]+)\s+\(([^\)]+)?\)/;
+            $fields[0] =~ /Host:\s+($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)\s+\(([^\)]+)?\)/;
             $hostdesc = ($2 ne "") ? $2 : $1;
 
             # Parse the ports list from:
@@ -219,7 +219,7 @@ sub parse_hostfile {
                 }
                 $nmp =~ /^(?:\s+)?(\d+)\//;
                 nprint("+ nmap Input Queued: $hostdesc:$1");
-                push(@results, $hostdesc . ":" . $1);
+                push(@results, $hostdesc . "_" . $1);
             }
         }
         else {
