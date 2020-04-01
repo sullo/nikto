@@ -6957,4 +6957,6 @@
 "007269","CVE-2019-19781 https://www.tripwire.com/state-of-security/vert/citrix-netscaler-cve-2019-19781-what-you-need-to-know/","8","/vpn/../vpns/cfg/smb.conf","GET","(name\sresolve\sorder|encrypt\spasswords)\s*=","^\[global\]","200","","","Citrix ADC and Citrix Gateway are vulnerable to a local file inclusion (LFI) vulnerability.","",""
 "007270","","23","/whoAmI","GET","IsAuthenticated","","","","","The Jenkins \"Who Am I?\" page is exposed and may reveal system/app information.","",""
 "007271","https://docs.coveralls.io/supported-ci-services","3","/.coveralls.yml","GET","repo_token","","","","","A Coveralls.io file is exposed and contains a repository token, which could allow access to source control","",""
-"007272","https://easyengine.io/tutorials/nginx/status-page/","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found","",""
+"007272","https://easyengine.io/tutorials/nginx/status-page/","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found.","",""
+"007273","https://docs.docker.com/engine/reference/builder/","3","/Dockerfile","GET","FROM\s","ENTRYPOINT\s","ENV\s","","","Dockerfile found.","",""
+
