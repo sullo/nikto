@@ -6959,3 +6959,4 @@
 "007270","0","23","/whoAmI","GET","IsAuthenticated","","","","","The Jenkins \"Who Am I?\" page is exposed and may reveal system/app information.","",""
 "007271","0","3","/.coveralls.yml","GET","repo_token","","","","","A Coveralls.io file is exposed and contains a repository token, which could allow access to source control","",""
 "007272","0","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found","",""
+"007273","0","3","/Dockerfile","GET","FROM\s","ENTRYPOINT\s","ENV\s","","","Dockerfile found.","",""
