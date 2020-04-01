@@ -2531,7 +2531,6 @@ sub http_do_request {
                   if ($puke_flag);
                 return 2;
             }
-
             # freshly open stream/connection, handle auth
             if (   defined $$hin{whisker}->{proxy_host}
                 && defined $$hin{whisker}->{auth_proxy_callback} )
@@ -2591,7 +2590,6 @@ sub _http_do_request_ex {
 
     if ( defined $raw && ref($raw) ) {
         $stream->{queue}->($$raw);
-
     }
     else {
         $stream->{queue}->( http_req2line($hin) );
@@ -5060,7 +5058,6 @@ sub _stream_socket_alloc {
                 INADDR_ANY ;
             
             $xr->{sock_hints}->{flags} += AI_PASSIVE;
-            
         } else {
             ($ip,$port) = ($xr->{chost}, $xr->{cport});
         }
@@ -5070,17 +5067,18 @@ sub _stream_socket_alloc {
         return _stream_err( $xr, 0, 'getaddrinfo problems (no sockets)' )
           if ( scalar(@results) < 1);
 
-        # Ideally, we should call connect() on each @result
-        # but LW2 isn't currently set up to make that easy...
+        foreach my $potential_sock( @results ) {
+            socket(
+                $xr->{sock}, $potential_sock->{family},
+                $potential_sock->{socktype}, $potential_sock->{proto}
+            ) or next;
+
+            $xr->{iaton} = $potential_sock->{addr};
+            last;
+        }
+
         return _stream_err( $xr, 0, 'socket() problems' )
-          if (
-            !socket(
-                $xr->{sock}, $results[0]->{family},
-                $results[0]->{socktype}, $results[0]->{proto} || 0
-            )
-          );
-          
-        $xr->{iaton} = $results[0]->{addr};
+          unless ($xr->{sock});
 
     } else {
         if ( $xr->{streamtype} == 2 ) {
