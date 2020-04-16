@@ -50,6 +50,7 @@
 "expect"
 "expect-ct"
 "expires"
+"feature-policy"
 "from"
 "host"
 "if-match"
