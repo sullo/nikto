@@ -6959,4 +6959,4 @@
 "007271","https://docs.coveralls.io/supported-ci-services","3","/.coveralls.yml","GET","repo_token","","","","","A Coveralls.io file is exposed and contains a repository token, which could allow access to source control","",""
 "007272","https://easyengine.io/tutorials/nginx/status-page/","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found.","",""
 "007273","https://docs.docker.com/engine/reference/builder/","3","/Dockerfile","GET","FROM\s","ENTRYPOINT\s","ENV\s","","","Dockerfile found.","",""
-
+"007274","https://developers.cloudflare.com/images/about/","3","/cdn-cgi/trace","GET","visit_scheme=","","","","","Cloudflare trace CGI found, which may leak some system information. Other CGI/API programs may be available, see linked CF documentation.","",""
