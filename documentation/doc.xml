@@ -1244,7 +1244,7 @@ DOCDIR=EXECDIR/docs</screen>
       </itemizedlist>
 
       <para>For more information on the development enviornment, please see:
-      http://www.assembla.com/spaces/Nikto_2/trac_subversion_tool</para>
+	https://github.com/sullo/nikto</para>
     </section>
   </chapter>
 
