@@ -225,7 +225,7 @@ sub nikto_headers_postfetch {
     # Look for Expect-CT
     if($mark->{'ssl'} && !$EXPECTCT{ $mark->{hostname} }{$mark->{port} } && defined $result->{'whisker'}->{'code'}) {
         if(defined $result->{'expect-ct'}) {
-            unless($result->{'expect-ct'} =~ /^enforce/) {
+            unless($result->{'expect-ct'} =~ /enforce/i) {
                 add_vulnerability( $mark, "Expect-CT is not enforced, upon receiving an invalid Certificate Transparency Log, the connection will not be dropped.",
                     999954, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             }
