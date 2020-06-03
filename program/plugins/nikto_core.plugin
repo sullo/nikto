@@ -2851,7 +2851,6 @@ sub send_updates {
 sub usage {
     my $is_failure = shift;
 
-    if ($_[0] eq "Help") {
         print "
    Options:
        -ask+               Whether to ask about submitting updates
@@ -2877,7 +2876,7 @@ sub usage {
             print "                               $k     $NIKTO{'anti_ids'}{$k}\n";
         }
 
-        print "        -Format+           Save file (-o) format:
+        print "       -Format+           Save file (-o) format:
                                csv   Comma-separated-value
                                json  JSON Format
                                htm   HTML Format
@@ -2886,7 +2885,7 @@ sub usage {
                                txt   Plain text
                                xml   XML Format
                                (if not specified the format will be taken from the file extension passed to -output)
-       -Help              Extended help information
+       -Help              This help information
        -host+             Target host/URL
        -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
        -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
@@ -2943,33 +2942,6 @@ sub usage {
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
    		+ requires a value\n\n";
-    }
-    else {
-        print "
-       -config+            Use this config file
-       -Display+           Turn on/off display outputs
-       -dbcheck            check database and other key files for syntax errors
-       -Format+            save file (-o) format
-       -Help               Extended help information
-       -host+              target host/URL
-       -id+                Host authentication to use, format is id:pass or id:pass:realm
-       -list-plugins       List all available plugins
-       -output+            Write output to this file
-       -nossl              Disables using SSL
-       -no404              Disables 404 checks
-       -Plugins+           List of plugins to run (default: ALL)
-       -port+              Port to use (default 80)
-       -root+              Prepend root value to all requests, format is /directory
-       -ssl                Force ssl mode on port
-       -Tuning+            Scan tuning
-       -timeout+           Timeout for requests (default 10 seconds)
-       -update             Update databases and plugins from CIRT.net
-       -Version            Print plugin and database versions
-       -vhost+             Virtual host (for Host header)
-   		+ requires a value
-
-	Note: This is the short help output. Use -H for full help text.\n\n";
-    }
 
     check_modules();
 
