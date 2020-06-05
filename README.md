@@ -5,6 +5,18 @@ Nikto web server scanner  - https://cirt.net/Nikto2
 
 Full documentation - https://cirt.net/nikto2-docs/
 
+Run normally:
+
+~~~
+git clone https://github.com/sullo/nikto
+# Binary is in program
+cd nikto/program
+# Run using the shebang interpreter
+./nikto.pl -h http://www.example.com
+# Run using perl (if you forget to chmod)
+perl nikto.pl -h http://www.example.com
+~~~
+
 Run as a Docker container:
 
 ~~~bash
