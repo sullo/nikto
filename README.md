@@ -9,7 +9,7 @@ Run normally:
 
 ~~~
 git clone https://github.com/sullo/nikto
-# Binary is in program
+# Main script is in program/
 cd nikto/program
 # Run using the shebang interpreter
 ./nikto.pl -h http://www.example.com
