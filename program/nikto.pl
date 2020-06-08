@@ -27,7 +27,7 @@ load_modules();
 #     Sullo (sullo@cirt.net)
 #     http://cirt.net/
 #######################################################################
-# See the LICENSE.txt file for more information on the License Nikto is distributed under.
+# See the COPYING file for more information on the License Nikto is distributed under.
 #
 # This program is intended for use in an authorized manner only, and the author
 # can not be held liable for anything done with this program, code, or items discovered
