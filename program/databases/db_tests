@@ -6961,3 +6961,4 @@
 "007272","0","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found","",""
 "007273","0","3","/Dockerfile","GET","FROM\s","ENTRYPOINT\s","ENV\s","","","Dockerfile found.","",""
 "007274","0","3","/cdn-cgi/trace","GET","visit_scheme=","","","","","Cloudflare trace CGI found, which may leak some system information.","",""
+"007275","0","23","/.dockerignore","GET","200","","","","",".dockerignore file found. It is possible to grasp the directory structure.","",""
