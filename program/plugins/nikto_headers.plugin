@@ -240,7 +240,7 @@ sub nikto_headers_postfetch {
     if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability( $mark,
-                "The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type",
+                "The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type.",
                 999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         }
         $HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } = 1;
