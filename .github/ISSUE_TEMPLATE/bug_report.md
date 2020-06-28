@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report an issue found in Nikto
-title: Bug: 
+title: 'Bug: '
 labels: bug
 assignees: ''
 
