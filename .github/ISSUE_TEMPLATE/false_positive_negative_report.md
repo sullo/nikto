@@ -1,7 +1,7 @@
 ---
 name: False positive / negative Report
 about: Report a false positive / negative found by Nikto
-title: ''
+title: 'False Positive: '
 labels: bug
 assignees: ''
 

@@ -1,11 +1,13 @@
 ---
 name: Bug Report
 about: Report an issue found in Nikto
-title: ''
+title: Bug: 
 labels: bug
 assignees: ''
 
 ---
+### Note: you can obtain Nikto debug output by running "-D D" and redirecting to a file
+###       you may also scrub the output of hostnames and IPs by specifying "-D DS"
 
 ### Expected behavior
 
