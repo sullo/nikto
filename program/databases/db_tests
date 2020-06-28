@@ -6961,3 +6961,7 @@
 "007272","0","3","/nginx_status","GET","Active\sconn","","","","","Nginx status page found","",""
 "007273","0","3","/Dockerfile","GET","FROM\s","ENTRYPOINT\s","ENV\s","","","Dockerfile found.","",""
 "007274","0","3","/cdn-cgi/trace","GET","visit_scheme=","","","","","Cloudflare trace CGI found, which may leak some system information.","",""
+"007275","0","3","/v1/tasks","GET","KnownStatus","Family","","","","Amazon Elastic Container Service metadata URL found which may leak open ports and other information. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html","",""
+"007276","0","3","/v2/tasks","GET","KnownStatus","Family","","","","Amazon Elastic Container Service metadata URL found which may leak open ports and other information. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html","",""
+"007277","0","3","/v3/tasks","GET","KnownStatus","Family","","","","Amazon Elastic Container Service metadata URL found which may leak open ports and other information. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html","",""
+"007278","0","3","/v4/tasks","GET","KnownStatus","Family","","","","Amazon Elastic Container Service metadata URL found which may leak open ports and other information. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html","",""
