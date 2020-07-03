@@ -6,9 +6,6 @@ labels: bug
 assignees: ''
 
 ---
-### Note: you can obtain Nikto debug output by running "-D D" and redirecting to a file
-###       you may also scrub the output of hostnames and IPs by specifying "-D DS"
-
 ### Expected behavior
 
 ### Actual behavior
@@ -28,3 +25,8 @@ Run:
 ```
 
 and paste the output here.
+
+### Further technical info
+
+E.g. you can obtain Nikto debug output by running `-D D` and redirecting to a file.
+You may also scrub the output of hostnames and IPs by specifying `-D DS`.
