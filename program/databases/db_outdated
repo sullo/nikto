@@ -1271,3 +1271,4 @@
 "601277","Sawmill/","8.7.7.6","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601278","KDH","6300.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601279","Jetty/winstone-","2.9","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
+"007280","0","7","/tmui/login.jsp/..;/tmui/locallb/workspace/fileRead.jsp?fileName=/etc/hosts","GET","\{\"output\":\"","","","","","The F5 Big-IP's TMUI is vulnerable to a local file inclusion vulnerability and likely command exec. CVE-2020-5902.","",""
