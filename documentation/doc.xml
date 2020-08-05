@@ -1144,6 +1144,20 @@ PROXYPASS=</screen>
         </varlistentry>
 
         <varlistentry>
+          <term><varname>FAILURES</varname></term>
+
+          <listitem>
+            <para>Number of failures before giving up.</para>
+
+            <para>Set to 0 to disable entirely</para>
+
+            <para>Default Setting</para>
+
+            <screen>FAILURES=20</screen>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><varname>EXECDIR</varname></term>
 
           <term><varname>PLUGINDIR</varname></term>
