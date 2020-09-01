@@ -145,19 +145,6 @@ sub nikto_headers_postfetch {
 		$XFRAME{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
-    # X-XSS-Protection
-    if (!$XSSPROTECTION{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
-        if (defined $result->{'x-xss-protection'}) {
-
-            # Parse this and see whether it's set to 0
-            if ($result->{'x-xss-protection'} =~ /^0/) {
-                add_vulnerability( $mark, "X-XSS-Protection header has been set to disable XSS Protection. There is unlikely to be a good reason for this.",
-                    999101, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-                $XSSPROTECTION{ $mark->{hostname} }{ $mark->{port} } = 1;
-            }
-        }
-    }
-
     # Incapsula WAF
     if (defined $result->{'x-cdn'} && ($result->{'x-cdn'} == "Incapsula")) {
             add_vulnerability( $mark, "Incapsula WAF is in use.",
