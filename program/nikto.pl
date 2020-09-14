@@ -204,7 +204,7 @@ foreach my $mark (@MARKS) {
         }
         else {
             nprint(
-                "+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+                "+ SCAN TERMINATED:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
                 );
         }
         nprint(  "+ End Time:           "
