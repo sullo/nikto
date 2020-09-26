@@ -6987,3 +6987,5 @@
 "007298","0","1","/Service/Service1.svc","GET","You have created a service","","","","","WCF endpoint found.","",""
 "007299","0","1","/Services/Service1`.svc","GET","You have created a service","","","","","WCF endpoint found.","",""
 "007300","0","1","/BackOffice/Services/","GET","You have created a service","","","","","WCF endpoint found.","",""
+"007301","0","3","/phpci.yml","GET","build_settings:","","","","","PHP CI config file found.","",""
+"007302","0","1","/README.md","GET","200","","","","","Readme Found","",""
