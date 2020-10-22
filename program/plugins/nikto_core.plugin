@@ -41,6 +41,7 @@ sub change_variables {
 
                 # We've found the variable; expand it
                 foreach my $value (split(/ /, $VARIABLES{$varname})) {
+		print "Var: $varname\tval:\t$value\n";
                     $cooked = $line;
                     $cooked =~ s/$varname/$value/g;
                     push(@subtests, change_variables($cooked));
@@ -49,6 +50,11 @@ sub change_variables {
         }
     }
 
+#            if ($line =~ /CGIDIRS/) {
+#                print "changed CGI Dirs\n";
+#                for ($i=0;$i<=$#subtests;$i++) { print "\t$i\t$subtests[$i]\n"; }
+#exit;
+	#}
     return @subtests;
 }
 
@@ -103,6 +109,44 @@ sub is_404 {
 }
 
 ###############################################################################
+sub scrub {
+	my (@s, $line);
+	($line, $s[0], $s[1], $s[2], $s[3], $s[4]) = @_;
+
+	foreach my $i (@_) {
+print "i: $i\n";
+		next if $i eq "";
+		if (is_ip($i)) { 
+			$line =~ s/$i/0\.\0\.\0\.0/g;
+		}
+		else {
+			$line =~ s/$i/example.com/ig;
+		}
+	}
+
+return $line; 
+        # name
+print "line1: $line\n";
+print "hostname: " . $mark->{'hostname'} ."\n";
+        $line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
+
+        # ip
+        $line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
+print "ip: " . $mark->{'ip'} ."\n";
+
+        # vhost
+        $line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
+print "vhost: " . $mark->{'vhost'} ."\n";
+
+        # and in case we got here from set_target
+        $line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
+print "ident: " . $mark->{'ident'} ."\n";
+	
+print "line2: $line\n";
+	return $line;
+
+}
+###############################################################################
 sub nprint {
     my $line   = shift;
     my $mode   = shift;
@@ -111,18 +155,19 @@ sub nprint {
 
     # scrub values
     if ($OUTPUT{'scrub'}) {
+	$line = scrub($line, $mark->{'hostname'}, $mark->{'ip'}, $CLI{'vhost'}, $mark->{'ident'});
 
         # name
-        $line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
+        #$line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
 
         # ip
-        $line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
+        #$line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
 
         # vhost
-        $line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
+        #$line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
 
         # and in case we got here from set_target
-        $line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
+        #$line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
     }
 
     # don't print debug & verbose to output file...
@@ -815,9 +860,6 @@ sub general_config {
 
     if (defined $CLI{'evasion'}) {
         $CLI{'evasion'} =~ s/[^1-8AB]//g;
-    }
-    else {
-        undef $NIKTO{'anti_ids'};    # we don't need this any more
     }
 
     if (!defined $CLI{'plugins'} || $CLI{'plugins'} eq "") {
@@ -2303,8 +2345,13 @@ sub dump_var {
     my $display = LW2::dump('', \%hash_in);
     $display =~ s/^\$/'$msg'/;
     if ($OUTPUT{'scrub'}) {
-        $display =~ s/'host' => '.*',/'host' => 'example.com',/g;
-        $display =~ s/'Host' => '.*'/'host' => 'example.com'/g;
+	$new = "";
+	foreach my $line (split(/\n/, $display)) { 
+        	$line = scrub($line);
+print "line: $line\n";
+		$new .= "$line\n";
+	}
+	$display = $new;
     }
     nprint($display, "d");
     return;
@@ -2906,7 +2953,7 @@ sub usage {
        -no404             Disables nikto attempting to guess a 404 page
        -Option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
-       -Pause+            Pause between tests (seconds, integer or float)
+       -Pause+            Pause between tests (seconds)
        -Plugins+          List of plugins to run (default: ALL)
        -port+             Port to use (default 80)
        -RSAcert+          Client certificate file
