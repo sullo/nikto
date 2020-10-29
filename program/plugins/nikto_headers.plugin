@@ -159,15 +159,6 @@ sub nikto_headers_postfetch {
             $HFOUND{$header} = 1;
             }
     
-    # And for if it's not defined
-    if (!$HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
-        if (!defined $result->{'x-xss-protection'}) {
-            add_vulnerability( $mark, "The X-XSS-Protection header is not defined. This header can hint to the user agent to protect against some forms of XSS",
-                999102, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-        }
-        $HEADERS_XXP{ $mark->{hostname} }{ $mark->{port} } = 1;
-    }
-
     # Look for any uncommon headers
 
     foreach my $header (keys %$result) {
