@@ -41,7 +41,6 @@ sub change_variables {
 
                 # We've found the variable; expand it
                 foreach my $value (split(/ /, $VARIABLES{$varname})) {
-		print "Var: $varname\tval:\t$value\n";
                     $cooked = $line;
                     $cooked =~ s/$varname/$value/g;
                     push(@subtests, change_variables($cooked));
@@ -53,8 +52,8 @@ sub change_variables {
 #            if ($line =~ /CGIDIRS/) {
 #                print "changed CGI Dirs\n";
 #                for ($i=0;$i<=$#subtests;$i++) { print "\t$i\t$subtests[$i]\n"; }
-#exit;
-	#}
+#		 exit;
+# 		}
     return @subtests;
 }
 
@@ -114,7 +113,6 @@ sub scrub {
 	($line, $s[0], $s[1], $s[2], $s[3], $s[4]) = @_;
 
 	foreach my $i (@_) {
-print "i: $i\n";
 		next if $i eq "";
 		if (is_ip($i)) { 
 			$line =~ s/$i/0\.\0\.\0\.0/g;
@@ -124,25 +122,23 @@ print "i: $i\n";
 		}
 	}
 
-return $line; 
         # name
-print "line1: $line\n";
-print "hostname: " . $mark->{'hostname'} ."\n";
+# print "hostname: " . $mark->{'hostname'} ."\n";
         $line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
 
         # ip
         $line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
-print "ip: " . $mark->{'ip'} ."\n";
+#print "ip: " . $mark->{'ip'} ."\n";
 
         # vhost
         $line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
-print "vhost: " . $mark->{'vhost'} ."\n";
+#print "vhost: " . $mark->{'vhost'} ."\n";
 
         # and in case we got here from set_target
         $line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
-print "ident: " . $mark->{'ident'} ."\n";
+#print "ident: " . $mark->{'ident'} ."\n";
 	
-print "line2: $line\n";
+#print "line2: $line\n";
 	return $line;
 
 }
@@ -2348,7 +2344,6 @@ sub dump_var {
 	$new = "";
 	foreach my $line (split(/\n/, $display)) { 
         	$line = scrub($line);
-print "line: $line\n";
 		$new .= "$line\n";
 	}
 	$display = $new;
