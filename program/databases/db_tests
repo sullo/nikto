@@ -6989,3 +6989,4 @@
 "007300","0","1","/BackOffice/Services/","GET","You have created a service","","","","","WCF endpoint found.","",""
 "007301","0","3","/phpci.yml","GET","build_settings:","","","","","PHP CI config file found.","",""
 "007302","0","1","/README.md","GET","200","","","","","Readme Found","",""
+"007303","0","3","/JAMonAdmin.jsp","GET","200","| JAMonAdmin |","","","","JAMon - Java Application Monitor Admin interface. Versions 2.7 and earlier are affected by CVE-2013-6235","",""
