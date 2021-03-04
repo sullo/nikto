@@ -585,7 +585,7 @@
 "600572","NetZoom","1.00","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600573","ngd/","4.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600574","mod_wsgi/","4.6.5","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600575","nginx/","1.17.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600575","nginx/","1.18.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600576","Niagara Web Server/","1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600577","NiagaraWebServer/","3.5.34","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600578","NIS/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
