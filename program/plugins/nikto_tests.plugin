@@ -59,7 +59,7 @@ sub nikto_tests {
         my @urilist = change_variables($TESTS{$checkid}{'uri'});
 
         # Now repeat for each uri
-        foreach my $uri (@urilist) {
+	URI: foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
             my %headrs;
             my %flags;
@@ -97,7 +97,7 @@ sub nikto_tests {
             # If user puts a @CODE= string in db_404_strings, let it take precedence
             foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
                 if ($res =~ /$code/) {
-                    return;
+                    next URI;
                 }
             }
 
