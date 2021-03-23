@@ -291,7 +291,7 @@ sub nikto_headers {
     $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ IIS\ internal\ IP/;
     $locflags{'noclean'} = 1;
     $locflags{'nohost'}  = 1;
-    $cl = $l = $wa = 0;
+    $cl = $l = $wa = $rt = 0;
 
     foreach my $uri ('/',                              '/images',
                      '/Autodiscover/Autodiscover.xml', '/Autodiscover/',
@@ -303,6 +303,7 @@ sub nikto_headers {
                      '/ecp',                           '/OAB',
                      '/aspnet_client',                 '/PowerShell'
                      ) {
+if ($uri != "/") { next; }
         my ($res, $content, $errors, $request, $result) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP", "1.0");
 
@@ -338,7 +339,25 @@ sub nikto_headers {
                         999986, 630, "GET", $uri, $request, $result);
                         }
                 }
-        if ($cl && $l && $wa) { last; }
+
+        if (!$rt && ($result->{'report-to'} ne "")) {
+        	my @bits = split("url\": \"", $result->{'report-to'});
+		    my $have = 0;
+            my @urls;
+        	foreach my $b (@bits) {
+                	next if $b !~ /^http/;
+                	$b =~ s/\".*$//;
+        			if ($b ne "") {
+                        push(@urls, $b);
+			        	$have = $rt = 1;
+				        }
+        		    }
+		if ($have) {
+			add_vulnerability( $mark, "A report-to header was found with the following URLs: " . join(", ", @urls), 999945, 630, "GET", $uri, $request, $result);
+			}
+		}
+
+        if ($cl && $l && $wa && $rt) { last; }
         }
 
     #######################################################################
