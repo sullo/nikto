@@ -50,6 +50,7 @@ sub nikto_robots {
         my ($DIRS, $RFILES) = "";
         my $DISCTR = 0;
         my @DOC = split(/\n/, $content);
+        my $tocheck;
         foreach my $line (@DOC) {
             $line =~ s/(?:^\s+|\s+$)//g;
             $line = quotemeta($line);
@@ -85,15 +86,20 @@ sub nikto_robots {
 				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0;}				
 				next if (($realdir eq "/" && $realfile eq "") ||
 				         ($realfile eq "/" && $realdir eq ""));
-				if (!defined($parameters->{'nocheck'})) {
-					my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
-					if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
-						add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
-					}
-				}
-
+                $tocheck{$line}=1;
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
+
+        # Check for allowed paths
+        foreach my $line (keys %tocheck) {
+            print("line: $line\n");
+        	if (!defined($parameters->{'nocheck'})) {
+				my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
+				if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
+					add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
+				}
+			}
+        }
 
         # add them  to mutate dir/file
         foreach my $dir (sort keys %DIRS) {
@@ -102,13 +108,13 @@ sub nikto_robots {
 	    $dir = validate_and_fix_regex($dir);
             
             # Add to variables
-            if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
+            if ($dir =~ /cgi/i && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
                 $VARIABLES{"\@CGIDIRS"} .= " $raw";
             }
-            if ($dir =~ /forum/ && $VARIABLES{"\@NUKE"} !~ /$dir/) {
+            if ($dir =~ /forum/i && $VARIABLES{"\@NUKE"} !~ /$dir/) {
                 $VARIABLES{"\@NUKE"} .= " $raw";
             }
-            if ($dir =~ /pass/ && $VARIABLES{"\@PASSWORDDIRS"} !~ /$dir/) {
+            if ($dir =~ /pass/i && $VARIABLES{"\@PASSWORDDIRS"} !~ /$dir/) {
                 $VARIABLES{"\@PASSWORDDIRS"} .= " $raw";
             }
             if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
