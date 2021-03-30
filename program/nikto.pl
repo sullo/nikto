@@ -206,6 +206,7 @@ foreach my $mark (@MARKS) {
             nprint(
                 "+ SCAN TERMINATED:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
                 );
+                $is_failure = 1;
         }
         nprint(  "+ End Time:           "
                . date_disp($mark->{'end_time'})
