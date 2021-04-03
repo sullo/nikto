@@ -2699,12 +2699,9 @@ sub send_updates {
         ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
-    if ($code != 200) {
+    if (($code != 200) || ($content !~ /SUCCESS/)){
 	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.");
 	}
-    elsif ($content !~ /SUCCESS/) {
-        nprint("+ ERROR: Unable to send update info to cirt.net. Here was the request result : Code: $code\n$content\n");
-    }
     else {
         nprint("- Sent updated info to cirt.net -- Thank you!");
     }
