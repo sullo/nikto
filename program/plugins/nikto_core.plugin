@@ -1,5 +1,3 @@
-#VERSION,2.1.5
-
 ###############################################################################
 #  Copyright (C) 2006 Chris Sullo
 #
@@ -2764,41 +2762,11 @@ sub check_modules {
 #######################################################################
 sub version {
     my %NIKTOFILES;
-    my @F = dirlist($CONFIGFILE{'PLUGINDIR'}, "");
-    foreach my $f (@F) { $NIKTOFILES{$f} = $CONFIGFILE{'PLUGINDIR'} . "/" . $f; }
-    @F = dirlist($CONFIGFILE{'DBDIR'}, "");
-    foreach my $f (@F) { $NIKTOFILES{$f} = $CONFIGFILE{'DBDIR'} . "/" . $f; }
 
-    nprint($VARIABLES{'DIV'});
-    nprint("$VARIABLES{'name'} Versions");
-    nprint($VARIABLES{'DIV'});
-    nprint("File                               Version      Last Mod");
-    nprint("-----------------------------      --------     ----------");
-    nprint("Nikto main                         $VARIABLES{'version'}");
-    nprint("LibWhisker                         $LW2::VERSION");
-
-    foreach my $FILE (sort keys %NIKTOFILES) {
-        next if $FILE eq 'LW2.pm';
-        open(FI, "<$NIKTOFILES{$FILE}")
-          || die print STDERR "+ ERROR: Unable to open '$NIKTOFILES{$FILE}': $@\n";
-        my @F = <FI>;
-        close(FI);
-        my @VERS = grep(/^#VERSION/, @F);
-        my @MODS = grep(/^# \$Id:/,  @F);
-        chomp($VERS[0]);
-        chomp($MODS[0]);
-        my @modification = split(/ /, $MODS[0]);
-        $VERS[0] =~ s/^#VERSION,//;
-        my $ws1 = (35 - length($FILE));
-        my $ws2 = (13 - length($VERS[0]));
-        nprint("$FILE" . " " x $ws1 . "$VERS[0]" . " " x $ws2 . "$modification[4]");
-    }
-    nprint($VARIABLES{'DIV'});
+    nprint("$VARIABLES{'name'} $VARIABLES{'version'} (LW $LW2::VERSION)");
 
     # Check dependencies
     check_modules();
-
-    nprint($VARIABLES{'DIV'});
 
     exit;
 }
