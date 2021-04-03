@@ -67,7 +67,7 @@ sub nikto_domino {
         ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
             $is_domino=1;
-            add_vulnerability($mark, "$uri: Domino login page found.", 520275, 523,
+            add_vulnerability($mark, "$uri: Domino login page found.", 520275, "https://www.cvedetails.com/vulnerability-list.php?vendor_id=14&product_id=1563",
                 $uri, $request, $response);
         }
     }
@@ -115,7 +115,7 @@ sub nikto_domino {
         $finalmark,                                              # mark structure to identify target
         "IBM/Lotus Domino: Version $ver detected at $finaluri.", # message
         520000,                                                  # tid
-        0,                                                       # Reference
+        "https://www.cvedetails.com/vulnerability-list.php?vendor_id=14&product_id=1563",   # Reference
         $finaluri,                                               # URI
         $finalreq,                                               # Request structure for full output
         $finalres);                                              # Response structure for full output
@@ -145,7 +145,7 @@ sub nikto_domino {
                     $mark,                                     # mark structure to identify target
                     "$item->{'file'}: $item->{'description'}", # message
                     $item->{'nikto_id'},                       # tid
-                    523,                                       # Reference
+                    "http://www.iss.net/security_center/static/8072.php",   # Reference
                     $item->{'file'},                           # URI
                     $request,                                  # Request structure for full output
                     $response);                                # Response structure for full output

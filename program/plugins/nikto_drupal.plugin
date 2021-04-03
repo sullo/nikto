@@ -84,8 +84,8 @@ sub nikto_drupal {
 				add_vulnerability(
 					$mark, 			 		 # mark structure to identify target
 					"Drupal module $item->{'module'} found", # message
-					$item->{'nikto_id'},			 # tid
-					0, 					 # Reference
+					$item->{'nikto_id'},	 # tid
+					$item->{'refs'},         # References
 					$uri,					 # URI
 					$request,				 # Request structure for full output
 					$response);				 # Response structure for full output

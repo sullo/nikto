@@ -53,7 +53,7 @@ sub nikto_clientaccesspolicy {
             if ($line eq "") { next; }
             elsif (($line =~ /<domain\suri="(?:http:\/\/)?\*"/) ||
             	($line =~ /<allow-http-request-headers-from\sdomain="\*"/)) {
-                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://msdn.microsoft.com/en-us/library/cc197955(v=vs.95).aspx", 999982, 0, "GET", $file, $request, $response);
+                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry.", 999982, "https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc197955(v=vs.95)?redirectedfrom=MSDN", "GET", $file, $request, $response);
             }
             else {
                 $DISCTR++;
@@ -63,7 +63,7 @@ sub nikto_clientaccesspolicy {
 		$msg =  $mark->{'root'} . "$file contains $DISCTR " . (($DISCTR > 1)?"lines":"line") . " which should be manually viewed for improper domains or wildcards.";
 
         if ($msg ne '') {
-            add_vulnerability($mark, $msg, 999981, 0, "GET", $file, $request, $response);
+            add_vulnerability($mark, $msg, 999981, "https://www.acunetix.com/vulnerabilities/web/insecure-clientaccesspolicy-xml-file/", "GET", $file, $request, $response);
         }
     }
 
@@ -80,7 +80,7 @@ sub nikto_clientaccesspolicy {
             $line =~ s/\#.*$//;
             if ($line eq "") { next; }
             elsif ($line =~ /allow-access-from\sdomain="\*"/) {
-                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry. See http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", 999975, 0, "GET", $file, $request, $response);
+                add_vulnerability($mark, $mark->{'root'} . "$file contains a full wildcard entry.", 999975, "http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", "GET", $file, $request, $response);
             }
             elsif ($line =~ /allow-access-from/ && $line =~ /\*\./ ) {
                 $DISCTR++;
@@ -96,7 +96,7 @@ sub nikto_clientaccesspolicy {
 		$msg .= " which include the following domains: $domainlist";
 
         if ($DISCTR > 0) {
-            add_vulnerability($mark, $msg, 999956, 0, "GET", $file, $request, $response);
+            add_vulnerability($mark, $msg, 999956, "http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html", "GET", $file, $request, $response);
         }
     }
 }

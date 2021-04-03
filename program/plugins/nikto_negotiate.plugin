@@ -49,7 +49,7 @@ sub nikto_negotiate {
 		}
 	$message =~ s/, $//;
 		
-        add_vulnerability($mark, $message, 999965, 0, GET, "/index", $request, $response);
+        add_vulnerability($mark, $message, 999965, "https://exchange.xforce.ibmcloud.com/vulnerabilities/8275", GET, "/index", $request, $response);
     }
 
 }

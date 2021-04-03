@@ -38,7 +38,7 @@ sub nikto_dishwasher {
     my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "dishwasher");
 
     if (($response->{'server'} =~ 'PST10 WebServer') && ($content =~ 'root:\$1\$.*')) {
-        add_vulnerability($mark, "$path: Site appears vulnerable to the dishwasher directory traversal vulnerability.", 999951, 0, "GET", $path, $request, $response);
+        add_vulnerability($mark, "$path: Site appears vulnerable to the dishwasher directory traversal vulnerability.", 999951, CVE-2017-7240, "GET", $path, $request, $response);
     }
 }
 

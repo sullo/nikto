@@ -89,7 +89,7 @@ sub nikto_dictionary_attack {
         foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
 
             if ($code eq $found) {
-                add_vulnerability($mark, "Found file /$dir", 999969, "0", "HEAD", "/$dir", $request, $response);
+                add_vulnerability($mark, "Found file /$dir", 999969, "", "HEAD", "/$dir", $request, $response);
             }
         }
         $ctr++;

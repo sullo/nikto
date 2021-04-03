@@ -136,6 +136,7 @@ sub html_change_vars {
       "$COUNTERS{'totalrequests'} requests, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
     $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
     $variables{"#TEMPL_ELAPSED#"} = $mark->{'end_time'} - $mark->{'start_time'};
+    $variables{"#TEMPL_REFERENCES#"}      = linkify_refs($item->{'refs'});
 
     $variables{"#TEMPL_LINK_NAME#"} = "N/A";
     if ($hostname ne "") {
@@ -145,16 +146,6 @@ sub html_change_vars {
     if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
 
     $variables{"#ID#"} = $item->{'nikto_id'};
-
-    # OSVDB info
-    my $refs = "";
-    my $OSVDB = $item->{'osvdb'};
-    if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    if ($OSVDB != 0) { 
-        $refs = "<a href='https://vulners.com/osvdb/OSVDB:" . $OSVDB ."'>OSVDB-" . $OSVDB . "</a>"; 
-        }
-
-    $variables{"#TEMPL_REFERENCES#"} = $refs; 
 
     # Scanner Messages Handling
     $variables{"#TEMPL_SMMSG#"} = $item->{'message'};
@@ -198,6 +189,38 @@ sub html_change_vars {
 
     return $template;
 }
+###############################################################################
+sub linkify_refs {
+    my $refs = $_[0] || return;
+    my @rs = parse_csv($refs);
+    for (my $i=0;$i<=$#rs;$i++) {
+      $r = $rs[$i];
+      if ($r =~ /^OSVDB-(\d+)$/) {
+          my $id=$1;
+          $r="<a href='https://vulners.com/osvdb/OSVDB:$id'>$r</a>";
+          }
+      elsif ($r =~ /^CVE-\d+/) {
+          $r="<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$r'>$r</a>";
+          }
+      elsif ($r =~ /^MS-\d+-\d+/i) {
+          $r="<a href='https://technet.microsoft.com/en-us/library/security/$r.aspx'>$r</a>";
+          }
+      elsif ($r =~ /^BID-(\d+)/) {
+          $r="<a href='http://www.securityfocus.com/bid/$1'>$r</a>";
+          }
+      elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
+              $r="<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
+              }
+      elsif ($r =~ /^http/) {
+          $r="<a href='$r'>$r</a>";
+          }
+      $rs[$i]=$r;
+      }
+    my $out = join("</br>", @rs);
+    $out =~ s/<br>$//;
+    return $out;
+}
+
 ###############################################################################
 sub simple_enc {
     my $var = $_[0] || return;

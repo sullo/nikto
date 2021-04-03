@@ -92,11 +92,10 @@ sub nikto_robots {
 
         # Check for allowed paths
         foreach my $line (keys %tocheck) {
-            print("line: $line\n");
         	if (!defined($parameters->{'nocheck'})) {
 				my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
-				if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403")) {
-					add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, 0, "GET", "/$line", $request, $response);
+				if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403") && ($res ne "301") && ($res ne "302")) {
+						add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, "https://portswigger.net/kb/issues/00600600_robots-txt-file", "GET", "/$line", $request, $response);
 				}
 			}
         }
@@ -151,7 +150,7 @@ sub nikto_robots {
         else { $msg = "retrieved but it does not contain any 'disallow' entries (which is odd)."; }
 
 		if ($onlyroot eq 0) {
-			add_vulnerability($mark, "\"robots.txt\" $msg", 999996, 0, "GET", "/robots.txt", $request, $response);
+			add_vulnerability($mark, "\"robots.txt\" $msg", 999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt", "GET", "/robots.txt", $request, $response);
 		}
     }
 }

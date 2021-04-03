@@ -100,7 +100,7 @@ sub dir_trav_check {
                 $mark,                                     # mark structure to identify target
                 "$newuri: $item->{'description'}",         # message
                 $item->{'nikto_id'},                       # tid
-                $item->{'osvdb_id'},                       # OSVDB reference
+                $item->{'refs'},                           # References
                 $newuri,                                   # URI
                 $request,                                  # Request structure for full output
                 $response);                                # Response structure for full output

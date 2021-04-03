@@ -36,8 +36,8 @@ sub nikto_headers_init {
         };
 
     # some global variables
-    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH %XSSPROTECTION %XCO/;
-    use vars qw/%HEADERS_XXS %HEADERS_XCTO/;
+    use vars qw/%HFOUND %ETAGS %XFRAME %HEADERS_STS %BREACH/;
+    use vars qw/%HEADERS_XCO %HEADERS_XCTO/;
 
     return $id;
 }
@@ -78,7 +78,7 @@ sub nikto_headers_postfetch {
                     my $msg;
                     if ($internal) { $msg .= "RFC-1918 "; }
                     $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
-                    add_vulnerability($mark, $msg, 999979, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result); 
+                    add_vulnerability($mark, $msg, 999979, "https://portswigger.net/kb/issues/00600300_private-ip-addresses-disclosed", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result); 
                     $HFOUND{$header} = 1;
                 }
             }
@@ -122,7 +122,7 @@ sub nikto_headers_postfetch {
               ? sprintf(", inode: %d, size: %d, mtime: %s",
                         hex($inode), hex($size), scalar(localtime($ltime)))
               : sprintf(", inode: %s, size: %s, mtime: %s", $inode, $size, $mtime);
-            add_vulnerability($mark, $message, 999984, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability($mark, $message, 999984, "CVE-2003-1418", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $ETAGS{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
     }
@@ -135,12 +135,12 @@ sub nikto_headers_postfetch {
                 $allowed =~ s/^.* //g;
                 add_vulnerability( $mark,
                     "X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
-                    999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                    999978, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             }
 		}			
 		else {
 			add_vulnerability($mark, "The anti-clickjacking X-Frame-Options header is not present.",
-							  999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+							  999957, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
 		}
 		$XFRAME{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
@@ -148,14 +148,14 @@ sub nikto_headers_postfetch {
     # Incapsula WAF
     if (defined $result->{'x-cdn'} && ($result->{'x-cdn'} == "Incapsula")) {
             add_vulnerability( $mark, "Incapsula WAF is in use.",
-                    999976, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                    999976, "https://www.sumasoft.com/incapsula-cloud-based-web-application-firewall-waf/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HFOUND{$header} = 1;
             }
 
     # NetIQ
     if (defined $result->{'x-mag'}) {
-            add_vulnerability( $mark, "NetIQ debug information is enabled. See https://www.netiq.com/documentation/netiqaccessmanager32/accessgatewayhelp/data/agsglobaladv.html.",
-                    999946, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability( $mark, "NetIQ debug information is enabled.",
+                    999946, "https://www.netiq.com/documentation/netiqaccessmanager32/accessgatewayhelp/data/agsglobaladv.html", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HFOUND{$header} = 1;
             }
     
@@ -182,18 +182,18 @@ sub nikto_headers_postfetch {
                 $multiheader.=')';
                 $vuln = "Uncommon header '$header' found, with multiple values: $multiheader";
             }
-            add_vulnerability($mark, $vuln, 999100, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability($mark, $vuln, 999100, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HFOUND{$header}{ $mark->{'hostname'} } = 1;
         }
     }
 
     if ($mark->{'ssl'} && !$HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } && defined $result) {
         if (!defined $result->{'strict-transport-security'}) {
-            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0,
+            add_vulnerability( $mark, "The site uses TLS and the Strict-Transport-Security HTTP header is not defined.", 999970, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         } 
         elsif ($result->{'strict-transport-security'} =~ /max-age="?0"?/i) {
-            add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999971, 0,
+            add_vulnerability( $mark, "The site uses TLS and the Strict-Transport-Security HTTP header is set with max-age=0.", 999971, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
           }
        
@@ -204,14 +204,14 @@ sub nikto_headers_postfetch {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability( $mark,
                 "The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type.",
-                999103, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                999103, "https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         }
         $HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
     if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
         if (defined $result->{'x-clacks-overhead'}) {
-            add_vulnerability( $mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0,
+            add_vulnerability( $mark, "There appears to be Clacks Overhead on the server (lol), the message is: $result->{'x-clacks-overhead'}", 999104, "https://xclacksoverhead.org/home/about",
                 $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
@@ -219,8 +219,8 @@ sub nikto_headers_postfetch {
 
     # CSP Report URLs
       if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
-        if (defined $result->{'x-clacks-overhead'}) {
-            add_vulnerability( $mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0,
+        if (defined $result->{'report-uri'}) {
+            add_vulnerability( $mark, "A CSP report-uri header was found. The URL is: $result->{'report-uri'}", 999104, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-uri",
                 $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
@@ -253,7 +253,7 @@ sub nikto_headers_check {
               	$value = $result->{$header};
               	}
             $HFOUND{$key} = $value;
-            add_vulnerability($mark, "Retrieved $header header: $value", $tid, "0", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+            add_vulnerability($mark, "Retrieved $header header: $value", $tid, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
        	}
     }
   }
@@ -277,7 +277,7 @@ sub nikto_headers {
               nfetch($mark, $f . "\\", "GET", "", \%transheaders, "", "headers: Translate-f #2");
             if ($res eq "200") {
                 if ($content =~ /<asp:/ || $content =~ /<\/asp:/) {
-                    add_vulnerability( $mark, "Host may be vulnerable to a source disclosure using the Translate: header", 999983, 390, "GET", $f, $request, $result);
+                    add_vulnerability( $mark, "Host may be vulnerable to a source disclosure using the Translate: header", 999983, "CVE-2000-0778", "GET", $f, $request, $result);
                     last;
                 }
             }
@@ -314,7 +314,7 @@ if ($uri != "/") { next; }
             		$cl = 1;
             		add_vulnerability( $mark,
                 	"IIS may reveal its internal or real IP in the Content-Location header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
-                	999989, 630, "GET", $uri, $request, $result);
+                	999989, "CVE-2000-0649", "GET", $uri, $request, $result);
         		}
 		}
 
@@ -325,7 +325,7 @@ if ($uri != "/") { next; }
                         $l = 1;
                         add_vulnerability( $mark,
                         "The web server may reveal its internal or real IP in the Location header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
-                        999988, 630, "GET", $uri, $request, $result);
+                        999988, "CVE-2000-0649", "GET", $uri, $request, $result);
                         }
                 }
 
@@ -336,7 +336,7 @@ if ($uri != "/") { next; }
                         $wa = 1;
                         add_vulnerability( $mark,
                 	"Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".", 
-                        999986, 630, "GET", $uri, $request, $result);
+                        999986, "CVE-2000-0649", "GET", $uri, $request, $result);
                         }
                 }
 
@@ -353,7 +353,7 @@ if ($uri != "/") { next; }
 				        }
         		    }
 		if ($have) {
-			add_vulnerability( $mark, "A report-to header was found with the following URLs: " . join(", ", @urls), 999945, 630, "GET", $uri, $request, $result);
+			add_vulnerability( $mark, "A CSP report-to header was found with the following URLs: " . join(", ", @urls), 999945, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to", "GET", $uri, $request, $result);
 			}
 		}
 
@@ -380,7 +380,7 @@ if ($uri != "/") { next; }
             if   ($internal) { $msg .= "an RFC-1918 IP address. "; }
             else             { $msg .= "a different IP address in the Location header."; }
             $msg .= "The IP is \"$ips[0]\".";
-            add_vulnerability($mark, $msg, 999987, 5737, "GET", ".", $request, $result);
+            add_vulnerability($mark, $msg, 999987, "BID-7257", "GET", ".", $request, $result);
         }
     }
 
@@ -398,7 +398,7 @@ if ($uri != "/") { next; }
             if ($result->{'content-encoding'} =~ "(deflate|gzip)") {
                 $BREACH = 1;
                 add_vulnerability( $mark, "The Content-Encoding header is set to \"deflate\" this may mean that the server is vulnerable to the BREACH attack.",
-                    999966, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                    999966, "http://breachattack.com/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             }
         }
     }
@@ -415,7 +415,7 @@ if ($uri != "/") { next; }
 
     if (($res eq "400") && ($result->{'whisker'}->{'message'} =~ /x1f<<</)) {
         add_vulnerability( $mark, "Jetty > 9.2.3 and < 9.2.9 may reveal the contents of internal memory if illegal characters are passed.",
-            999976, 0, "GET", ".", $request, $result);
+            999976, "CVE-2015-2080", "GET", ".", $request, $result);
     }
 }
 1;

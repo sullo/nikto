@@ -38,7 +38,7 @@ sub nikto_docker_registry {
     my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "");
 
     if (defined($response->{'docker-distribution-api-version'})) {
-        add_vulnerability($mark, "$path: This is the Docker Registry server. This might be interesting...", 999952, 0, "GET", $path, $request, $response);
+        add_vulnerability($mark, "$path: This is the Docker Registry server.", 999952, "https://docs.docker.com/registry/", "GET", $path, $request, $response);
     }
 }
 

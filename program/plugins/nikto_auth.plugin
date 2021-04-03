@@ -178,7 +178,7 @@ sub nikto_auth {
                       "Default account found for '$realm' at $request->{'whisker'}->{'uri'} (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
                 }
 
-                add_vulnerability($mark, $message, $entry->{'nikto_id'}, 0, "GET", $request{'whisker'}->{'uri'}, $request, $response);
+                add_vulnerability($mark, $message, $entry->{'nikto_id'}, "CWE-16", "GET", $request{'whisker'}->{'uri'}, $request, $response);
 
                 # Mark it successful
                 $entry->{'checked'}                 = 1;

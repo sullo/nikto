@@ -72,7 +72,7 @@ sub csv_item {
         $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
 
         $line .= "\"";
-        if ($item->{'osvdb'} ne '') { $line .= "OSVDB-" . $item->{'osvdb'}; }
+        if ($item->{'refs'} ne '') { $line .= $item->{'refs'}; }
         $line .= "\",";
 
         $line .= "\"";
