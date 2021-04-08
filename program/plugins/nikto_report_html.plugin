@@ -198,14 +198,14 @@ sub linkify_refs {
           my $id=$1;
           $r="<a href='https://vulners.com/osvdb/OSVDB:$id'>$r</a>";
           }
-      elsif ($r =~ /^CVE-\d+/) {
+      elsif ($r =~ /^CVE-\d{4}-\d{3,4}/) {
           $r="<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$r'>$r</a>";
           }
       elsif ($r =~ /^MS-\d+-\d+/i) {
           $r="<a href='https://technet.microsoft.com/en-us/library/security/$r.aspx'>$r</a>";
           }
       elsif ($r =~ /^BID-(\d+)/) {
-          $r="<a href='http://www.securityfocus.com/bid/$1'>$r</a>";
+          $r="<a href='https://vulners.com/search?query=$1'>$r</a>";
           }
       elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
               $r="<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
