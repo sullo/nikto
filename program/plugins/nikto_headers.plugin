@@ -302,7 +302,7 @@ sub nikto_headers {
                      '/ecp',                           '/OAB',
                      '/aspnet_client',                 '/PowerShell'
                      ) {
-if ($uri != "/") { next; }
+
         my ($res, $content, $errors, $request, $result) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP", "1.0");
 
