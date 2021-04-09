@@ -469,12 +469,12 @@ sub dump_target_info {
     }
 
     if ($CLI{'plugins'} ne '@@NONE') {
-        if ($mark->{ip} =~ /[a-z]/i) {
-            nprint("+ Target IP:          (proxied)", "", $mark);
-        }
-        else {
+        if ($mark->{ip} =~ /^$LW2::IPv4_re$/ || $mark->{ip} =~ /^$LW2::IPv6_re_inc_zoneid$/) {
             nprint("+ Target IP:          $mark->{ip}", "", $mark);
         }
+        else {
+            nprint("+ Target IP:          (proxied)", "", $mark);
+            }
 
         nprint("+ Target Hostname:    $mark->{hostname}", "", $mark);
         nprint("+ Target Port:        $mark->{port}");
@@ -1084,43 +1084,60 @@ sub resolve {
         return $ident, $ident, $ident;
     }
 
-    if ($ident =~ /[^0-9\.]/)    # not an IP, assume name & resolve
+    if ($ident =~ /^$LW2::IPv4_re$/) {  # ident is IPv4
+        $ip = $name = $ident;   
+    } elsif ( $ident =~ /^\[($LW2::IPv6_re_inc_zoneid)\]$/ ) {
+        $ip = $1;
+        $name = $ident; # HTTP host header uses [IPv6] rather than the raw IPv6 address
+    }
+    else  # not an IP, assume name & resolve
     {
         if ($CLI{'skiplookup'}) {
             print("+ ERROR: -nolookup set, but given name\n");
-            exit 1;
+            exit;
         }
 
-    if ($hent = gethostbyname($ident)) {
-         # my $name      = $hent->name;  ## Future--report multiple names
-         my $addr_ref  = $hent->addr_list;
-         @addresses = map { inet_ntoa($_) } @$addr_ref;
-    }
+        if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
+            use Socket qw(:addrinfo SOCK_RAW);
 
-    $ip = $addresses[0];
-    if ($addresses[1] != "") {
-	$ipcache = "Multiple IP addresses found: $ip, ";
-	for (my $i=1; $i<=$#addresses; $i++) {
-		$ipcache .= "$addresses[$i], ";
-	}
-        $ipcache =~ s/, $//;
-    }
+            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW});
+            if ($err) {
+                nprint("+ ERROR: Cannot resolve hostname '$ident' because '$err'\n");
+                return;
+            }
 
-   if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-       nprint("+ ERROR: Invalid IP: $ip\n\n");
-       exit 1;
-   }
-       $name = $ident;
+            ## Future--report multiple names
+            foreach my $res (@res) {
+                my ($err, $ip) = Socket::getnameinfo( $res->{addr}, NI_NUMERICHOST, NIx_NOSERV );
+                push @addresses, $ip unless $err;
+            }
+
+        } else { # Traditional IPv4 resolve
+            if ($hent = gethostbyname($ident)) {
+                 # my $name      = $hent->name;  ## Future--report multiple names
+                 my $addr_ref  = $hent->addr_list;
+                 @addresses = map { inet_ntoa($_) } @$addr_ref;
+            }
+        }
+
+        $ip = $addresses[0];
+        if ($addresses[1] != "") { 
+            $ipcache = "Multiple IP addresses found: $ip, ";
+        	for (my $i=1; $i<=$#addresses; $i++) {
+                $ipcache .= "$addresses[$i], ";
+            }
+            $ipcache =~ s/, $//;
+        }
+
+        if ( $ip !~ /^$LW2::IPv4_re$/ &&
+             $ip !~ /^$LW2::IPv6_re$/
+        ) {
+            nprint("+ ERROR: Invalid IP: $ip\n\n");
+            exit;
+        }
+
+        $name = $ident;
      }
-   else    # ident is IP
-    {
-        if ($ident !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
-            nprint("+ ERROR: Invalid IP: $ident\n\n");
-            return;
-        }
-
-        $ip = $name = $ident;
-    }
 
     my $displayname = ($name) ? $name : $ip;
     return $name, $ip, $displayname, $ipcache;
@@ -1175,7 +1192,7 @@ sub set_targets {
         }
     }
 
-    # Now parse the list of checkhosts, store in %targs by host:port
+    # Now parse the list of checkhosts, store in %targs by host_port
     my $targs = {};
     foreach my $host (@checkhosts) {
         $host =~ s/\s+//g;
@@ -1193,24 +1210,37 @@ sub set_targets {
 
             $defhost = $hostdata[2];
             $defport = $hostdata[3];
-            $targs{ $defhost . ":" . $defport } = ($root ne "") ? $root : '/';
+            $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
 
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
                 $hostdata[0] =~ s/\/$//;
-                $targs{ $defhost . ":" . $defport } = $hostdata[0];
+                $targs{ $defhost . "_" . $defport } = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI", "v");
             }
         }
         else {
-            my @h = split(/\:|\,/, $host);
-            $defhost = $h[0];
-            $defport = $h[1];
-            $targs{ $defhost . ":" . $defport } = ($root ne "") ? $root : '/';
-        }
+            if ( (index $host, '[') == 0) { # looks like accepted IPv6 format
+                if ($host =~ /^(\[$LW2::IPv6_re_inc_zoneid\])(?:[:](\d+))?$/) {
+                    $defhost = $1;
+                    $defport = $2;                
+                } else {
+                    nprint("- ERROR: Unrecognised target host format: $host");
+                }
+            } else {
+                my @h = split(/\:|\,/, $host); # Q. Is host,port format ever going to reach here, or will the port be incorrectly split off earlier as another host
+                $defhost = $h[0];
+                $defport = $h[1];
+                if (scalar @h > 2) { # Possible invalid IPv6 format has been supplied
+                  nprint("- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.");
+                  # TODO skip this host if going through a file of targets
+                }
+            }
+            $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
+            }
     }
 
     foreach my $host (keys %targs) {
-        my ($h, $p) = split(/:/, $host);
+        my ($h, $p) = split(/_/, $host);
         if ($p eq '') {
             foreach my $port (@ports) {
                 my $markhash = {};
@@ -2526,7 +2556,7 @@ sub max_test_id {
 sub get_ips {
     my $string = $_[0] || return;
     my @ips;
-    while ($string =~ /(?:\b|[^0-9v])([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(?:\b|[^0-9])/g) {
+    while ($string =~ /(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/g) {
         push(@ips, $1);
     }
     return @ips;
@@ -2539,27 +2569,42 @@ sub is_ip {
     my $internal = 0;
     my $loopback = 0;
 
-    # simple syntax check
-    # this will fail on some edge cases, but it's 99%...
-    if ($ip !~ /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/) {
+    if ($ip =~ /^$LW2::IPv4_re$/) {
+        return 0, $internal, $loopback;
+
+         # now validate octets - may not be necessary now with use of $LW2::IPv4_re ?
+        my @octets = split(/\./, $ip);
+        if (scalar(@octets) ne 4) { return 0, $internal, $loopback; }
+        for (my $o = 0 ; $o <= 3 ; $o++) {
+            if (($octets[$o] < 0) || ($octets[$o] > 255)) { return 0, $internal, $loopback; }
+            if ($octet[$o] =~ /^0/) { return 0, $internal, $loopback; }
+            if (($o eq 0) && ($octets[$o] < 1)) { return 0, $internal, $loopback; }
+        }
+
+        # now check for internal
+        if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
+
+        # lastly, loopback?
+        if ($ip eq '127.0.0.1') { $loopback = 1; }
+
+    } elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
+
+        # now check for internal
+        if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
+
+        if ( $ip =~ /^(?:fe80     # is a link local unicast address
+                                          |ff0[1-8] # is a multicast address
+                                          |fc00     # private network
+        ):/ix ) { $internal = 1 ;}
+
+        # lastly, loopback?
+        # This is a bit rough 'n' ready, could do with some finesse
+        if ($ip =~ /^[01:]+(?:\/[0-9]+)?$/) { $loopback = 1; }
+
+    } else {
         return 0, $internal, $loopback;
     }
-
-    # now validate octets
-    my @octets = split(/\./, $ip);
-    if (scalar(@octets) ne 4) { return 0, $internal, $loopback; }
-    for (my $o = 0 ; $o <= 3 ; $o++) {
-        if (($octets[$o] < 0) || ($octets[$o] > 255)) { return 0, $internal, $loopback; }
-        if ($octet[$o] =~ /^0/) { return 0, $internal, $loopback; }
-        if (($o eq 0) && ($octets[$o] < 1)) { return 0, $internal, $loopback; }
-    }
-
-    # now check for internal
-    if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
-
-    # lastly, loopback?
-    if ($ip eq '127.0.0.1') { $loopback = 1; }
-
+    
     return 1, $internal, $loopback;
 }
 
