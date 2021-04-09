@@ -43,7 +43,7 @@ Getopt::Long::Configure('no_ignore_case');
 $COUNTERS{'scan_start'}  = time();
 $VARIABLES{'DIV'}        = "-" x 75;
 $VARIABLES{'name'}       = "Nikto";
-$VARIABLES{'version'}    = "2.1.6";
+$VARIABLES{'version'}    = "2.5.0";
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
