@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2013 Chris Sullo
+#  Copyright (C) 2021 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_ms10_070_init {
                                          weight => 20,
                                          },
                             },
-               copyright => "2013 Chris Sullo"
+               copyright => "2021 Chris Sullo"
                };
 
     return $id;

@@ -1,6 +1,6 @@
 #VERSION,1.00
 ###############################################################################
-#  Copyright (C) 2004 Chris Sullo
+#  Copyright (C) 2021 Chris Sullo
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ sub nikto_siebel_init {
                                  method => \&nikto_siebel,
                               },
                            },
-            copyright   => "2011 Chris Sullo",
+            copyright   => "2021 Chris Sullo",
             options     => {
                               enumerate    => "Flag to indicate whether we shall attempt to enumerate known apps",
                               applications => "List of applications",
