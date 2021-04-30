@@ -567,6 +567,7 @@ sub general_config {
     $CLI{'all_options'} =~ s/(\-id?\s[^\s:]+:)[^\s]+/$1****/i;
 
     GetOptions("ask=s"            => \$CLI{'ask'},
+               "check6"           => \$CLI{'check6'},
                "Cgidirs=s"        => \$CLI{'forcecgi'},
                "config=s"         => \$CLI{'config'},
                "dbcheck"          => \&check_dbs,
@@ -606,11 +607,23 @@ sub general_config {
                "vhost=s"          => \$CLI{'vhost'},
                "404string=s"      => \$CLI{'404string'},
                "404code=s"        => \$CLI{'404code'},
+               "ipv6"             => \$CLI{'ipv6'},
+               "ipv4"             => \$CLI{'ipv4'},
                ) or usage();
 
+    # Run a test for IPv6 connectivity
+    if ($CLI{'check6'}) {
+        check_ipv6();
+    }
     # both -host and -url
     if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) {
         nprint("+ ERROR: Cannot use -url and -host at the same time");
+        exit 1;
+	}
+
+    # both -ipv4 and -ipv6
+    if ($CLI{'ipv4'} && $CLI{'ipv6'}) {
+        nprint("+ ERROR: Cannot use -ipv4 and -ipv6 at the same time");
         exit 1;
 	}
 
@@ -2604,7 +2617,7 @@ sub is_ip {
     } else {
         return 0, $internal, $loopback;
     }
-    
+
     return 1, $internal, $loopback;
 }
 
@@ -2740,6 +2753,7 @@ sub usage {
                                yes   Ask about each (default)
                                no    Don't ask, don't send
                                auto  Don't ask, just send
+       -check6             Check if IPv6 is working (connects to Google)
        -Cgidirs+           Scan these CGI dirs: \"none\", \"all\", or values like \"/cgi/ /cgi-a/\"
        -config+            Use this config file
        -Display+           Turn on/off display outputs:
@@ -2770,9 +2784,9 @@ sub usage {
                                (if not specified the format will be taken from the file extension passed to -output)
        -Help              This help information
        -host+             Target host/URL
-       -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
-       -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
        -id+               Host authentication to use, format is id:pass or id:pass:realm
+       -ipv4                 IPv4 Only
+       -ipv6                 IPv6 Only
        -key+              Client certificate key file
        -list-plugins      List all available plugins, perform no testing
        -maxtime+          Maximum testing time per host (e.g., 1h, 60m, 3600s)
@@ -2823,6 +2837,8 @@ sub usage {
        -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
+       -404code           Ignore these HTTP codes as negative responses (always). Format is \"302,301\".
+       -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
    		+ requires a value\n\n";
 
     check_modules();
@@ -3140,6 +3156,10 @@ sub expand_range {
 				((@range = split /-/) == 2) ? eval('map {$_} '. "@range") : $_
 			} split /\s/
 		} @_;
+}
+###############################################################################
+sub check_ipv6 {
+    # Do something and: exit 1 or 0 
 }
 ###############################################################################
 sub nikto_core { return; }    # trap for this plugin being called to run. lame.
