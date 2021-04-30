@@ -621,11 +621,17 @@ sub general_config {
         exit 1;
 	}
 
-    # both -ipv4 and -ipv6
+    # -ipv4 and -ipv6 validations
     if ($CLI{'ipv4'} && $CLI{'ipv6'}) {
         nprint("+ ERROR: Cannot use -ipv4 and -ipv6 at the same time");
         exit 1;
 	}
+    if ($CLI{'ipv6'}) {
+        $CLI{'ipv4'} = 0;
+    }
+    else {
+        $CLI{'ipv4'} = 1;
+    }
 
     # 404string
     if ($CLI{'404string'} ne '') {
