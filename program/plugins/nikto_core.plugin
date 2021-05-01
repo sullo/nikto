@@ -2542,7 +2542,7 @@ sub set_scan_items {
 
                 $COUNTERS{total_checks}++;
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
-                $TESTS{ $item[0] }{'osvdb'}       = $item[1];
+                $TESTS{ $item[0] }{'references'}  = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
                 $TESTS{ $item[0] }{'match_1'}     = $item[5];
                 $TESTS{ $item[0] }{'match_1_or'}  = $item[6];
@@ -2916,7 +2916,6 @@ sub add_vulnerability {
     my ($mark, $message, $nikto_id, $refs, $method, $uri, $request, $response, $reason) = @_;
     $uri    = "/"   unless (defined $uri);
     $method = "GET" unless (defined $method);
-    $osvdb  = "0"   unless (defined $osvdb);
     if ($message !~ /\.$/) {
         $message .= ".";
     }
