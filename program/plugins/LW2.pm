@@ -5046,6 +5046,8 @@ sub _stream_socket_alloc {
     if ($LW2_CAN_IPv6) {
         
         my ($ip, $port);
+
+        $xr->{sock_hints}->{family} = ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET ;
         
         if ( defined $wh->{whisker}->{bind_socket} ) {
             $port = $wh->{whisker}->{bind_port} || 0;
@@ -5065,7 +5067,7 @@ sub _stream_socket_alloc {
             ($ip,$port) = ($xr->{chost}, $xr->{cport});
         }
         
-        my ($err, @results) = getaddrinfo($ip, $port, $xr->{sock_hints} );
+        my ($err, @results) = getaddrinfo($ip, $port, $xr->{sock_hints});
         return _stream_err( $xr, 0, "getaddrinfo problems ($err)" ) if $err;
         return _stream_err( $xr, 0, 'getaddrinfo problems (no sockets)' )
           if ( scalar(@results) < 1);
@@ -6041,7 +6043,8 @@ sub utils_port_open {    # this should be platform-safe
 
         my ($err, @results) =
             getaddrinfo($target, $port, {
-                socktype => SOCK_STREAM, protocol => IPPROTO_TCP
+                socktype => SOCK_STREAM, protocol => IPPROTO_TCP,
+                family => ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
                 } );
 
         foreach my $sk (@results) {
