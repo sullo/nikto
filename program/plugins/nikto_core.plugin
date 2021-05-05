@@ -288,14 +288,14 @@ sub map_codes {
     my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "map_codes");
 
     if ($response->{'location'} ne '') {
-        nprint("+ Root page / redirects to: $response->{'location'}");
+	my $root = "/";
+	if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
+        nprint("+ Root page $root redirects to: $response->{'location'}");
         if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
         {
-            my $uri = $response->{'location'};
-            ($res, $content, $error, $request, $response) =
-              nfetch($mark, "/", "GET", "", "", "", "map_codes");
+            ($res, $content, $error, $request, $response) = nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");
         }
-        else    # different host... ugh... just guess
+        else    # different host... just guess?
         {
             $FoF{'okay'}{'response'} = 200;
             $FoF{'okay'}{'type'}     = "STD";
@@ -1972,8 +1972,6 @@ sub report_head {
     my ($format, $file) = @_;
     nprint("- Opening reports ($format, $file)", "v");
 
-    # For tuning set up a list of report methods, formats and handles
-
     # This is a frig until I can think of a better way of achieving it
     foreach my $i (1 .. 100) {
         foreach my $plugin (@PLUGINS) {
@@ -2490,6 +2488,20 @@ sub set_scan_items {
     if (defined $CONFIGFILE{SKIPIDS}) {
         @SKIPLIST = split(/ /, $CONFIGFILE{SKIPIDS});
     }
+            my $includes = $excludes = "";
+
+                     print "Tuning: $CLI{'tuning'}\n";
+                 foreach my $tune (split(//, $CLI{'tuning'})) {
+                     next if ($tune eq "x");
+                     if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
+                         print "Adding $tune to excludes\n";
+                         $excludes .= $tune;
+                     }
+                     else {
+                         print "Adding $tune to includes\n";
+                         $includes .= $tune;
+                     }
+                 }
 
     # now load checks
     foreach my $line (@DBFILE) {
@@ -2500,35 +2512,91 @@ sub set_scan_items {
             my $add  = 1;
 
             # check tuning options
+            # $item[2] conains the test's types
             if ((defined $CLI{'tuning'}) && (defined $item[2])) {
 
                 # Work out the required tuning from the CLI string
-                my $exclude = 0;
-                foreach my $tune (split(//, $CLI{'tuning'})) {
-                    if ($tune eq "x") {
-                        $exclude = 1;
-                        next;
+        
+        # If flag, test type is added
+            # All others excluded
+        # If exclude == 1, next flag is exclude
+        
+                # my $exclude = 0;
+                #      print "Tuning: $CLI{'tuning'}\n";
+                #  foreach my $tune (split(//, $CLI{'tuning'})) {
+                #      next if ($tune eq "x");
+                #      if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
+                #          print "Adding $tune to excludes\n";
+                #          $excludes .= $tune;
+                #      }
+                #      else {
+                #          print "Adding $tune to includes\n";
+                #          $includes .= $tune;
+                #      }
+                 
+
+                    # if includes is not null, all non matches are excluded
+                   # $add = 0;
+                    if ($includes ne "") {
+                        foreach $tune (split(//, $includes)) {
+                            if ($item[2] =~ /$tune/i ) {
+                                $add = 1;
+                                print "Add: id $item[0]\ttuning $item[2]\tflag $tune\n";
+                                #print "Keep: $item[2] vs $tune\n";
+                            }
+                            else {
+                                print "Excl: id $item[0]\ttuning $item[2]\tflag $tune\n";
+                                $add = 0;
+                            }
+                        }
                     }
-                    if ($exclude == 0) {
-                        if ($item[2] !~ /$tune/) { $add = 0; }
-                        next;
-                    }
-                    if ($exclude == 1) {
-                        if ($item[2] =~ /$tune/) { $add = 0; }
-                    }
-                }
+                    if ($excludes ne "") {
+                        print "\$excludes: $excludes\n";
+                    # if includes is null and excludes is not null, add all but excludes
+                        foreach $tune (split(//, $excludes)) {
+                            #print "Tune: $tune\n";
+                            if ($item[2] =~ /$tune/i) {
+                                print "Exclude: id $item[0]\ttuning $item[2]\tflag $tune\n";
+
+                                $add = 0;
+                                #print "Discard: $item[2] vs $tune\n";
+                            }
+                        }
+                    #}
+
+
+
+                #     if ($tune eq "x") {
+                #         $exclude = 1;
+                #         next;
+                #     }
+                #     if ($exclude == 0) {
+                #         if ($item[2] !~ /$tune/) { $add = 0; }
+                #         next;
+                #     }
+                #     if ($exclude == 1) {
+                #         if ($item[2] =~ /$tune/) { $add = 0; }
+                #         $exclude = 0;
+                #     }
+                 }
             }
+                   #  exit;
 
             # Skip list
+            if ($add) {
             foreach my $id (@SKIPLIST) {
                 if ($id eq $item[0]) { $add = 0; }
             }
+            }
 
             # RFI URL Defined?
+            if ($add) {
             if (($item[2] =~ /c/) && ($VARIABLES{'@RFIURL'} eq '')) {
                 $add = 0;
             }
+            }
 
+            # If $add is still true, then add it
             if ($add) {
                 my $ext = get_ext($item[3]);
                 $db_extensions{$ext} = 1;
@@ -2541,6 +2609,7 @@ sub set_scan_items {
                 }
 
                 $COUNTERS{total_checks}++;
+                print "Total: $COUNTERS{total_checks}\n";
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
                 $TESTS{ $item[0] }{'references'}  = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
