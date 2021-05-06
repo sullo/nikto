@@ -1119,7 +1119,9 @@ sub resolve {
         if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
 
-            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW});
+            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW, 
+                                  family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
+                                  });
             if ($err) {
                 nprint("+ ERROR: Cannot resolve hostname '$ident' because '$err'\n");
                 return;
@@ -3233,7 +3235,42 @@ sub expand_range {
 }
 ###############################################################################
 sub check_ipv6 {
-    # Do something and: exit 1 or 0 
+    nprint("Performing IPv6 connectivity tests:");
+    # Perform a series of tests and: exit 1 or 0
+
+    # Does the version of Socket even support IPv6?
+    if (! $LW2::LW2_CAN_IPv6 ) {
+        nprint("+ ERROR: This version of Socket ($Socket::VERSION) has insufficient (or no) IPv6 support");
+        exit 1;
+    }
+    nprint("+ This version of Socket ($Socket::VERSION) does support IPv6");
+
+    # Ensure switches are in a known state
+    $CLI{'ipv6'} = 1; $CLI{'ipv4'} = 0;
+
+    # Test host & port could be extracted out into the config file
+    my $check6host = 'ipv6.google.com';
+    my $check6port = 443;
+
+    # Try to resolve a known IPv6 hostname
+    my ($name, $ip, $displayname, $ipcache) = resolve($check6host);
+    if (! $ip) {
+        nprint("- DNS resolution of '$check6host' using AF_INET6 failed");
+        nprint("\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for the test host)");
+        exit 1;
+    }
+    nprint("+ Successful DNS resolution of '$check6host': $ip");
+
+    # Try to connect to the host
+    my $res = LW2::utils_port_open($check6host, $check6port);
+    if (! $res) {
+        nprint("+ ERROR: TCP connection to '$check6host:$check6port' using AF_INET6 failed");
+        nprint("\t(Likely either no IPv6 connectivity or firewall blocking)");
+        exit 1;
+    }
+    nprint("+ Successful TCP connection to '$check6host:$check6port'");
+    nprint("----> All tests successful");
+    exit 0;
 }
 ###############################################################################
 sub nikto_core { return; }    # trap for this plugin being called to run. lame.
