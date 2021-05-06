@@ -2830,7 +2830,7 @@ sub usage {
                                yes   Ask about each (default)
                                no    Don't ask, don't send
                                auto  Don't ask, just send
-       -check6             Check if IPv6 is working (connects to Google)
+       -check6             Check if IPv6 is working (connects to ipv6.google.com or value set in nikto.conf)
        -Cgidirs+           Scan these CGI dirs: \"none\", \"all\", or values like \"/cgi/ /cgi-a/\"
        -config+            Use this config file
        -Display+           Turn on/off display outputs:
@@ -3246,29 +3246,31 @@ sub check_ipv6 {
     nprint("+ This version of Socket ($Socket::VERSION) does support IPv6");
 
     # Ensure switches are in a known state
-    $CLI{'ipv6'} = 1; $CLI{'ipv4'} = 0;
+    $CLI{'ipv6'} = 1; 
+    $CLI{'ipv4'} = 0;
 
-    # Test host & port could be extracted out into the config file
-    my $check6host = 'ipv6.google.com';
-    my $check6port = 443;
+    if ($CONFIGFILE{'CHECK6HOST'} == "") {
+        $CONFIGFILE{'CHECK6HOST'} = 'ipv6.google.com';
+        $CONFIGFILE{'CHECK6PORT'} = '443';
+    }
 
     # Try to resolve a known IPv6 hostname
-    my ($name, $ip, $displayname, $ipcache) = resolve($check6host);
+    my ($name, $ip, $displayname, $ipcache) = resolve($CONFIGFILE{'CHECK6HOST'});
     if (! $ip) {
-        nprint("- DNS resolution of '$check6host' using AF_INET6 failed");
-        nprint("\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for the test host)");
+        nprint("- DNS resolution of '$CONFIGFILE{'CHECK6HOST'}' using AF_INET6 failed");
+        nprint("\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for $CONFIGFILE{'CHECK6HOST'})");
         exit 1;
     }
-    nprint("+ Successful DNS resolution of '$check6host': $ip");
+    nprint("+ Successful DNS resolution of '$CONFIGFILE{'CHECK6HOST'}': $ip");
 
     # Try to connect to the host
-    my $res = LW2::utils_port_open($check6host, $check6port);
+    my $res = LW2::utils_port_open($CONFIGFILE{'CHECK6HOST'}, $CONFIGFILE{'CHECK6PORT'});
     if (! $res) {
-        nprint("+ ERROR: TCP connection to '$check6host:$check6port' using AF_INET6 failed");
+        nprint("+ ERROR: TCP connection to '$CONFIGFILE{'CHECK6HOST'}:$CONFIGFILE{'CHECK6PORT'}' using AF_INET6 failed");
         nprint("\t(Likely either no IPv6 connectivity or firewall blocking)");
         exit 1;
     }
-    nprint("+ Successful TCP connection to '$check6host:$check6port'");
+    nprint("+ Successful TCP connection to '$CONFIGFILE{'CHECK6HOST'}:$CONFIGFILE{'CHECK6PORT'}'");
     nprint("----> All tests successful");
     exit 0;
 }

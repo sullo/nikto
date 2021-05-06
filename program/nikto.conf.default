@@ -85,3 +85,7 @@ LW_SSL_ENGINE=auto
 # Number of failures before giving up
 # Set to 0 to disable entirely
 FAILURES=20
+
+# Accessible IPv6 host for -check6 flag only
+CHECK6HOST=ipv6.google.com
+CHECK6PORT=443
