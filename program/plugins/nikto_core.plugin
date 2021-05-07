@@ -2492,15 +2492,15 @@ sub set_scan_items {
     }
             my $includes = $excludes = "";
 
-                     print "Tuning: $CLI{'tuning'}\n";
+              #       print "Tuning: $CLI{'tuning'}\n";
                  foreach my $tune (split(//, $CLI{'tuning'})) {
                      next if ($tune eq "x");
                      if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
-                         print "Adding $tune to excludes\n";
+                #         print "Adding $tune to excludes\n";
                          $excludes .= $tune;
                      }
                      else {
-                         print "Adding $tune to includes\n";
+            #             print "Adding $tune to includes\n";
                          $includes .= $tune;
                      }
                  }
@@ -2611,7 +2611,7 @@ sub set_scan_items {
                 }
 
                 $COUNTERS{total_checks}++;
-                print "Total: $COUNTERS{total_checks}\n";
+                #print "Total: $COUNTERS{total_checks}\n";
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
                 $TESTS{ $item[0] }{'references'}  = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
