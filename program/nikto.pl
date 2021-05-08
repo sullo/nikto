@@ -102,7 +102,6 @@ foreach my $mark (@MARKS) {
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
     if ($msgs ne "") { 
 	push(@{ $mark->{'messages'} }, $msgs);
-	#push ($mark->{'messages'}, $msgs);
     }
 
     # Skip if we can't resolve the host - we'll error later
@@ -178,7 +177,9 @@ foreach my $mark (@MARKS) {
             $mark->{'banner'} = "(no identification possible)";
         }
 
-        add_vulnerability($mark, "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}", 0, "");
+        add_vulnerability($mark,
+                   "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}",
+                   0);
     }
     else {
         dump_target_info($mark);

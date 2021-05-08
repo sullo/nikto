@@ -64,11 +64,11 @@ CIRT=107.170.99.251
 CHECKMETHODS=GET
 
 # If you want to specify the location of any of the files, specify them here
-# EXECDIR=/opt/nikto				# Location of Nikto
-# PLUGINDIR=/opt/nikto/plugins			# Location of plugin dir
-# DBDIR=/opt/nikto/databases			# Location of database dir
-# TEMPLATEDIR=/opt/nikto/templates		# Location of template dir
-# DOCDIR=/opt/nikto/docs			# Location of docs dir
+# EXECDIR=/opt/nikto                    # Location of Nikto
+# PLUGINDIR=/opt/nikto/plugins          # Location of plugin dir
+# DBDIR=/opt/nikto/databases            # Location of database dir
+# TEMPLATEDIR=/opt/nikto/templates      # Location of template dir
+# DOCDIR=/opt/nikto/docs                # Location of docs dir
 
 # Default plugin macros
 # Remove plugins designed to be run standalone
@@ -89,3 +89,4 @@ FAILURES=20
 # Accessible IPv6 host for -check6 flag only
 CHECK6HOST=ipv6.google.com
 CHECK6PORT=443
+
