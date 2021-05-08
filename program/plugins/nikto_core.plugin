@@ -2490,20 +2490,19 @@ sub set_scan_items {
     if (defined $CONFIGFILE{SKIPIDS}) {
         @SKIPLIST = split(/ /, $CONFIGFILE{SKIPIDS});
     }
-            my $includes = $excludes = "";
+    my ($includes, $excludes) = "";
 
-              #       print "Tuning: $CLI{'tuning'}\n";
-                 foreach my $tune (split(//, $CLI{'tuning'})) {
-                     next if ($tune eq "x");
-                     if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
-                #         print "Adding $tune to excludes\n";
-                         $excludes .= $tune;
-                     }
-                     else {
-            #             print "Adding $tune to includes\n";
-                         $includes .= $tune;
-                     }
-                 }
+    foreach my $tune (split(//, $CLI{'tuning'})) {
+        next if ($tune eq "x");
+        if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
+            print "Adding $tune to excludes\n";
+            $excludes .= $tune;
+        }
+        else {
+            print "Adding $tune to includes\n";
+            $includes .= $tune;
+        }
+    }
 
     # now load checks
     foreach my $line (@DBFILE) {
@@ -2511,91 +2510,52 @@ sub set_scan_items {
         {
             chomp($line);
             my @item = parse_csv($line);
-            my $add  = 1;
+            my $add  = 0;
 
             # check tuning options
             # $item[2] conains the test's types
-            if ((defined $CLI{'tuning'}) && (defined $item[2])) {
+            if (($CLI{'tuning'} ne "") && (defined $item[2])) {
 
                 # Work out the required tuning from the CLI string
-        
-        # If flag, test type is added
-            # All others excluded
-        # If exclude == 1, next flag is exclude
-        
-                # my $exclude = 0;
-                #      print "Tuning: $CLI{'tuning'}\n";
-                #  foreach my $tune (split(//, $CLI{'tuning'})) {
-                #      next if ($tune eq "x");
-                #      if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
-                #          print "Adding $tune to excludes\n";
-                #          $excludes .= $tune;
-                #      }
-                #      else {
-                #          print "Adding $tune to includes\n";
-                #          $includes .= $tune;
-                #      }
-                 
-
-                    # if includes is not null, all non matches are excluded
-                   # $add = 0;
-                    if ($includes ne "") {
-                        foreach $tune (split(//, $includes)) {
-                            if ($item[2] =~ /$tune/i ) {
-                                $add = 1;
-                                print "Add: id $item[0]\ttuning $item[2]\tflag $tune\n";
-                                #print "Keep: $item[2] vs $tune\n";
-                            }
-                            else {
-                                print "Excl: id $item[0]\ttuning $item[2]\tflag $tune\n";
-                                $add = 0;
-                            }
+                if ($includes ne "") {
+                    foreach $tune (split(//, $includes)) {
+                        if ($item[2] =~ /$tune/i) {
+                            $add = 1;
+                            last;
                         }
                     }
-                    if ($excludes ne "") {
-                        print "\$excludes: $excludes\n";
+                }
+                if ($excludes ne "") {
+
                     # if includes is null and excludes is not null, add all but excludes
-                        foreach $tune (split(//, $excludes)) {
-                            #print "Tune: $tune\n";
-                            if ($item[2] =~ /$tune/i) {
-                                print "Exclude: id $item[0]\ttuning $item[2]\tflag $tune\n";
-
-                                $add = 0;
-                                #print "Discard: $item[2] vs $tune\n";
-                            }
+                    foreach $tune (split(//, $excludes)) {
+                        if ($item[2] =~ /$tune/i) {
+                            $add = 0;
+                            last;
                         }
-                    #}
+                        else {
+                            $add = 1;
+                        }
+                    }
 
-
-
-                #     if ($tune eq "x") {
-                #         $exclude = 1;
-                #         next;
-                #     }
-                #     if ($exclude == 0) {
-                #         if ($item[2] !~ /$tune/) { $add = 0; }
-                #         next;
-                #     }
-                #     if ($exclude == 1) {
-                #         if ($item[2] =~ /$tune/) { $add = 0; }
-                #         $exclude = 0;
-                #     }
-                 }
+                }
             }
-                   #  exit;
+            else {
+                $add = 1;
+            }
 
             # Skip list
             if ($add) {
-            foreach my $id (@SKIPLIST) {
-                if ($id eq $item[0]) { $add = 0; }
-            }
+                foreach my $id (@SKIPLIST) {
+                    if ($id eq $item[0]) { $add = 0; }
+                }
             }
 
             # RFI URL Defined?
             if ($add) {
-            if (($item[2] =~ /c/) && ($VARIABLES{'@RFIURL'} eq '')) {
-                $add = 0;
-            }
+                if (($item[2] =~ /c/) && ($VARIABLES{'@RFIURL'} eq '')) {
+                    $add = 0;
+                }
             }
 
             # If $add is still true, then add it
@@ -2611,7 +2571,6 @@ sub set_scan_items {
                 }
 
                 $COUNTERS{total_checks}++;
-                #print "Total: $COUNTERS{total_checks}\n";
                 $TESTS{ $item[0] }{'uri'}         = $item[3];
                 $TESTS{ $item[0] }{'references'}  = $item[1];
                 $TESTS{ $item[0] }{'method'}      = $item[4];
