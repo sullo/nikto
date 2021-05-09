@@ -110,7 +110,7 @@ sub scrub {
 	my (@s, $line);
 	($line, $s[0], $s[1], $s[2], $s[3], $s[4]) = @_;
 
-	foreach my $i (@_) {
+	foreach my $i (@s) {
 		next if $i eq "";
 		if (is_ip($i)) { 
 			$line =~ s/$i/0\.\0\.\0\.0/g;
@@ -2217,6 +2217,7 @@ sub dump_var {
     my %hash_in = %{ $_[1] };
 
     my $display = LW2::dump('', \%hash_in);
+    print "disp:$display\n";
     $display =~ s/^\$/'$msg'/;
     if ($OUTPUT{'scrub'}) {
 	$new = "";
