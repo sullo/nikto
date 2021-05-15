@@ -103,20 +103,25 @@ sub is_404 {
 
 ###############################################################################
 sub scrub {
-    my $line = shift;  # line to scrub
+    my $line = shift;    # line to scrub
 
-	for my $val (@_) {
-		next if $val eq "";
-        my ($valid, $internal, $loopback) = is_ip($val);
-		if ($valid) { 
-			$line =~ s/$val/0.0.0.0/g;
-		}
-		else {
-			$line =~ s/$val/example.com/ig;
-		}
-	}
+    for my $val (@_) {
+        next if $val eq "";
+        my ($validip, $internal, $loopback) = is_ip($val);
+        if ($validip) {
+            if ($val =~ /^$LW2::IPv6_re$/) {
+                $line =~ s/$val/\:\:/g;
+            }
+            else {
+                $line =~ s/$val/0.0.0.0/g;
+            }
+        }
+        else {
+            $line =~ s/$val/example.com/ig;
+        }
+    }
 
-	return $line;
+    return $line;
 }
 
 ###############################################################################
