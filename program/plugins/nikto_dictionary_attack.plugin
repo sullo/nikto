@@ -64,7 +64,7 @@ sub nikto_dictionary_attack {
     my $ctr = 0;
 
     if (!defined $dictfile) {
-        nprint("- No dictionary file given in mutate-options, skipping check");
+        nprint("- No dictionary file given in mutate-options, skipping check.");
         return;
     }
 

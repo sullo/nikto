@@ -47,14 +47,10 @@ sub change_variables {
         }
     }
 
-#            if ($line =~ /CGIDIRS/) {
-#                print "changed CGI Dirs\n";
-#                for ($i=0;$i<=$#subtests;$i++) { print "\t$i\t$subtests[$i]\n"; }
-#		 exit;
-# 		}
     return @subtests;
 }
 
+###############################################################################
 sub unslash {
     my $line = $_[0] || return;    # $line is the slash-escaped variable
     my @line = split(/\\\\/, $line);
@@ -107,61 +103,31 @@ sub is_404 {
 
 ###############################################################################
 sub scrub {
-	my (@s, $line);
-	($line, $s[0], $s[1], $s[2], $s[3], $s[4]) = @_;
+    my $line = shift;  # line to scrub
 
-	foreach my $i (@s) {
-		next if $i eq "";
-		if (is_ip($i)) { 
-			$line =~ s/$i/0\.\0\.\0\.0/g;
+	for my $val (@_) {
+		next if $val eq "";
+        my ($valid, $internal, $loopback) = is_ip($val);
+		if ($valid) { 
+			$line =~ s/$val/0.0.0.0/g;
 		}
 		else {
-			$line =~ s/$i/example.com/ig;
+			$line =~ s/$val/example.com/ig;
 		}
 	}
 
-        # name
-# print "hostname: " . $mark->{'hostname'} ."\n";
-        $line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
-
-        # ip
-        $line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
-#print "ip: " . $mark->{'ip'} ."\n";
-
-        # vhost
-        $line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
-#print "vhost: " . $mark->{'vhost'} ."\n";
-
-        # and in case we got here from set_target
-        $line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
-#print "ident: " . $mark->{'ident'} ."\n";
-	
-#print "line2: $line\n";
 	return $line;
-
 }
+
 ###############################################################################
 sub nprint {
-    my $line   = shift;
-    my $mode   = shift;
-    my ($mark) = @_;
+    my $line   = shift; #$_[0];
+    my $mode   = shift; #$_[1];
     chomp($line);
 
     # scrub values
     if ($OUTPUT{'scrub'}) {
-	$line = scrub($line, $mark->{'hostname'}, $mark->{'ip'}, $CLI{'vhost'}, $mark->{'ident'});
-
-        # name
-        #$line =~ s/$mark->{'hostname'}/example.com/ig unless $mark->{'hostname'} eq '';
-
-        # ip
-        #$line =~ s/$mark->{'ip'}/0.0.0.0/ig unless $mark->{'ip'} eq '';
-
-        # vhost
-        #$line =~ s/$CLI{'vhost'}/example.com/ig unless $CLI{'vhost'} eq '';
-
-        # and in case we got here from set_target
-        #$line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
+        $line = scrub($line, @_);
     }
 
     # don't print debug & verbose to output file...
@@ -283,14 +249,14 @@ sub map_codes {
     my ($mark) = @_;
     my %REQS;
     my $rs = LW2::utils_randstr(8);
-
+    
     # / for OK response
     my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "map_codes");
 
     if ($response->{'location'} ne '') {
 	my $root = "/";
 	if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
-        nprint("+ Root page $root redirects to: $response->{'location'}");
+        nprint("+ Root page $root redirects to: $response->{'location'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
         {
             ($res, $content, $error, $request, $response) = nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");
@@ -342,7 +308,7 @@ sub map_codes {
 
     foreach my $file (keys %REQS) {
         return if $mark->{'terminate'};
-        nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n", "v");
+        nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n", "v", $mark->{'hostname'}, ($mark->{'ip'}, $mark->{'displayname'}));
         ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "map_codes");
 
         $ext = $REQS{$file};
@@ -470,30 +436,30 @@ sub dump_target_info {
 
     if ($CLI{'plugins'} ne '@@NONE') {
         if ($mark->{ip} =~ /^$LW2::IPv4_re$/ || $mark->{ip} =~ /^$LW2::IPv6_re_inc_zoneid$/) {
-            nprint("+ Target IP:          $mark->{ip}", "", $mark);
+            nprint("+ Target IP:          $mark->{ip}", "", ($mark->{'ip'}));
         }
         else {
-            nprint("+ Target IP:          (proxied)", "", $mark);
+            nprint("+ Target IP:          (proxied)", "", ($mark->{'ip'}));
             }
 
-        nprint("+ Target Hostname:    $mark->{hostname}", "", $mark);
+        nprint("+ Target Hostname:    $mark->{hostname}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         nprint("+ Target Port:        $mark->{port}");
         if (defined $CLI{'root'}) {
-            nprint("+ Target Path:        $CLI{'root'}");
+            nprint("+ Target Path:        $CLI{'root'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ((defined $CLI{'vhost'}) && ($CLI{'vhost'} ne $mark->{hostname})) {
-            nprint("+ Virtual Host:       $CLI{'vhost'}", "", $mark);
+            nprint("+ Virtual Host:       $CLI{'vhost'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ($request{'whisker'}->{'proxy_host'} ne '') {
             nprint(
-                "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}"
-                );
+                "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}",
+                "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ($mark->{ssl}) {
-            nprint($sslprint);
+            nprint($sslprint, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if (defined $NIKTO{'anti_ids'} && defined $CLI{'evasion'}) {
@@ -514,7 +480,7 @@ sub dump_target_info {
 	if (defined $mark->{'messages'}) {
 		my @msgs = @{ $mark->{'messages'} };
 		foreach my $m (@msgs) {
-        		nprint("+ Message:            $m");
+        		nprint("+ Message:            $m", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 		}
 	}
 
@@ -524,7 +490,7 @@ sub dump_target_info {
     }
 
     if ($mark->{banner} ne "") {
-        nprint("+ Server: $mark->{banner}");
+        nprint("+ Server: $mark->{banner}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
     else {
         nprint("+ Server: No banner retrieved");
@@ -802,7 +768,7 @@ sub general_config {
                 }
             }
         }
-        nprint("- Auto-generated save file: $CLI{'file'}", "v");
+        nprint("- Auto-generated save file: $CLI{'file'}", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 
     # output file
@@ -1097,7 +1063,7 @@ sub readkey {
 sub resolve {
     my $ident = $_[0] or return;
     my ($ip, $name, $ipcache) = "";
-    my @addresses;
+    my (@addresses, @scrub);
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
         return $ident, $ident, $ident;
@@ -1123,7 +1089,7 @@ sub resolve {
                                   family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
                                   });
             if ($err) {
-                nprint("+ ERROR: Cannot resolve hostname '$ident' because '$err'\n");
+                nprint("+ ERROR: Cannot resolve hostname '$ident' because '$err'\n", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 return;
             }
 
@@ -1142,18 +1108,27 @@ sub resolve {
         }
 
         $ip = $addresses[0];
+        push(@scrub, $ip);
         if ($addresses[1] != "") { 
-            $ipcache = "Multiple IP addresses found: $ip, ";
-        	for (my $i=1; $i<=$#addresses; $i++) {
-                $ipcache .= "$addresses[$i], ";
-            }
-            $ipcache =~ s/, $//;
+                my %seen;
+                my @unique = grep !$seen{$_}++, @addresses;
+
+                for my $newip (@unique) {
+                    push(@scrub, $newip);
+                    if ($newip != $ip) {
+                        $ipcache .= "$newip, ";
+                    }
+                }
+                if ($ipcache != "") {
+                    $ipcache =~ s/, $//;
+                    nprint("Multiple IP addresses found: $ip, $ipcache", "", @scrub);
+                }
         }
 
         if ( $ip !~ /^$LW2::IPv4_re$/ &&
              $ip !~ /^$LW2::IPv6_re$/
         ) {
-            nprint("+ ERROR: Invalid IP: $ip\n\n");
+            nprint("+ ERROR: Invalid IP: $ip\n\n", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit;
         }
 
@@ -1161,7 +1136,7 @@ sub resolve {
      }
 
     my $displayname = ($name) ? $name : $ip;
-    return $name, $ip, $displayname, $ipcache;
+    return $name, $ip, $displayname;
 }
 
 ###############################################################################
@@ -1236,7 +1211,7 @@ sub set_targets {
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
                 $hostdata[0] =~ s/\/$//;
                 $targs{ $defhost . "_" . $defport } = $hostdata[0];
-                nprint("- Added -root value of '$hostdata[0]' from URI", "v");
+                nprint("- Added -root value of '$hostdata[0]' from URI", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
         }
         else {
@@ -1245,14 +1220,14 @@ sub set_targets {
                     $defhost = $1;
                     $defport = $2;                
                 } else {
-                    nprint("- ERROR: Unrecognised target host format: $host");
+                    nprint("- ERROR: Unrecognised target host format: $host", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 }
             } else {
                 my @h = split(/\:|\,/, $host); # Q. Is host,port format ever going to reach here, or will the port be incorrectly split off earlier as another host
                 $defhost = $h[0];
                 $defport = $h[1];
                 if (scalar @h > 2) { # Possible invalid IPv6 format has been supplied
-                  nprint("- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.");
+                  nprint("- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                   # TODO skip this host if going through a file of targets
                 }
             }
@@ -1273,7 +1248,7 @@ sub set_targets {
                 $markhash->{'ident'} = $h;
                 $markhash->{'port'}  = $port;
                 if ($targs{$host} ne '/') { $markhash->{'root'} = $targs{$host}; }
-                nprint("- Target:$markhash->{'ident'} port:$markhash->{'port'}", "v", $markhash);
+                nprint("- Target:$markhash->{'ident'} port:$markhash->{'port'}", "v", ($markhash->{'hostname'}, $markhash->{'ip'}, $markhash->{'displayname'}));
                 push(@marks, $markhash);
             }
         }
@@ -1736,7 +1711,7 @@ sub port_check {
                      . ($m->{'hostname'} || $m->{'ip'})
                      . ":$port, using $method",
                    "v",
-                   $m
+                   ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                    );
             $m->{ssl} = ($checkssl eq "HTTP") ? 0 : 1;
             if ($m->{'ssl'}) {
@@ -1752,14 +1727,12 @@ sub port_check {
                 if (defined $content
                     && ( $content =~ /plain HTTP to an SSL/ ||
 					     $content =~ /plain HTTP request was sent to HTTPS/ )) {
-                    dump_var("Result Hash", \%result);
+                    dump_var("Result Hash", \%result, ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
-                nprint("- $checkssl Server found: "
-                         . ($m->{'hostname'} || $m->{'ip'})
-                         . ":$port \t$response->{server}",
+                nprint("- $checkssl server found: " . ($m->{'hostname'} || $m->{'ip'}) . ":$port \t$response->{server}",
                        "d",
-                       $m
+                       ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                        );
                 return $m->{'ssl'} + 1;
             }
@@ -1767,7 +1740,7 @@ sub port_check {
     }
 
     add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", '000029', '', '', '/', $request, $response, "No HTTP response");
-    nprint("---------------------------------------------------------------------------");
+    nprint($VARIABLES{'DIV'});
 
     return 0;
 }
@@ -2155,8 +2128,8 @@ sub proxy_check {
         sleeper();
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
-        dump_var("Request Hash", \%request);
-        dump_var("Result Hash",  \%result);
+        dump_var("Request Hash", \%request, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        dump_var("Result Hash",  \%result, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         # First check that we can connect to the proxy
         if (exists $result{'whisker'}{'error'}) {
@@ -2190,8 +2163,8 @@ sub proxy_check {
             sleeper();
             LW2::http_do_request_timeout(\%request, \%result);
             $COUNTERS{'totalrequests'}++;
-            dump_var("Request Hash", \%request);
-            dump_var("Result Hash",  \%result);
+            dump_var("Request Hash", \%request, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            dump_var("Result Hash",  \%result, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             if ($result{'proxy-authenticate'} ne "") {
                 my @pauthinfo  = split(/ /, $result{'proxy-authenticate'});
@@ -2215,14 +2188,17 @@ sub dump_var {
     return if !$OUTPUT{'debug'};
     my $msg     = $_[0];
     my %hash_in = %{ $_[1] };
-
+    my @scrubs;
+    for (my $i=2;$i<=$#_;$i++) {
+        push(@scrubs, $_[$i]);
+    }
     my $display = LW2::dump('', \%hash_in);
-    print "disp:$display\n";
+    my $new;
     $display =~ s/^\$/'$msg'/;
     if ($OUTPUT{'scrub'}) {
-	$new = "";
-	foreach my $line (split(/\n/, $display)) { 
-        	$line = scrub($line);
+	    $new = "";
+	    foreach my $line (split(/\n/, $display)) { 
+        	$line = scrub($line, @scrubs);
 		$new .= "$line\n";
 	}
 	$display = $new;
@@ -2408,14 +2384,14 @@ sub nfetch {
         $COUNTERS{'totalrequests'}++;
     }
     if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
-	nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'});
+	nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'}, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 	$mark->{'terminate'} = 1;
 	}
 
 
     if ($OUTPUT{'debug'}) {
-        dump_var("Request Hash", \%request);
-        dump_var("Result Hash",  \%result);
+        dump_var("Request Hash", \%request, ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
+        dump_var("Result Hash",  \%result, ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
     }
 
     # Snarf what we can from the whisker hash and put in mark
@@ -2451,7 +2427,7 @@ sub nfetch {
         }
     }
 
-    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}", "v");
+    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Check for errors to reduce false positives
     if ((defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '')
@@ -2459,8 +2435,7 @@ sub nfetch {
         $mark->{'total_errors'}++;
         nprint(
             "+ ERROR: $result{'whisker'}->{'uri_requested'} returned an error: $result{'whisker'}{'error'}\n",
-            "e"
-            );
+            "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         if (($result{'whisker'}->{'code'} eq 502) && ($CLI{'useproxy'})) {
             nprint("+ ERROR: Revieved 502 'Bad Gateway' from proxy\n");
         }
@@ -2468,7 +2443,7 @@ sub nfetch {
 
     if ($OUTPUT{'show_cookies'} && (defined($result{'whisker'}->{'cookies'}))) {
         foreach my $c (@{ $result{'whisker'}->{'cookies'} }) {
-            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c");
+            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
 
@@ -2496,11 +2471,9 @@ sub set_scan_items {
     foreach my $tune (split(//, $CLI{'tuning'})) {
         next if ($tune eq "x");
         if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
-            print "Adding $tune to excludes\n";
             $excludes .= $tune;
         }
         else {
-            print "Adding $tune to includes\n";
             $includes .= $tune;
         }
     }
@@ -2620,21 +2593,10 @@ sub is_ip {
     my $loopback = 0;
 
     if ($ip =~ /^$LW2::IPv4_re$/) {
-        return 0, $internal, $loopback;
-
-         # now validate octets - may not be necessary now with use of $LW2::IPv4_re ?
-        my @octets = split(/\./, $ip);
-        if (scalar(@octets) ne 4) { return 0, $internal, $loopback; }
-        for (my $o = 0 ; $o <= 3 ; $o++) {
-            if (($octets[$o] < 0) || ($octets[$o] > 255)) { return 0, $internal, $loopback; }
-            if ($octet[$o] =~ /^0/) { return 0, $internal, $loopback; }
-            if (($o eq 0) && ($octets[$o] < 1)) { return 0, $internal, $loopback; }
-        }
-
-        # now check for internal
+        # check for internal
         if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
 
-        # lastly, loopback?
+        # check for loopback
         if ($ip eq '127.0.0.1') { $loopback = 1; }
 
     } elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
@@ -2654,7 +2616,6 @@ sub is_ip {
     } else {
         return 0, $internal, $loopback;
     }
-
     return 1, $internal, $loopback;
 }
 
@@ -2733,7 +2694,7 @@ sub send_updates {
       to submit this information (*no server specific data*) to CIRT.net
       for a Nikto update (or you may email to sullo\@cirt.net) (y/n)? ", ""
         );
-    }
+    } 
 
     if ($answer !~ /y/i) { return; }
 
@@ -2771,7 +2732,7 @@ sub send_updates {
     }
 
     if (($code != 200) || ($content !~ /SUCCESS/)){
-	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.");
+	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 	}
     else {
         nprint("- Sent updated info to cirt.net -- Thank you!");
@@ -2987,7 +2948,7 @@ sub add_vulnerability {
         $message .= " See: $refs";
         }
 
-    nprint("+ $message");
+    nprint("+ $message", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Save it
     if ($CLI{'saveresults'} ne '') {
@@ -3129,7 +3090,6 @@ sub expand_pluginlist {
             $suffix = "";
         }
 
-        #nprint("P:$plugin M:$minus N:$name S:$suffix");
         if ($minus) {
 
             # it's a minus - remove any previous entry
@@ -3215,7 +3175,7 @@ sub check_ipv6 {
     }
 
     # Try to resolve a known IPv6 hostname
-    my ($name, $ip, $displayname, $ipcache) = resolve($CONFIGFILE{'CHECK6HOST'});
+    my ($name, $ip, $displayname) = resolve($CONFIGFILE{'CHECK6HOST'});
     if (! $ip) {
         nprint("- DNS resolution of '$CONFIGFILE{'CHECK6HOST'}' using AF_INET6 failed");
         nprint("\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for $CONFIGFILE{'CHECK6HOST'})");

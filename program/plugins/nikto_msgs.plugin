@@ -88,7 +88,7 @@ sub nikto_msgs {
             if ($line =~ "new ObjectIpAddresses") {
                 my $ipaddr = $line;
                 $ipaddr =~ s#(^.*new ObjectIpAddresses\(")([\d\.]+)("\);.*$)#$2#;
-                nprint("$ipaddr");
+                nprint("$ipaddr", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 $ipaddrs .= " $ipaddr";
             }
         }

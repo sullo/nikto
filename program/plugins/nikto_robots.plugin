@@ -76,7 +76,7 @@ sub nikto_robots {
                 my $realfile = validate_and_fix_regex($line);
                 $realfile =~ s/^$realdir//;
 
-                nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d");
+                nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 if (($realdir  ne "") && ($realdir  ne "/")) { $DIRS{$realdir}++; }
                 if (($realfile ne "") && ($realfile ne "/")) { $RFILES{$realfile}++; }
                 $DISCTR++;

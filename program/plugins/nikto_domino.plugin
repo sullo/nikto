@@ -95,7 +95,7 @@ sub nikto_domino {
             }
 
             $tmpver = $1;
-            nprint("+ nikto_domino.plugin: Current detected version in '$uri' : '$tmpver' , previous version: '$ver'", "d");
+            nprint("+ nikto_domino.plugin: Current detected version in '$uri' : '$tmpver' , previous version: '$ver'", "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             if ($tmpver gt $ver) {
                 $ver = $tmpver;
@@ -108,7 +108,7 @@ sub nikto_domino {
     }
 
     if ($ver ne "") {
-        nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d");
+        nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         add_vulnerability(
         $finalmark,                                              # mark structure to identify target

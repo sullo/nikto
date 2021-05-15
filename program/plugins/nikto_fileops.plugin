@@ -43,16 +43,16 @@ sub save_item {
     my $cookies_written = 0;
 
     open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $@\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "			  Information\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
     print SAVEFILE "References: \t" . $resulthash->{'refs'} . "\n";
     print SAVEFILE "Message:  \t" . $message . "\n";
     print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "			  Request\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
 
     if ($request->{'whisker'}{'method'} eq '') {
         print SAVEFILE "Not Applicable\n";
@@ -69,9 +69,9 @@ sub save_item {
         }
     }
     print SAVEFILE "\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "			  Response\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     if ($response->{'whisker'}{'protocol'} eq '') {
         print SAVEFILE "Not Applicable\n";
     }
@@ -96,9 +96,9 @@ sub save_item {
         }
         print SAVEFILE "\n" . $response->{'whisker'}{'data'} . "\n";
     }
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "			  Data Objects\n";
-    print SAVEFILE "-----------------------------------------------------------------------\n";
+    print SAVEFILE $VARIABLES{'DIV'} . "\n";
     if ($request->{'whisker'}{'method'} ne '') {
         print SAVEFILE "REQUEST:$json_request\n";
     }
@@ -171,7 +171,7 @@ sub save_createdir {
     if (!-d $savedir) {
         mkdir($savedir);
         if (!-d $savedir) {
-            nprint("+ERROR: Unable to create -Save directory '$savedir'");
+            nprint("+ERROR: Unable to create -Save directory '$savedir'", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit;
         }
     }

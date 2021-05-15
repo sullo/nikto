@@ -117,17 +117,17 @@ sub nikto_auth {
     my ($method)   = $response->{'whisker'}->{'method'} || "GET";
 
     unless (defined $response->{'www-authenticate'}) {
-        nprint("+ ERROR: No authentication header defined: $uri","v");
+        nprint("+ ERROR: No authentication header defined: $uri", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
-    nprint("+ $uri - Requires Authentication for realm '$realm'")
+    nprint("+ $uri - Requires Authentication for realm '$realm'", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
       if ($OUTPUT{'show_auth'} || $uri =~ /^$CLI{'root'}\/?$/);
 
     # Save to revert
     $save_auth = $response->{'www-authenticate'};
 
-    nprint("- : Testing default credentials against '$realm'","v");
+    nprint("- : Testing default credentials against '$realm'", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Now we have this we can try guessing the password
     foreach my $entry (@{$REALMS}) {
@@ -150,7 +150,7 @@ sub nikto_auth {
         $COUNTERS{'totalrequests'}++;
         dump_var("Auth Request",  $request);
         dump_var("Auth Response", $response);
-	nprint("- Tested credentials: " . $entry->{'id'} . "/" . $entry->{'password'} . "- result: " . $response->{'whisker'}->{'code'} ,"v");
+	    nprint("- Tested credentials: " . $entry->{'id'} . "/" . $entry->{'password'} . "- result: " . $response->{'whisker'}->{'code'} ,"v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         $mark->{'realms'}{$realm}{'status'}   = 0;
         $mark->{'realms'}{$realm}{'id'}       = $entry->{'id'};

@@ -50,7 +50,7 @@ sub nikto_favicon {
     		if (($res eq "200") && ($content ne "")) {
         		my $hash = LW2::md5($content);
         		$hash =~ s/^.*://;
-        		nprint("Got /favicon.$ext hash:$hash", "d", "");
+        		nprint("Got /favicon.$ext hash:$hash", "d");
         		favicon_matchhash($mark, $hash, $mark->{'root'} . "/favicon.$ext", $request, $response);
     		}
 	}
@@ -67,7 +67,7 @@ sub nikto_favicon {
             if (($res eq "200") && ($content ne "")) {
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
-                nprint("Got $icon hash:$hash", "d", "");
+                nprint("Got $icon hash:$hash", "d");
                 favicon_matchhash($mark, $hash, $icon, $request, $response);
             }
         }

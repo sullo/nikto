@@ -83,7 +83,7 @@ sub nbe_item {
             }
 
             #die $debug;
-            nprint("+ Invalid reporting line: $debug");
+            nprint("+ Invalid reporting line: $debug", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
 }

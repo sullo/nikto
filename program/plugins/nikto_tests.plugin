@@ -86,11 +86,11 @@ sub nikto_tests {
 
             # NOTE: auth is now done in nfetch
             if ($OUTPUT{'show_ok'} && ($res eq 200)) {
-                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}");
+                nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
             elsif ($OUTPUT{'show_redirects'} && ($res =~ /30(?:[0-3]|7)/)) {
                 nprint(  "+ $mark->{'root'}$uri - Redirects ($res) to "
-                       . $response->{'location'} . " , " . $TESTS{$checkid}{'message'});
+                       . $response->{'location'} . " , " . $TESTS{$checkid}{'message'}, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
 
             # If user puts a @CODE= string in db_404_strings, let it take precedence
@@ -291,7 +291,7 @@ sub passchecks {
     my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
     my @EXTS = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
-    nprint("- Performing passfiles mutation", "v");
+    nprint("- Performing passfiles mutation.", "v");
 
     # Update total requests for status reports
     my @CGIS = split(/ /, $VARIABLES{'@CGIDIRS'});
@@ -337,7 +337,7 @@ sub allchecks {
     my (%FILES, %DIRS);
 
     # build the arrays
-    nprint("- Loading root level files", "v");
+    nprint("- Loading root level files.", "v");
     foreach my $checkid (keys %TESTS) {
 
         # Expand out vars so we get full matches
@@ -375,10 +375,10 @@ sub testfile {
     my ($mark, $uri, $name, $tid) = @_;
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
-    nprint("- $res for $uri (error: $error)", "v");
+    nprint("- $res for $uri (error: $error)", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     if ($error) {
         $mark->{'total_errors'}++;
-        nprint("+ ERROR: $uri returned an error: $error", "e");
+        nprint("+ ERROR: $uri returned an error: $error", "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return;
     }
     if ($res == 200) {
