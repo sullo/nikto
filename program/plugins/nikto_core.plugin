@@ -1083,7 +1083,7 @@ sub resolve {
     else  # not an IP, assume name & resolve
     {
         if ($CLI{'skiplookup'}) {
-            print("+ ERROR: -nolookup set, but given name\n");
+            nprint("+ ERROR: -nolookup set, but given name\n");
             exit;
         }
 
@@ -1120,13 +1120,13 @@ sub resolve {
 
                 for my $newip (@unique) {
                     push(@scrub, $newip);
-                    if ($newip != $ip) {
+                    if ($newip ne $ip) {
                         $ipcache .= "$newip, ";
                     }
                 }
                 if ($ipcache != "") {
                     $ipcache =~ s/, $//;
-                    nprint("Multiple IP addresses found: $ip, $ipcache", "", @scrub);
+                    nprint("+ Multiple IP addresses found: $ip, $ipcache", "", @scrub);
                 }
         }
 
