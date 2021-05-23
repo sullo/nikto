@@ -1098,7 +1098,6 @@ sub resolve {
                 return;
             }
 
-            ## Future--report multiple names
             foreach my $res (@res) {
                 my ($err, $ip) = Socket::getnameinfo( $res->{addr}, NI_NUMERICHOST, NIx_NOSERV );
                 push @addresses, $ip unless $err;
@@ -1106,7 +1105,6 @@ sub resolve {
 
         } else { # Traditional IPv4 resolve
             if ($hent = gethostbyname($ident)) {
-                 # my $name      = $hent->name;  ## Future--report multiple names
                  my $addr_ref  = $hent->addr_list;
                  @addresses = map { inet_ntoa($_) } @$addr_ref;
             }
@@ -1114,13 +1112,14 @@ sub resolve {
 
         $ip = $addresses[0];
         push(@scrub, $ip);
-        if ($addresses[1] != "") { 
+        if ($addresses[1] != "") {  # have more than 1 IP
                 my %seen;
+                # get unique list of IPs
                 my @unique = grep !$seen{$_}++, @addresses;
 
                 for my $newip (@unique) {
-                    push(@scrub, $newip);
                     if ($newip ne $ip) {
+                        push(@scrub, $newip);
                         $ipcache .= "$newip, ";
                     }
                 }
