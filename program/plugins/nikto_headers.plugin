@@ -145,21 +145,34 @@ sub nikto_headers_postfetch {
     }
 
     # Incapsula WAF
-    if (defined $result->{'x-cdn'} && ($result->{'x-cdn'} == "Incapsula")) {
+    if (defined $result->{'x-cdn'} && ($result->{'x-cdn'} == "Incapsula") && ($HFOUND{'x-cdn'} != 1)) {
             add_vulnerability( $mark, "Incapsula WAF is in use.",
                     999976, "https://www.sumasoft.com/incapsula-cloud-based-web-application-firewall-waf/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-            $HFOUND{$header} = 1;
+            $HFOUND{'x-cdn'} = 1;
             }
 
     # NetIQ
-    if (defined $result->{'x-mag'}) {
+    if (defined $result->{'x-mag'} && $HFOUND{'x-mag'} != 1) {
             add_vulnerability( $mark, "NetIQ debug information is enabled.",
                     999946, "https://www.netiq.com/documentation/netiqaccessmanager32/accessgatewayhelp/data/agsglobaladv.html", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-            $HFOUND{$header} = 1;
+            $HFOUND{'x-mag'} = 1;
             }
     
-    # Look for any uncommon headers
+    # Drupal
+    if (defined $result->{'x-generator'} && $HFOUND{'x-generator'} != 1) {
+        my $drupal = $result->{'x-generator'};
+        $drupal =~ s/ \(.*$//;
+        add_vulnerability( $mark, "$drupal identified via the x-generator header.",
+                000326, "https://www.drupal.org/project/remove_http_headers", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'x-generator'} = 1;
+    }
+    elsif (defined $result->{'x-drupal-cache'} && $HFOUND{'x-drupal-cache'} != 1 && $HFOUND{'x-generator'} != 1) {
+        add_vulnerability( $mark, "Drupal identified via the presence of the x-drupal-cache header.",
+                000407, "https://support.acquia.com/hc/en-us/articles/360005275013-How-Drupal-page-cache-works", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'x-drupal-cache'} = 1;
+    }
 
+    # Look for any uncommon headers
     foreach my $header (keys %$result) {
         my $found = 0;
         foreach my $st_header (@$HEADERSDB) {
@@ -251,7 +264,7 @@ sub nikto_headers_check {
             else {
               	$value = $result->{$header};
               	}
-            $HFOUND{$key} = $value;
+            $HFOUND{$key} = 1;
             add_vulnerability($mark, "Retrieved $header header: $value", $tid, "", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
        	}
     }
@@ -383,11 +396,14 @@ sub nikto_headers {
         }
     }
 
+    #######################################################################
+    # BREACH Checks
     for (keys %locheaders) {
         delete $locheaders{$_};
     }
 
-    # BREACH Checks
+    $locheaders{'User-Agent'} = $VARIABLES{'useragent'};
+    $locheaders{'User-Agent'} =~ s/\@TESTID/headers:\ BREACH\ Check/;
     $locheaders{'Accept-Encoding'} = "deflate, gzip";
     ($res, $content, $errors, $request, $result) =
       nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "headers: BREACH Test", "1.1");
@@ -402,6 +418,7 @@ sub nikto_headers {
         }
     }
 
+    #######################################################################
     # Jetty CVE-2015-2080
     for (keys %locheaders) {
         delete $locheaders{$_};
@@ -416,5 +433,6 @@ sub nikto_headers {
         add_vulnerability( $mark, "Jetty > 9.2.3 and < 9.2.9 may reveal the contents of internal memory if illegal characters are passed.",
             999976, "CVE-2015-2080", "GET", ".", $request, $result);
     }
+
 }
 1;
