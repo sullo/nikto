@@ -171,6 +171,11 @@ sub nikto_headers_postfetch {
                 000407, "https://support.acquia.com/hc/en-us/articles/360005275013-How-Drupal-page-cache-works", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         $HFOUND{'x-drupal-cache'} = 1;
     }
+    if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
+        add_vulnerability( $mark, "Drupal Link header found with value: $result->{'link'}",
+                000427, "https://www.drupal.org/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'x-link'} = 1;
+    }
 
     # Look for any uncommon headers
     foreach my $header (keys %$result) {
