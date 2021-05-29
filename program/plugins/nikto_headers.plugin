@@ -163,18 +163,30 @@ sub nikto_headers_postfetch {
         my $drupal = $result->{'x-generator'};
         $drupal =~ s/ \(.*$//;
         add_vulnerability( $mark, "$drupal identified via the x-generator header.",
-                000326, "https://www.drupal.org/project/remove_http_headers", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                "000326", "https://www.drupal.org/project/remove_http_headers", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         $HFOUND{'x-generator'} = 1;
     }
     elsif (defined $result->{'x-drupal-cache'} && $HFOUND{'x-drupal-cache'} != 1 && $HFOUND{'x-generator'} != 1) {
         add_vulnerability( $mark, "Drupal identified via the presence of the x-drupal-cache header.",
-                000407, "https://support.acquia.com/hc/en-us/articles/360005275013-How-Drupal-page-cache-works", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+                "000407", "https://support.acquia.com/hc/en-us/articles/360005275013-How-Drupal-page-cache-works", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         $HFOUND{'x-drupal-cache'} = 1;
     }
     if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
         add_vulnerability( $mark, "Drupal Link header found with value: $result->{'link'}",
-                000427, "https://www.drupal.org/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-        $HFOUND{'x-link'} = 1;
+                "000427", "https://www.drupal.org/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'link'} = 1;
+    }
+
+    # Fastly
+    if (defined $result->{'x-timer'} && $HFOUND{'x-timer'} != 1) {
+        add_vulnerability( $mark, "Fastly CDN in use, identified by the x-timer header",
+                "000432", "https://www.fastly.com/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'x-timer'} = 1;
+    }
+    if (defined $result->{'fastly-restarts'} && $HFOUND{'fastly-restarts'} != 1) {
+        add_vulnerability( $mark, "Fastly CDN in use, identified by the fastly-restarts header",
+                "000430", "https://www.fastly.com/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        $HFOUND{'fastly-restarts'} = 1;
     }
 
     # Look for any uncommon headers
