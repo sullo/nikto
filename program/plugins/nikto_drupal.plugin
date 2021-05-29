@@ -80,14 +80,7 @@ sub nikto_drupal {
 			
 			if ($content =~ /LICENSE/) {
 				# Looks like a match - raise this up to the front end
-				add_vulnerability(
-					$mark, 			 		 # mark structure to identify target
-					"Drupal module $item->{'module'} found", # message
-					$item->{'nikto_id'},	 # tid
-					$item->{'refs'},         # References
-					$uri,					 # URI
-					$request,				 # Request structure for full output
-					$response);				 # Response structure for full output
+				add_vulnerability($mark, "Drupal module $item->{'module'} found", $item->{'nikto_id'}, $item->{'refs'}, $uri,$request, $response);
             }
         }
     }

@@ -48,7 +48,7 @@ sub nikto_origin_reflection {
 
     ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
     if ($response->{'Access-Control-Allow-Origin'} =~ /$mark{'hostname'}\.example\.com/) {
-        add_vulnerability($mark, "$path: Site reflects CORS Origin headers which partially match the domain, without full validation.", "000429", "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", "GET", $path, $request, $response);
+        add_vulnerability($mark, "$path: Site reflects CORS Origin headers which partially match the domain without full validation.", "000499", "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", "GET", $path, $request, $response);
     }
 
 }

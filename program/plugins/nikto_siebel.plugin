@@ -74,7 +74,7 @@ sub nikto_siebel {
         chomp($appver);
         $hotfix = $content;
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
-        add_vulnerability($mark, "Siebel version $siebelver found, application version $appver, applied hostfixes are $hotfix", 999901, "https://www.oracle.com/applications/siebel/", "GET", $path, $request, $response);
+        add_vulnerability($mark, "Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix", 999901, "https://www.oracle.com/applications/siebel/", "GET", $path, $request, $response);
     }
         
     $path = $application . "/_stats.swe";

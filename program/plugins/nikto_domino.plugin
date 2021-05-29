@@ -66,7 +66,7 @@ sub nikto_domino {
         ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "Domino detection");
         if ($res eq "200" && (($content =~ /<title>Server\sLogin</i && $content =~ /name="password"/) || ($content =~ /self._domino_name/ && $content =~ /NotesView/))) {
             $is_domino=1;
-            add_vulnerability($mark, "$uri: Domino login page found.", 520275, "https://www.cvedetails.com/vulnerability-list.php?vendor_id=14&product_id=1563",
+            add_vulnerability($mark, "$uri: Domino login page found.", 520275, "https://www.ibm.com/support/pages/ibm-domino-ibm-i",
                 $uri, $request, $response);
         }
     }
@@ -110,14 +110,7 @@ sub nikto_domino {
     if ($ver ne "") {
         nprint("+ nikto_domino.plugin: Highest detected version in '$finaluri' : '$ver'", "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-        add_vulnerability(
-        $finalmark,                                              # mark structure to identify target
-        "IBM/Lotus Domino: Version $ver detected at $finaluri.", # message
-        520000,                                                  # tid
-        "https://www.cvedetails.com/vulnerability-list.php?vendor_id=14&product_id=1563",   # Reference
-        $finaluri,                                               # URI
-        $finalreq,                                               # Request structure for full output
-        $finalres);                                              # Response structure for full output
+        add_vulnerability($finalmark, "IBM/Lotus Domino: Version $ver detected at $finaluri.", 520000, "https://www.ibm.com/support/pages/ibm-domino-ibm-i", $finaluri, $finalreq, $finalres);                                            
     }
 
     # Now the main meat: we shall enumerated through the database and attempt to look for the
@@ -140,14 +133,7 @@ sub nikto_domino {
                 $content !~ /Domino\sAdministrator\s\d+\sHelp/ &&
                 $content !~ /<TITLE>Server\sLogin<\/TITLE>/i ) {
                 # Looks like a match - raise this up to the front end
-                add_vulnerability(
-                    $mark,                                     # mark structure to identify target
-                    "$item->{'file'}: $item->{'description'}", # message
-                    $item->{'nikto_id'},                       # tid
-                    "http://www.iss.net/security_center/static/8072.php",   # Reference
-                    $item->{'file'},                           # URI
-                    $request,                                  # Request structure for full output
-                    $response);                                # Response structure for full output
+                add_vulnerability($mark, "$item->{'file'}: $item->{'description'}", $item->{'nikto_id'}, "CVE-2001-1567", $item->{'file'}, $request, $response);
             }
         }
     }

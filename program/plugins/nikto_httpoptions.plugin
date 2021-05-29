@@ -97,7 +97,7 @@ sub nikto_httpoptions {
 	my $junkmethod=LW2::utils_randstr(8,'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
     ($res, $content, $error, $request, $response) = nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
 	if ($res == 200) {
-		add_vulnerability($mark, "Web Server returns a valid response with junk HTTP methods, this may cause false positives.", 999967, "", $junkmethod, '/', $request, $response);
+		add_vulnerability($mark, "Web Server returns a valid response with junk HTTP methods which may cause false positives.", 999967, "", $junkmethod, '/', $request, $response);
 		$junkmethodresp=LW2::md5($content);
 	}
 
@@ -133,7 +133,7 @@ sub nikto_httpoptions {
             ($res, $content, $error, $request, $response) = nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", $version);
             if ($res == 200) {
                 if ($content =~ /Trace-Test: Nikto/) {
-                    add_vulnerability($mark, "HTTP $method method is active, suggesting the host is vulnerable to XST", 999971, "https://owasp.org/www-community/attacks/Cross_Site_Tracing", $method, "/", $request, $response);
+                    add_vulnerability($mark, "HTTP $method method is active whichs suggests the host is vulnerable to XST", "000434", "https://owasp.org/www-community/attacks/Cross_Site_Tracing", $method, "/", $request, $response);
 
                     # now we know its vulnerable stop testing
                     last;

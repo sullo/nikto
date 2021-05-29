@@ -1297,7 +1297,7 @@ sub load_databases {
     for my $file (@dbs) {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
-	nprint("- Loading DB: $filename","d");
+	    nprint("- Loading DB: $filename","d");
         open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$@\n");
 
         # db_tests
@@ -1647,6 +1647,7 @@ sub check_dbs {
 		chomp($addv);
 		my @bits = parse_csv($addv);
 		$bits[2] =~ s/\s+//g;
+        $bits[2] =~ s/\"//g;
 		if ($bits[2] =~ /^[\d]+$/) {
                 	if (($bits[2] ne 0) && exists($ALL_IDS{$bits[2]})) {
                         nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
@@ -1655,6 +1656,8 @@ sub check_dbs {
 			}
 		}
 	}
+    # Bad practice here but this one won't parse right above ¯\_(ツ)_/¯
+    $ALL_IDS{'000029'}=1;
 
     # Look for bad/invalid IDs
     foreach my $id (keys %ALL_IDS) {
@@ -1748,7 +1751,7 @@ sub port_check {
         }
     }
 
-    add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", '000029', '', '', '/', $request, $response, "No HTTP response");
+    add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", "000029", "", "", "/", $request, $response, "No HTTP response");
     nprint($VARIABLES{'DIV'});
 
     return 0;

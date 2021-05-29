@@ -66,10 +66,10 @@ sub nikto_msgs {
         	$name =~ s#(^.*<ComputerName>)([^<]+)(</ComputerName>.*$)#$2#;
         	my $eposerver = $content;
         	$eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
-        	add_vulnerability( $mark, "Web server is a McAfee ePO agent, showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 980100, "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html", "GET", "/_LOGFILENAME_", $request, $resonse);
+        	add_vulnerability( $mark, "Web server is a McAfee ePO agent and showing the hostname as '$name' and the ePO server(s) as '$eposerver'.", 980100, "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html", "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
  	else { 
-        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 980100, "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html", "GET", "/_LOGFILENAME_", $request, $resonse);
+        	add_vulnerability($mark, "Web server is a McAfee ePO agent.", 000435, "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html", "GET", "/_LOGFILENAME_", $request, $resonse);
 		}
     }
 
@@ -92,7 +92,7 @@ sub nikto_msgs {
                 $ipaddrs .= " $ipaddr";
             }
         }
-        add_vulnerability($mark, "Web server is an HP WBEM agent, showing the hostname is $name and the IP addresses are $ipaddrs.", 80101, "", "GET", "/cpqlogin.htm", $request, $response);
+        add_vulnerability($mark, "Web server is an HP WBEM agent and showing the hostname is $name and the IP addresses are $ipaddrs.", 801010, "", "GET", "/cpqlogin.htm", $request, $response);
     }
 }
 
