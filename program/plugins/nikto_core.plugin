@@ -103,10 +103,15 @@ sub is_404 {
 
 ###############################################################################
 sub scrub {
-    my $line = shift;    # line to scrub
+    # line to scrub
+    my $line = shift;
 
     for my $val (@_) {
         next if $val eq "";
+
+        # remove IPv6 brackets if present
+        $val =~ s/^\[([^\]]+)\]$/$1/;
+
         my ($validip, $internal, $loopback) = is_ip($val);
         if ($validip) {
             if ($val =~ /^$LW2::IPv6_re$/) {
@@ -1089,6 +1094,7 @@ sub resolve {
 
         if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
+            print "in6 resolve"\n";
 
             my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW, 
                                   family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
@@ -2605,7 +2611,7 @@ sub is_ip {
 
     } elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
 
-        # now check for internal
+        # check for internal
         if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
 
         if ( $ip =~ /^(?:fe80     # is a link local unicast address
