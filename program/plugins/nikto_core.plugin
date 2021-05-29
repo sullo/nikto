@@ -1094,7 +1094,6 @@ sub resolve {
 
         if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
-            print "in6 resolve"\n";
 
             my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW, 
                                   family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
