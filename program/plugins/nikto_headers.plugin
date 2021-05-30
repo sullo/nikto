@@ -57,7 +57,7 @@ sub nikto_headers_postfetch {
 
         # skip some very unlikely headers
         if    ($header eq 'whisker')         { next; }
-        elsif ($header eq 'date')  w          { next; }
+        elsif ($header eq 'date')            { next; }
         elsif ($header eq 'content-type')    { next; }
         elsif ($header eq 'content-length')  { next; }
         elsif ($header eq 'connection')      { next; }
