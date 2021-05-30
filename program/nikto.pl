@@ -105,7 +105,8 @@ foreach my $mark (@MARKS) {
     }
 
     # Skip if we can't resolve the host - we'll error later
-    if (!defined $mark->{'ip'}) {
+    if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
+        add_vulnerability($mark, $msgs, 0, "", "GET", "/", "", "");
         $mark->{'test'} = 0;
         next;
     }

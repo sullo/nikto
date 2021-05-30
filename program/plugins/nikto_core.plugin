@@ -1099,8 +1099,7 @@ sub resolve {
                                   family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
                                   });
             if ($err) {
-                nprint("+ ERROR: Cannot resolve hostname '$ident' because '$err'\n", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-                return;
+                return $mark->{'hostname'}, '', $mark->{'display_name'}, "ERROR: Cannot resolve hostname '$ident' because '$err'";
             }
 
             foreach my $res (@res) {
