@@ -43,6 +43,10 @@ sub nikto_apacheusers {
     my ($mark, $parameters) = @_;
     my $apacheusers = 0;
 
+    # If we haven't been asked to enumerate users then return
+    return unless (defined $parameters->{'enumerate'}
+                   && $parameters->{'enumerate'} == 1);
+
     # First ensure that the server is vulnerable
     my ($result, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
@@ -61,10 +65,6 @@ sub nikto_apacheusers {
 
     # If we can't enumerate users then return
     return unless ($apacheusers == 1);
-
-    # If we haven't been asked to enumerate users then return
-    return unless (defined $parameters->{'enumerate'}
-                   && $parameters->{'enumerate'} == 1);
 
     # Now we can attempt to enumerate the users
     my ($url, $dictfile, $size);
