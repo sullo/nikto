@@ -1659,6 +1659,7 @@ sub check_dbs {
     # Bad practice here but this one won't parse right above ¯\_(ツ)_/¯
     $ALL_IDS{'000029'}=1;
 
+
     # Look for bad/invalid IDs
     foreach my $id (keys %ALL_IDS) {
 	chomp($id);
@@ -1759,23 +1760,23 @@ sub port_check {
 
 ###############################################################################
 # Directory listing
-sub dirlist {
-    my $DIR     = $_[0] || return;
-    my $PATTERN = $_[1] || "";
-    my @FILES_TMP = ();
+    sub dirlist {
+        my $DIR     = $_[0] || return;
+        my $PATTERN = $_[1] || "";
+        my @FILES_TMP = ();
 
-    opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
-    foreach my $file (readdir(DIRECTORY)) {
-        if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
-        if ($PATTERN ne "") {
-            if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
+        opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
+        foreach my $file (readdir(DIRECTORY)) {
+            if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
+            if ($PATTERN ne "") {
+                if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
+            }
+            else { push(@FILES_TMP, $file); }
         }
-        else { push(@FILES_TMP, $file); }
-    }
-    closedir(DIRECTORY);
+        closedir(DIRECTORY);
 
-    return @FILES_TMP;
-}
+        return @FILES_TMP;
+    }
 
 ###############################################################################
 sub load_plugins {
