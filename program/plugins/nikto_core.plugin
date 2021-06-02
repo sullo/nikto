@@ -1074,6 +1074,7 @@ sub resolve {
     my $ident = $_[0] or return;
     my ($ip, $name, $ipcache) = "";
     my (@addresses, @scrub);
+    my $is6 = 0;
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
         return $ident, $ident, $ident;
@@ -1081,7 +1082,7 @@ sub resolve {
 
     if ($ident =~ /^$LW2::IPv4_re$/) {  # ident is IPv4
         $ip = $name = $ident;   
-    } elsif ( $ident =~ /^\[($LW2::IPv6_re_inc_zoneid)\]$/ ) {
+    } elsif ( $ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/ ) {
         $ip = $1;
         $name = $ident; # HTTP host header uses [IPv6] rather than the raw IPv6 address
     }
@@ -1094,12 +1095,18 @@ sub resolve {
 
         if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
-
             my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW, 
                                   family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
                                   });
             if ($err) {
-                return $mark->{'hostname'}, '', $mark->{'display_name'}, "ERROR: Cannot resolve hostname '$ident' because '$err'";
+                my $msg = "ERROR: Cannot resolve hostname '$ident' because '$err'.";
+                if ($ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/ ) {
+                    $msg .= " Use the -IPv6 flag if needed."
+                }
+                if ($CLI{'ipv6'}) {
+                    $msg .= " Ensure you have IPv6 connectivity."
+                }
+                return $mark->{'hostname'}, '', $mark->{'display_name'}, $msg;
             }
 
             foreach my $res (@res) {
@@ -1224,7 +1231,7 @@ sub set_targets {
         }
         else {
             if ( (index $host, '[') == 0) { # looks like accepted IPv6 format
-                if ($host =~ /^(\[$LW2::IPv6_re_inc_zoneid\])(?:[:](\d+))?$/) {
+                if ($host =~ /^(\[?$LW2::IPv6_re_inc_zoneid\]?)(?:[:](\d+))?$/) {
                     $defhost = $1;
                     $defport = $2;                
                 } else {
@@ -1735,7 +1742,7 @@ sub port_check {
 
             if ($res) {
 
-      # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
+                # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
                 if (defined $content
                     && ( $content =~ /plain HTTP to an SSL/ ||
 					     $content =~ /plain HTTP request was sent to HTTPS/ )) {
@@ -1751,7 +1758,12 @@ sub port_check {
         }
     }
 
-    add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", "000029", "", "", "/", $request, $response, "No HTTP response");
+    my $msg = "Unable to connect to " . ($hostname || $ip) . ":$port";
+    if ($CLI{'ipv6'}) {
+        $msg .= ". Ensure you have IPv6 connectivity.";
+    }
+
+    add_vulnerability($m, $msg, "000029", "", "", "/", $request, $response, "No Response");
     nprint($VARIABLES{'DIV'});
 
     return 0;
