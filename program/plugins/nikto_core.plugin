@@ -1095,16 +1095,14 @@ sub resolve {
 
         if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
-            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW, 
-                                  family => ( $CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET
-                                  });
+            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW });
             if ($err) {
                 my $msg = "ERROR: Cannot resolve hostname '$ident' because '$err'.";
                 if ($ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/ ) {
-                    $msg .= " Use the -IPv6 flag if needed."
+                    $msg .= " Use the -ipv6 flag if needed."
                 }
                 if ($CLI{'ipv6'}) {
-                    $msg .= " Ensure you have IPv6 connectivity."
+                    $msg .= " Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag."
                 }
                 return $mark->{'hostname'}, '', $mark->{'display_name'}, $msg;
             }
@@ -1121,23 +1119,32 @@ sub resolve {
             }
         }
 
-        $ip = $addresses[0];
-        push(@scrub, $ip);
-        if ($addresses[1] != "") {  # have more than 1 IP
-                my %seen;
-                # get unique list of IPs
-                my @unique = grep !$seen{$_}++, @addresses;
+        my @temp4_ipcache;
+        my @temp6_ipcache;
+        my %seen;
+        foreach $temp_ip (@addresses) {
+            if ($temp_ip =~ /:/) {
+                push @temp6_ipcache, $temp_ip if !$seen{ $temp_ip }++;
+            } else {
+                push @temp4_ipcache, $temp_ip if !$seen{ $temp_ip }++;
+            }
+        }
 
-                for my $newip (@unique) {
-                    if ($newip ne $ip) {
-                        push(@scrub, $newip);
-                        $ipcache .= "$newip, ";
-                    }
-                }
-                if ($ipcache != "") {
-                    $ipcache =~ s/, $//;
-                    nprint("+ Multiple IP addresses found: $ip, $ipcache", "", @scrub);
-                }
+        $ip = ( $CLI{'ipv6'} ) ? shift @temp6_ipcache : shift @temp4_ipcache;
+        push(@scrub, $ip, @temp4_ipcache, @temp6_ipcache);
+        $ipcache = join ", ", (@temp4_ipcache, @temp6_ipcache);
+
+        if ( $ip eq '' ) {
+            if ( $CLI{'ipv6'} && scalar @temp4_ipcache ) {
+                nprint("+ ERROR: IPv6 scanning mode requested but only IPv4 addresses found ($ipcache)");
+            } elsif ( $CLI{'ipv4'} && scalar @temp6_ipcache ) {
+                nprint("+ ERROR: IPv4 scanning mode requested but only IPv6 addresses found ($ipcache)");
+            }
+            exit;
+        }
+
+        if ($ipcache != "") {
+            nprint("+ Multiple IP addresses found: $ip, $ipcache", "", @scrub);
         }
 
         if ( $ip !~ /^$LW2::IPv4_re$/ &&
@@ -1760,7 +1767,7 @@ sub port_check {
 
     my $msg = "Unable to connect to " . ($hostname || $ip) . ":$port";
     if ($CLI{'ipv6'}) {
-        $msg .= ". Ensure you have IPv6 connectivity.";
+        $msg .= ". Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
     }
 
     add_vulnerability($m, $msg, "000029", "", "", "/", $request, $response, "No Response");
