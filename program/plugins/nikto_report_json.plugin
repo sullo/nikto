@@ -89,14 +89,14 @@ sub json_item {
         $json_item_count++;
         $line .= "{";
 
-        $line .= "\"id\": \"" .$item->{'nikto_id'} ."\",";
-        if ($item->{'refs'} ne '') { $line .= "\"references\": \"" .$item->{'refs'} ."\","; }
+        $line .= "\"id\": \"" . $item->{'nikto_id'} ."\",";
+        if ($item->{'refs'} ne '') { $line .= "\"references\": \"" . $item->{'refs'} ."\","; }
 
-        if ($item->{'method'} ne '') { $line .= "\"method\":\"" .$item->{'method'} ."\","; }
+        if ($item->{'method'} ne '') { $line .= "\"method\":\"" . $item->{'method'} ."\","; }
 
         if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/))
-			{ $line .= "\"url\":\"" .$mark->{'root'} . $uri ."\","; }
-		else { $line .= "\"url\":\"" .$uri ."\","; }
+			{ $line .= "\"url\":\"" . $mark->{'root'} . $uri . "\","; }
+		else { $line .= "\"url\":\"" . $uri ."\","; }
 	
 		my $msg = $item->{'message'};
 		$uri=quotemeta($uri);
