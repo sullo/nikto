@@ -255,7 +255,7 @@ sub nikto_tests {
                     add_vulnerability($mark,
                                   "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
                                   $checkid,
-                                  $TESTS{$checkid}{'refs'},
+                                  $TESTS{$checkid}{'references'},
                                   $TESTS{$checkid}{'method'},
                                   $mark->{'root'} . $uri,
                                   $request,
