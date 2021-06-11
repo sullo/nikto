@@ -76,11 +76,11 @@ sub json_close {
     return OUT;
 }
 
-my $json_item_count = 0;
 ###############################################################################
 # print an item
 sub json_item {
     my ($handle, $mark, $item) = @_;
+    my $json_item_count = 0;
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $line = '';
         if ( $json_item_count ne 0 ) {
@@ -106,7 +106,7 @@ sub json_item {
         $msg =~ s/"/\\"/g;
         $line .= "\"msg\":\"$msg\"";
         $line .= "}";
-        print $handle "$line";
+        print $handle $line;
     }
 }
 
