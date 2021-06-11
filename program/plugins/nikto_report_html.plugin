@@ -191,7 +191,7 @@ sub html_change_vars {
 ###############################################################################
 sub linkify_refs {
     my $refs = $_[0] || return;
-    my @rs = parse_csv($refs);
+    my @rs = split(/ /, $refs);
     for (my $i=0;$i<=$#rs;$i++) {
       $r = $rs[$i];
       if ($r =~ /^OSVDB-(\d+)$/) {
