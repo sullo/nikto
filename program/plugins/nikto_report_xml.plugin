@@ -37,7 +37,7 @@ sub nikto_report_xml_init {
     xml_open_templates();
     return $id;
 }
-
+###############################################################################
 sub xml_head {
     my ($file) = @_;
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';

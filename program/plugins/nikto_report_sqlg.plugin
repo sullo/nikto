@@ -94,11 +94,11 @@ sub sqlg_item {
     my ($handle, $mark, $item) = @_;  
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
- 	$hostname = quotemeta($hostname);
+ 		$hostname = quotemeta($hostname);
     	my $httpmethod = quotemeta($item->{'method'});
-	my $msg = quotemeta($item->{'message'});
+		my $msg = quotemeta($item->{'message'});
         my $root = quotemeta($mark->{'root'});
-	my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
+		my $rootq = quotemeta($mark->{'root'});  # temporary, just for regex
         $uri = quotemeta($uri);
         my $ssl = $mark->{'ssl_cipher'} ? 1 : 0;
 
