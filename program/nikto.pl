@@ -101,8 +101,16 @@ foreach my $mark (@MARKS) {
     my $msgs;
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
     if ($msgs ne "") { 
-	push(@{ $mark->{'messages'} }, $msgs);
+	    push(@{ $mark->{'messages'} }, $msgs);
     }
+
+    # Load db_tests
+    set_scan_items();
+
+    # Start hook to allow plugins to load databases etc
+    run_hooks("", "start");
+
+    report_host_start($mark);
 
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
@@ -141,20 +149,20 @@ foreach my $mark (@MARKS) {
     }
 }
 
-# Load db_tests
-set_scan_items();
-
-# Start hook to allow plugins to load databases etc
-run_hooks("", "start");
-
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
-    next unless ($mark->{'test'});
+    $mark->{'total_vulns'}  = 0;
+    $mark->{'total_errors'} = 0;
     $mark->{'start_time'} = time();
     $VARIABLES{'TEMPL_HCTR'}++;
 
     if (defined $CLI{'vhost'}) {
         $mark->{'vhost'} = $CLI{'vhost'};
+    }
+
+    if (!$mark->{'test'}) {
+        report_host_end($mark);
+        next;
     }
 
     # Saving responses
@@ -163,14 +171,10 @@ foreach my $mark (@MARKS) {
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
 
-    $mark->{'total_vulns'}  = 0;
-    $mark->{'total_errors'} = 0;
-
     my %FoF = ();
 
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
 
-    report_host_start($mark);
     if ($CLI{'findonly'}) {
         my $protocol = "http";
         if ($mark->{'ssl'}) { $protocol .= "s"; }
@@ -215,6 +219,7 @@ foreach my $mark (@MARKS) {
     $COUNTERS{'hosts_completed'}++;
     report_host_end($mark);
 }
+
 $COUNTERS{'scan_end'}     = time();
 $COUNTERS{'scan_elapsed'} = ($COUNTERS{'scan_end'} - $COUNTERS{'scan_start'});
 report_summary();

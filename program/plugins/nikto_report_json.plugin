@@ -75,7 +75,7 @@ sub json_close {
     my ($handle, $mark) = @_;
     print $handle "}\n";
     close($handle);
-    return OUT;
+    return;
 }
 
 ###############################################################################
