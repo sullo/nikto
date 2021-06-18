@@ -1727,7 +1727,6 @@ sub port_check {
     my @checktypes;
     if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
     elsif ($CLI{'ssl'}) { @checktypes = ('HTTPS'); }
-    elsif ($port == 80) { @checktypes = ('HTTP', 'HTTPS'); }
     else { @checktypes = ('HTTPS', 'HTTP'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
@@ -1751,8 +1750,7 @@ sub port_check {
 
                 # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
                 if (defined $content
-                    && ( $content =~ /plain HTTP to an SSL/ ||
-					     $content =~ /plain HTTP request was sent to HTTPS/ )) {
+                    && ( $content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
                     dump_var("Result Hash", \%result, ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
@@ -1770,7 +1768,7 @@ sub port_check {
         $msg .= ". Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
     }
 
-    add_vulnerability($m, $msg, "000029", "", "", "/", $request, $response, "No Response");
+    add_vulnerability($m, $msg, "000029", "", "TCP", "/", $request, $response, "No Response");
     nprint($VARIABLES{'DIV'});
 
     return 0;
@@ -2054,7 +2052,9 @@ sub report_summary {
 ###############################################################################
 sub report_item {
     my ($mark, $item) = @_;
-    if ($item->{'uri'} eq 'undef') { $item->{'uri'} = '/'; }
+    if (($item->{'uri'} eq 'undef') || ($item->{'uri'} eq '')) { 
+        $item->{'uri'} = '/'; 
+    }
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
