@@ -123,33 +123,6 @@ sub save_getprefix {
 }
 
 ###############################################################################
-# get mark's save file name
-# Note: this is unused right now but keeping for next release
-sub get_report_filename {
-    my ($in_file, $in_format, $mark) = @_;
-    if ($in_file eq '.') {
-        my $prefix = "nikto_http";
-        $prefix .= "s" if ($mark->{'ssl'});
-        $prefix .= "_" . $mark->{'display_name'} . '_' . $mark->{'port'};
-        $prefix =~ s/,/\-/g;
-        $prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
-        $prefix =~ s/_+/_/g;
-        my $now = date_disp(time());
-        $now =~ s/\s.*$//;
-        $prefix .= "_" . $now . "." . $in_format;
-    }
-    else {
-        $prefix = $in_file;
-        if ($in_format eq '') {
-            $in_format = lc($in_file);
-            $in_format =~ s/(^.*\.)([^.]*$)/$2/g;
-        }
-    }
-
-    return $prefix, $in_format;
-}
-
-###############################################################################
 # Define/create the save directory
 sub save_createdir {
     my ($savedir, $mark) = @_;
