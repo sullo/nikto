@@ -6989,5 +6989,5 @@
 "007300","0","1","/BackOffice/Services/","GET","You have created a service","","","","","WCF endpoint found.","",""
 "007301","0","3","/phpci.yml","GET","build_settings:","","","","","PHP CI config file found.","",""
 "007302","0","1","/README.md","GET","200","","","","","Readme Found","",""
-"007303","0","3","/JAMonAdmin.jsp","GET","200","| JAMonAdmin |","","","","JAMon - Java Application Monitor Admin interface. Versions 2.7 and earlier are affected by CVE-2013-6235","",""
+"007303","0","3","/JAMonAdmin.jsp","GET","200","\| JAMonAdmin \|","","","","JAMon - Java Application Monitor Admin interface. Versions 2.7 and earlier are affected by CVE-2013-6235","",""
 "007304","0","7","/hsqldb;","GET","<title>HSQL Database Engine Servlet</title>","","","","","The F5 Big-IP's TMUI is vulnerable to a local file inclusion vulnerability and likely command exec. CVE-2020-5902.","",""
