@@ -2490,7 +2490,6 @@ sub nfetch {
 #######################################################################
 sub set_scan_items {
 
-    # load the tests
     %TESTS = ();
     $COUNTERS{total_checks} = 0;
     my @SKIPLIST = ();
@@ -2567,7 +2566,6 @@ sub set_scan_items {
             if ($add) {
                 my $ext = get_ext($item[3]);
                 $db_extensions{$ext} = 1;
-
                 # validate...
                 for (my $y = 5 ; $y <= 9 ; $y++) {
                     next if $item[$y] eq '';
@@ -2591,18 +2589,12 @@ sub set_scan_items {
         }
     }
 
-    undef @DBFILE;    # this memory hog is no longer needed!
     nprint("- $COUNTERS{'total_checks'} server checks loaded", "v");
     if ($COUNTERS{'total_checks'} eq 0 && !defined $CLI{'tuning'}) {
         nprint("+ Unable to load valid checks!");
-        exit 1;
+        $mark->{'terminate'} = 1;
     }
     return;
-}
-
-#######################################################################
-sub max_test_id {
-    return (sort { $a <=> $b } keys %TESTS)[-1];
 }
 
 #######################################################################

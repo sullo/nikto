@@ -69,7 +69,7 @@ load_databases('u');
 nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
-# No targets - quit while we're ahead
+# No targets - quit before we do anything
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host (-host) specified");
     usage(1);
