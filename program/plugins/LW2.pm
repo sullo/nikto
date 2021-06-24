@@ -2617,7 +2617,7 @@ sub _http_do_request_ex {
               if ( defined $$W{'save_raw_headers'} );
 
             if ( $resp !~
-                /^([^\/]+)\/(\d\.\d)([ \t]+)(\d+)([ \t]*)(.*?)([\r\n]+)/ )
+                /^([^\/]+)\/(\d\.?\d?)([ \t]+)(\d+)([ \t]*)(.*?)([\r\n]+)/ )
             {
                 $$hout{whisker}->{'error'} = 'invalid HTTP response';
                 $$hout{whisker}->{'data'}  = $resp;
