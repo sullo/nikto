@@ -91,6 +91,7 @@ sub nikto_robots {
 
         # Check for allowed paths
         foreach my $line (keys %tocheck) {
+            return if $mark->{'terminate'};
         	if (!defined($parameters->{'nocheck'})) {
 				my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
 				if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403") && ($res ne "301") && ($res ne "302")) {
