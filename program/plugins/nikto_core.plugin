@@ -111,6 +111,7 @@ sub scrub {
 
         # remove IPv6 brackets if present
         $val =~ s/^\[([^\]]+)\]$/$1/;
+        $val = validate_and_fix_regex($val);
 
         my ($validip, $internal, $loopback) = is_ip($val);
         if ($validip) {
