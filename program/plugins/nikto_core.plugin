@@ -1145,7 +1145,7 @@ sub resolve {
         }
 
         if ($ipcache != "") {
-            nprint("+ Multiple IP addresses found: $ip, $ipcache", "", @scrub);
+            nprint("+ Multiple IPs found: $ip, $ipcache", "", @scrub);
         }
 
         if ( $ip !~ /^$LW2::IPv4_re$/ &&
