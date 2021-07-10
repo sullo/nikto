@@ -110,11 +110,9 @@ foreach my $mark (@MARKS) {
     # Start hook to allow plugins to load databases etc
     run_hooks("", "start");
 
-    report_host_start($mark);
-
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
-        add_vulnerability($mark, $msgs, 0, "", "GET", "/", "", "");
+        $mark->{'errmsg'} = $msgs;
         $mark->{'test'} = 0;
         next;
     }
@@ -151,6 +149,12 @@ foreach my $mark (@MARKS) {
 
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
+    report_host_start($mark);
+
+    if ($mark->{'errmsg'} != "") {
+        add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
+    }
+
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'} = time();
