@@ -5621,7 +5621,7 @@ Params: @vals
 
 Return: $url
 
-Takes the @vals array output from http_split_uri, and returns a single 
+Takes the @vals array output from uri_split, and returns a single 
 scalar/string with them joined again, in the form of:
 protocol://user:pass@host:port/uri?params#frag
 
