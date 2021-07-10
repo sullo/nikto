@@ -1,42 +1,64 @@
-<!ELEMENT niktoscan (scandetails*,statistics?)>
-<!ATTLIST niktoscan hoststest CDATA #IMPLIED>
-<!ATTLIST niktoscan options CDATA #REQUIRED>
-<!ATTLIST niktoscan version CDATA #REQUIRED>
-<!ATTLIST niktoscan scanstart CDATA #REQUIRED>
-<!ATTLIST niktoscan scanend CDATA #REQUIRED>
-<!ATTLIST niktoscan scanelapsed CDATA #REQUIRED>
-<!ATTLIST niktoscan nxmlversion CDATA #REQUIRED>
+<?xml encoding="UTF-8"?>
 
-<!ELEMENT scandetails (item*,statistics?,ssl?)>
-<!ATTLIST scandetails targetip CDATA #REQUIRED>
-<!ATTLIST scandetails targethostname CDATA #REQUIRED>
-<!ATTLIST scandetails targetport CDATA #REQUIRED>
-<!ATTLIST scandetails targetbanner CDATA #REQUIRED>
-<!ATTLIST scandetails starttime CDATA #REQUIRED>
-<!ATTLIST scandetails sitename CDATA #REQUIRED>
-<!ATTLIST scandetails siteip CDATA #REQUIRED>
-<!ATTLIST scandetails hostheader CDATA #IMPLIED>
-<!ATTLIST scandetails errors CDATA #REQUIRED>
-<!ATTLIST scandetails checks CDATA #REQUIRED>
+<!ELEMENT niktoscans (niktoscan)+>
+<!ATTLIST niktoscans
+  xmlns CDATA #FIXED ''>
 
-<!ELEMENT ssl EMPTY>
-<!ATTLIST ssl ciphers CDATA #IMPLIED>
-<!ATTLIST ssl issuers CDATA #REQUIRED>
-<!ATTLIST ssl info CDATA #REQUIRED>
+<!ELEMENT niktoscan (scandetails)>
+<!ATTLIST niktoscan
+  xmlns CDATA #FIXED ''
+  hoststest CDATA #REQUIRED
+  nxmlversion CDATA #REQUIRED
+  options CDATA #REQUIRED
+  scanelapsed NMTOKEN #REQUIRED
+  scanend CDATA #REQUIRED
+  scanstart CDATA #REQUIRED
+  version NMTOKEN #REQUIRED>
 
-<!ELEMENT item (description,uri?,namelink?,iplink?)>
-<!ATTLIST item id CDATA #REQUIRED>
-<!ATTLIST item method CDATA #IMPLIED>
+<!ELEMENT scandetails (item+,statistics)>
+<!ATTLIST scandetails
+  xmlns CDATA #FIXED ''
+  checks CDATA #REQUIRED
+  errors CDATA #REQUIRED
+  hostheader NMTOKEN #REQUIRED
+  siteip CDATA #REQUIRED
+  sitename CDATA #REQUIRED
+  starttime CDATA #REQUIRED
+  targetbanner CDATA #REQUIRED
+  targethostname NMTOKEN #REQUIRED
+  targetip NMTOKEN #REQUIRED
+  targetport CDATA #REQUIRED>
 
-<!ELEMENT description ANY>
-<!ELEMENT uri ANY>
-<!ELEMENT namelink ANY>
-<!ELEMENT iplink ANY>
-<!ELEMENT references ANY>
+<!ELEMENT item (description,uri,namelink,iplink,references)>
+<!ATTLIST item
+  xmlns CDATA #FIXED ''
+  id CDATA #REQUIRED
+  method NMTOKEN #REQUIRED>
 
 <!ELEMENT statistics EMPTY>
-<!ATTLIST statistics itemstested CDATA #IMPLIED>
-<!ATTLIST statistics itemsfound CDATA #IMPLIED>
-<!ATTLIST statistics elapsed CDATA #IMPLIED>
-<!ATTLIST statistics endtime CDATA #IMPLIED>
+<!ATTLIST statistics
+  xmlns CDATA #FIXED ''
+  elapsed CDATA #REQUIRED
+  endtime CDATA #REQUIRED
+  itemsfound CDATA #REQUIRED
+  itemstested CDATA #REQUIRED>
 
+<!ELEMENT description (#PCDATA)>
+<!ATTLIST description
+  xmlns CDATA #FIXED ''>
+
+<!ELEMENT uri (#PCDATA)>
+<!ATTLIST uri
+  xmlns CDATA #FIXED ''>
+
+<!ELEMENT namelink (#PCDATA)>
+<!ATTLIST namelink
+  xmlns CDATA #FIXED ''>
+
+<!ELEMENT iplink (#PCDATA)>
+<!ATTLIST iplink
+  xmlns CDATA #FIXED ''>
+
+<!ELEMENT references (#PCDATA)>
+<!ATTLIST references
+  xmlns CDATA #FIXED ''>
