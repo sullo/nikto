@@ -268,6 +268,22 @@ sub map_codes {
 	my $root = "/";
 	if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
         nprint("+ Root page $root redirects to: $response->{'location'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+
+        if ($response->{'location'} ne '/') {
+            if (($response->{'location'} =~ /^\//) || 
+                ($response->{'location'} =~ /^https?\:\/\/(?:$mark->{'hostname'}|$mark->{'ip'}|$mark->{'displayname'})/i))
+            {
+                my @uriparts = LW2::uri_split($response->{'location'});
+                my @pathparts = split('/', $uriparts[0]);
+                for (my $i=scalar(@pathparts)-1;$i>=1; $i--) {
+                    $uriparts[0] =~ s/$pathparts[$i]//;
+                    $uriparts[0] =~ s/\/\//\//;
+                    next if ($path eq '/');
+                    my ($res, $content, $error, $request, $response) = nfetch($mark, $uriparts[0], "GET", "", "", "", "Redirect Follow");
+                    }
+                }
+        }
+
         if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
         {
             ($res, $content, $error, $request, $response) = nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");

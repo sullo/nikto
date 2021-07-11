@@ -35,4 +35,4 @@
 "750516","","plain HTTP to an SSL","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect.."
 "750517","","plain HTTP request was sent to HTTPS","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect."
 "750518","","password e-?mailed","Possible cleartext emailing of stored password."
-"750519","","[T]omcat\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}","The detailed Tomcat version is disclosed in error pages."
+"750519","","[Tt]omcat\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}","The detailed Tomcat version is disclosed in error pages."
