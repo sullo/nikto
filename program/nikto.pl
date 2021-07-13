@@ -179,23 +179,10 @@ foreach my $mark (@MARKS) {
 
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
 
-    if ($CLI{'findonly'}) {
-        my $protocol = "http";
-        if ($mark->{'ssl'}) { $protocol .= "s"; }
-        if ($mark->{'banner'} eq "") {
-            $mark->{'banner'} = "(no identification possible)";
-        }
-
-        add_vulnerability($mark,
-                   "Server: $protocol://$mark->{'display_name'}:$mark->{'port'}\t$mark->{'banner'}",
-                   0);
-    }
-    else {
-        dump_target_info($mark);
-        unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
-        run_hooks($mark, "recon");
-        run_hooks($mark, "scan");
-    }
+    dump_target_info($mark);
+    unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
+    run_hooks($mark, "recon");
+    run_hooks($mark, "scan");
 
     if ($mark->{'total_errors'} > 0 || $mark->{'total_vulns'} > 0) {
         $is_failure = 1;
@@ -203,21 +190,19 @@ foreach my $mark (@MARKS) {
 
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
-    if (!$CLI{'findonly'}) {
-        if (!$mark->{'terminate'}) {
-            nprint(
-                "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
-                );
-        }
-        else {
-            nprint(
-                "+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
-                );
-        }
-        nprint(  "+ End Time:           "
-               . date_disp($mark->{'end_time'})
-               . " (GMT$VARIABLES{'GMTOFFSET'}) ($mark->{'elapsed'} seconds)");
+    if (!$mark->{'terminate'}) {
+        nprint(
+            "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+            );
     }
+    else {
+        nprint(
+            "+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+            );
+    }
+    nprint(  "+ End Time:           "
+            . date_disp($mark->{'end_time'})
+            . " (GMT$VARIABLES{'GMTOFFSET'}) ($mark->{'elapsed'} seconds)");
     nprint($VARIABLES{'DIV'});
 
     $COUNTERS{'hosts_completed'}++;
@@ -229,12 +214,10 @@ $COUNTERS{'scan_elapsed'} = ($COUNTERS{'scan_end'} - $COUNTERS{'scan_start'});
 report_summary();
 report_close();
 
-if (!$CLI{'findonly'}) {
-    nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
-    nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds", "v");
+nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
+nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds", "v");
 
-    send_updates(@MARKS);
-}
+send_updates(@MARKS);
 
 nprint("T:" . localtime() . ": Ending", "d");
 

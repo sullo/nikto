@@ -566,7 +566,7 @@ sub general_config {
                "dbcheck"          => \&check_dbs,
                "Display=s"        => \$CLI{'display'},
                "evasion=s"        => \$CLI{'evasion'},
-               "findonly"         => \$CLI{'findonly'},
+               "followredirects"  => \$CLI{'followredirects'},
                "Format=s"         => \$CLI{'format'},
                "Help"             => \&usage,
                "host=s"           => \$CLI{'host'},
@@ -708,12 +708,6 @@ sub general_config {
     foreach my $option (@options) {
         my @optione=split("=", $option, 2);
         $CONFIGFILE{$optione[0]}=$optione[1];
-    }
-
-    # deprecated -findonly overrides -Plugins
-    if ($CLI{'findonly'}) {
-        $CLI{'plugins'} =
-          '@@NONE;report_csv;report_json;report_sqlg;report_html;report_text;report_xml;report_nbe';
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -2383,6 +2377,7 @@ sub nfetch {
     
     # remove trailing slash if requested
     if ($CLI{'noslash'}) { $request{'whisker'}->{'uri'} =~ s/\/$//; }
+
     $request{'whisker'}->{'method'} = $method;
 
     # POST data?
@@ -2393,7 +2388,6 @@ sub nfetch {
 
     # check for extra HTTP headers
     if (ref($headers_send) eq "HASH") {
-
         # loop through the hash ref passed and add each header to request
         while (my ($key, $value) = each(%$headers_send)) {
             $request{$key} = $value;
@@ -2405,7 +2399,7 @@ sub nfetch {
         LW2::cookie_write($mark->{'cookiejar'}, \%request, 1);
     }
 
-    # over-ride HTTP version
+    # override HTTP version
     if ($httpver ne '') {
         $request{'whisker'}->{'version'} = $httpver;
     }
@@ -2430,18 +2424,34 @@ sub nfetch {
 		running_average(tv_interval($time, [gettimeofday]), $mark);
 	}
 
-    # If we got an error, do 1 retry. This should be much more intelligent and configurable!
+    # If we got an error, do 1 retry. This should be configurable
     if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
-	$mark->{'failures'}++;
+	    $mark->{'failures'}++;
         sleeper();
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
     }
-    if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
-	nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'}, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-	$mark->{'terminate'} = 1;
-	}
 
+    # follow redirects
+    if ($CLI{'followredirects'} && ($result{'whisker'}->{'code'} =~ /^30[1278]/)) {
+        my $newlocation = $result{'location'};
+
+        # Is a full URL redirect the same host?
+        if ($result{'location'} =~ /^https?:\/\/($mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//i) {
+            $newlocation =~ s/^https?:\/\/(?:$mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//\//i;
+        }
+        $request{'whisker'}->{'uri'} = $newlocation;
+
+        # Make redirect request
+        LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
+        LW2::http_do_request_timeout(\%request, \%result);
+        $COUNTERS{'totalrequests'}++;
+    }
+
+    if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
+	    nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'}, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+	    $mark->{'terminate'} = 1;
+	}
 
     if ($OUTPUT{'debug'}) {
         dump_var("Request Hash", \%request, ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
@@ -2817,7 +2827,8 @@ sub usage {
             print "                               $k     $NIKTO{'anti_ids'}{$k}\n";
         }
 
-        print "       -Format+           Save file (-o) format:
+        print "        -followredirects   Follow 3xx redirects to new location
+        -Format+           Save file (-o) format:
                                csv   Comma-separated-value
                                json  JSON Format
                                htm   HTML Format
