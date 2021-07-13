@@ -588,6 +588,7 @@ sub general_config {
                "port=s"           => \$CLI{'ports'},
                "root=s"           => \$CLI{'root'},
                "ssl"              => \$CLI{'ssl'},
+               "noslash"          => \$CLI{'noslash'},
                "Save=s"           => \$CLI{'saveresults'},
                "timeout=i"        => \$CLI{'timeout'},
                "Tuning=s"         => \$CLI{'tuning'},
@@ -2359,7 +2360,7 @@ sub nfetch {
     my (%request, %result);
     setup_hash(\%request, $mark, $testid);
 
-    # check for keyboard input
+    # check for keyboard input  & terminate flag
     if (!$CLI{'nointeractive'} && (($COUNTERS{'totalrequests'} % 10) == 0)) {
         if (check_input($mark) eq 'term') { $mark->{'terminate'} = 1; }
         if ($CLI{'until'} ne '') {
@@ -2377,9 +2378,14 @@ sub nfetch {
         }
     }
 
-    $request{'whisker'}->{'uri'}    = $mark->{'root'} . $uri;  # prepend -root option's value if set
+    # prepend -root option's value if set
+    $request{'whisker'}->{'uri'}    = $mark->{'root'} . $uri;
+    
+    # remove trailing slash if requested
+    if ($CLI{'noslash'}) { $request{'whisker'}->{'uri'} =~ s/\/$//; }
     $request{'whisker'}->{'method'} = $method;
 
+    # POST data?
     if ($data ne "") {
         $data =~ s/\\\"/\"/g;
         $request{'whisker'}->{'data'} = $data;
@@ -2838,6 +2844,7 @@ sub usage {
        -nointeractive     Disables interactive features
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
+       -noslash           Strip trailing slash from URL (e.g., '/admin/' to '/admin')
        -no404             Disables nikto attempting to guess a 404 page
        -Option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
