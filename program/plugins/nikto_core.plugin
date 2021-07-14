@@ -921,7 +921,11 @@ sub general_config {
 
     # SSL Test
     if (!LW2::ssl_is_available()) {
-        nprint("- ***** SSL support not available (see docs for SSL install) *****");
+        nprint("- ***** TLS/SSL support not available (see docs for SSL install) *****");
+        if ($CLI{'ssl'}) {
+            nprint("- ERROR: -ssl was specified but TLS/SSL is not available.");
+            exit;
+            }
     }
 
     # get core version
