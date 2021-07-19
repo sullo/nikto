@@ -1213,19 +1213,18 @@ sub dump_writefile {
 
 sub _dump {    # dereference and dump an element
     my ( $t,   $ref, $depth ) = @_;
-    my ( $out, $k,   $v )     = ('');
+    my $out;
     $depth ||= 1;
-
+    
     # to protect against circular loops
     return 'undef' if ( $depth > 128 );
-
     if ( !defined $ref ) {
         return 'undef';
     }
     elsif ( ref($ref) eq 'HASH' ) {
         $out .= "{\n";
-        while ( ( $k, $v ) = each %$ref ) {
-#            next if ( $k eq '' );
+        foreach my $k (sort keys %$ref) {
+            my $v = %$ref{$k};
             $out .= "\t" x $t;
             $out .= _dumpd($k) . ' => ';
             if ( ref($v) ) { $out .= _dump( $t + 1, $v, $depth + 1 ); }
