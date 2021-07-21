@@ -74,7 +74,7 @@ sub nikto_tests {
             }
             if ($TESTS{$checkid}{'data'} ne '') {
             	$data = unslash($TESTS{$checkid}{'data'});
-                $headrs{'content-length'} = length($data) unless grep(/^transfer-encoding$/i, keys %headrs);
+                $headrs{'content-length'} = length($data) unless grep(/^(transfer-encoding|content-length)$/i, keys %headrs);
             }
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri,
