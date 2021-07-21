@@ -129,11 +129,12 @@ foreach my $mark (@MARKS) {
 
     if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
 
-    # Check that the port is open
+    # Check that the port is open. Return value is overloaded, either 1 for open or an error message to convey
     my $open =
       port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'}, $mark->{'vhost'});
-    if ($open == 0) {
+    if (($open != 1) && ($open != 2)) {
         $mark->{'test'} = 0;
+        $mark->{'errmsg'} = $open;
         next;
     }
     else {
@@ -150,9 +151,13 @@ foreach my $mark (@MARKS) {
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
     report_host_start($mark);
-
-    if ($mark->{'errmsg'} != "") {
+    if ($mark->{'errmsg'} ne "") {
         add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
+    }
+
+    if (!$mark->{'test'}) {
+        report_host_end($mark);
+        next;
     }
 
     $mark->{'total_vulns'}  = 0;
@@ -162,11 +167,6 @@ foreach my $mark (@MARKS) {
 
     if (defined $CLI{'vhost'}) {
         $mark->{'vhost'} = $CLI{'vhost'};
-    }
-
-    if (!$mark->{'test'}) {
-        report_host_end($mark);
-        next;
     }
 
     # Saving responses

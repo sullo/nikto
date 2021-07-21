@@ -1784,10 +1784,8 @@ sub port_check {
         $msg .= ". Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
     }
 
-    add_vulnerability($m, $msg, "000029", "", "TCP", "/", $request, $response, "No Response");
     nprint($VARIABLES{'DIV'});
-
-    return 0;
+    return $msg;
 }
 
 ###############################################################################
@@ -2473,7 +2471,7 @@ sub nfetch {
             if (   exists $result{'server'}
                 && !exists $mark->{'bannerchanged'}
                 && ($mark->{'banner'} ne $result{'server'})
-		&& ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
+		        && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
 		) {
 		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999962, "", $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
