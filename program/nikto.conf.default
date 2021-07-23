@@ -56,7 +56,7 @@ CIRT=107.170.99.251
 
 # Cookies: send cookies with all requests
 # Multiple can be set by separating with a semi-colon, e.g.:
-# "cookie1"="cookie value";"cookie2"="cookie val" 
+# "cookie1=cookie value";"cookie2=cookie val" 
 #STATIC-COOKIE="name=value";"something=nothing";
 
 # The below allows you to vary which HTTP methods are used to check whether an HTTP(s) server 
