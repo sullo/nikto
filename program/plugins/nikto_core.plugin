@@ -594,6 +594,7 @@ sub general_config {
                "Tuning=s"         => \$CLI{'tuning'},
                "until:s"          => \$CLI{'until'},
                "Userdbs:s"        => \$CLI{'userdbs'},
+               "usecookies"       => \$CLI{'usecookies'},
                "useproxy:s"       => \$CLI{'useproxy'},
                "useragent=s"      => \$CLI{'useragent'},
                "url=s"            => \$CLI{'host'},
@@ -2433,6 +2434,17 @@ sub nfetch {
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
     }
+            use Data::Dumper;
+
+    # Get cookies from response & add to jar
+    if ($CLI{'usecookies'}) {
+        my $tmpjar = LW2::cookie_new_jar();
+        LW2::cookie_read(\%tmpjar,\%result, \%request);
+        foreach my $c (keys %tmpjar) {
+              my @construct = ( $tmpjar{$c}[0], $tmpjar{$c}[1], $tmpjar{$c}[2], undef, $tmpjar{$c}[4] );
+            $mark->{'cookiejar'}{$c}=\@construct;
+        }
+    }
 
     # follow redirects
     if ($CLI{'followredirects'} && ($result{'whisker'}->{'code'} =~ /^30[1278]/)) {
@@ -2892,6 +2904,7 @@ sub usage {
        -useragent         Over-rides the default useragent
        -until             Run until the specified time or duration
        -url+              Target host/URL (alias of -host)
+       -usecookies        Use cookies from responses in future requests
        -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
