@@ -51,7 +51,7 @@ sub nikto_apacheusers {
     my ($result, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
     $content = quotemeta($content);
-    if ($content =~ /forbidden/i)    # good on "root"
+    if ($content =~ /forbidden/i)    # good on "bin"
     {
         my ($result, $content, $errors, $request, $response) = nfetch($mark, "/~" . LW2::utils_randstr(8), "GET", "", "", "", "apacheusers: invalid user");
 
