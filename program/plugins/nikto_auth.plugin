@@ -51,10 +51,17 @@ sub nikto_auth_load {
 
     if (defined $CLI{'hostauth'}) {
         my @x = split(/:/, $CLI{'hostauth'});
+        
+        print "Password for user ".$x[0]." : ";
+        
+        use Term::ReadKey;
+        ReadMode('noecho');
+        
+        my $idpass = ReadLine(0);
 
         my $HOSTAUTH = { nikto_id => "700500",
-                         realm    => (defined $x[2]) ? $x[2] : '@ANY',
-                         password => $x[1],
+                         realm    => (defined $x[1]) ? $x[1] : '@ANY',
+                         password => $idpass,
                          id       => $x[0],
                          message  => "Credentials provided by CLI.",
                          };
