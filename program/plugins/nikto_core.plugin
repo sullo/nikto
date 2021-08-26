@@ -1741,8 +1741,10 @@ sub port_check {
             }
         }
     }
-
+    
+    report_host_start($m)
     add_vulnerability($m,"No web server found on " . ($hostname || $ip) . ":$port", '000029', '0', '', '/', $request, $response, "No HTTP response");
+    report_host_end($m)
     nprint("---------------------------------------------------------------------------");
 
     return 0;
