@@ -310,7 +310,7 @@
 "000276","","3e","/hostadmin/?page='","GET","C:\\\\","","","","","Host Admin reveals install location and other sensitive information.","",""
 "000277","","3e","/hostadmin/?page='","GET","D:\\\\","","","","","Host Admin reveals install location and other sensitive information.","",""
 "000278","","3","/index.php?file=index.php","GET","Fatal error:","","","","","PHP-Nuke 5.4 allows file system paths to be shown in error messages.","",""
-"000279","OSVDB-40589","3","/jgb_eng_php3/cfooter.php3","GET","Fatal error","","","","","Justice Guestbook may reveal file system paths in error messages.","",""
+"000279","CVE-2003-1535","3","/jgb_eng_php3/cfooter.php3","GET","Fatal error","","","","","Justice Guestbook may reveal file system paths in error messages.","",""
 "000280","","3","/JUNK(5).csp","GET","File not found: \/","","","","","Invalid files with .csp extension reveal the file system path to the web root.","",""
 "000281","","3","/modules.php?name=Downloads&d_op=viewdownload","GET","Failed opening","","","","","PHP-Nuke allows file system paths to be revealed.","",""
 "000282","","3","/modules.php?name=Downloads&d_op=viewdownload","GET","Fatal error","","","","","PHP-Nuke allows file system paths to be revealed.","",""
