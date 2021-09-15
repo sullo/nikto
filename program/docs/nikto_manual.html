@@ -73,7 +73,7 @@ version data back to the maintainers.</p><p>The name "Nikto" is taken from the m
       URL syntax, and it will be scanned:</p><pre class="screen">perl nikto.pl -h https://192.168.0.1:443/</pre><p>There is no need to specify that port 443 may be SSL, as Nikto
       will first test regular HTTP and if that fails, HTTPS. If you are sure
       it is an SSL server, specifying -s (-ssl) will speed up the test.</p><pre class="screen">perl nikto.pl -h 192.168.0.1 -p 443 -ssl</pre><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note"><tr><td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="note.png"></td><th align="left">Note</th></tr><tr><td align="left" valign="top"><p><em class="parameter"><code>-mutate</code></em> 1 increases the number of tests so
-      that all filenames are tested against all databases inc 
+      that all filenames are tested against all databases inc
       <code class="filename">db_tests</code>. This will produce over 2,000,000 extra
       tests, which will use up a massive amount of resource.</p></td></tr></table></div><p>More complex tests can be performed using the
       <em class="parameter"><code>-mutate</code></em> parameter, as detailed later. This can
@@ -453,15 +453,15 @@ DOCDIR=EXECDIR/docs</pre></dd></dl></div></div></div><div class="chapter" lang="
       the tests. Fields are enclosed by quotes and separated by commas. The
       field order is:</p><p>Test-ID, OSVDB-ID, Tuning Type, URI, HTTP Method, Match 1, Match 1
       Or, Match1 And, Fail 1, Fail 2, Summary, HTTP Data, Headers</p><p>Here is an example test:</p><pre class="screen">"120","3092","2","/manual/","GET","200","","","","","Web server manual","",""</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id288564"></a>Plugins</h2></div></div></div><p>To allow a bit more flexibility, Nikto allows plugins so that there
-      is easy expansion of existing capabilities and some future 
-      proofing.</p><p>Plugins are run in four different phases, these are:</p><div class="blockquote"><blockquote class="blockquote"><div class="variablelist"><dl><dt><span class="term">Initialisation (mandatory)</span></dt><dd><p>Plugin initialisation is performed before targets are 
+      is easy expansion of existing capabilities and some future
+      proofing.</p><p>Plugins are run in four different phases, these are:</p><div class="blockquote"><blockquote class="blockquote"><div class="variablelist"><dl><dt><span class="term">Initialisation (mandatory)</span></dt><dd><p>Plugin initialisation is performed before targets are
                assigned. During this phase, the plugin should tell Nikto
                about its existence and capabilities. It may optionally
                set up any later required variables.</p></dd><dt><span class="term">Reconnaisance (optional)</span></dt><dd><p>During the reconnaisance phase, the plugin should look
                for interesting information that may be of use during the scan
                phase. It may report vulnerablities, though this is
                discouraged.</p></dd><dt><span class="term">Scan (optional)</span></dt><dd><p>The scan phase should perform the meat of the plugin - this
-               is where it should look at the web server and return any 
+               is where it should look at the web server and return any
                potential vulnerabilities.</p></dd><dt><span class="term">Reporting (optional)</span></dt><dd><p>The reporting phase is used to export any found
                vulnerabilities into a format that they can be used later, for
                example written as a file report, or imported into a database.
@@ -614,7 +614,7 @@ DOCDIR=EXECDIR/docs</pre></dd></dl></div></div></div><div class="chapter" lang="
                   Source Vulnerability Database. This may be 0 if an OSVDB
                   reference is not relevant or doesn't exist.</td></tr><tr><td>method</td><td>HTTP method used to find the vulnerability.</td></tr><tr><td>uri</td><td>URI for the result.</td></tr><tr><td>result</td><td>Any HTTP data, excluding headers.</td></tr></tbody></table></div></div><br class="table-break"></blockquote></div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id289774"></a>Standard Methods</h3></div></div></div><p>Several standard methods are defined in
          <code class="filename">nikto_core.plugin</code> that can be used for all
-         plugins. It is strongly advised that these should be used where 
+         plugins. It is strongly advised that these should be used where
          possible instead of writing new methods.</p><p>For some methods, such as <code class="function">add_vulnerability</code>
          which write to global variables, these <span class="emphasis"><em>must</em></span> be
          the only interface to those global variables.</p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">array <b class="fsfunc">change_variables</b>(</code></td><td><var class="pdparam">line</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td><code>string </code> </td><td><code><var class="pdparam">line</var>;</code></td></tr></table></div><p>Expands any variables in the line parameter. The expansions are

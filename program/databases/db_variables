@@ -12,9 +12,9 @@
 # relicensed or reused.
 #######################################################################
 # Notes:
-# Variables which will be used as replacements for values in the scan_database.db and user_scan_database.db files. 
+# Variables which will be used as replacements for values in the scan_database.db and user_scan_database.db files.
 # Any values to be replaced must start with the @ character, such as: @CGIDIRS.
-# 
+#
 # User defined variables should be set in config.txt as this file may be over-written during updates.
 #######################################################################
 @CGIDIRS=/cgi.cgi/ /webcgi/ /cgi-914/ /cgi-915/ /bin/ /cgi/ /mpcgi/ /cgi-bin/ /ows-bin/ /cgi-sys/ /cgi-local/ /htbin/ /cgibin/ /cgis/ /scripts/ /cgi-win/ /fcgi-bin/ /cgi-exe/ /cgi-home/ /cgi-perl/ /scgi-bin/ /cgi-bin-sdb/ /cgi-mod/

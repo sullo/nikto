@@ -61,7 +61,7 @@ sub text_item {
         my $line = "+ ";
         if ($item->{osvdb})  { $line .= "OSVDB-" . $item->{osvdb} . ": " }
         if ($item->{method}) { $line .= $item->{method} . " " }
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))             
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
         	{ $line .= $mark->{'root'} . ${'uri'} . ": " }
         $line .= $item->{message};
         print $handle "$line\n";

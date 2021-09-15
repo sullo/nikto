@@ -101,7 +101,7 @@ foreach my $mark (@MARKS) {
     # Try to resolve the host
     my $msgs;
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
-    if ($msgs ne "") { 
+    if ($msgs ne "") {
 	push(@{ $mark->{'messages'} }, $msgs);
 	#push ($mark->{'messages'}, $msgs);
     }
@@ -286,18 +286,18 @@ sub load_modules {
 	my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
 	push(@modules,"List::Util qw(sum)");
 	push(@modules,"Cwd 'abs_path'");
-	foreach my $mod (@modules) { 
+	foreach my $mod (@modules) {
 		eval "use $mod";
-        	if ($@) { 
-			print "ERROR: Required module not found: $mod\n"; 
-			$errors=1; 
+        	if ($@) {
+			print "ERROR: Required module not found: $mod\n";
+			$errors=1;
 		}
 	}
 
 	@modules = ();
 	push(@modules,"Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
 	push(@modules,"POSIX qw(:termios_h)");
-	foreach my $mod (@modules) { 
+	foreach my $mod (@modules) {
 		eval "use $mod";
 		if ($@ && $^O !~ /MSWin32/) {
 			# Allow this to work on Windows

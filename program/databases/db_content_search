@@ -13,7 +13,7 @@
 #######################################################################
 # Notes:
 # These can be regular expressions, but will be eval'd case insensitive.
-# Since these are run after every page retrieved, we should try to keep these as fast 
+# Since these are run after every page retrieved, we should try to keep these as fast
 # regular expressions as possible, and limited to only critical findings.
 #######################################################################
 "nikto_id","osvdb","matchstring","message"

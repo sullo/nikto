@@ -56,10 +56,10 @@ CIRT=107.170.99.251
 
 # Cookies: send cookies with all requests
 # Multiple can be set by separating with a semi-colon, e.g.:
-# "cookie1"="cookie value";"cookie2"="cookie val" 
+# "cookie1"="cookie value";"cookie2"="cookie val"
 #STATIC-COOKIE="name=value";"something=nothing";
 
-# The below allows you to vary which HTTP methods are used to check whether an HTTP(s) server 
+# The below allows you to vary which HTTP methods are used to check whether an HTTP(s) server
 # is running. Some web servers, such as the autopsy web server do not implement the HEAD method
 CHECKMETHODS=GET
 
@@ -75,11 +75,11 @@ CHECKMETHODS=GET
 @@EXTRAS=dictionary;siebel;embedded
 @@DEFAULT=@@ALL;-@@EXTRAS;tests(report:500)
 
-# Choose SSL libs: 
-# SSLeay        - use Net::SSLeay 
-# SSL           - use Net::SSL 
-# auto          - automatically choose what's available 
-#                 (SSLeay wins if both are available) 
+# Choose SSL libs:
+# SSLeay        - use Net::SSLeay
+# SSL           - use Net::SSL
+# auto          - automatically choose what's available
+#                 (SSLeay wins if both are available)
 LW_SSL_ENGINE=auto
 
 # Number of failures before giving up

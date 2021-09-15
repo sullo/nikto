@@ -208,4 +208,3 @@ sub nikto_user_enum_apache_check {
 }
 
 1;
-

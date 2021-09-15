@@ -43,7 +43,7 @@ sub nikto_ms10_070 {
     return if $mark->{'ms100707'};
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
-   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) { 
+   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
     	return if $mark->{'terminate'};
  	my $string = $1;
 	next if $MS10070{$string};

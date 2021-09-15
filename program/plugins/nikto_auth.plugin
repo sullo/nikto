@@ -142,7 +142,7 @@ sub nikto_auth {
         $request->{'whisker'}->{'allow_short_reads'} = 1;
         LW2::http_fixup_request($request);
 
-        if ($authtype eq 'ntlm') { 
+        if ($authtype eq 'ntlm') {
             $request->{'whisker'}->{'allow_short_reads'} = 1;
         }
 

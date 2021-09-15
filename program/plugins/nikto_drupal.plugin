@@ -24,7 +24,7 @@ sub nikto_drupal_init {
                full_name   => "Drupal Specific Tests",
                author      => "Tautology",
                description => "Performs a selection of drupal specific tests",
-               hooks       => { scan => { method => \&nikto_drupal, }, 
+               hooks       => { scan => { method => \&nikto_drupal, },
                                 start => { method => \&nikto_drupal_load, },
                               },
                options     => {
@@ -45,40 +45,40 @@ sub nikto_drupal_load {
 sub nikto_drupal {
 	# load mark and parameters from plugin caller
     my ($mark, $parameters) = @_;
-	
+
 	# quit if user is terminating - this is a catch all and we should never execute it
 	return if $mark->{'terminate'};
-	
+
 	# Check whether we should enumerate the modules
 	return if !$parameters->{'enum-modules'};
 
 	# Default module path
 	my $modulepath="/sites/default/modules";
-	
+
 	# override it if it is passed as a parameter
 	if (defined $parameters->{'path'}) {
 		$modulepath=$parameters->{'path'};
 	}
-	
+
 	# Now the main meat: we shall enumerated through the database and attempt to look for the
 	# licence file in each module which is at modulepath/module/LICENSE.txt
     foreach my $item (@$DRUPALMODULESDB) {
 		# $item will contain the entry in db_drupal, made into a hash pointer
-		
+
 		# Check if the user is terminating the current mark
         return if $mark->{'terminate'};
-		
+
 		# Set up URI
 		my $uri = "$modulepath/$item->{'module'}/LICENSE.txt";
-		
+
 		# Fetch the URI, we use nfetch to ensure that auth, headers etc are taken into account
         my ($res, $content, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "drupal detection");
-		
+
 		# We're looking for a 200 response
         if ($res eq "200") {
 			# We could assume we've got a validate result here, but we may as well check the
 			# data for the text LICENSE [sic] to ensure that we have a real match
-			
+
 			if ($content =~ /LICENSE/) {
 				# Looks like a match - raise this up to the front end
 				add_vulnerability(
