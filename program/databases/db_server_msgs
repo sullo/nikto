@@ -7,7 +7,7 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
@@ -72,7 +72,7 @@
 "800052","cpaneld","0","This is a web hosting manager. It should not be running unless required, as it allows web server administration."
 "800053","cern","0","http://www.w3.org/hypertext/WWW/Daemon"
 "800054","ChaiServer","0","HP printer."
-"800055","Cherokee\/0\.2\.7","0","This version of Cherokee allows arbitrary files to be retreived remotely. See http://www.securitytracker.com/alerts/2001/Dec/1003074.html"
+"800055","Cherokee\/0\.2\.7","0","This version of Cherokee allows arbitrary files to be retrieved remotely. See http://www.securitytracker.com/alerts/2001/Dec/1003074.html"
 "800056","cisco ios","0","Cisco Catalyst Switch"
 "800057","cisco-CPA","0","Most likely a router/switch web management port"
 "800058","cl-http","0","http://www.ai.mit.edu/projects/iiip/doc/cl-http/home-page.html"
@@ -116,14 +116,14 @@
 "800096","Ipswitch-IMail\/7\.11","0","May be vulnerable to a remote command execution overflow, see http://online.securityfocus.com/archive/1/284465"
 "800097","Jaguar Server","0","Probably a Sybase web interface"
 "800098","jakarta-tomcat-4.0.1","0","Server will reveal path"
-"800099","JavaWebServer","0","Probably Sun Microsystem's servlet interface. May have defualt code which is exploitable. Try admin/admin for id/password."
+"800099","JavaWebServer","0","Probably Sun Microsystem's servlet interface. May have default code which is exploitable. Try admin/admin for id/password."
 "800100","JetAdmin","0","HP Printer"
 "800101","Jeus WebContainer\/([0-3]\.[0-2]\..*)","0","JEUS below 3.2.2 is vulnerable to XSS if a nonexistent url is requested, i.e. [victim site]/[javascript].jsp"
 "800102","Jigsaw\/([0-1].*|2\.([0-1].*|2\.0))","0","Jigsaw 2.1.0 or below may be vulnerable to XSS if a nonexistent host name is requested, i.e. nosuchhost.domain.com/<script>..."
 "800103","Jigsaw\/2\.2\.1","0","Jigsaw 2.1.1 on Windows may be tricked into revealing the system path by requesting /aux two times."
 "800104","JRun\/([0-3]\..*|4\.0)","0","JRun 4.0 and below on IIS is vulnerable to remote buffer overflow with a filename over 4096. http://www.macromedia.com/v1/handlers/index.cfm?ID=23500 and http://www.eeye.com/html/Research/Advisories/index.html"
 "800105","JRun\/3\.1","0","JRun 3.1 on Windows NT/2000 is vulnerable to remote buffer overflow in the Host header field that can allow attackers to exploit the system."
-"800106","KazaaClient","0","Kazaa may allow sensitve information to be retrieved, http://www.securiteam.com/securitynews/5UP0L2K55W.html"
+"800106","KazaaClient","0","Kazaa may allow sensitive information to be retrieved, http://www.securiteam.com/securitynews/5UP0L2K55W.html"
 "800107","LabVIEW\/(5\.[1-9]|6\.[0-1])","0","LabVIEW 5.1.1 to 6.1 is vulnerable to a remote DoS by sending a malformed GET request. This DoS was not attempted."
 "800108","Lasso\/3\.6\.5","0","This version of Blueworld WebData engine is vulnerable to DoS by sending a 1600 character long GET request."
 "800109","LilHTTP\/2\.1","0","LilHTTP server 2.1 allows password protected resources to be retrieved by prepending '/./' to the url."
