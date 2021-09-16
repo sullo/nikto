@@ -18,9 +18,9 @@
 ###############################################################################
 # PURPOSE:
 # SQL Reporting
-# Sample table create (mysql): 
-#	create table nikto_table (testid varchar(6) not null, ip varchar(15), 
-#	hostname text, port int(5), usessl tinyint(1), osvdb int, httpmethod text, 
+# Sample table create (mysql):
+#	create table nikto_table (testid varchar(6) not null, ip varchar(15),
+#	hostname text, port int(5), usessl tinyint(1), osvdb int, httpmethod text,
 #	uri text, message text, request blob, response blob);
 ###############################################################################
 sub nikto_report_sqlg_init {
@@ -54,7 +54,7 @@ sub sqlg_open {
 	print OUT "# Start Time:    " . localtime($COUNTERS{'scan_start'}) . "\n";
 	print OUT "# End Time:      " . localtime($COUNTERS{'scan_end'}) . "\n";
 	print OUT "\n";
-	
+
     return OUT;
 }
 
@@ -70,7 +70,7 @@ sub sqlg_host_start {
     my $sql="insert into nikto_table (testid, ip, hostname, port, usessl, osvdb, httpmethod, uri, message) values(";
     $sql .= "'999958','$mark->{'ip'}','$hostname','$mark->{'port'}','$ssl','0','GET','/','$banner');\n";
 	print $handle $sql;
-    
+
     if (defined $mark->{'ssl_cipher'}) {
     	my $ciphers = $mark->{'ssl_cipher'};
     	my $issuer = $mark->{'ssl_cert_issuer'};
@@ -85,14 +85,14 @@ sub sqlg_host_start {
 	print OUT "# SSL Issuer:  $issuer\n";
 	print OUT "# SSL Info:    $subj\n";
     }
-    
+
     return;
 }
 
 ###############################################################################
 # print an item
 sub sqlg_item {
-    my ($handle, $mark, $item) = @_;  
+    my ($handle, $mark, $item) = @_;
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
  	$hostname = quotemeta($hostname);
@@ -107,22 +107,22 @@ sub sqlg_item {
 		$sql .= "'$item->{'nikto_id'}','$item->{'mark'}->{'ip'}','$hostname','$item->{'mark'}->{'port'}','$ssl',";
 		$sql .= "'$item->{'osvdb'}','$httpmethod',";
 
-        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/)) { 
+        if (($uri ne '') && ($root ne '') && ($uri !~ /^$rootq/)) {
 		$sql .= "'" . $root . $uri . "',"; }
-	else { 
-		$sql .= "'$uri',"; 
+	else {
+		$sql .= "'$uri',";
 		}
 
 	$msg =~ s/^$uri:\s//;
 	$msg =~ s/^$rootq$uri:\s//;
         $sql .= "'$msg',";
-        
+
         # Rebuild the request from the hash -- no need to escape as it's base64 encoded
         my $req = $$item{'request'};
-    	if ($req->{'whisker'}{'method'} eq '') { 
+    	if ($req->{'whisker'}{'method'} eq '') {
 		$sql .= "'',";
 		}
-    	else { 
+    	else {
     		my $rstring = $req->{'whisker'}{'method'} . " "
       			. $req->{'whisker'}{'uri'} . " "
       			. $req->{'whisker'}{'protocol'} . "/"

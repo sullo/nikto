@@ -84,7 +84,7 @@ sub csv_item {
 			{ $line .= csv_safecell($mark->{'root'}) . $uri; }
 		else { $line .= csv_safecell($uri); }
         $line .= "\",";
-	
+
 	my $msg = $item->{'message'};
 	$uri=quotemeta($uri);
 	my $root = quotemeta($mark->{'root'});

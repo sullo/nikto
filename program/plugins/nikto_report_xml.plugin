@@ -180,16 +180,16 @@ sub xml_change_vars {
     my $refs = "";
     my $OSVDB = $item->{'osvdb'};
     if ($OSVDB !~ /\d+/) { $OSVDB = 0; }
-    if ($OSVDB != 0) { 
-        $refs = "https://vulners.com/osvdb/OSVDB:" . $OSVDB; 
+    if ($OSVDB != 0) {
+        $refs = "https://vulners.com/osvdb/OSVDB:" . $OSVDB;
         }
 
-    $variables{"#TEMPL_OSVDB#"} = $OSVDB; 
-    $variables{"#TEMPL_OSVDB_LINK#"} = $refs; 
+    $variables{"#TEMPL_OSVDB#"} = $OSVDB;
+    $variables{"#TEMPL_OSVDB_LINK#"} = $refs;
 
     # For future XML modification
     #<references><![CDATA[#TEMPL_REFERENCES#]]></references>
-    #$variables{"#TEMPL_REFERENCES#"} = $refs; 
+    #$variables{"#TEMPL_REFERENCES#"} = $refs;
 
 
     # Scanner Messages Handling
@@ -198,7 +198,7 @@ sub xml_change_vars {
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
 	my $uri = $item->{'uri'};
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) 
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
 		{ $uri = $mark->{'root'} . $uri . ": " }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $item->{'message'};

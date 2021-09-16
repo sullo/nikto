@@ -44,7 +44,7 @@ require 'LW2.pm';
 
 Libwhisker is a Perl library useful for HTTP testing scripts.  It
 contains a pure-Perl reimplementation of functionality found in the C<LWP>,
-C<URI>, C<Digest::MD5>, C<Digest::MD4>, C<Data::Dumper>, C<Authen::NTLM>, 
+C<URI>, C<Digest::MD5>, C<Digest::MD4>, C<Data::Dumper>, C<Authen::NTLM>,
 C<HTML::Parser>, C<HTML::FormParser>, C<CGI::Upload>, C<MIME::Base64>,
 and C<GetOpt::Std> modules.
 
@@ -94,7 +94,7 @@ sub init_ssl_engine {
     my  ($lw_ssl_engine) = @_;
 
     # if user-specified, undef initialization in case user's desired lib is not available
-    if ($lw_ssl_engine ne 'auto') { 
+    if ($lw_ssl_engine ne 'auto') {
         $LW_SSL_LIB   = 0;
         $_SSL_LIBRARY = undef;
 	}
@@ -102,7 +102,7 @@ sub init_ssl_engine {
     if ($lw_ssl_engine eq 'SSLeay'){
 	# use Net::SSLeay as your SSL Library
         eval "use Net::SSLeay";
-	if ( !$@ ) { 
+	if ( !$@ ) {
         	$LW_SSL_LIB   = 1;
         	$_SSL_LIBRARY = 'Net::SSLeay';
         	Net::SSLeay::load_error_strings();
@@ -113,12 +113,12 @@ sub init_ssl_engine {
     } elsif ($lw_ssl_engine eq 'SSL'){
         # use Net:SSL
         eval "use Net::SSL";
-	if ( !$@ ) { 
+	if ( !$@ ) {
         	$LW_SSL_LIB   = 2;
         	$_SSL_LIBRARY = 'Net::SSL';
 		}
 	else  { print "ERROR: $@\n"; exit; }
-    } 
+    }
 	else {
 	# assuming autodetection
 	eval "use Net::SSL";
@@ -174,7 +174,7 @@ $PACKAGE='LW2';
         *EINPROGRESS = sub { 10036 };
         *EWOULDBLOCK = sub { 10035 };
     }
-    
+
 } # BEGIN
 
 
@@ -185,13 +185,13 @@ $PACKAGE='LW2';
 Params: $auth_method, \%req, $user, \@passwords [, $domain, $fail_code ]
 Return: $first_valid_password, undef if error/none found
 
-Perform a HTTP authentication brute force against a server (host and URI 
-defined in %req).  It will try every password in the password array for 
-the given user.  The first password (in conjunction with the given user) 
-that doesn't return HTTP 401 is returned (and the brute force is stopped 
+Perform a HTTP authentication brute force against a server (host and URI
+defined in %req).  It will try every password in the password array for
+the given user.  The first password (in conjunction with the given user)
+that doesn't return HTTP 401 is returned (and the brute force is stopped
 at that point).  You should retry the request with the given password and
 double-check that you got a useful HTTP return code that indicates
-successful authentication (200, 302), and not something a bit more 
+successful authentication (200, 302), and not something a bit more
 abnormal (407, 500, etc).  $domain is optional, and is only used for NTLM
 auth.
 
@@ -239,10 +239,10 @@ Params: \%req
 
 Return: nothing (modifies %req)
 
-Modifes %req to disable all authentication (regular and proxy).
+Modifies %req to disable all authentication (regular and proxy).
 
 Note: it only removes the values set by auth_set().  Manually-defined
-[Proxy-]Authorization headers will also be deleted (but you shouldn't 
+[Proxy-]Authorization headers will also be deleted (but you shouldn't
 be using the auth_* functions if you're manually handling your own auth...)
 
 =cut
@@ -266,7 +266,7 @@ Params: $auth_method, \%req, $user, $password [, $domain]
 
 Return: nothing (modifies %req)
 
-Modifes %req to use the indicated authentication info.
+Modifies %req to use the indicated authentication info.
 
 Auth_method can be: 'basic', 'proxy-basic', 'ntlm', 'proxy-ntlm'.
 
@@ -385,15 +385,15 @@ Params: $jar, $cookie [, $default_domain, $default_path, $reject ]
 
 Return: nothing
 
-Parses the cookie into the various parts and then sets the appropriate 
-values in the cookie $jar. If the cookie value is blank, it will delete 
+Parses the cookie into the various parts and then sets the appropriate
+values in the cookie $jar. If the cookie value is blank, it will delete
 it from the $jar.  See the 'docs/cookies.txt' document for a full
-explanation of how Libwhisker parses cookies and what RFC aspects are 
+explanation of how Libwhisker parses cookies and what RFC aspects are
 supported.
 
-The optional $default_domain value is taken literally.  Values with no 
-leading dot (e.g. 'www.host.com') are considered to be strict hostnames 
-and will only match the identical hostname.  Values with leading dots (e.g. 
+The optional $default_domain value is taken literally.  Values with no
+leading dot (e.g. 'www.host.com') are considered to be strict hostnames
+and will only match the identical hostname.  Values with leading dots (e.g.
 '.host.com') are treated as sub-domain matches for a single domain level.
 If the cookie does not indicate a domain, and a $default_domain is not
 provided, then the cookie is considered to match all domains/hosts.
@@ -404,8 +404,8 @@ the cookie does not specify a path, and $default_path is not provided, then
 the default value '/' will be used.
 
 Set $reject to 1 if you wish to reject cookies based upon the provided
-$default_domain and $default_path.  Note that $default_domain and 
-$default_path must be specified for $reject to actually do something 
+$default_domain and $default_path.  Note that $default_domain and
+$default_path must be specified for $reject to actually do something
 meaningful.
 
 =cut
@@ -457,7 +457,7 @@ sub cookie_parse {
 		$del++ if($C[0] eq '');
 		$del++ if(defined $seen{'max-age'} && $seen{'max-age'} eq '0');
 		if($del){
-        delete $$jarref{$n} if exists $$jarref{$n};			
+        delete $$jarref{$n} if exists $$jarref{$n};
         return;
 		}
 
@@ -515,13 +515,13 @@ Params: $jar, \%request, $override
 
 Return: nothing
 
-Goes through the given $jar and sets the Cookie header in %req pending the 
-correct domain and path.  If $override is true, then the secure, domain and 
+Goes through the given $jar and sets the Cookie header in %req pending the
+correct domain and path.  If $override is true, then the secure, domain and
 path restrictions of the cookies are ignored and all cookies are essentially
 included.
 
 Notice: cookie expiration is currently not implemented.  URL restriction
-comparision is also case-insensitive.
+comparison is also case-insensitive.
 
 =cut
 
@@ -616,9 +616,9 @@ Return: @names
 
 Fetch all the cookie names from the jar which are valid for the given
 $domain, $url, and $ssl values.  $domain should be string scalar of the
-target host domain ('www.example.com', etc.).  $url should be the absolute 
-URL for the page ('/index.html', '/cgi-bin/foo.cgi', etc.).  $ssl should be 
-0 for non-secure cookies, or 1 for all (secure and normal) cookies.  The 
+target host domain ('www.example.com', etc.).  $url should be the absolute
+URL for the page ('/index.html', '/cgi-bin/foo.cgi', etc.).  $ssl should be
+0 for non-secure cookies, or 1 for all (secure and normal) cookies.  The
 return value is an array of names compatible with cookie_get().
 
 =cut
@@ -640,7 +640,7 @@ sub cookie_get_valid_names {
             push @r, $name;
         }
     }
-    
+
     return @r;
 }
 
@@ -653,7 +653,7 @@ Params: $jar, $name, $value, $domain, $path, $expire, $secure
 
 Return: nothing
 
-Set the named cookie with the provided values into the %jar.  $name is 
+Set the named cookie with the provided values into the %jar.  $name is
 required to be a non-empty string.  $value is required, and will delete
 the named cookie from the $jar if it is an empty string.  $domain and
 $path can be strings or undefined.  $expire is ignored (but exists
@@ -817,10 +817,10 @@ sub crawl_new {
 
 Params: $crawl_object [, $START, $MAX_DEPTH ]
 
-Return: $count [ undef on error ] 
+Return: $count [ undef on error ]
 
 The heart of the crawl package.  Will perform an HTTP crawl on the
-specified HOST, starting at START URI, proceeding up to MAX_DEPTH. 
+specified HOST, starting at START URI, proceeding up to MAX_DEPTH.
 
 Crawl_object needs to be the variable returned by crawl_new().  You can
 also indirectly call crawl() via the crawl_object itself:
@@ -1162,7 +1162,7 @@ Params: $file, $name, \@array [, $name, \%hash, $name, \@scalar ]
 
 Return: 0 if success; 1 if error
 
-This calls dump() and saves the output to the specified $file.  
+This calls dump() and saves the output to the specified $file.
 
 Note: LW does not checking on the validity of the file name, it's
 creation, or anything of the sort.  Files are opened in overwrite
@@ -1316,7 +1316,7 @@ Params: $data
 Return: $b64_decoded_data
 
 A perl implementation of base64 decoding.  The perl code for this function
-was actually taken from an older MIME::Base64 perl module, and bears the 
+was actually taken from an older MIME::Base64 perl module, and bears the
 following copyright:
 
 Copyright 1995-1999 Gisle Aas <gisle@aas.no>
@@ -1353,7 +1353,7 @@ Params: $data
 
 Return: $result
 
-This function encodes every character (except the / character) with normal 
+This function encodes every character (except the / character) with normal
 URL hex encoding.
 
 =cut
@@ -1372,7 +1372,7 @@ Params: $data
 
 Return: $result
 
-This function randomly encodes characters (except the / character) with 
+This function randomly encodes characters (except the / character) with
 normal URL hex encoding.
 
 =cut
@@ -1445,9 +1445,9 @@ Params: $unicode_string
 Return: $decoded_string
 
 This function attempts to decode a unicode (UTF-8) string by
-converting it into a single-byte-character string.  Overlong 
-characters are converted to their standard characters in place; 
-non-overlong (aka multi-byte) characters are substituted with the 
+converting it into a single-byte-character string.  Overlong
+characters are converted to their standard characters in place;
+non-overlong (aka multi-byte) characters are substituted with the
 0xff; invalid encoding characters are left as-is.
 
 Note: this function is useful for dealing with the various unicode
@@ -1516,9 +1516,9 @@ Params: \%request, $modes
 
 Return: nothing
 
-encode_anti_ids computes the proper anti-ids encoding/tricks 
-specified by $modes, and sets up %hin in order to use those tricks.  
-Valid modes are (the mode numbers are the same as those found in whisker 
+encode_anti_ids computes the proper anti-ids encoding/tricks
+specified by $modes, and sets up %hin in order to use those tricks.
+Valid modes are (the mode numbers are the same as those found in whisker
 1.4):
 
 =over 4
@@ -1537,7 +1537,7 @@ Valid modes are (the mode numbers are the same as those found in whisker
 
 =item 7 Change the case of the URL (works against Windows and Novell)
 
-=item 8 Change normal seperators ('/') to Windows version ('\')
+=item 8 Change normal separators ('/') to Windows version ('\')
 
 =item 9 Session splicing [NOTE: not currently available]
 
@@ -1639,7 +1639,7 @@ sub encode_anti_ids {
 =item B<FORMS FUNCTIONS>
 
 The goal is to parse the variable, human-readable HTML into concrete
-structures useable by your program.  The forms functions does do a good job
+structures usable by your program.  The forms functions does do a good job
 at making these structures, but I will admit: they are not exactly simple,
 and thus not a cinch to work with.  But then again, representing something
 as complex as a HTML form is not a simple thing either.  I think the
@@ -1704,8 +1704,8 @@ Params: \$html_data
 
 Return: \@found_forms
 
-This function parses the given $html_data into libwhisker form hashes.  
-It returns a reference to an array of hash references to the found 
+This function parses the given $html_data into libwhisker form hashes.
+It returns a reference to an array of hash references to the found
 forms.
 
 =cut
@@ -1924,14 +1924,14 @@ Params: \$data, \&callback_function [, $xml_flag, $funcref, \%tag_map]
 Return: nothing
 
 html_find_tags parses a piece of HTML and 'extracts' all found tags,
-passing the info to the given callback function.  The callback function 
-must accept two parameters: the current tag (as a scalar), and a hash ref 
+passing the info to the given callback function.  The callback function
+must accept two parameters: the current tag (as a scalar), and a hash ref
 of all the tag's elements. For example, the tag <a href="/file"> will
 pass 'a' as the current tag, and a hash reference which contains
 {'href'=>"/file"}.
 
 The xml_flag, when set, causes the parser to do some extra processing
-and checks to accomodate XML style tags such as <tag foo="bar"/>.
+and checks to accommodate XML style tags such as <tag foo="bar"/>.
 
 The optional %tagmap is a hash of lowercase tag names.  If a tagmap is
 supplied, then the parser will only call the callback function if the
@@ -2191,7 +2191,7 @@ substr(DATA, $position, $length) = $replacement
 Where DATA is the current HTML string the html parser is using.
 The reason you need to use this function and not substr() is
 because a few internal parser pointers and counters need to be
-adjusted to accomodate the changes.
+adjusted to accommodate the changes.
 
 If you want to remove a piece of the string, just set the
 replacement to an empty string ('').  If you wish to insert a
@@ -2346,11 +2346,11 @@ method.  The timeout is set to 10 seconds, no proxies are defined, and all
 URI formatting is set to standard HTTP syntax.  It also sets the
 Connection (Keep-Alive) and User-Agent headers.
 
-NOTICE!!  It's important to use http_init_request before calling 
-http_do_request, or http_do_request might puke.  Thus, a special magic 
-value is placed in the hash to let http_do_request know that the hash has 
-been properly initialized.  If you really must 'roll your own' and not use 
-http_init_request before you call http_do_request, you will at least need 
+NOTICE!!  It's important to use http_init_request before calling
+http_do_request, or http_do_request might puke.  Thus, a special magic
+value is placed in the hash to let http_do_request know that the hash has
+been properly initialized.  If you really must 'roll your own' and not use
+http_init_request before you call http_do_request, you will at least need
 to set the MAGIC value (amongst other things).
 
 =cut
@@ -2408,8 +2408,8 @@ Return: >=1 if error; 0 if no error (also modifies response hash)
 
 *THE* core function of libwhisker.  http_do_request actually performs
 the HTTP request, using the values submitted in %request, and placing result
-values in %response.  This allows you to resubmit %request in subsequent 
-requests (%response is automatically cleared upon execution).  You can 
+values in %response.  This allows you to resubmit %request in subsequent
+requests (%response is automatically cleared upon execution).  You can
 submit 'runtime' config directives as %configs, which will be spliced into
 $hin{whisker}->{} before anything else.  That means you can do:
 
@@ -2418,7 +2418,7 @@ LW2::http_do_request(\%req,\%resp,{'uri'=>'/cgi-bin/'});
 This will set $req{whisker}->{'uri'}='/cgi-bin/' before execution, and
 provides a simple shortcut (note: it does modify %req).
 
-This function will also retry any requests that bomb out during the 
+This function will also retry any requests that bomb out during the
 transaction (but not during the connecting phase).  This is controlled
 by the {whisker}->{retry} value.  Also note that the returned error
 message in hout is the *last* error received.  All retry errors are
@@ -2636,7 +2636,7 @@ sub _http_do_request_ex {
             $$hout{whisker}->{message}     = $6;
             $$hout{whisker}->{http_eol}    = $7;
             $$hout{whisker}->{'100_continue'}++ if ( $4 == 100 );
-            $$hout{whisker}->{'uri_requested'} = $$W{'uri'}; 
+            $$hout{whisker}->{'uri_requested'} = $$W{'uri'};
 
             @H = http_read_headers( $stream, $hin, $hout );
             if ( !$H[0] ) {
@@ -2744,7 +2744,7 @@ Params: \%request, $uri_only_switch
 Return: $request
 
 req2line is used internally by http_do_request, as well as provides a
-convienient way to turn a %request configuration into an actual HTTP request
+convenient way to turn a %request configuration into an actual HTTP request
 line.  If $switch is set to 1, then the returned $request will be the URI
 only ('/requested/page.html'), versus the entire HTTP request ('GET
 /requested/page.html HTTP/1.0\n\n').  Also, if the 'full_request_override'
@@ -2819,7 +2819,7 @@ Params: \%response
 
 Return: $response
 
-http_resp2line provides a convienient way to turn a %response hash back 
+http_resp2line provides a convenient way to turn a %response hash back
 into the original HTTP response line.
 
 =cut
@@ -2848,10 +2848,10 @@ sub _http_getline {
 
     $t = index( $stream->{bufin}, "\n", 0 );
     while ( $t < 0 ) {
-        return undef if !$stream->{read}->() || 
+        return undef if !$stream->{read}->() ||
 		length($stream->{bufin}) == $bc;
         $t = index( $stream->{bufin}, "\n", 0 );
-    	$bc = length( $stream->{bufin} );
+        $bc = length( $stream->{bufin} );
     }
 
     my $r = substr( $stream->{bufin}, 0, $t + 1 );
@@ -2887,10 +2887,10 @@ sub _http_getall {
 
     while ( $stream->{read}->() && length( $stream->{bufin} ) != $b) {
         last if ( $max_size && length( $stream->{bufin} ) >= $max_size );
-        $b = length( $stream->{bufin} );	
+        $b = length( $stream->{bufin} );
     }
     ( $tmp, $stream->{bufin} ) = ( $stream->{bufin}, '' );
-    $tmp = substr($tmp, 0, $max_size) if($max_size && 
+    $tmp = substr($tmp, 0, $max_size) if($max_size &&
     	length($tmp) > $max_size);
     return $tmp;
 }
@@ -2903,10 +2903,10 @@ Params: $hash_ref
 
 Return: Nothing
 
-This function takes a %hin hash reference and makes sure the proper 
-headers exist (for example, it will add the Host: header, calculate the 
-Content-Length: header for POST requests, etc).  For standard requests 
-(i.e. you want the request to be HTTP RFC-compliant), you should call this 
+This function takes a %hin hash reference and makes sure the proper
+headers exist (for example, it will add the Host: header, calculate the
+Content-Length: header for POST requests, etc).  For standard requests
+(i.e. you want the request to be HTTP RFC-compliant), you should call this
 function right before you call http_do_request.
 
 =cut
@@ -2924,24 +2924,24 @@ sub http_fixup_request {
 
     if ( $$hin{whisker}->{'version'} eq '1.1' ) {
         my ($host) = utils_find_lowercase_key($hin,'host');
-        $$hin{'Host'} = $$hin{whisker}->{'host'} 
+        $$hin{'Host'} = $$hin{whisker}->{'host'}
             if(!defined $host || $host eq '');
         $$hin{'Host'} .= ':' . $$hin{whisker}->{'port'}
-          if ( index($$hin{'Host'},':') == -1 && 
+          if ( index($$hin{'Host'},':') == -1 &&
                ( $$hin{whisker}->{port} != 80 && ( $$hin{whisker}->{ssl}==1 &&
               $$hin{whisker}->{port} != 443 ) ) );
         my ($conn) = utils_find_lowercase_key($hin,'connection');
-        $$hin{'Connection'} = 'Keep-Alive' 
+        $$hin{'Connection'} = 'Keep-Alive'
             if(!defined $conn || $conn eq '');
 
     } elsif( $$hin{whisker}->{'version'} eq '1.0' ){
         my ($conn) = utils_find_lowercase_key($hin,'connection');
-        $$hin{'Connection'} = 'close' 
+        $$hin{'Connection'} = 'close'
             if(!defined $conn || $conn eq '');
     }
 
     utils_delete_lowercase_key( $hin, 'content-length' );
-    if ( $$hin{whisker}->{method} eq 'POST' || 
+    if ( $$hin{whisker}->{method} eq 'POST' ||
     		defined $$hin{whisker}->{data} ) {
 	$$hin{whisker}->{data}||='';
         $$hin{'Content-Length'} = length( $$hin{whisker}->{'data'} );
@@ -2966,7 +2966,7 @@ Params: Nothing
 
 Return: Nothing
 
-The http_reset function will walk through the %http_host_cache, 
+The http_reset function will walk through the %http_host_cache,
 closing all open sockets and freeing SSL resources.  It also clears
 out the host cache in case you need to rerun everything fresh.
 
@@ -2994,11 +2994,11 @@ Params: Nothing
 Return: $boolean [, $lib_name, $version]
 
 The ssl_is_available() function will inform you whether SSL requests
-are allowed, which is dependant on whether the appropriate SSL
+are allowed, which is dependent on whether the appropriate SSL
 libraries are installed on the machine.  In scalar context, the
 function will return 1 or 0.  In array context, the second element
 will be the SSL library name that is currently being used by LW2,
-and the third elment will be the SSL library version number.
+and the third element will be the SSL library version number.
 Elements two and three (name and version) will be undefined if
 called in array context and no SSL libraries are available.
 
@@ -3306,7 +3306,7 @@ sub http_construct_headers {
     foreach ( keys %$hin ) {
         next if ( $_ eq '' || $_ eq 'whisker' );
         if ( ref( $hin->{$_} ) ) {    # header with multiple values
-	    utils_croak("http_construct_headers: non-array header value ref") 
+	    utils_croak("http_construct_headers: non-array header value ref")
 	    	if ( ref( $hin->{$_} ) ne 'ARRAY' );
 	    $SENT{$_} ||= 0;
 	    for($i=$SENT{$_}; $i<~~@{ $hin->{$_} }; $i++) {
@@ -3397,7 +3397,7 @@ Params: $data
 
 Return: $hex_md5_string
 
-This function takes a data scalar, and composes a MD5 hash of it, and 
+This function takes a data scalar, and composes a MD5 hash of it, and
 returns it in a hex ascii string.  It will use the fastest MD5 function
 available.
 
@@ -3536,7 +3536,7 @@ Params: $data
 
 Return: $hex_md4_string
 
-This function takes a data scalar, and composes a MD4 hash of it, and 
+This function takes a data scalar, and composes a MD4 hash of it, and
 returns it in a hex ascii string.  It will use the fastest MD4 function
 available.
 
@@ -3736,7 +3736,7 @@ Return: $current_boundary_name
 multipart_boundary is used to retrieve, and optionally set, the
 multipart boundary used for the request.
 
-NOTE: the function does no checking on the supplied boundary, so if 
+NOTE: the function does no checking on the supplied boundary, so if
 you want things to work make sure it's a legit boundary.  Libwhisker
 does *not* prefix it with any '---' characters.
 
@@ -3882,8 +3882,8 @@ Params: \%multi_hash, \$data, $boundary [, $filepath ]
 
 Return: 1 if successful, undef on error
 
-multipart_read_data parses the contents of the supplied data using 
-the given boundary and puts the values in the supplied %multi_hash.  
+multipart_read_data parses the contents of the supplied data using
+the given boundary and puts the values in the supplied %multi_hash.
 Embedded files will *not* be saved unless a $filepath is given, which
 should be a directory suitable for writing out temporary files.
 
@@ -3899,7 +3899,7 @@ sub multipart_read_data {
     return undef if ( !( defined $dr && ref($dr) ) );
 
     # if $bound is undef, then we'll snag what looks to be
-    # the first boundry from the data.
+    # the first boundary from the data.
     if ( !defined $bound ) {
         if ( $$dr =~ /([-]{5,}[A-Z0-9]+)[\r\n]/i ) {
             $bound = $1;
@@ -4079,7 +4079,7 @@ Params: $username, $password [, $domain, $ntlm_only]
 Return: $ntlm_object
 
 Returns a reference to an array (otherwise known as the 'ntlm object')
-which contains the various informations specific to a user/pass combo.
+which contains the various information specific to a user/pass combo.
 If $ntlm_only is set to 1, then only the NTLM hash (and not the LanMan
 hash) will be generated.  This results in a speed boost, and is typically
 fine for using against IIS servers.
@@ -5156,7 +5156,7 @@ sub _stream_ssl_open {
                 Timeout  => $xr->{timeout}
             );
 	};
-        return _stream_err( $xr, 0, 'can\'t connect: ' . $@ ) 
+        return _stream_err( $xr, 0, 'can\'t connect: ' . $@ )
 		if ($@ || !defined $xr->{sock});
         $xr->{sock}->autoflush(1);
         $xr->{state} = 1;
@@ -5385,8 +5385,8 @@ Return: $seconds_local_timezone
 
 Takes a seconds value in UTC/GMT time and adjusts it to reflect the current
 timezone.  This function is slightly expensive; it takes the gmtime() and
-localtime() representations of the current time, calculates the delta 
-difference by turning them back into seconds via time_mktime, and then 
+localtime() representations of the current time, calculates the delta
+difference by turning them back into seconds via time_mktime, and then
 applies this delta difference to $seconds_gmt.
 
 Note that if you give this function a time and subtract the return value from
@@ -5417,7 +5417,7 @@ Return: @uri_parts
 
 Return an array of the following values, in order:  uri, protocol, host,
 port, params, frag, user, password.  Values not defined are given an undef
-value.  If a %request hash is passed in, then uri_split() will also set 
+value.  If a %request hash is passed in, then uri_split() will also set
 the appropriate values in the hash.
 
 Note:  uri_split() will only set the %request hash if the protocol
@@ -5523,7 +5523,7 @@ Params: @vals
 
 Return: $url
 
-Takes the @vals array output from http_split_uri, and returns a single 
+Takes the @vals array output from http_split_uri, and returns a single
 scalar/string with them joined again, in the form of:
 protocol://user:pass@host:port/uri?params#frag
 
@@ -5660,7 +5660,7 @@ Params: $uri
 
 Return: $uri_directory
 
-Will take a URI and return the directory base of it, i.e. /rfp/page.php 
+Will take a URI and return the directory base of it, i.e. /rfp/page.php
 will return /rfp/.
 
 =cut
@@ -5698,8 +5698,8 @@ and returns the stripped URI ('/blah1/blah2').  If the optional
 parameter hash reference is provided, the stripped parameters
 are saved in the form of 'blah1'=>'foo=bar', 'blah2'=>'baz'.
 
-Note: only the last value of a duplicate name is saved into the 
-param_hash, if provided.  So a $uri of '/foo;A/foo;B/' will result 
+Note: only the last value of a duplicate name is saved into the
+param_hash, if provided.  So a $uri of '/foo;A/foo;B/' will result
 in a single hash entry of 'foo'=>'B'.
 
 =cut
@@ -5731,7 +5731,7 @@ This function takes a string in the form of:
 
 And parses it into a hash.  In the above example, the element 'foo'
 has two values (1 and 4).  If $multi_flag is set to 1, then the
-'foo' hash entry will hold an anonymous array of both values. 
+'foo' hash entry will hold an anonymous array of both values.
 Otherwise, the default is to just contain the last value (in this
 case, '4').
 
@@ -6283,7 +6283,7 @@ sub utils_text_wrapper {
 Params: \%req, $pre, $post, \@values_in, \@values_out
 
 Return: Nothing (adds to @out)
-        
+
 Bruteurl will perform a brute force against the host/server specified in
 %req.  However, it will make one request per entry in @in, taking the
 value and setting $hin{'whisker'}->{'uri'}= $pre.value.$post.  Any URI
@@ -6327,9 +6327,9 @@ sub utils_bruteurl {
 Params: $tag_name, \%attributes
 
 Return: $tag_string [undef on error]
-        
+
 This function takes the $tag_name (like 'A') and a hash full of
-attributes (like {href=>'http://foo/'}) and returns the 
+attributes (like {href=>'http://foo/'}) and returns the
 constructed HTML tag string (<A href="http://foo">).
 
 =cut
@@ -6402,7 +6402,7 @@ sub utils_request_clone {
 Params: \%request [, $hash ]
 
 Return: $fingerprint [undef on error]
-        
+
 This function constructs a 'fingerprint' of the given request by
 using a cryptographic hashing function on the constructed original
 HTTP request.
@@ -6443,7 +6443,7 @@ sub utils_request_fingerprint {
 Params: \%lwhash
 
 Return: $flat_version [undef on error]
-        
+
 This function takes a %request or %response libwhisker hash, and
 creates an approximate flat data string of the original request/
 response (i.e. before it was parsed into components and placed
@@ -6492,10 +6492,10 @@ sub _utils_carp_common {
 Params: [ $package_name ]
 
 Return: nothing
-        
-This function acts like Carp's carp function.  It warn's with the file and 
-line number of user's code which causes a problem.  It traces up the call 
-stack and reports the first function that is not in the LW2 or optional 
+
+This function acts like Carp's carp function.  It warn's with the file and
+line number of user's code which causes a problem.  It traces up the call
+stack and reports the first function that is not in the LW2 or optional
 $package_name package package.
 
 =cut
@@ -6509,10 +6509,10 @@ sub utils_carp {
 Params: [ $package_name ]
 
 Return: nothing
-        
-This function acts like Carp's croak function.  It die's with the file and 
-line number of user's code which causes a problem.  It traces up the call 
-stack and reports the first function that is not in the LW2 or optional 
+
+This function acts like Carp's croak function.  It die's with the file and
+line number of user's code which causes a problem.  It traces up the call
+stack and reports the first function that is not in the LW2 or optional
 $package_name package package.
 
 =cut

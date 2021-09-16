@@ -40,4 +40,3 @@
 <!ATTLIST statistics itemsfound CDATA #IMPLIED>
 <!ATTLIST statistics elapsed CDATA #IMPLIED>
 <!ATTLIST statistics endtime CDATA #IMPLIED>
-

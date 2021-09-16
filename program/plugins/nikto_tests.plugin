@@ -82,7 +82,7 @@ sub nikto_tests {
                      $TESTS{$checkid}{'method'},
                      $data,
                      \%headrs,
-                     \%flags, 
+                     \%flags,
                      $checkid);
 
             # NOTE: auth is now done in nfetch

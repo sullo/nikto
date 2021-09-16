@@ -65,7 +65,7 @@ sub nikto_headers_postfetch {
         elsif ($header eq 'x-mod-pagespeed') { next; }
         elsif ($header eq 'x-page-speed')    { next; }
         elsif (defined $HFOUND{$header}) { next; }
-	
+
 	next if $header eq 'server' && substr($result->{$header}, 0, 8) eq 'WebSEAL/';
 	next if $header eq 'x-powered-by' && $result->{$header} =~ /Oracle GlassFish Server [0-9]/;
 
@@ -78,7 +78,7 @@ sub nikto_headers_postfetch {
                     my $msg;
                     if ($internal) { $msg .= "RFC-1918 "; }
                     $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
-                    add_vulnerability($mark, $msg, 999979, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result); 
+                    add_vulnerability($mark, $msg, 999979, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
                     $HFOUND{$header} = 1;
                 }
             }
@@ -105,13 +105,13 @@ sub nikto_headers_postfetch {
             }
             use bignum;
             my ($inode, $size, $mtime, $ltime);
-            if ($ishex) { 
+            if ($ishex) {
             	$inode = "0x$fields[0]";
             	$size  = "0x$fields[1]";
             	$mtime = "0x$fields[2]";
             	$ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
 		}
-            else { 
+            else {
             	$inode = $fields[0];
             	$size  = $fields[1];
             	$mtime = $ltime = $fields[2];
@@ -137,7 +137,7 @@ sub nikto_headers_postfetch {
                     "X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
                     999978, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             }
-		}			
+		}
 		else {
 			add_vulnerability($mark, "The anti-clickjacking X-Frame-Options header is not present.",
 							  999957, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
@@ -158,7 +158,7 @@ sub nikto_headers_postfetch {
                     999946, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HFOUND{$header} = 1;
             }
-    
+
     # Look for any uncommon headers
 
     foreach my $header (keys %$result) {
@@ -191,12 +191,12 @@ sub nikto_headers_postfetch {
         if (!defined $result->{'strict-transport-security'}) {
             add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is not defined.", 999970, 0,
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
-        } 
+        }
         elsif ($result->{'strict-transport-security'} =~ /max-age="?0"?/i) {
             add_vulnerability( $mark, "The site uses SSL and the Strict-Transport-Security HTTP header is set with max-age=0.", 999971, 0,
                   $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
           }
-       
+
        $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
@@ -225,14 +225,14 @@ sub nikto_headers_postfetch {
             $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
     }
- 
+
     return $request, $result;
 }
 
 sub nikto_headers_check {
     return if $mark->{'terminate'};
     my ($mark, $result, $header, $tid, $request) = @_;
-    my @interesting_headers = 
+    my @interesting_headers =
     qw /commerce-server-software daap-server dasl datacenter dav generator hosted-by hosted-with microsoftofficewebserver microsoftsharepointteamservices ms-author-via powered-by server-name serverid servlet-engine via x-aspnet-version x-blackboard-product x-cocoon-version x-compressed-by x-dmuser x-gallery-version x-hosted-at x-hostname x-isp x-powered-by x-responding-server x-served-by x-server x-server-name x-webserver x-owa-version access-control-allow-origin x-application-context cneonction nncoection xxx-real-ip bae-env-addr-sql-ip bae-env-addr-sql-port cf-connecting-ip fastly-client-ip incap-client-ip real-ip rlnclientipaddr true-client-ip x-clientip x-client-ip x-cluster-client-ip  x-ip x-nokia-ipaddress x-real-ip x-wap-network-client-ip reason-code/;
 
     foreach my $header (@interesting_headers) {
@@ -334,7 +334,7 @@ sub nikto_headers {
                 if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
                         $wa = 1;
                         add_vulnerability( $mark,
-                	"Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".", 
+                	"Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
                         999986, 630, "GET", $uri, $request, $result);
                         }
                 }

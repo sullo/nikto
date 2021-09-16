@@ -114,7 +114,7 @@ sub scrub {
 
 	foreach my $i (@_) {
 		next if $i eq "";
-		if (is_ip($i)) { 
+		if (is_ip($i)) {
 			$line =~ s/$i/0\.\0\.\0\.0/g;
 		}
 		else {
@@ -137,7 +137,7 @@ sub scrub {
         # and in case we got here from set_target
         $line =~ s/$mark->{'ident'}/example.com/ig unless $mark->{'ident'} eq '';
 #print "ident: " . $mark->{'ident'} ."\n";
-	
+
 #print "line2: $line\n";
 	return $line;
 
@@ -2342,7 +2342,7 @@ sub dump_var {
     $display =~ s/^\$/'$msg'/;
     if ($OUTPUT{'scrub'}) {
 	$new = "";
-	foreach my $line (split(/\n/, $display)) { 
+	foreach my $line (split(/\n/, $display)) {
         	$line = scrub($line);
 		$new .= "$line\n";
 	}

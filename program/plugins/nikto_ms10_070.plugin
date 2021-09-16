@@ -43,7 +43,7 @@ sub nikto_ms10_070 {
     return if $mark->{'ms100707'};
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
-   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) { 
+   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
     	return if $mark->{'terminate'};
  	my $string = $1;
 	next if $MS10070{$string};
@@ -56,7 +56,7 @@ sub nikto_ms10_070 {
 	$string = LW2::decode_base64($string);
 	if ((length($string) % 8) == 0) {
 		$mark->{'ms100707'}=1;
-        	add_vulnerability($mark, "Server may be vulnerable to MS10-070 (based on numeric calculation), thus allowing a cryptographic padding oracle. This vulnerabilty must be manually validated. See http://blog.gdssecurity.com/labs/2010/9/14/automated-padding-oracle-attacks-with-padbuster.html", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
+        	add_vulnerability($mark, "Server may be vulnerable to MS10-070 (based on numeric calculation), thus allowing a cryptographic padding oracle. This vulnerability must be manually validated. See http://blog.gdssecurity.com/labs/2010/9/14/automated-padding-oracle-attacks-with-padbuster.html", 999959, 68127, $method, $response->{'whisker'}->{'uri'}, $request, $response);
         	}
 	}
 
