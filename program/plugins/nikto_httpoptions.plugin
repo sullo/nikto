@@ -133,7 +133,7 @@ sub nikto_httpoptions {
             ($res, $content, $error, $request, $response) = nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", $version);
             if ($res == 200) {
                 if ($content =~ /Trace-Test: Nikto/) {
-                    add_vulnerability($mark, "HTTP $method method is active whichs suggests the host is vulnerable to XST", "000434", "https://owasp.org/www-community/attacks/Cross_Site_Tracing", $method, "/", $request, $response);
+                    add_vulnerability($mark, "HTTP $method method is active which suggests the host is vulnerable to XST", "000434", "https://owasp.org/www-community/attacks/Cross_Site_Tracing", $method, "/", $request, $response);
 
                     # now we know its vulnerable stop testing
                     last;

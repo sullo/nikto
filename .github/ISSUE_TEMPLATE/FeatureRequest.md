@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Reqeust a new feature for Nikto
+about: Request a new feature for Nikto
 title: 'Feature: '
 labels: 'enhancement'
 assignees: ''

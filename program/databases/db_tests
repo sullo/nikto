@@ -6,7 +6,7 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
@@ -561,7 +561,7 @@
 "000544","","5","///etc/hosts","GET","127\.0\.0\.1","","","","","The server install allows reading of any system file by adding an extra '/' to the URL.","",""
 "000545","CVE-2002-0784","5","////./../.../boot.ini","GET","boot loader","","","","","Server is vulnerable to directory traversal, this may be Lidik Webserver 0.7b from lysias.de.","",""
 "000546","CVE-2000-0234","5","/.cobalt/sysManage/../admin/.htaccess","GET","AuthName","","","","","Cobalt RaQ 4 server manager allows any files to be retrieved by using the path through the .cobalt directory.","",""
-"000547","","5","/albums/userpics/Copperminer.jpg.php?cat%20/etc/passwd","GET","root:","","","","","Coppermine 1.0 RC3 may have been compromised to allow arbitrary file retreival. The product is no longer maintained and should be replaced.","",""
+"000547","","5","/albums/userpics/Copperminer.jpg.php?cat%20/etc/passwd","GET","root:","","","","","Coppermine 1.0 RC3 may have been compromised to allow arbitrary file retrieval. The product is no longer maintained and should be replaced.","",""
 "000548","CVE-2003-0294","5","/autohtml.php?op=modload&mainfile=x&name=/etc/passwd","GET","root:","","","","","php-proxima 6.0 and below allows arbitrary files to be retrieved.","",""
 "000549","OSVDB-49354","5","/atomicboard/index.php?location=../../../../../../../../../../etc/passwd","GET","root:","","","","","AtomicBoard v0.6.2 allows remote users to read arbitrary files.","",""
 "000550","OSVDB-54099","5","/current/modules.php?mod=fm&file=../../../../../../../../../../etc/passwd%00&bn=fm_d1","GET","root:","","","","","w-agora 4.1.5 allows any file to be retrieved from the remote host.","",""
@@ -3210,7 +3210,7 @@
 "003441","OSVDB-3233","1b","/aplogon.html","GET","200","","","","","Oracle Applications Portal Page","",""
 "003442","OSVDB-3233","1b","/appdet.html","GET","200","","","","","Oracle Applications Portal Pages","",""
 "003443","OSVDB-3233","1b","/servlets/weboam/oam/oamLogin","GET","200","","","","","Oracle Application Manager","",""
-"003444","OSVDB-3233","1b","/OA_HTML/PTB/mwa_readme.htm","GET","200","","","","","Oracle Mobile Applications Industrial Server administration and configuration inerface","",""
+"003444","OSVDB-3233","1b","/OA_HTML/PTB/mwa_readme.htm","GET","200","","","","","Oracle Mobile Applications Industrial Server administration and configuration interface","",""
 "003445","OSVDB-3233","1b","/reports/rwservlet","GET","200","","","","","Oracle Reports","",""
 "003446","OSVDB-3233","1b","/reports/rwservlet/showenv","GET","200","","","","","Oracle Reports","",""
 "003447","OSVDB-3233","1b","/reports/rwservlet/showmap","GET","200","","","","","Oracle Reports","",""
@@ -3218,7 +3218,7 @@
 "003449","OSVDB-3233","1b","/reports/rwservlet/getjobid7?server=myrep","GET","200","","","","","Oracle Reports","",""
 "003450","OSVDB-3233","1b","/reports/rwservlet/getjobid4?server=myrep","GET","200","","","","","Oracle Reports","",""
 "003451","OSVDB-3233","1b","/reports/rwservlet/showmap?server=myserver","GET","200","","","","","Oracle Reports","",""
-"003452","","1a","/pls/portal/owa_util.cellsprint?p_theQuery=select","GET","200","","","","","Direct access to Oracle packages could have an unkown impact.","",""
+"003452","","1a","/pls/portal/owa_util.cellsprint?p_theQuery=select","GET","200","","","","","Direct access to Oracle packages could have an unknown impact.","",""
 "003453","","1a","/pls/portal/owa_util.listprint?p_theQuery=select","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
 "003454","","1a","/pls/portal/owa_util.show_query_columns?ctable=sys.dba_users","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
 "003455","","1a","/pls/portal/owa_util.showsource?cname=owa_util","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
@@ -6435,7 +6435,7 @@
 "006747","","d","/manage/CxSenseWebService/CxSense.asmx","GET","200","","CxSense\sWeb\sService","","","Covertix SmartCipher Web Service detected","",""
 "006748","","d","/ws/CxInternetDMZ.asmx","GET","200","","CxServerDMZ","","","Covertix SmartCipher DMZ Server Web Service detected","",""
 "006749","CVE-2009-0932","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found.","",""
-"006750","https://owncloud.org/security/advisories/","b","@OWNCLOUDstatus.php","GET","\{\"installed\":\"true\",\"(version|maintenance)\":\"","","200","","","ownCloud/Nextcloud installation indentified by status.php--see the program for the running version","",""
+"006750","https://owncloud.org/security/advisories/","b","@OWNCLOUDstatus.php","GET","\{\"installed\":\"true\",\"(version|maintenance)\":\"","","200","","","ownCloud/Nextcloud installation identified by status.php--see the program for the running version","",""
 "006751","","0","@OWNCLOUDremote.php/webdav","GET","Generated\sby\sSabreDAV","Sabre_DAV_Exception_NotAuthenticated","","","","ownCloud WebDAV file upload detected (pass protected), remote.php/caldav and remote.php/carddav are also valid","",""
 "006752","","1235","@OWNCLOUD@OCFILES","GET","(\"app\":\"|\"reqId\":\"|This is used for testing whether htaccess|SQLite format)","","200","","","Unprotected ownCloud data directory identified","",""
 "006754","https://cirt.net/passwords?criteria=Seclore","b","@SECLOREWelcome.do","GET","200","","Powered\sBy\sFileSecure","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
@@ -6977,7 +6977,7 @@
 "007300","","1","/BackOffice/Services/","GET","You have created a service","","","","","WCF endpoint found.","",""
 "007301","","3","/phpci.yml","GET","build_settings:","","","","","PHP CI config file found.","",""
 "007302","","1","/README.md","GET","200","","","","","Readme Found","",""
-"007303","CVE-2013-6235","3","/JAMonAdmin.jsp","GET","200","\| JAMonAdmin \|","","","","JAMon - Java Application Monitor Admin interface identified. Versions 2.7 and earlier contain XSS vulnerabilites.","",""
+"007303","CVE-2013-6235","3","/JAMonAdmin.jsp","GET","200","\| JAMonAdmin \|","","","","JAMon - Java Application Monitor Admin interface identified. Versions 2.7 and earlier contain XSS vulnerabilities.","",""
 "007304","CVE-2020-5902","7","/hsqldb;","GET","<title>HSQL Database Engine Servlet</title>","","","","","The F5 Big-IP's TMUI is vulnerable to a local file inclusion vulnerability and likely command exec.","",""
 "007305","https://packetstormsecurity.com/files/32406/xmas.txt.html","23","/shopdbtest.asp","GET","xDatabase","","","","","VP-ASP shopping cart test application is available from the web. This page gives the location of .mdb files which may also be available (xDatabase).","",""
 "007306","https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html","2","http://169.254.169.254/latest/meta-data/","GET","iam/","","","","","The host is configured as a proxy which allows access to the AWS Meta-Data service. With some IAM role permissions this could allow significant access to the host/infrastructure.","","Host: 169.254.169.254\r\naccept: */*\r\nProxy-Connection: Keep-Alive\r\n"
