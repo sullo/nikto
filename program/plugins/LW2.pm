@@ -269,7 +269,7 @@ Params: \%req
 
 Return: nothing (modifies %req)
 
-Modifes %req to disable all authentication (regular and proxy).
+Modifies %req to disable all authentication (regular and proxy).
 
 Note: it only removes the values set by auth_set().  Manually-defined
 [Proxy-]Authorization headers will also be deleted (but you shouldn't 
@@ -296,7 +296,7 @@ Params: $auth_method, \%req, $user, $password [, $domain]
 
 Return: nothing (modifies %req)
 
-Modifes %req to use the indicated authentication info.
+Modifies %req to use the indicated authentication info.
 
 Auth_method can be: 'basic', 'proxy-basic', 'ntlm', 'proxy-ntlm'.
 
@@ -551,7 +551,7 @@ path restrictions of the cookies are ignored and all cookies are essentially
 included.
 
 Notice: cookie expiration is currently not implemented.  URL restriction
-comparision is also case-insensitive.
+comparison is also case-insensitive.
 
 =cut
 
@@ -1566,7 +1566,7 @@ Valid modes are (the mode numbers are the same as those found in whisker
 
 =item 7 Change the case of the URL (works against Windows and Novell)
 
-=item 8 Change normal seperators ('/') to Windows version ('\')
+=item 8 Change normal separators ('/') to Windows version ('\')
 
 =item 9 Session splicing [NOTE: not currently available]
 
@@ -1668,7 +1668,7 @@ sub encode_anti_ids {
 =item B<FORMS FUNCTIONS>
 
 The goal is to parse the variable, human-readable HTML into concrete
-structures useable by your program.  The forms functions does do a good job
+structures usable by your program.  The forms functions does do a good job
 at making these structures, but I will admit: they are not exactly simple,
 and thus not a cinch to work with.  But then again, representing something
 as complex as a HTML form is not a simple thing either.  I think the
@@ -1960,7 +1960,7 @@ pass 'a' as the current tag, and a hash reference which contains
 {'href'=>"/file"}.
 
 The xml_flag, when set, causes the parser to do some extra processing
-and checks to accomodate XML style tags such as <tag foo="bar"/>.
+and checks to accommodate XML style tags such as <tag foo="bar"/>.
 
 The optional %tagmap is a hash of lowercase tag names.  If a tagmap is
 supplied, then the parser will only call the callback function if the
@@ -2220,7 +2220,7 @@ substr(DATA, $position, $length) = $replacement
 Where DATA is the current HTML string the html parser is using.
 The reason you need to use this function and not substr() is
 because a few internal parser pointers and counters need to be
-adjusted to accomodate the changes.
+adjusted to accommodate the changes.
 
 If you want to remove a piece of the string, just set the
 replacement to an empty string ('').  If you wish to insert a
@@ -2773,7 +2773,7 @@ Params: \%request, $uri_only_switch
 Return: $request
 
 req2line is used internally by http_do_request, as well as provides a
-convienient way to turn a %request configuration into an actual HTTP request
+convenient way to turn a %request configuration into an actual HTTP request
 line.  If $switch is set to 1, then the returned $request will be the URI
 only ('/requested/page.html'), versus the entire HTTP request ('GET
 /requested/page.html HTTP/1.0\n\n').  Also, if the 'full_request_override'
@@ -2848,7 +2848,7 @@ Params: \%response
 
 Return: $response
 
-http_resp2line provides a convienient way to turn a %response hash back 
+http_resp2line provides a convenient way to turn a %response hash back 
 into the original HTTP response line.
 
 =cut
@@ -3023,11 +3023,11 @@ Params: Nothing
 Return: $boolean [, $lib_name, $version]
 
 The ssl_is_available() function will inform you whether SSL requests
-are allowed, which is dependant on whether the appropriate SSL
+are allowed, which is dependent on whether the appropriate SSL
 libraries are installed on the machine.  In scalar context, the
 function will return 1 or 0.  In array context, the second element
 will be the SSL library name that is currently being used by LW2,
-and the third elment will be the SSL library version number.
+and the third element will be the SSL library version number.
 Elements two and three (name and version) will be undefined if
 called in array context and no SSL libraries are available.
 
@@ -3928,7 +3928,7 @@ sub multipart_read_data {
     return undef if ( !( defined $dr && ref($dr) ) );
 
     # if $bound is undef, then we'll snag what looks to be
-    # the first boundry from the data.
+    # the first boundary from the data.
     if ( !defined $bound ) {
         if ( $$dr =~ /([-]{5,}[A-Z0-9]+)[\r\n]/i ) {
             $bound = $1;
@@ -4108,7 +4108,7 @@ Params: $username, $password [, $domain, $ntlm_only]
 Return: $ntlm_object
 
 Returns a reference to an array (otherwise known as the 'ntlm object')
-which contains the various informations specific to a user/pass combo.
+which contains the various information specific to a user/pass combo.
 If $ntlm_only is set to 1, then only the NTLM hash (and not the LanMan
 hash) will be generated.  This results in a speed boost, and is typically
 fine for using against IIS servers.

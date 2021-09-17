@@ -2564,7 +2564,7 @@ sub set_scan_items {
             my $add  = 0;
 
             # check tuning options
-            # $item[2] conains the test's types
+            # $item[2] contains the test's types
             if (($CLI{'tuning'} ne "") && (defined $item[2])) {
 
                 # Work out the required tuning from the CLI string
