@@ -181,7 +181,7 @@ sub nikto_headers_postfetch {
 
     # Netlify
     if (defined $result->{'x-nf-request-id'} && $HFOUND{'x-nf-request-id'} != 1) {
-        add_vulnerability( $mark, "Netlify was identified by the x-nf-request-id header.", "000432", "https://www.netlify.com/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
+        add_vulnerability( $mark, "Netlify was identified by the x-nf-request-id header.", "000287", "https://www.netlify.com/", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
         $HFOUND{'x-nf-request-id'} = 1;
     }
 
