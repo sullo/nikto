@@ -1,3 +1,4 @@
+#VERSION,2.05
 ###############################################################################
 #  Copyright (C) 2010 Chris Sullo
 #
@@ -42,32 +43,38 @@ sub nikto_cookies_postfetch {
 
     foreach my $c (@{ $response->{'whisker'}->{'cookies'} }) {
 		my $c2 = $c;
-		$c =~ /^([^=]+)/;
+		$c =~ /([^=]+)+=([^;]+)/;
 		my $cname = $1;
+        my $cvalue = $2;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
 
 		# secure flag
 		if ($c !~ /secure/i && $mark->{ssl}) {
-			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the secure flag", 999960, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
 
 		# httponly flag
 		if ($c !~ /httponly/i) {
-			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 000137, "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies", $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+			add_vulnerability($mark, "Cookie $cname created without the httponly flag", 999961, 0, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
 		}
 
         my @ips = get_ips($c);
+
+        if (substr($cname,0,4) eq 'NSC_'){
+            push(@ips, decode_netscaler_cookie($cvalue));
+        }
+
         foreach my $ip (@ips) {
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {
                     my $msg   = "";
-                    my $refs = "";
+                    my $osvdb = 0;
 
                     if ($cname eq 'ARPT') {
                         $msg =
                           "Cisco content switch reveals internal IP address found in the '$cname' cookie. The IP is \"$ip\".";
-                        $refs = "CVE-2006-4352";
+                        $osvdb = 28121;
                     }
                     else {
 
@@ -76,12 +83,24 @@ sub nikto_cookies_postfetch {
                         if ($internal) { $int = "RFC-1918 "; }
                         $msg = $int . "IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
-                    add_vulnerability($mark, $msg, 999991, $refs, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
+                    add_vulnerability($mark, $msg, 999991, $osvdb, $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $response);
                 }
             }
         }
 		$CFOUND{$cname}{$mark->{hostname}}=1;
     }
 }
+
+sub decode_netscaler_cookie {
+    my ($cookie_val) = @_;
+    $cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*([0-9a-f]{4})$/;
+    my $ip_value = hex($1) ^ 0x03081e11;
+    my $port_value = hex($2) ^ 0x3630;
+    
+    $ip_hex_str = sprintf("0x%X", $ip_value);
+    $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
+    return hex('0x' . substr($ip_hex_zero_pad,0,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,2,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,4,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,6,2));
+}
+
 
 1;
