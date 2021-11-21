@@ -33,7 +33,7 @@ sub nikto_robots_init {
         copyright => "2008 Chris Sullo",
 		options     => {
 					 nocheck => "Flag to disable checking entries in robots file.",
-					 }		
+					 }
         };
     return $id;
 }
@@ -43,7 +43,7 @@ sub nikto_robots {
     return if $mark->{'terminate'};
     my ($code, $content, $errors, $request, $response) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
     my $onlyroot=1;
-	
+
     if (($code eq 200) || ($code eq $FoF{'okay'}{'response'})) {
         if (is_404("robots.txt", $content, $code, $response->{'location'})) { return; }
 
@@ -83,7 +83,7 @@ sub nikto_robots {
                 $DISCTR++;
 
 				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0; }
-				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0;}				
+				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0;}
 				next if (($realdir eq "/" && $realfile eq "") ||
 				         ($realfile eq "/" && $realdir eq ""));
                 $tocheck{$line}=1;
@@ -106,7 +106,7 @@ sub nikto_robots {
 	    my $raw  = $dir;
             $raw =~ s/\\//g;
 	    $dir = validate_and_fix_regex($dir);
-            
+
             # Add to variables
             if ($dir =~ /cgi/i && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
                 $VARIABLES{"\@CGIDIRS"} .= " $raw";
@@ -119,26 +119,26 @@ sub nikto_robots {
             }
             if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
                 $VARIABLES{"\@NUKE"} .= " $raw";
-            }           
+            }
         	if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
                 $VARIABLES{"\@ADMIN"} .= " $raw";
-            }              
+            }
             if ($dir =~ /phpmy/i && $VARIABLES{"\@PHPMYADMIN"} !~ /$dir/i) {
                 $VARIABLES{"\@PHPMYADMIN"} .= " $raw";
-            } 
+            }
             if ($dir =~ /fck/i && $VARIABLES{"\@FCKEDITOR"} !~ /$dir/i) {
                 $VARIABLES{"\@FCKEDITOR"} .= " $raw";
-            } 
+            }
             if ($dir =~ /crystal/i && $VARIABLES{"\@CRYSTALREPORTS"} !~ /$dir/i) {
                 $VARIABLES{"\@CRYSTALREPORTS"} .= " $raw";
-            } 
+            }
         }
 
         foreach my $file (sort keys %RFILES) {
             my $raw = $file;
             $raw =~ s/\\//g;
 	    $file = validate_and_fix_regex($file);
-            
+
             # Add to variables
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
                 $VARIABLES{"\@PASSWORDFILES"} .= " $raw";

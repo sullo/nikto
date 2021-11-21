@@ -52,16 +52,16 @@ sub nikto_siebel {
         my @apps=nikto_siebel_enumerate($mark, $parameters);
         my $application=$apps[0];
     }
-    
+
     if ($application eq "" && defined $parameters->{'application'}) {
         $application=$parameters->{'application'};
     }
-    
+
     if ($application eq "") {
         nprint("No Siebel Application defined","v");
         return;
     }
-    
+
     # Now we have an application time to perform some tests
     my $path = $application . "/base.txt";
     my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
@@ -77,13 +77,13 @@ sub nikto_siebel {
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
         add_vulnerability($mark, "Siebel version $siebelver found, application version $appver, applied hostfixes are $hotfix", 999901, 0, "GET", $path, $request, $response);
     }
-        
+
     $path = $application . "/_stats.swe";
     ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
     if ($res eq "200") {
         add_vulnerability($mark, "Siebel stats page found at $path", 999902, 0, "GET", $path, $request, $response);
     }
-    
+
     foreach my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm")) {
         $path = $application . "/$page";
         ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
@@ -93,24 +93,24 @@ sub nikto_siebel {
     }
 
     return;
-}    
+}
 
 sub nikto_siebel_enumerate {
     my ($mark, $params) = @_;
-    
+
     # Default apps and languages - allow parameters to over-ride them.
     my $apps = "emarketing ecustomer pmmanager sales marketing wpeserv salesce econsumerpharma emedia epublicsector eaf echannelcme epharmace siaservicece finseenenrollment ecustomercme loyalty erm etraining esales callcenter wpsales eai smc eprofessionalpharma eenergy pseservice sismarketing econsumer medicalce epharma fins finesales finscustomer htim loyaltyscw ermadmin eevents eauctionswexml cra wpserv eai_anon edealer esitesclinical eautomotive econsumersector echannelaf eEnergyOilGasChemicals cgce eclinical finsconsole finsebanking finssalespam htimpim eloyalty ememb pimportal eservice service wppm servicece edealerscw ecommunications ehospitality eretail echannelcg eCommunicationsWireless siasalesce emedical finsechannel finsebrokerage esalescme";
     my $langs = "enu euq cht dan fin deu hun kor ptb sky sve pse cat shl nld fra ell ita nor ptg slv tha psl chs csy frc heb jpn plk rus esn trk";
-    
+
     my @foundapps;
-    
+
     if ($params->{applications}) {
         $apps=$params->{applications};
     }
 
     if ($params->{languages}) {
         $langs=$params->{languages};
-    }   
+    }
 
     foreach my $language (split(/ /,$langs)) {
         foreach my $application (split(/ /,$apps)) {
@@ -124,7 +124,7 @@ sub nikto_siebel_enumerate {
             }
         }
     }
-    
+
     return @foundapps;
 }
 

@@ -43,12 +43,12 @@ sub nikto_negotiate {
     if ($response->{'alternates'} =~ /\{\"/)  {
 	my $message = "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. See http://www.wisec.it/sectou.php?id=4698ebdc59d15. The following alternatives for 'index' were found: ";
 	my @alts = split(/,/, $response->{'alternates'});
-	foreach my $h (@alts) { 
+	foreach my $h (@alts) {
 		$h =~ /\s?\{"([^"]+)"/;
 		$message .= $1 .", ";
 		}
 	$message =~ s/, $//;
-		
+
         add_vulnerability($mark, $message, 999965, 0, GET, "/index", $request, $response);
     }
 

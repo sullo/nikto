@@ -58,7 +58,7 @@ sub nikto_httpoptions {
     # Odd case here, but maybe... http://zacstewart.com/2012/04/14/http-options-method.html
     # lots of FP on this one; disabling for now
     #if (($content ne '') && ($res !~ /^3\d\d$/)) {
-    #    add_vulnerability($mark, "Response body of OPTIONS / request is not empty--this may describe additonal REST/API services", 999980, 0, "OPTIONS", "/", $request, $response);
+    #    add_vulnerability($mark, "Response body of OPTIONS / request is not empty--this may describe additional REST/API services", 999980, 0, "OPTIONS", "/", $request, $response);
     #	}
 
     foreach my $o (split(/,[ ]?/, $aoptions)) {

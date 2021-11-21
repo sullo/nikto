@@ -43,8 +43,9 @@ sub nikto_cookies_postfetch {
 
     foreach my $c (@{ $response->{'whisker'}->{'cookies'} }) {
 		my $c2 = $c;
-		$c =~ /^([^=]+)/;
+		$c =~ /([^=]+)+=([^;]+)/;
 		my $cname = $1;
+        my $cvalue = $2;
 		next if (defined $CFOUND{$cname}{$mark->{hostname}});
 
 		# secure flag
@@ -58,6 +59,11 @@ sub nikto_cookies_postfetch {
 		}
 
         my @ips = get_ips($c);
+
+        if (substr($cname,0,4) eq 'NSC_'){
+            push(@ips, decode_netscaler_cookie($cvalue));
+        }
+
         foreach my $ip (@ips) {
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
@@ -84,5 +90,17 @@ sub nikto_cookies_postfetch {
 		$CFOUND{$cname}{$mark->{hostname}}=1;
     }
 }
+
+sub decode_netscaler_cookie {
+    my ($cookie_val) = @_;
+    $cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*([0-9a-f]{4})$/;
+    my $ip_value = hex($1) ^ 0x03081e11;
+    my $port_value = hex($2) ^ 0x3630;
+    
+    $ip_hex_str = sprintf("0x%X", $ip_value);
+    $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
+    return hex('0x' . substr($ip_hex_zero_pad,0,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,2,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,4,2)) . "." . hex('0x' . substr($ip_hex_zero_pad,6,2));
+}
+
 
 1;

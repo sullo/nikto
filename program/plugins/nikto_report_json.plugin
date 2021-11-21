@@ -67,7 +67,7 @@ sub json_host_end {
     my ($handle, $mark) = @_;
     print $handle "]";
     return;
-}                                                                
+}
 ###############################################################################
 # close output file
 sub json_close {
@@ -98,7 +98,7 @@ sub json_item {
         if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/))
 			{ $line .= "\"url\":\"" .$mark->{'root'} . $uri ."\","; }
 		else { $line .= "\"url\":\"" .$uri ."\","; }
-	
+
 		my $msg = $item->{'message'};
 		$uri=quotemeta($uri);
 		my $root = quotemeta($mark->{'root'});
@@ -112,4 +112,3 @@ sub json_item {
 }
 
 1;
-

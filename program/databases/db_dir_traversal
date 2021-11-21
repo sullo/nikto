@@ -7,7 +7,7 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #
@@ -15,7 +15,7 @@
 # Notes:
 # NiktoDB 1.0
 # Use @TRAVALL, @TRAVLIN or @TRAVWIN as a placeholder where nikto
-# should instert the file to check.
+# should insert the file to check.
 # @TRAVLIN: /etc/passwd
 # @TRAVWIN: boot.ini winnt/win.ini windows/win.ini
 # @TRAVALL: All of the above

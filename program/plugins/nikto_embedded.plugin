@@ -24,7 +24,7 @@ sub nikto_embedded_init {
                full_name   => "Embedded Detection",
                author      => "Tautology",
                description => "Checks to see whether the host is an embedded server.",
-               hooks       => { scan => { method => \&nikto_embedded, }, 
+               hooks       => { scan => { method => \&nikto_embedded, },
                                 start => { method => \&nikto_embedded_load, },
                               },
                copyright   => "2009 Chris Sullo"

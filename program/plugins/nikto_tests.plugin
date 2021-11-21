@@ -43,7 +43,7 @@ sub nikto_tests_init {
 sub nikto_tests {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
-    my (@tids, $data);
+    my @tids;
 
     if (defined $parameters->{'tids'}) {
         @tids = expand_range($parameters->{'tids'});
@@ -61,8 +61,8 @@ sub nikto_tests {
         # Now repeat for each uri
 	URI: foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
-            my %headrs;
-            my %flags;
+            my (%headrs, %flags, $data);
+
             if ($TESTS{$checkid}{'headers'} ne '') {
             	my $header = unslash($TESTS{$checkid}{'headers'});
                 foreach my $h (split /\r\n/, $header) {
@@ -82,7 +82,7 @@ sub nikto_tests {
                      $TESTS{$checkid}{'method'},
                      $data,
                      \%headrs,
-                     \%flags, 
+                     \%flags,
                      $checkid);
 
             # NOTE: auth is now done in nfetch

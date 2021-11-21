@@ -7,7 +7,7 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
@@ -562,7 +562,7 @@
 "000544","0","5","///etc/hosts","GET","127\.0\.0\.1","","","","","The server install allows reading of any system file by adding an extra '/' to the URL.","",""
 "000545","0","5","////./../.../boot.ini","GET","boot loader","","","","","Server is vulnerable to directory traversal, this may be Lidik Webserver 0.7b from lysias.de. See http://www.it-checkpoint.net/advisory/14.html for details.","",""
 "000546","1269","5","/.cobalt/sysManage/../admin/.htaccess","GET","AuthName","","","","","Cobalt RaQ 4 server manager allows any files to be retrieved by using the path through the .cobalt directory.","",""
-"000547","50624","5","/albums/userpics/Copperminer.jpg.php?cat%20/etc/passwd","GET","root:","","","","","Coppermine 1.0 RC3 may have been compromised to allow arbitrary file retreival. Upgrade to the latest at http://www.chezgreg.net/coppermine/","",""
+"000547","50624","5","/albums/userpics/Copperminer.jpg.php?cat%20/etc/passwd","GET","root:","","","","","Coppermine 1.0 RC3 may have been compromised to allow arbitrary file retrieval. Upgrade to the latest at http://www.chezgreg.net/coppermine/","",""
 "000548","9028","5","/autohtml.php?op=modload&mainfile=x&name=/etc/passwd","GET","root:","","","","","php-proxima 6.0 and below allows arbitrary files to be retrieved.","",""
 "000549","49354","5","/atomicboard/index.php?location=../../../../../../../../../../etc/passwd","GET","root:","","","","","AtomicBoard v0.6.2 allows remote users to read arbitrary files.","",""
 "000550","54099","5","/current/modules.php?mod=fm&file=../../../../../../../../../../etc/passwd%00&bn=fm_d1","GET","root:","","","","","w-agora 4.1.5 allows any file to be retrieved from the remote host.","",""
@@ -1000,7 +1000,7 @@
 "000987","59092","3e","/admin.html","GET","MySimpleNews - Administration","","","","","MySimpleNews contains the admin password in the login page HTML.","",""
 "000988","0","3","/admin/cplogfile.log","GET","200","","","","","DevBB 1.0 final (http://www.mybboard.com) log file is readable remotely. Upgrade to the latest version.","",""
 "000989","0","3","/admin/system_footer.php","GET","200","","","","","myphpnuke version 1.8.8_final_7 reveals detailed system information.","",""
-"000990","0","3","/cfdocs/snippets/fileexists.cfm","GET","200","","","","","Can be used to verify the existance of files (on the same drive info as the web tree/file)","",""
+"000990","0","3","/cfdocs/snippets/fileexists.cfm","GET","200","","","","","Can be used to verify the existence of files (on the same drive info as the web tree/file)","",""
 "000991","0","3","/cgi-bin/MachineInfo","GET","200","","","","","Gives out information on the machine (IRIX), including hostname","",""
 "000992","59646","3","/chat/!nicks.txt","GET","200","","","","","WF-Chat 1.0 Beta allows retrieval of user information.","",""
 "000993","59645","3","/chat/!pwds.txt","GET","200","","","","","WF-Chat 1.0 Beta allows retrieval of user information.","",""
@@ -1052,7 +1052,7 @@
 "001039","59545","8","@CGIDIRScsNewsPro.cgi?command=savesetup&setup=;system('cat%20/etc/passwd')","GET","root:","","","","","Multiple scripts from CGIscript.net have remote code execution vulnerabilities. Upgrade to the latest version.","",""
 "001040","0","8","@CGIDIRSecho.bat","GET","200","","","","","This CGI may allow attackers to execute remote commands.","",""
 "001041","0","8","@CGIDIRSformmail.cgi?recipient=root@localhost%0Acat%20/etc/passwd&email=joeuser@localhost&subject=test","GET","root:","","","","","This CGI allows attackers to retrieve arbitrary files from the server.","",""
-"001042","4571","8","@CGIDIRSImageFolio/admin/admin.cgi","GET","200","","","","","ImageFolio (default accout Admin/ImageFolio) may allow files to be deleted via URLs like: ?cgi=remove.pl&uid=111.111.111.111&rmstep=2&category=../../../../../../../../../../../etc/","",""
+"001042","4571","8","@CGIDIRSImageFolio/admin/admin.cgi","GET","200","","","","","ImageFolio (default account Admin/ImageFolio) may allow files to be deleted via URLs like: ?cgi=remove.pl&uid=111.111.111.111&rmstep=2&category=../../../../../../../../../../../etc/","",""
 "001043","101","8","@CGIDIRSinfo2www '(../../../../../../../bin/mail root </etc/passwd>","GET","root:","","","","","This CGI allows attackers to execute commands. passwd file may have been mailed to root.","",""
 "001044","0","8","@CGIDIRSinfo2www","GET","200","","","","","This CGI allows attackers to execute commands.","",""
 "001045","0","8","@CGIDIRSinfosrch.cgi","GET","200","","","","","This CGI allows attackers to execute commands.","",""
@@ -1424,7 +1424,7 @@
 "001423","2117","2","/","GET","Celerra Web Manager","","","","","Default EMC Cellera manager server is running.","",""
 "001424","2117","2","/","GET","EMC ControlCenter","","","","","Default EMC ControlCenter manager server is running.","",""
 "001425","2117","2","/cpqlogin.htm","GET","System Management Homepage","","","","","Default Compaq/HP WBEM server is running.","",""
-"001426","2117","2","/cpqlogin.htm","GET","This is a private system","","","","","Defaul Compaq/HP WBEM server is running.","",""
+"001426","2117","2","/cpqlogin.htm","GET","This is a private system","","","","","Default Compaq/HP WBEM server is running.","",""
 "001427","2117","2","/","GET","DHost HTTP Server","","","","","Default Novell NDS iMonitor was found. Default account may be 'sadmin' with no password.","",""
 "001428","2117","2","/","GET","AnswerBook","","","","","Default Sun Answerbook server running.","",""
 "001429","2117","2","/","GET","Allaire Corporateion","","","","","Default JRun 2 server running.","",""
@@ -3222,7 +3222,7 @@
 "003441","3233","1b","/aplogon.html","GET","200","","","","","Oracle Applications Portal Page","",""
 "003442","3233","1b","/appdet.html","GET","200","","","","","Oracle Applications Portal Pages","",""
 "003443","3233","1b","/servlets/weboam/oam/oamLogin","GET","200","","","","","Oracle Application Manager","",""
-"003444","3233","1b","/OA_HTML/PTB/mwa_readme.htm","GET","200","","","","","Oracle Mobile Applications Industrial Server administration and configuration inerface","",""
+"003444","3233","1b","/OA_HTML/PTB/mwa_readme.htm","GET","200","","","","","Oracle Mobile Applications Industrial Server administration and configuration interface","",""
 "003445","3233","1b","/reports/rwservlet","GET","200","","","","","Oracle Reports","",""
 "003446","3233","1b","/reports/rwservlet/showenv","GET","200","","","","","Oracle Reports","",""
 "003447","3233","1b","/reports/rwservlet/showmap","GET","200","","","","","Oracle Reports","",""
@@ -3230,7 +3230,7 @@
 "003449","3233","1b","/reports/rwservlet/getjobid7?server=myrep","GET","200","","","","","Oracle Reports","",""
 "003450","3233","1b","/reports/rwservlet/getjobid4?server=myrep","GET","200","","","","","Oracle Reports","",""
 "003451","3233","1b","/reports/rwservlet/showmap?server=myserver","GET","200","","","","","Oracle Reports","",""
-"003452","3093","1a","/pls/portal/owa_util.cellsprint?p_theQuery=select","GET","200","","","","","Direct access to Oracle packages could have an unkown impact.","",""
+"003452","3093","1a","/pls/portal/owa_util.cellsprint?p_theQuery=select","GET","200","","","","","Direct access to Oracle packages could have an unknown impact.","",""
 "003453","3093","1a","/pls/portal/owa_util.listprint?p_theQuery=select","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
 "003454","3093","1a","/pls/portal/owa_util.show_query_columns?ctable=sys.dba_users","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
 "003455","3093","1a","/pls/portal/owa_util.showsource?cname=owa_util","GET","200","","","","","Access to Oracle pages could have an unknown impact.","",""
@@ -6451,7 +6451,7 @@
 "006747","0","d","/manage/CxSenseWebService/CxSense.asmx","GET","200","","CxSense\sWeb\sService","","","Covertix SmartCipher Web Service detected","",""
 "006748","0","d","/ws/CxInternetDMZ.asmx","GET","200","","CxServerDMZ","","","Covertix SmartCipher DMZ Server Web Service detected","",""
 "006749","51887","7","/horde/util/barcode.php?type=../../../../../../../../../../../etc/./passwd%00","GET","root:","","","","","Horde local file retrieval (LFI) found. CVE-2009-0932.","",""
-"006750","0","b","@OWNCLOUDstatus.php","GET","\{\"installed\":\"true\",\"(version|maintenance)\":\"","","200","","","ownCloud/Nextcloud installation indentified by status.php, see the program for the running version","",""
+"006750","0","b","@OWNCLOUDstatus.php","GET","\{\"installed\":\"true\",\"(version|maintenance)\":\"","","200","","","ownCloud/Nextcloud installation identified by status.php, see the program for the running version","",""
 "006751","0","0","@OWNCLOUDremote.php/webdav","GET","Generated\sby\sSabreDAV","Sabre_DAV_Exception_NotAuthenticated","","","","ownCloud WebDAV file upload detected (pass protected), remote.php/caldav and remote.php/carddav are also valid","",""
 "006752","0","1235","@OWNCLOUD@OCFILES","GET","(\"app\":\"|\"reqId\":\"|This is used for testing whether htaccess|SQLite format)","","200","","","Unprotected ownCloud data directory identified","",""
 "006754","0","b","@SECLOREWelcome.do","GET","200","","Powered\sBy\sFileSecure","","","Seclore FileSecure installation detected. Default credentials are: root:changeonfirstlogin and sa:changeonfirstlogin.","",""
@@ -6510,7 +6510,7 @@
 "006807","0","123","/.git/config","GET","\[core\]","\[branch","","","","Git config file found. Infos about repo details may be present.","",""
 "006808","0","e","/solr/admin/","GET","Solr\sadmin\spage","","","","","Apache Solr administration console found","",""
 "006809","0","2abe","/html/vergessen.html","GET","uiRestoreFactoryDefaults","","","","","The Fritz!Box gateway allows any user to restore factory default settings.","",""
-"006810","3233","2","@TYPO3typo3/install/index.php","GET","200","","Install\sTool","","","TYPO3 Install Tool identified. This might be interesing...","",""
+"006810","3233","2","@TYPO3typo3/install/index.php","GET","200","","Install\sTool","","","TYPO3 Install Tool identified. This might be interesting...","",""
 "006811","0","2be","/dnnLogin.aspx","GET","Enter\syour\sUser\sName\sbelow","","","","","DotNetNuke Login page found.","",""
 "006812","0","2be","/dnn/Login.aspx","GET","Login_DNN","","","","","DotNetNuke Login page found.","",""
 "006813","0","2be","/tabid/400999900/ctl/Login/portalid/699996/Default.aspx","GET","Login_DNN","","","","","DotNetNuke Login page found with random tabid and portalid parameters.","",""

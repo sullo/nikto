@@ -24,7 +24,7 @@ sub nikto_dir_traversal_init {
                full_name   => "Directory Traversal",
                author      => "RealRancor",
                description => "Check applications / servers for directory traversal vulnerabilities.",
-               hooks       => { scan => { method => \&nikto_dir_traversal, }, 
+               hooks       => { scan => { method => \&nikto_dir_traversal, },
                                 start => { method => \&nikto_dir_traversal_load, },
                               },
                copyright   => "2016 Chris Sullo"

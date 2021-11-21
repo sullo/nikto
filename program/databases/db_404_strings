@@ -7,7 +7,7 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
@@ -27,7 +27,7 @@ ExtendNet DX Configuration
 FireWall-1 message
 forcelogon.htm
 IMail Server Web Messaging
-Management Console	
+Management Console
 name=qt id="search" size=40 value=" "
 No web site is configured at this address
 not found
@@ -35,7 +35,7 @@ parameter is incorrect                                   # IIS 5.0 500 error
 Please identify yourself:
 Reload acp_userinfo database
 RSA SecurID User Name Request
-The userid or password that was specified is not valid.  # Tivoli server administrator   
+The userid or password that was specified is not valid.  # Tivoli server administrator
 TYPE=password	                                         # As in "<input type=password>"
 Unable to complete your request
 unable to open

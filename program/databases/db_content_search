@@ -7,13 +7,13 @@
 # Chris Sullo (csullo@gmail.com)
 #
 # Note:
-# By submitting updates to this file you are transfering any and all copyright
+# By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
 # Notes:
 # These can be regular expressions, but will be eval'd case insensitive.
-# Since these are run after every page retrieved, we should try to keep these as fast 
+# Since these are run after every page retrieved, we should try to keep these as fast
 # regular expressions as possible, and limited to only critical findings.
 #######################################################################
 "nikto_id","osvdb","matchstring","message"
