@@ -5,3 +5,4 @@
 *.sublime-workspace
 tags
 nikto.conf
+.vscode
