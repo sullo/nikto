@@ -46,6 +46,8 @@
 "content-security-policy"
 "content-security-policy-report-only"
 "content-type"
+"cross-origin-opener-policy"
+"cross-origin-resource-policy"
 "dasl"
 "date"
 "dav"
