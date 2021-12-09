@@ -210,6 +210,9 @@ sub linkify_refs {
       elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
               $r="<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
               }
+      elsif ($r =~ /^CWE-\d+/) {
+              $r="<a href='https://cwe.mitre.org/data/definitions/$r.html'>$r</a>";
+              }
       elsif ($r =~ /^http/) {
           $r="<a href='$r'>$r</a>";
           }
