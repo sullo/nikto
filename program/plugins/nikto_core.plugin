@@ -2844,7 +2844,7 @@ sub send_updates {
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
-    my %mark = ('ident' => 'cirt.net',
+    my %mark = ('ident' => '68.183.58.226',
                 'ssl'   => 1,
                 'port'  => 443
                 );
@@ -2856,7 +2856,7 @@ sub send_updates {
         }
     }
 
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('68.183.58.226');
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
