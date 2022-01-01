@@ -58,11 +58,11 @@ sub nikto_shellshock {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) = nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-        if (($response->{'nikto-added-cve-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+        if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
             add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).", 999949, "CVE-2014-6271", "GET",
                 "$parameters->{'uri'}", $request, $response);
         }
-        if (($response->{'nikto-added-cve-2014-6278'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+        if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
             add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, "CVE-2014-6278", "GET",
                 "$parameters->{'uri'}", $request, $response);
         }
@@ -74,11 +74,11 @@ sub nikto_shellshock {
 
                 # request by hostname
                 my ($res, $content, $error, $request, $response) = nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
-                if (($response->{'nikto-added-cve-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+                if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
                     add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999947, "CVE-2014-6271", "GET",
                         "$cgidir$file", $request, $response);
                 }
-                if (($response->{'nikto-added-cve-2014-6278'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+                if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
                     add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999946, "CVE-2014-6278", "GET",
                         "$cgidir$file", $request, $response);
                 }
