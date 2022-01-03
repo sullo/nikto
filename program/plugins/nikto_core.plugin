@@ -1944,7 +1944,6 @@ sub load_plugins {
 ###############################################################################
 sub run_hooks {
     my ($mark, $type, $request, $result) = @_;
-    return if $mark->{'terminate'};
 
     foreach my $plugin (@{ $PLUGINORDER{$type} }) {
         return if $mark->{'terminate'};
@@ -2474,7 +2473,7 @@ sub nfetch {
 
     # Snarf what we can from the whisker hash and put in mark
     if (!exists $result{'whisker'}->{'error'}) {
-        if (!exists $mark->{'banner'}) {
+        if ((!exists $mark->{'banner'}) || ($mark->{'banner'} eq "")) {
             $mark->{'banner'} = $result{'server'};
         }
         else {

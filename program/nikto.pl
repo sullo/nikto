@@ -150,24 +150,20 @@ foreach my $mark (@MARKS) {
 
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
-    report_host_start($mark);
-    if ($mark->{'errmsg'} ne "") {
-        add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
-    }
+    my %FoF = ();
 
     if (!$mark->{'test'}) {
         report_host_end($mark);
         next;
     }
 
+    if (defined $CLI{'vhost'}) {
+        $mark->{'vhost'} = $CLI{'vhost'};
+    }
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'} = time();
     $VARIABLES{'TEMPL_HCTR'}++;
-
-    if (defined $CLI{'vhost'}) {
-        $mark->{'vhost'} = $CLI{'vhost'};
-    }
 
     # Saving responses
     if ($CLI{'saveresults'} ne '') {
@@ -175,9 +171,14 @@ foreach my $mark (@MARKS) {
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
 
-    my %FoF = ();
-
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
+
+    report_host_start($mark);
+
+    if ($mark->{'errmsg'} ne "") {
+        add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
+    }
+
 
     dump_target_info($mark);
     unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
@@ -197,7 +198,7 @@ foreach my $mark (@MARKS) {
     }
     else {
         nprint(
-            "+ Scan terminated:  $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+            "+ Scan terminated: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
             );
     }
     nprint(  "+ End Time:           "
