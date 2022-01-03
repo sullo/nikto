@@ -81,10 +81,9 @@ sub nikto_tests {
                      $TESTS{$checkid}{'method'},
                      $data,
                      \%headrs,
-                     \%flags, 
+                     \%flags,
                      $checkid);
 
-            # NOTE: auth is now done in nfetch
             if ($OUTPUT{'show_ok'} && ($res eq 200)) {
                 nprint("+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
