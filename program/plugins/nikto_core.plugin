@@ -1744,7 +1744,7 @@ sub port_check {
     my @checktypes;
     if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
     elsif ($CLI{'ssl'}) { @checktypes = ('HTTPS'); }
-    else { @checktypes = ('HTTPS', 'HTTP'); }
+    else { @checktypes = ('HTTP', 'HTTPS'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
         $request{'whisker'}->{'method'} = $method;
@@ -2433,7 +2433,6 @@ sub nfetch {
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
     }
-            use Data::Dumper;
 
     # Get cookies from response & add to jar
     if ($CLI{'usecookies'}) {
