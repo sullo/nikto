@@ -184,7 +184,7 @@ sub xml_change_vars {
     if ($template =~ /\#TEMPL_MSG#/) {
 	my $uri = $item->{'uri'};
         if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) 
-		{ $uri = $mark->{'root'} . $uri . ": " }
+		{ $uri = $mark->{'root'} . $uri; }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $item->{'message'};
         $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
