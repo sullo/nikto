@@ -84,8 +84,7 @@ sub nikto_sitefiles {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, "/$f", "GET", "", "", \%flags, "sitefiles");
 
-            if (($response->{'content-type'} =~ '/^application\//i')
-                || (($res == 200) && ($response->{'content-length'} > 0) && ($response->{'content-type'} !~ '/^text\//i') &&
+            if (($response->{'content-type'} =~ '/^application\//i') || (($response->{'content-type'} !~ '/^text\//i') && ($res == 200) && ($response->{'content-length'} > 0) && ($response->{'content-type'} !~ '/^text\//i') &&
                 (!is_404("/$f", $content, $res, $response->{'location'})))
                     ) {
 
