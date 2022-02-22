@@ -40,7 +40,7 @@ sub csv_open {
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # Open file and produce header
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    open(OUT, ">$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
 
     # Write header
     print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";

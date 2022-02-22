@@ -57,7 +57,7 @@ sub xml_head {
         close(IN);
     }
 
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    open(OUT, ">$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
 
     # If file doesn't contain a header, write it
     if (!$header_present) {
