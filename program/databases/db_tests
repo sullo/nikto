@@ -6693,8 +6693,6 @@
 "007015","","b","@TOMCATADMINstatus","GET","<tt>conf\/tomcat-users\.xml<\/tt>","","","","","Default Tomcat Server Status interface found","",""
 "007016","","b","@TOMCATADMINstatus","GET","401","","","","","Tomcat Server Status interface found (pass protected)","",""
 "007017","","be","@TOMCATADMINlogin.jsp","GET","<title>Tomcat Server Administration","","","","","Tomcat Server Administration interface found","",""
-"007018","http://httpd.apache.org/docs/2.2/mod/mod_status.html","b","/server-status","GET","401","403","","200","","Apache server-status interface found (protected/forbidden)","",""
-"007019","http://httpd.apache.org/docs/2.2/mod/mod_info.html","b","/server-info","GET","401","403","","200","","Apache server-info interface found (protected/forbidden)","",""
 "007020","","b","/README.mediawiki","GET","== MediaWiki ==","","","","","Mediawiki README file found","",""
 "007021","","123b","@MANTISdoc/RELEASE","GET","MantisBT Release Notes","(Maintenance|Stable|Security) Release","","","","Mantis Bugtracker Release Notes identified.","",""
 "007022","","123b","@DOKUWIKIVERSION","GET","[0-9]+\-[0-9]+\-[0-9]+[a-z]? \"[a-zA-Z].*\"","","","","","Dokuwiki Version file identified.","",""
