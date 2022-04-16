@@ -51,7 +51,7 @@ sub nikto_tests {
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
         return if $mark->{'terminate'};
-        if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
+        #if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
     	my $intcheck=int($checkid);
 
     # replace variables in the uri

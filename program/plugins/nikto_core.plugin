@@ -849,16 +849,6 @@ sub general_config {
         if (($CLI{'root'} !~ /^\//) && ($CLI{'root'} ne "")) { $CLI{'root'} = "/$CLI{'root'}"; }
     }
 
-    if (defined $CLI{'hostauth'}) {
-        my @x = split(/:/, $CLI{'hostauth'});
-        if (($#x > 2) || ($x[0] eq "")) {
-            nprint(
-                "+ ERROR: \'$CLI{'hostauth'}\' (-i option) syntax is 'user:password' or 'user:password:domain' for host authentication."
-                );
-            exit 1;
-        }
-    }
-
     if (defined $CLI{'evasion'}) {
         $CLI{'evasion'} =~ s/[^1-8AB]//g;
     }
@@ -1910,9 +1900,6 @@ sub load_plugins {
         }
     }
 
-    # For speed in future, create a hash of active plugins ordered by plugin weight, for
-    # each type of plugin
-
     # first build a temporary hash of all known hooks
     my %hooks;
     foreach my $plugin (@PLUGINS) {
@@ -1947,12 +1934,11 @@ sub run_hooks {
 
     foreach my $plugin (@{ $PLUGINORDER{$type} }) {
         return if $mark->{'terminate'};
-        my ($run) = 1;
+        my $run = 1;
 
         # first check for conditionals
         my $condition = $plugin->{'hooks'}->{$type}->{'cond'};
         if (defined $plugin->{'hooks'}->{$type}->{'cond'}) {
-
             # Evaluate condition
             $run = eval($condition);
         }
@@ -2356,7 +2342,7 @@ sub nfetch {
     my (%request, %result);
     setup_hash(\%request, $mark, $testid);
 
-    # check for keyboard input  & terminate flag
+    # Check for keyboard input  & terminate flag
     if (!$CLI{'nointeractive'} && (($COUNTERS{'totalrequests'} % 10) == 0)) {
         if (check_input($mark) eq 'term') { $mark->{'terminate'} = 1; }
         if ($CLI{'until'} ne '') {
@@ -2366,7 +2352,7 @@ sub nfetch {
         }
     }
 
-    # check execution time
+    # Check execution time
     if ($CLI{'maxtime'} ne '') {
         if ((time() - $mark->{'start_time'}) > $CLI{'maxtime'}) {
             nprint("+ ERROR: Host maximum execution time of $CLI{'maxtime'} seconds reached");
@@ -2374,10 +2360,10 @@ sub nfetch {
         }
     }
 
-    # prepend -root option's value if set
+    # Prepend -root option's value if set
     $request{'whisker'}->{'uri'}    = $mark->{'root'} . $uri;
     
-    # remove trailing slash if requested
+    # Remove trailing slash if requested
     if ($CLI{'noslash'}) { $request{'whisker'}->{'uri'} =~ s/\/$//; }
 
     $request{'whisker'}->{'method'} = $method;
@@ -2388,7 +2374,7 @@ sub nfetch {
         $request{'whisker'}->{'data'} = $data;
     }
 
-    # check for extra HTTP headers
+    # Check for extra HTTP headers
     if (ref($headers_send) eq "HASH") {
         # loop through the hash ref passed and add each header to request
         while (my ($key, $value) = each(%$headers_send)) {
@@ -2396,12 +2382,17 @@ sub nfetch {
         }
     }
 
-    # set cookies
+    # Set auth
+    if (defined($CLI{'hostauth'})) {
+       LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
+    }
+
+    # Set cookies
     if (defined($mark->{'cookiejar'})) {
         LW2::cookie_write($mark->{'cookiejar'}, \%request, 1);
     }
 
-    # override HTTP version
+    # Override HTTP version
     if ($httpver ne '') {
         $request{'whisker'}->{'version'} = $httpver;
     }
@@ -2417,7 +2408,7 @@ sub nfetch {
         (%$request, %$result) = run_hooks($mark, "prefetch", \%request, \%result);
     }
 
-    # do the request
+    # Do the request
     sleeper();
     my $time=[gettimeofday];
     LW2::http_do_request_timeout(\%request, \%result);
