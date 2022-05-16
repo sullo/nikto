@@ -3,7 +3,7 @@
 # $Id: config.txt 94 2009-01-21 22:47:25Z deity $
 #########################################################################################################
 # This is the default config file. If you want to change it, we strongly suggest you copy it to nikto.conf
-# This will top it being over-ridden when you git pull
+# This will stop it being over-ridden when you git pull
 
 # default command line options, can't be an option that requires a value.  used for ALL runs.
 # CLIOPTS=-g -a
