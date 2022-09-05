@@ -96,7 +96,7 @@ sub favicon_matchhash {
     foreach my $item (@$FAVICONDB) {
         if ($item->{'md5hash'} eq $hash) {
             add_vulnerability($mark,
-                              "$icon file identifies this app/server as: $item->{'description'}",
+                              "$icon: identifies this app/server as: $item->{'description'}",
                               $item->{'nikto_id'},
                               "https://en.wikipedia.org/wiki/Favicon",
                               "GET",

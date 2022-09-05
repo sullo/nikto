@@ -40,7 +40,7 @@ sub nikto_negotiate {
 
     if ($response->{'alternates'} =~ /\{\"/) {
         my $message =
-          "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: ";
+          "/index: Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: ";
         my @alts = split(/,/, $response->{'alternates'});
         foreach my $h (@alts) {
             $h =~ /\s?\{"([^"]+)"/;

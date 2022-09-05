@@ -103,7 +103,7 @@ sub nikto_robots {
                     && ($res ne "302")) {
                     add_vulnerability(
                         $mark,
-                        "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)",
+                        "/robots.txt: Entry '$line' is returned a non-forbidden or redirect HTTP code ($res)",
                         999997,
                         "https://portswigger.net/kb/issues/00600600_robots-txt-file",
                         "GET",
@@ -165,7 +165,7 @@ sub nikto_robots {
         else { $msg = "retrieved but it does not contain any 'disallow' entries (which is odd)."; }
 
         if ($onlyroot eq 0) {
-            add_vulnerability($mark, "\"robots.txt\" $msg",
+            add_vulnerability($mark, "/robots.txt: $msg",
                              999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
                              "GET",  "/robots.txt", $request, $response);
         }

@@ -71,7 +71,7 @@ sub nikto_httpoptions {
 
     %davmethods = ();
     if ($allow_methods ne "") {
-        add_vulnerability($mark, "Allowed HTTP Methods: $allow_methods $txt",
+        add_vulnerability($mark, "OPTIONS: Allowed HTTP Methods: $allow_methods $txt",
                           999990, "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $allow_methods) {
             my $method = eval_methods($m, "Allow", $dbarray, $mark);
@@ -80,7 +80,7 @@ sub nikto_httpoptions {
     }
 
     if ($public_methods ne "") {
-        add_vulnerability($mark, "Public HTTP Methods: $public_methods $txt",
+        add_vulnerability($mark, "OPTIONS: Public HTTP Methods: $public_methods $txt",
                           999985, "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $public_methods) {
             my $method = eval_methods($m, "Public", $dbarray, $mark);
@@ -89,7 +89,7 @@ sub nikto_httpoptions {
     }
 
     if (scalar(keys(%davmethods)) > 0) {
-        $message = "WebDAV enabled (";
+        $message = "OPTIONS: WebDAV enabled (";
         for my $key (keys %davmethods) {
             $message .= "$key ";
         }
@@ -104,7 +104,7 @@ sub nikto_httpoptions {
     if ($res == 200) {
         add_vulnerability(
             $mark,
-            "Web Server returns a valid response with junk HTTP methods which may cause false positives.",
+            "/: Web Server returns a valid response with junk HTTP methods which may cause false positives.",
             999967,
             "",
             $junkmethod,
@@ -123,7 +123,7 @@ sub nikto_httpoptions {
     if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
         add_vulnerability(
             $mark,
-            "DEBUG HTTP verb may show server debugging information.",
+            "/: DEBUG HTTP verb may show server debugging information.",
             999972,
             "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017",
             "DEBUG",
@@ -146,7 +146,7 @@ sub nikto_httpoptions {
             $ipfound =~ s/<\/a:href>.*$//g;
             add_vulnerability(
                 $mark,
-                "PROPFIND HTTP verb may show the server's internal IP address: $ipfound",
+                "/: PROPFIND HTTP verb may show the server's internal IP address: $ipfound",
                 999973,
                 "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)",
                 "PROPFIND",
@@ -170,7 +170,7 @@ sub nikto_httpoptions {
                 if ($content =~ /Trace-Test: Nikto/) {
                     add_vulnerability(
                         $mark,
-                        "HTTP $method method is active which suggests the host is vulnerable to XST",
+                        "/: HTTP $method method is active which suggests the host is vulnerable to XST",
                         "000434",
                         "https://owasp.org/www-community/attacks/Cross_Site_Tracing",
                         $method,
@@ -219,7 +219,7 @@ sub eval_methods {
             else {
                 $message = $item->{'message'};
                 $message =~ s/\@TYPE\@/$type/;
-                add_vulnerability($mark, "$message", $item->{'nikto_id'}, $item->{'refs'});
+                add_vulnerability($mark, $message, $item->{'nikto_id'}, $item->{'refs'});
             }
         }
     }

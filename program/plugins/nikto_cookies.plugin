@@ -50,7 +50,7 @@ sub nikto_cookies_postfetch {
         # secure flag
         if ($c !~ /secure/i && $mark->{ssl}) {
             add_vulnerability($mark,
-                              "Cookie $cname created without the httponly flag",
+                              $request->{'whisker'}->{'uri'} . ": Cookie $cname created without the secure flag",
                               999961,
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
@@ -63,7 +63,7 @@ sub nikto_cookies_postfetch {
         # httponly flag
         if ($c !~ /httponly/i) {
             add_vulnerability($mark,
-                              "Cookie $cname created without the httponly flag",
+                              $request->{'whisker'}->{'uri'} . ": Cookie $cname created without the httponly flag",
                               000137,
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
@@ -96,7 +96,7 @@ sub nikto_cookies_postfetch {
                         # is it an internal, or just different?
                         my $int;
                         if ($internal) { $int = "RFC-1918 "; }
-                        $msg = $int . "IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                        $msg = $request->{'whisker'}->{'uri'} . ": $int IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
                     add_vulnerability($mark, $msg, 999991, $refs,
                                       $request->{'whisker'}->{'method'},

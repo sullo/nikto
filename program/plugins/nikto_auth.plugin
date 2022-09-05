@@ -186,8 +186,7 @@ sub nikto_auth {
                     $ref = "CWE-16";
                 }
                 else {
-                    $message =
-                      "Default account found for '$realm' at $request->{'whisker'}->{'uri'} (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
+                    $message = $request->{'whisker'}->{'uri'} .": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
                     $ref = "CWE-16";
                 }
 

@@ -62,7 +62,7 @@ sub nikto_apacheusers {
         {
             add_vulnerability(
                 $mark,
-                "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users and 'not found' for non-existent users).",
+                "/~bin: Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users and 'not found' for non-existent users).",
                 999999,
                 "CVE-2001-1013",
                 "GET",

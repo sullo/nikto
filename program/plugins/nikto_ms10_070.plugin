@@ -24,7 +24,7 @@ sub nikto_ms10_070_init {
     my $id = { name        => "ms10_070",
                full_name   => "ms10-070 Check",
                author      => "Sullo",
-               description => "Determine if a site is vulnerable to ms10-070",
+               description => "Determine if a site is vulnerable to MS10-070",
                hooks       => {
                           postfetch => { method => \&nikto_ms10_070,
                                          weight => 20,

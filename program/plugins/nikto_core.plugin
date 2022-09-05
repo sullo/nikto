@@ -2567,7 +2567,7 @@ sub nfetch {
                 && ($mark->{'banner'} ne $result{'server'})
                 && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
                 add_vulnerability($mark,
-                                "Server banner changed from '$mark->{banner}' to '$result{server}'",
+                                $request->{'whisker'}->{'uri'} . ": Server banner changed from '$mark->{banner}' to '$result{server}'",
                                 999962, "", $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
             }

@@ -70,7 +70,7 @@ sub nikto_msgs {
             $eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
             add_vulnerability(
                 $mark,
-                "Web server is a McAfee ePO agent and showing the hostname as '$name' and the ePO server(s) as '$eposerver'.",
+                "/_LOGFILENAME_: Web server is a McAfee ePO agent and showing the hostname as '$name' and the ePO server(s) as '$eposerver'.",
                 980100,
                 "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
                 "GET",
@@ -82,7 +82,7 @@ sub nikto_msgs {
         else {
             add_vulnerability(
                 $mark,
-                "Web server is a McAfee ePO agent.",
+                "/_LOGFILENAME_: Web server is a McAfee ePO agent.",
                 000435,
                 "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
                 "GET",
@@ -115,7 +115,7 @@ sub nikto_msgs {
         }
         add_vulnerability(
             $mark,
-            "Web server is an HP WBEM agent and showing the hostname is $name and the IP addresses are $ipaddrs.",
+            "/cpqlogin.htm: Web server is an HP WBEM agent and showing the hostname is $name and the IP addresses are $ipaddrs.",
             801010,
             "",
             "GET",

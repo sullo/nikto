@@ -48,7 +48,7 @@ sub nikto_parked {
 
             # Check for the matches and pull out information
             if ($line =~ /$string/) {
-                add_vulnerability($mark,    "This domain appears to be parked",
+                add_vulnerability($mark,    "/: This domain appears to be parked",
                                   999968,   "https://makeawebsitehub.com/parked-domains/",
                                   "GET",    $item->{'uri'},
                                   $request, $response

@@ -39,7 +39,7 @@ sub nikto_apache_expect_xss {
       nfetch($mark, "/", "GET", "", \%headers, "", "apache_expect_xss");
 
     if ($content =~ /<script>alert\(xss\)<\/script>/) {
-        add_vulnerability($mark, "Apache is vulnerable to XSS via the Expect header",
+        add_vulnerability($mark, "/: Apache is vulnerable to XSS via the Expect header",
                           999974, "CVE-2006-3918", "GET", "/", $request, $response);
     }
 }

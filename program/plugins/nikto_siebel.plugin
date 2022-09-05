@@ -72,7 +72,7 @@ sub nikto_siebel {
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
         add_vulnerability(
             $mark,
-            "Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix",
+            "$path: Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix",
             999901,
             "https://www.oracle.com/applications/siebel/",
             "GET",
@@ -87,7 +87,7 @@ sub nikto_siebel {
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
     if ($res eq "200") {
         add_vulnerability(
-                        $mark, "Siebel stats page found at $path",
+                        $mark, "/_stats.swe: Siebel stats page found",
                         999902,
                         "https://docs.oracle.com/cd/E14004_01/books/SysDiag/SysDiagSWSEstats7.html",
                         "GET", $path, $request, $response
@@ -101,7 +101,7 @@ sub nikto_siebel {
         ($res, $content, $error, $request, $response) =
           nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
         if ($res eq "200") {
-            add_vulnerability($mark, "Siebel default file $path found",
+            add_vulnerability($mark, "$path: Siebel default file found",
                               999903, "", "GET", $path, $request, $response);
         }
     }
@@ -137,7 +137,7 @@ sub nikto_siebel_enumerate {
             if ($res eq "200") {
 
                 # We've found an app
-                add_vulnerability($mark, "Enumerated Siebel application: " . $appname,
+                add_vulnerability($mark, "$startname: Enumerated Siebel application: " . $appname,
                                   999900, "", "GET", $startname, $request, $response);
                 push(@foundapps, $appname);
             }
