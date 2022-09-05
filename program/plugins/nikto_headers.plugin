@@ -49,6 +49,9 @@ sub nikto_headers_postfetch {
     return if $mark->{'terminate'};
     my ($mark, $parameters, $request, $result) = @_;
 
+    # We don't want to check OPTIONS
+    return if $request->{'whisker'}{'method'} eq "OPTIONS";
+
     # Check for known headers
     nikto_headers_check($mark, $result, $header, 999986, $request);
 
