@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -49,21 +49,21 @@ sub nikto_auth_load {
 
     if (defined $CLI{'hostauth'}) {
         use Text::ParseWords;
-        my @array = nested_quotewords(':',0, $CLI{'hostauth'} );
+        my @array = nested_quotewords(':', 0, $CLI{'hostauth'});
 
-        if (($array[0][0] ne "") ||($array[0][1] ne "")) {
+        if (($array[0][0] ne "") || ($array[0][1] ne "")) {
 
-        my $HOSTAUTH = { nikto_id => "700500",
-                         realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
-                         password => $array[0][1],
-                         id       => $array[0][0],
-                         message  => "Credentials provided via CLI.",
-                         };
-        unshift(@{$REALMS}, $HOSTAUTH);
+            my $HOSTAUTH = { nikto_id => "700500",
+                             realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
+                             password => $array[0][1],
+                             id       => $array[0][0],
+                             message  => "Credentials provided via CLI.",
+                             };
+            unshift(@{$REALMS}, $HOSTAUTH);
         }
     }
     else {
-            $REALMS = init_db("db_realms");
+        $REALMS = init_db("db_realms");
     }
 }
 
@@ -118,22 +118,25 @@ sub nikto_auth {
     }
 
     $authtype = 'basic' if $authtype eq '';
-    my ($body)     = $response->{'whisker'}->{'data'};
-    my ($uri)      = $response->{'whisker'}->{'uri'};
-    my ($method)   = $response->{'whisker'}->{'method'} || "GET";
+    my ($body)   = $response->{'whisker'}->{'data'};
+    my ($uri)    = $response->{'whisker'}->{'uri'};
+    my ($method) = $response->{'whisker'}->{'method'} || "GET";
 
     unless (defined $response->{'www-authenticate'}) {
-        nprint("+ ERROR: No authentication header defined: $uri", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        nprint("+ ERROR: No authentication header defined: $uri",
+               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
-    nprint("+ $uri - Requires Authentication for realm '$realm'", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
+    nprint("+ $uri - Requires Authentication for realm '$realm'",
+           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
       if ($OUTPUT{'show_auth'} || $uri =~ /^$CLI{'root'}\/?$/);
 
     # Save to revert
     $save_auth = $response->{'www-authenticate'};
 
-    nprint("- : Testing credentials against '$realm'", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    nprint("- : Testing credentials against '$realm'",
+           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Now we have this we can try guessing the password
     foreach my $entry (@{$REALMS}) {
@@ -152,7 +155,14 @@ sub nikto_auth {
         $COUNTERS{'totalrequests'}++;
         dump_var("Auth Request",  $request);
         dump_var("Auth Response", $response);
-	    nprint("- Tested credentials: " . $entry->{'id'} . "/" . $entry->{'password'} . "- result: " . $response->{'whisker'}->{'code'} ,"v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        nprint("- Tested credentials: "
+                 . $entry->{'id'} . "/"
+                 . $entry->{'password'}
+                 . "- result: "
+                 . $response->{'whisker'}->{'code'},
+               "v",
+               ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+               );
 
         $mark->{'realms'}{$realm}{'status'}   = 0;
         $mark->{'realms'}{$realm}{'id'}       = $entry->{'id'};
@@ -160,9 +170,9 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
         #if ($response->{'www-authenticate'} eq '' && !defined $response->{'whisker'}->{'error'}) {
-        if ($response->{'whisker'}->{'code'} !~ /40[13]/ &&
-			$response->{'whisker'}->{'code'} ne "500" &&
-			!defined $response->{'whisker'}->{'error'}) {
+        if (   $response->{'whisker'}->{'code'} !~ /40[13]/
+            && $response->{'whisker'}->{'code'} ne "500"
+            && !defined $response->{'whisker'}->{'error'}) {
             unless ($entry->{'checked'} == 1) {
                 my $message;
                 my $ref;
@@ -173,15 +183,17 @@ sub nikto_auth {
                 elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
                     $message =
                       "Blank credentials found at $request{whisker}->{uri}, $entry->{'realm'}: $entry->{'msg'}.";
-                      $ref="CWE-16";
+                    $ref = "CWE-16";
                 }
                 else {
                     $message =
                       "Default account found for '$realm' at $request->{'whisker'}->{'uri'} (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
-                      $ref="CWE-16";
+                    $ref = "CWE-16";
                 }
 
-                add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET", $request{'whisker'}->{'uri'}, $request, $response);
+                add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
+                                  $request{'whisker'}->{'uri'},
+                                  $request, $response);
 
                 # Mark it successful
                 $entry->{'checked'}                 = 1;

@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -60,10 +60,10 @@ sub text_item {
         my $line = "+ ";
         if ($item->{method}) { $line .= $item->{method} . " " }
         if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) {
-           $line .= $mark->{'root'} . ${'uri'} . ": " 
+            $line .= $mark->{'root'} . ${'uri'} . ": ";
         }
         $line .= $item->{message};
-        if ($item->{refs} ne "")  { $line .= " See: " . $item->{refs} . ": " }
+        if ($item->{refs} ne "") { $line .= " See: " . $item->{refs} . ": " }
         print $handle "$line\n";
     }
 }

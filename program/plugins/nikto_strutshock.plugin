@@ -25,7 +25,7 @@ sub nikto_strutshock_init {
                description => "Look for the 'strutshock' vulnerability.",
                hooks       => { scan => { method => \&nikto_strutshock, weight => 20 }, },
                copyright   => "2017 Chris Sullo",
-             };
+               };
 
     return $id;
 }
@@ -34,12 +34,16 @@ sub nikto_strutshock {
     my ($mark, $parameters) = @_;
 
     my %headers;
-    $headers{'Content-Type'} = '%{#context[\'com.opensymphony.xwork2.dispatcher.HttpServletResponse\'].addHeader(\'Nikto-Added-CVE-2017-5638\',7*6)}.multipart/form-data';
+    $headers{'Content-Type'} =
+      '%{#context[\'com.opensymphony.xwork2.dispatcher.HttpServletResponse\'].addHeader(\'Nikto-Added-CVE-2017-5638\',7*6)}.multipart/form-data';
 
     for my $path (split(/ /, $VARIABLES{"\@STRUTSACTIONS"})) {
-        my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "strutshock");
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, $path, "GET", "", \%headers, "", "strutshock");
         if ($response->{'nikto-added-cve-2017-5638'} eq '42') {
-            add_vulnerability($mark, "$path: Site appears vulnerable to the 'strutshock' vulnerability.", 999950, "CVE-2017-5638", "GET", $path, $request, $response);
+            add_vulnerability($mark,
+                              "$path: Site appears vulnerable to the 'strutshock' vulnerability.",
+                              999950, "CVE-2017-5638", "GET", $path, $request, $response);
         }
     }
 }

@@ -71,6 +71,7 @@ sub nikto_sitefiles {
     }
 
     foreach my $f (keys %files) {
+
         # trickery to test with both host header and without
         foreach my $flag (0 .. 1) {
             return if $mark->{'terminate'};
@@ -84,15 +85,20 @@ sub nikto_sitefiles {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, "/$f", "GET", "", "", \%flags, "sitefiles");
 
-            if (($response->{'content-type'} =~ '/^application\//i') || 
-		(($res == 200) && 
-		($response->{'content-length'} > 0) && 
-		($response->{'content-type'} !~ '/^text\//i') &&
-                (!is_404("/$f", $content, $res, $response->{'location'})))
+            if (($response->{'content-type'} =~ '/^application\//i')
+                || (   ($res == 200)
+                    && ($response->{'content-length'} > 0)
+                    && ($response->{'content-type'} !~ '/^text\//i')
+                    && (!is_404("/$f", $content, $res, $response->{'location'})))
                     ) {
 
                 # alert
-                add_vulnerability($mark, "/$f: Potentially interesting backup/cert file found. $msg", 740001, "https://cwe.mitre.org/data/definitions/530.html", "HEAD", "/$f", $request, $response);
+                add_vulnerability(
+                              $mark,    "/$f: Potentially interesting backup/cert file found. $msg",
+                              740001,   "https://cwe.mitre.org/data/definitions/530.html",
+                              "HEAD",   "/$f",
+                              $request, $response
+                              );
                 last;
             }
         }

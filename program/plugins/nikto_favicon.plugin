@@ -43,27 +43,31 @@ sub nikto_favicon {
     return if $mark->{'terminate'};
 
     # Check /favicon.ico
-    foreach my $ext (split(/,/,"ico,gif,png")) {
-	foreach my $path (split/,/,",/favicons") {
-    		my ($res, $content, $error, $request, $response) = nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
+    foreach my $ext (split(/,/, "ico,gif,png")) {
+        foreach my $path (split /,/, ",/favicons") {
+            my ($res, $content, $error, $request, $response) =
+              nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
-    		if (($res eq "200") && ($content ne "")) {
-        		my $hash = LW2::md5($content);
-        		$hash =~ s/^.*://;
-        		nprint("Got /favicon.$ext hash:$hash", "d");
-        		favicon_matchhash($mark, $hash, $mark->{'root'} . "/favicon.$ext", $request, $response);
-    		}
-	}
-     }
+            if (($res eq "200") && ($content ne "")) {
+                my $hash = LW2::md5($content);
+                $hash =~ s/^.*://;
+                nprint("Got /favicon.$ext hash:$hash", "d");
+                favicon_matchhash($mark, $hash, $mark->{'root'} . "/favicon.$ext",
+                                  $request, $response);
+            }
+        }
+    }
 
     # Check for a <link> favicon
-    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "favicon");
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "GET", "", "", "", "favicon");
     if (($res eq "200") && ($content =~ /link\s[^<]+icon+[^>]+\.(ico|png|gif)/i)) {
         my %tags;
         $tags{'link'} = 1;
         LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);
-	foreach my $icon (keys %LINKICONS) {
-            ($res, $content, $error, $request, $response) = nfetch($mark, $icon, "GET", "", "", "", "favicon");
+        foreach my $icon (keys %LINKICONS) {
+            ($res, $content, $error, $request, $response) =
+              nfetch($mark, $icon, "GET", "", "", "", "favicon");
             if (($res eq "200") && ($content ne "")) {
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
@@ -80,7 +84,7 @@ sub favicon_checkhash {
         if ($e ne 'href') { next; }
         if ($v =~ /\.(ico|png|gif)$/) {
             my @url = LW2::uri_split($v);
-            $LINKICONS{$url[0]}=1;
+            $LINKICONS{ $url[0] } = 1;
         }
     }
     return;
@@ -91,7 +95,15 @@ sub favicon_matchhash {
     return if (($hash eq "") || ($icon eq ""));
     foreach my $item (@$FAVICONDB) {
         if ($item->{'md5hash'} eq $hash) {
-            add_vulnerability($mark, "$icon file identifies this app/server as: $item->{'description'}", $item->{'nikto_id'}, "https://en.wikipedia.org/wiki/Favicon", "GET", $icon, $request, $response);
+            add_vulnerability($mark,
+                              "$icon file identifies this app/server as: $item->{'description'}",
+                              $item->{'nikto_id'},
+                              "https://en.wikipedia.org/wiki/Favicon",
+                              "GET",
+                              $icon,
+                              $request,
+                              $response
+                              );
         }
     }
 }

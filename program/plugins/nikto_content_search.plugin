@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -47,9 +47,9 @@ sub nikto_content_search_load {
     %CSMATCHED     = ();
 
     # to try and speed it up - precompile the regular expressions
-     foreach my $testid (@$CONTENTSEARCH) {
-         $testid->{'compiled'} = qr/$testid->{'matchstring'}/;
-     }
+    foreach my $testid (@$CONTENTSEARCH) {
+        $testid->{'compiled'} = qr/$testid->{'matchstring'}/;
+    }
 }
 
 sub nikto_content_search {
@@ -61,10 +61,12 @@ sub nikto_content_search {
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
     foreach my $testid (@$CONTENTSEARCH) {
+
         # Check whether we've already matched it
         if (($CSMATCHED{ $mark->{'hostname'} }{$file} != 1) && ($body =~ $testid->{'compiled'})) {
             my $outmessage = "$file: $testid->{'message'}";
-            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'refs'}, $method, $file, $request, $response);
+            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'refs'},
+                              $method, $file, $request, $response);
             $CSMATCHED{ $mark->{'hostname'} }{$file} = 1;
         }
     }

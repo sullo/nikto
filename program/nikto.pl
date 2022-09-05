@@ -40,10 +40,10 @@ use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup
 Getopt::Long::Configure('no_ignore_case');
-$COUNTERS{'scan_start'}  = time();
-$VARIABLES{'DIV'}        = "-" x 75;
-$VARIABLES{'name'}       = "Nikto";
-$VARIABLES{'version'}    = "2.5.0";
+$COUNTERS{'scan_start'} = time();
+$VARIABLES{'DIV'}       = "-" x 75;
+$VARIABLES{'name'}      = "Nikto";
+$VARIABLES{'version'}   = "2.5.0";
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
@@ -93,15 +93,16 @@ report_head($CLI{'format'}, $CLI{'file'});
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
-    $mark->{'messages'} =  ();
-    $mark->{'test'} = 1;
+    $mark->{'messages'} = ();
+    $mark->{'test'}     = 1;
     $mark->{'failures'} = 0;
 
     # Try to resolve the host
     my $msgs;
-    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) = resolve($mark->{'ident'});
-    if ($msgs ne "") { 
-	    push(@{ $mark->{'messages'} }, $msgs);
+    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) =
+      resolve($mark->{'ident'});
+    if ($msgs ne "") {
+        push(@{ $mark->{'messages'} }, $msgs);
     }
 
     # Load db_tests
@@ -113,7 +114,7 @@ foreach my $mark (@MARKS) {
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
         $mark->{'errmsg'} = $msgs;
-        $mark->{'test'} = 0;
+        $mark->{'test'}   = 0;
         next;
     }
 
@@ -123,17 +124,18 @@ foreach my $mark (@MARKS) {
         foreach my $p (split(/;/, $CONFIGFILE{'STATIC-COOKIE'})) {
             if ($p =~ /"([^=]+)=(.+)"/) {
                 LW2::cookie_set(\%{ $mark->{'cookiejar'} }, $1, $2);
-                }
-       }
+            }
+        }
     }
 
     if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
 
-    # Check that the port is open. Return value is overloaded, either 1 for open or an error message to convey
+# Check that the port is open. Return value is overloaded, either 1 for open or an error message to convey
     my $open =
-      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'}, $CLI{'cert'}, $mark->{'vhost'});
+      port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'},
+                 $CLI{'cert'}, $mark->{'vhost'});
     if (($open != 1) && ($open != 2)) {
-        $mark->{'test'} = 0;
+        $mark->{'test'}   = 0;
         $mark->{'errmsg'} = $open;
         next;
     }
@@ -162,12 +164,12 @@ foreach my $mark (@MARKS) {
     }
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
-    $mark->{'start_time'} = time();
+    $mark->{'start_time'}   = time();
     $VARIABLES{'TEMPL_HCTR'}++;
 
     # Saving responses
     if ($CLI{'saveresults'} ne '') {
-        $mark->{'save_dir'} = save_createdir($CLI{'saveresults'}, $mark);
+        $mark->{'save_dir'}    = save_createdir($CLI{'saveresults'}, $mark);
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
 
@@ -178,7 +180,6 @@ foreach my $mark (@MARKS) {
     if ($mark->{'errmsg'} ne "") {
         add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
     }
-
 
     dump_target_info($mark);
     unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
@@ -202,8 +203,8 @@ foreach my $mark (@MARKS) {
             );
     }
     nprint(  "+ End Time:           "
-            . date_disp($mark->{'end_time'})
-            . " (GMT$VARIABLES{'GMTOFFSET'}) ($mark->{'elapsed'} seconds)");
+           . date_disp($mark->{'end_time'})
+           . " (GMT$VARIABLES{'GMTOFFSET'}) ($mark->{'elapsed'} seconds)");
     nprint($VARIABLES{'DIV'});
 
     $COUNTERS{'hosts_completed'}++;
@@ -250,17 +251,17 @@ sub config_init {
     }
 
     # Read the conf files in order (previous values are over-written with each, if multiple found)
-    push(@CF,"$NIKTODIR/nikto.conf.default");
-    push(@CF,"/etc/nikto.conf");
-    push(@CF,"$home/nikto.conf");
-    push(@CF,"$NIKTODIR/nikto.conf");
-    push(@CF,"nikto.conf");
-    push(@CF,"$VARIABLES{'configfile'}");
+    push(@CF, "$NIKTODIR/nikto.conf.default");
+    push(@CF, "/etc/nikto.conf");
+    push(@CF, "$home/nikto.conf");
+    push(@CF, "$NIKTODIR/nikto.conf");
+    push(@CF, "nikto.conf");
+    push(@CF, "$VARIABLES{'configfile'}");
 
     # load in order, over-writing values as we go
-    for (my $i=0;$i<=$#CF;$i++) {
+    for (my $i = 0 ; $i <= $#CF ; $i++) {
         my $error = load_config($CF[$i]);
-        $config_exists = 1 if ($error eq ""); # any loaded is good
+        $config_exists = 1 if ($error eq "");    # any loaded is good
     }
 
     # Couldn't find any
@@ -273,30 +274,31 @@ sub config_init {
 
 ###############################################################################
 sub load_modules {
-        my $errors=0;
-	my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
-	push(@modules,"List::Util qw(sum)");
-	push(@modules,"Cwd 'abs_path'");
-	foreach my $mod (@modules) { 
-		eval "use $mod";
-        	if ($@) { 
-			print "ERROR: Required module not found: $mod\n"; 
-			$errors=1; 
-		}
-	}
+    my $errors  = 0;
+    my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
+    push(@modules, "List::Util qw(sum)");
+    push(@modules, "Cwd 'abs_path'");
+    foreach my $mod (@modules) {
+        eval "use $mod";
+        if ($@) {
+            print "ERROR: Required module not found: $mod\n";
+            $errors = 1;
+        }
+    }
 
-	@modules = ();
-	push(@modules,"Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
-	push(@modules,"POSIX qw(:termios_h)");
-	foreach my $mod (@modules) { 
-		eval "use $mod";
-		if ($@ && $^O !~ /MSWin32/) {
-			# Allow this to work on Windows
-			if ($@) { print "ERROR: Required module not found: $mod\n"; $errors=1; }
-		}
-	}
+    @modules = ();
+    push(@modules, "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
+    push(@modules, "POSIX qw(:termios_h)");
+    foreach my $mod (@modules) {
+        eval "use $mod";
+        if ($@ && $^O !~ /MSWin32/) {
 
-	if ($errors) { exit 1; }
+            # Allow this to work on Windows
+            if ($@) { print "ERROR: Required module not found: $mod\n"; $errors = 1; }
+        }
+    }
+
+    if ($errors) { exit 1; }
 }
 
 #################################################################################

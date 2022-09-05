@@ -25,7 +25,7 @@ sub nikto_shellshock_init {
                description => "Look for the bash 'shellshock' vulnerability.",
                hooks       => { scan => { method => \&nikto_shellshock, weight => 20 }, },
                copyright   => "2014 Chris Sullo",
-               options => { uri => "uri to assess", },
+               options     => { uri => "uri to assess", },
                };
 
     return $id;
@@ -35,36 +35,57 @@ sub nikto_shellshock {
     my ($mark, $parameters) = @_;
     my ($found, @names,);
 
-
     # This would be better coming from live scan results and not db_variables
     my @files = split(/ /, $VARIABLES{"\@SHELLSHOCK"});
 
     push(@files, "");
     my %headers;
     $headers{'User-Agent'} = '() { :; }; echo 93e4r0-CVE-2014-6271: true;echo;echo;';
-    $headers{'Referer'} = '() { _; } >_[$($())] { echo 93e4r0-CVE-2014-6278: true; echo;echo; }';
+    $headers{'Referer'}    = '() { _; } >_[$($())] { echo 93e4r0-CVE-2014-6278: true; echo;echo; }';
     my @dirs = split(/ /, $VARIABLES{'@CGIDIRS'});
     push(@dirs, "/");
 
     #check for FP... error in page
-    my $checkcontent=1;
-    my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", \%headers, "", "shellshock");
+    my $checkcontent = 1;
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "GET", "", \%headers, "", "shellshock");
     if ($content =~ /93e4r0-CVE/) {
-	$checkcontent=0;
-	nprint("Content seems to contain error headers, ignoring content match in shellshock plugin","v");
-	}
+        $checkcontent = 0;
+        nprint(
+              "Content seems to contain error headers, ignoring content match in shellshock plugin",
+              "v");
+    }
 
     if (defined $parameters->{'uri'}) {
 
         # request by hostname
-        my ($res, $content, $error, $request, $response) = nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-        if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
-            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).", 999949, "CVE-2014-6271", "GET",
-                "$parameters->{'uri'}", $request, $response);
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
+        if (   ($response->{'93e4r0-CVE-2014-6271'} eq 'true')
+            || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+            add_vulnerability(
+                $mark,
+                "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).",
+                999949,
+                "CVE-2014-6271",
+                "GET",
+                "$parameters->{'uri'}",
+                $request,
+                $response
+                );
         }
-        if (($response->{'93e4r0-CVE-2014-6278'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
-            add_vulnerability( $mark, "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.", 999948, "CVE-2014-6278", "GET",
-                "$parameters->{'uri'}", $request, $response);
+        if (   ($response->{'93e4r0-CVE-2014-6278'} eq 'true')
+            || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+            add_vulnerability(
+                 $mark,
+                 "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.",
+                 999948,
+                 "CVE-2014-6278",
+                 "GET",
+                 "$parameters->{'uri'}",
+                 $request,
+                 $response
+                 );
         }
     }
     else {
@@ -73,14 +94,33 @@ sub nikto_shellshock {
                 return if $mark->{'terminate'};
 
                 # request by hostname
-                my ($res, $content, $error, $request, $response) = nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
-                if (($response->{'93e4r0-CVE-2014-6271'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
-                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999947, "CVE-2014-6271", "GET",
-                        "$cgidir$file", $request, $response);
+                my ($res, $content, $error, $request, $response) =
+                  nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
+                if (   ($response->{'93e4r0-CVE-2014-6271'} eq 'true')
+                    || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+                    add_vulnerability(
+                         $mark,
+                         "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
+                         999947,
+                         "CVE-2014-6271",
+                         "GET",
+                         "$cgidir$file",
+                         $request,
+                         $response
+                         );
                 }
-                if (($response->{'93e4r0-CVE-2014-6278'} eq 'true') || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
-                    add_vulnerability( $mark, "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.", 999946, "CVE-2014-6278", "GET",
-                        "$cgidir$file", $request, $response);
+                if (   ($response->{'93e4r0-CVE-2014-6278'} eq 'true')
+                    || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+                    add_vulnerability(
+                         $mark,
+                         "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
+                         999946,
+                         "CVE-2014-6278",
+                         "GET",
+                         "$cgidir$file",
+                         $request,
+                         $response
+                         );
                 }
             }
         }

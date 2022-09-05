@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -33,42 +33,46 @@ sub nikto_ssl {
     my ($mark) = @_;
 
     if ($mark->{ssl}) {
-    	my @names;
-	my $match=0;
+        my @names;
+        my $match = 0;
         $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/;
-	push(@names, $1);
-	if ($mark->{'ssl_cert_altnames'} ne '') { 
-		foreach my $n (split(/, /,$mark->{'ssl_cert_altnames'})) { 
-			push(@names, $n);
-			}
-		}
-	@names = unique_vals(@names);
-	my $allnames = join(", ", @names);
+        push(@names, $1);
+        if ($mark->{'ssl_cert_altnames'} ne '') {
+            foreach my $n (split(/, /, $mark->{'ssl_cert_altnames'})) {
+                push(@names, $n);
+            }
+        }
+        @names = unique_vals(@names);
+        my $allnames = join(", ", @names);
 
-	foreach my $cert_name (@names) { 
-		# straight up match
-		if (lc($mark->{'hostname'}) eq lc($cert_name)) { $match = 1; }
+        foreach my $cert_name (@names) {
 
-		# wildcard cert
-		elsif ($cert_name =~ /^\*/) { 
-			add_vulnerability($mark, "Server is using a wildcard certificate: $cert_name", 999992, "https://en.wikipedia.org/wiki/Wildcard_certificate");
-			$cert_name =~ s/^\*\.//;
-			$cert_name = rquote($cert_name);
+            # straight up match
+            if (lc($mark->{'hostname'}) eq lc($cert_name)) { $match = 1; }
 
-			# must match leading dot
-			# only one level of subdomain allowed
-			if ($mark->{'hostname'} =~ /^(.*)\.?$cert_name/i) {
-				my $matched = $1;
-				my $tldcount = ($matched =~ tr/\.//);
-				if ($tldcount <= 1) { $match = 1; }
-				}
-			}
-		last if $match;
-		}
-		
-		if (!$match) { 
-			add_vulnerability($mark, "Hostname '$mark->{'hostname'}' does not match certificate's names: $allnames", 999993, "https://cwe.mitre.org/data/definitions/297.html");
-			}
+            # wildcard cert
+            elsif ($cert_name =~ /^\*/) {
+                add_vulnerability($mark,  "Server is using a wildcard certificate: $cert_name",
+                                  999992, "https://en.wikipedia.org/wiki/Wildcard_certificate");
+                $cert_name =~ s/^\*\.//;
+                $cert_name = rquote($cert_name);
+
+                # must match leading dot
+                # only one level of subdomain allowed
+                if ($mark->{'hostname'} =~ /^(.*)\.?$cert_name/i) {
+                    my $matched  = $1;
+                    my $tldcount = ($matched =~ tr/\.//);
+                    if ($tldcount <= 1) { $match = 1; }
+                }
+            }
+            last if $match;
+        }
+
+        if (!$match) {
+            add_vulnerability($mark,
+                     "Hostname '$mark->{'hostname'}' does not match certificate's names: $allnames",
+                     999993, "https://cwe.mitre.org/data/definitions/297.html");
+        }
     }
 }
 

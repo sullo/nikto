@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -25,10 +25,8 @@ sub nikto_negotiate_init {
                author      => "Sullo",
                description => "Checks the mod_negotiation MultiViews.",
                copyright   => "2013 Chris Sullo",
-               hooks       => {
-                          scan  => { method => \&nikto_negotiate, },
-                          },
-                 };
+               hooks       => { scan => { method => \&nikto_negotiate, }, },
+               };
     return $id;
 }
 
@@ -37,18 +35,29 @@ sub nikto_negotiate {
     my ($mark) = @_;
     my %headers = ('Accept', 'application/whatever; q=1.0');
 
-    my ($res, $content, $error, $request, $response) = nfetch($mark, "/index", "GET", "", \%headers, "", "negotiate");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/index", "GET", "", \%headers, "", "negotiate");
 
-    if ($response->{'alternates'} =~ /\{\"/)  {
-	my $message = "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: ";
-	my @alts = split(/,/, $response->{'alternates'});
-	foreach my $h (@alts) { 
-		$h =~ /\s?\{"([^"]+)"/;
-		$message .= $1 .", ";
-		}
-	$message =~ s/, $//;
-		
-        add_vulnerability($mark, $message, 999965, "http://www.wisec.it/sectou.php?id=4698ebdc59d15,https://exchange.xforce.ibmcloud.com/vulnerabilities/8275", GET, "/index", $request, $response);
+    if ($response->{'alternates'} =~ /\{\"/) {
+        my $message =
+          "Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: ";
+        my @alts = split(/,/, $response->{'alternates'});
+        foreach my $h (@alts) {
+            $h =~ /\s?\{"([^"]+)"/;
+            $message .= $1 . ", ";
+        }
+        $message =~ s/, $//;
+
+        add_vulnerability(
+            $mark,
+            $message,
+            999965,
+            "http://www.wisec.it/sectou.php?id=4698ebdc59d15,https://exchange.xforce.ibmcloud.com/vulnerabilities/8275",
+            GET,
+            "/index",
+            $request,
+            $response
+            );
     }
 
 }

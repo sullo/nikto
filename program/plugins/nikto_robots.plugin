@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -20,9 +20,9 @@
 ###############################################################################
 sub nikto_robots_init {
     my $id = {
-        name      => "robots",
-        full_name => "Robots",
-        author    => "Sullo",
+        name        => "robots",
+        full_name   => "Robots",
+        author      => "Sullo",
         description =>
           "Checks whether there's anything within the robots.txt file and analyses it for other paths to pass to other scripts.",
         hooks => { recon => { method => \&nikto_robots,
@@ -30,9 +30,7 @@ sub nikto_robots_init {
                               },
                      },
         copyright => "2008 Chris Sullo",
-		options     => {
-					 nocheck => "Flag to disable checking entries in robots file.",
-					 }		
+        options   => { nocheck => "Flag to disable checking entries in robots file.", }
         };
     return $id;
 }
@@ -40,29 +38,31 @@ sub nikto_robots_init {
 sub nikto_robots {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my ($code, $content, $errors, $request, $response) = nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
-    my $onlyroot=1;
-	
+    my ($code, $content, $errors, $request, $response) =
+      nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
+    my $onlyroot = 1;
+
     if (($code eq 200) || ($code eq $FoF{'okay'}{'response'})) {
         if (is_404("robots.txt", $content, $code, $response->{'location'})) { return; }
 
         my ($DIRS, $RFILES) = "";
         my $DISCTR = 0;
-        my @DOC = split(/\n/, $content);
+        my @DOC    = split(/\n/, $content);
         my $tocheck;
         foreach my $line (@DOC) {
             $line =~ s/(?:^\s+|\s+$)//g;
             $line = quotemeta($line);
             if ($line =~ /allow/i) {
                 chomp($line);
-				# Report if Allow
-				if ($line =~ /^allow/i) { $onlyroot = 0; }
+
+                # Report if Allow
+                if ($line =~ /^allow/i) { $onlyroot = 0; }
                 $line =~ s/\#.*$//;
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
                 $line =~ s/(?:dis)?allow(?:\\:)?(?:\\\s+)?//i;
                 $line =~ s/\/+/\//g;
-		$line =~ s/\\//g;
+                $line =~ s/\\//g;
 
                 if ($line eq "") { next; }
 
@@ -76,36 +76,51 @@ sub nikto_robots {
                 my $realfile = validate_and_fix_regex($line);
                 $realfile =~ s/^$realdir//;
 
-                nprint("- robots.txt entry dir:$realdir -- file:$realfile", "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-                if (($realdir  ne "") && ($realdir  ne "/")) { $DIRS{$realdir}++; }
+                nprint("- robots.txt entry dir:$realdir -- file:$realfile",
+                       "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                if (($realdir ne "")  && ($realdir ne "/"))  { $DIRS{$realdir}++; }
                 if (($realfile ne "") && ($realfile ne "/")) { $RFILES{$realfile}++; }
                 $DISCTR++;
 
-				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0; }
-				if (($realdir  ne "") && ($realdir  ne "/")) { $onlyroot = 0;}				
-				next if (($realdir eq "/" && $realfile eq "") ||
-				         ($realfile eq "/" && $realdir eq ""));
-                $tocheck{$line}=1;
+                if (($realdir ne "") && ($realdir ne "/")) { $onlyroot = 0; }
+                if (($realdir ne "") && ($realdir ne "/")) { $onlyroot = 0; }
+                next
+                  if (   ($realdir eq "/" && $realfile eq "")
+                      || ($realfile eq "/" && $realdir eq ""));
+                $tocheck{$line} = 1;
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
 
         # Check for allowed paths
         foreach my $line (keys %tocheck) {
             return if $mark->{'terminate'};
-        	if (!defined($parameters->{'nocheck'})) {
-				my ($res, $content, $error, $request, $response) = nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
-				if (!is_404($line, $content, $res, $response->{'location'}) && ($res ne "403") && ($res ne "301") && ($res ne "302")) {
-						add_vulnerability($mark, "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)", 999997, "https://portswigger.net/kb/issues/00600600_robots-txt-file", "GET", "/$line", $request, $response);
-				}
-			}
+            if (!defined($parameters->{'nocheck'})) {
+                my ($res, $content, $error, $request, $response) =
+                  nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
+                if (   !is_404($line, $content, $res, $response->{'location'})
+                    && ($res ne "403")
+                    && ($res ne "301")
+                    && ($res ne "302")) {
+                    add_vulnerability(
+                        $mark,
+                        "Entry '$line' in robots.txt returned a non-forbidden or redirect HTTP code ($res)",
+                        999997,
+                        "https://portswigger.net/kb/issues/00600600_robots-txt-file",
+                        "GET",
+                        "/$line",
+                        $request,
+                        $response
+                        );
+                }
+            }
         }
 
         # add them  to mutate dir/file
         foreach my $dir (sort keys %DIRS) {
-	    my $raw  = $dir;
+            my $raw = $dir;
             $raw =~ s/\\//g;
-	    $dir = validate_and_fix_regex($dir);
-            
+            $dir = validate_and_fix_regex($dir);
+
             # Add to variables
             if ($dir =~ /cgi/i && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
                 $VARIABLES{"\@CGIDIRS"} .= " $raw";
@@ -118,26 +133,26 @@ sub nikto_robots {
             }
             if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
                 $VARIABLES{"\@NUKE"} .= " $raw";
-            }           
-        	if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
+            }
+            if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
                 $VARIABLES{"\@ADMIN"} .= " $raw";
-            }              
+            }
             if ($dir =~ /phpmy/i && $VARIABLES{"\@PHPMYADMIN"} !~ /$dir/i) {
                 $VARIABLES{"\@PHPMYADMIN"} .= " $raw";
-            } 
+            }
             if ($dir =~ /fck/i && $VARIABLES{"\@FCKEDITOR"} !~ /$dir/i) {
                 $VARIABLES{"\@FCKEDITOR"} .= " $raw";
-            } 
+            }
             if ($dir =~ /crystal/i && $VARIABLES{"\@CRYSTALREPORTS"} !~ /$dir/i) {
                 $VARIABLES{"\@CRYSTALREPORTS"} .= " $raw";
-            } 
+            }
         }
 
         foreach my $file (sort keys %RFILES) {
             my $raw = $file;
             $raw =~ s/\\//g;
-	    $file = validate_and_fix_regex($file);
-            
+            $file = validate_and_fix_regex($file);
+
             # Add to variables
             if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
                 $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
@@ -145,13 +160,15 @@ sub nikto_robots {
         }
 
         my $msg;
-        if ($DISCTR eq 1) { $msg = "contains $DISCTR entry which should be manually viewed."; }
-        elsif ($DISCTR > 1) { $msg = "contains $DISCTR entries which should be manually viewed."; }
+        if    ($DISCTR eq 1) { $msg = "contains $DISCTR entry which should be manually viewed."; }
+        elsif ($DISCTR > 1)  { $msg = "contains $DISCTR entries which should be manually viewed."; }
         else { $msg = "retrieved but it does not contain any 'disallow' entries (which is odd)."; }
 
-		if ($onlyroot eq 0) {
-			add_vulnerability($mark, "\"robots.txt\" $msg", 999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt", "GET", "/robots.txt", $request, $response);
-		}
+        if ($onlyroot eq 0) {
+            add_vulnerability($mark, "\"robots.txt\" $msg",
+                             999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
+                             "GET",  "/robots.txt", $request, $response);
+        }
     }
 }
 

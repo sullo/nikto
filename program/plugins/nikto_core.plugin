@@ -52,7 +52,7 @@ sub change_variables {
 
 ###############################################################################
 sub unslash {
-    my $line = $_[0] || return;    # $line is the slash-escaped variable
+    my $line = $_[0] || return;        # $line is the slash-escaped variable
     my @line = split(/\\\\/, $line);
     foreach (@line) {
         $_ =~ s/\\a/\a/g;
@@ -72,7 +72,8 @@ sub is_404 {
     my ($uri, $content, $rescode, $loc_header) = @_;
     $ext = get_ext($uri);
 
-    if ((($FoF{$ext}{'mode'} eq "STD") || ($FoF{$ext}{'mode'} eq '')) && ($rescode =~ /4[0-9][0-9]/)) {
+    if (   (($FoF{$ext}{'mode'} eq "STD") || ($FoF{$ext}{'mode'} eq ''))
+        && ($rescode =~ /4[0-9][0-9]/)) {
         return 1;
     }
     elsif ($FoF{$ext}{'mode'} eq "REDIR") {
@@ -103,6 +104,7 @@ sub is_404 {
 
 ###############################################################################
 sub scrub {
+
     # line to scrub
     my $line = shift;
 
@@ -132,8 +134,8 @@ sub scrub {
 
 ###############################################################################
 sub nprint {
-    my $line   = shift; #$_[0];
-    my $mode   = shift; #$_[1];
+    my $line = shift;    #$_[0];
+    my $mode = shift;    #$_[1];
     chomp($line);
 
     # scrub values
@@ -161,10 +163,12 @@ sub nprint {
     # don't print to STDOUT if output file is "-"
     if ((defined $CLI{'file'}) && ($CLI{'file'} eq "-")) { return; }
 
-    $line =~ s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
+    $line =~
+      s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
     $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/http:\/\/www.cert.org\/advisories\/$1.html/g;
     $line =~ s/BID\-([0-9]{4})/http:\/\/www.securityfocus.com\/bid\/$1/g;
-    $line =~ s/(MS([0-9]{2})\-[0-9]{3})/https\:\/\/docs\.microsoft\.com\/en-us\/security-updates\/securitybulletins\/20$2\/$1/gi;
+    $line =~
+      s/(MS([0-9]{2})\-[0-9]{3})/https\:\/\/docs\.microsoft\.com\/en-us\/security-updates\/securitybulletins\/20$2\/$1/gi;
 
     print $line . "\n";
 
@@ -191,9 +195,9 @@ sub status_report {
     my $line;
 
     # without this we could face a div by 0 error
-    if ($COUNTERS{'totalrequests'} eq 0 ||
-        $COUNTERS{'total_checks'} eq 0 ||
-        $COUNTERS{'total_targets'} eq 0) {
+    if (   $COUNTERS{'totalrequests'} eq 0
+        || $COUNTERS{'total_checks'} eq 0
+        || $COUNTERS{'total_targets'} eq 0) {
         nprint("- STATUS: Starting up!");
         return;
     }
@@ -213,20 +217,20 @@ sub status_report {
     else { $timeleft = sprintf("%.0f seconds", $secleft); }
 
     my $perc_compl =
-        ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
+      ($COUNTERS{'totalrequests'} / ($COUNTERS{'total_checks'} * $COUNTERS{'total_targets'}) * 100);
 
     $line = "- STATUS: Completed $COUNTERS{'totalrequests'} requests";
     if ($COUNTERS{'total_targets'} > 1) {
-    	$line .= " (target " . ($COUNTERS{'hosts_completed'} + 1) . "/$COUNTERS{'total_targets'})";
-	}
+        $line .= " (target " . ($COUNTERS{'hosts_completed'} + 1) . "/$COUNTERS{'total_targets'})";
+    }
 
     if (($perc_compl < 100) && ($secleft > 0)) {
-	$line .= sprintf(" (~%.0f%% complete, $timeleft left)", $perc_compl);
-	}
+        $line .= sprintf(" (~%.0f%% complete, $timeleft left)", $perc_compl);
+    }
 
     if ($NIKTO{'current_plugin'} ne '') {
-	$line .= ": currently in plugin '$NIKTO{'current_plugin'}'";
- 	}
+        $line .= ": currently in plugin '$NIKTO{'current_plugin'}'";
+    }
 
     nprint($line);
     nprint("- STATUS: " . running_average_print($mark));
@@ -260,35 +264,40 @@ sub map_codes {
     my ($mark) = @_;
     my %REQS;
     my $rs = LW2::utils_randstr(8);
-    
+
     # / for OK response
-    my ($res, $content, $error, $request, $response) = nfetch($mark, "/", "GET", "", "", "", "map_codes");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "GET", "", "", "", "map_codes");
 
     if ($response->{'location'} ne '') {
-	my $root = "/";
-	if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
-        nprint("+ Root page $root redirects to: $response->{'location'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        my $root = "/";
+        if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
+        nprint("+ Root page $root redirects to: $response->{'location'}",
+               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         if ($response->{'location'} ne '/') {
-            if (($response->{'location'} =~ /^\//) || 
-                ($response->{'location'} =~ /^https?\:\/\/(?:$mark->{'hostname'}|$mark->{'ip'}|$mark->{'displayname'})/i))
-            {
-                my @uriparts = LW2::uri_split($response->{'location'});
+            if (($response->{'location'} =~ /^\//)
+                || ($response->{'location'} =~
+                    /^https?\:\/\/(?:$mark->{'hostname'}|$mark->{'ip'}|$mark->{'displayname'})/i)
+                    ) {
+                my @uriparts  = LW2::uri_split($response->{'location'});
                 my @pathparts = split('/', $uriparts[0]);
-                for (my $i=scalar(@pathparts)-1;$i>=1; $i--) {
+                for (my $i = scalar(@pathparts) - 1 ; $i >= 1 ; $i--) {
                     $uriparts[0] =~ s/$pathparts[$i]//;
                     $uriparts[0] =~ s/\/\//\//;
                     next if ($path eq '/');
-                    my ($res, $content, $error, $request, $response) = nfetch($mark, $uriparts[0], "GET", "", "", "", "Redirect Follow");
-                    }
+                    my ($res, $content, $error, $request, $response) =
+                      nfetch($mark, $uriparts[0], "GET", "", "", "", "Redirect Follow");
                 }
+            }
         }
 
         if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
         {
-            ($res, $content, $error, $request, $response) = nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");
+            ($res, $content, $error, $request, $response) =
+              nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");
         }
-        else    # different host... just guess?
+        else                                                       # different host... just guess?
         {
             $FoF{'okay'}{'response'} = 200;
             $FoF{'okay'}{'type'}     = "STD";
@@ -310,13 +319,13 @@ sub map_codes {
         $db_extensions{'lst'}  = 1;
         $db_extensions{'htx'}  = 1;
         $db_extensions{'htm'}  = 1;
-        $db_extensions{'html'}  = 1;
+        $db_extensions{'html'} = 1;
         $db_extensions{'ini'}  = 1;
         $db_extensions{'lst'}  = 1;
         $db_extensions{'txt'}  = 1;
         $db_extensions{'xml'}  = 1;
         $db_extensions{'php'}  = 1;
-        $db_extensions{'php3'}  = 1;
+        $db_extensions{'php3'} = 1;
     }
 
     foreach my $ext (keys %db_extensions) {
@@ -335,8 +344,10 @@ sub map_codes {
 
     foreach my $file (keys %REQS) {
         return if $mark->{'terminate'};
-        nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n", "v", $mark->{'hostname'}, ($mark->{'ip'}, $mark->{'displayname'}));
-        ($res, $content, $error, $request, $response) = nfetch($mark, $file, "GET", "", "", "", "map_codes");
+        nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n",
+               "v", $mark->{'hostname'}, ($mark->{'ip'}, $mark->{'displayname'}));
+        ($res, $content, $error, $request, $response) =
+          nfetch($mark, $file, "GET", "", "", "", "map_codes");
 
         $ext = $REQS{$file};
         $FoF{$ext}{'response'} = $res;
@@ -347,11 +358,11 @@ sub map_codes {
         }
 
         # if it is not specific type, figure out Content or HASH method...
-        if ($FoF{$ext}{'response'} eq 404) { $FoF{$ext}{'mode'} = "STD"; next; }
+        if    ($FoF{$ext}{'response'} eq 404) { $FoF{$ext}{'mode'} = "STD"; next; }
         elsif ($FoF{$ext}{'response'} eq 200) { $FoF{$ext}{'mode'} = "OK"; }
-        elsif ($FoF{$ext}{'response'} eq 410) { $FoF{$ext}{'mode'} = "STD"; next; }
-        elsif ($FoF{$ext}{'response'} eq 401) { $FoF{$ext}{'mode'} = "STD"; next; }
-        elsif ($FoF{$ext}{'response'} eq 403) { $FoF{$ext}{'mode'} = "STD"; next; }
+        elsif ($FoF{$ext}{'response'} eq 410) { $FoF{$ext}{'mode'} = "STD";   next; }
+        elsif ($FoF{$ext}{'response'} eq 401) { $FoF{$ext}{'mode'} = "STD";   next; }
+        elsif ($FoF{$ext}{'response'} eq 403) { $FoF{$ext}{'mode'} = "STD";   next; }
         elsif ($FoF{$ext}{'response'} eq 300) { $FoF{$ext}{'mode'} = "REDIR"; next; }
         elsif ($FoF{$ext}{'response'} eq 301) { $FoF{$ext}{'mode'} = "REDIR"; next; }
         elsif ($FoF{$ext}{'response'} eq 302) { $FoF{$ext}{'mode'} = "REDIR"; next; }
@@ -456,7 +467,8 @@ sub dump_target_info {
 
         $sslprint = "$VARIABLES{'DIV'}\n";
         $sslprint .= "+ SSL Info:        Subject:  $mark->{'ssl_cert_subject'}\n";
-        $sslprint .= "                   Altnames: $mark->{'ssl_cert_altnames'}\n" if $mark->{'ssl_cert_altnames'} ne '';
+        $sslprint .= "                   Altnames: $mark->{'ssl_cert_altnames'}\n"
+          if $mark->{'ssl_cert_altnames'} ne '';
         $sslprint .= "                   Ciphers:  $mark->{'ssl_cipher'}\n";
         $sslprint .= "                   Issuer:   $mark->{'ssl_cert_issuer'}";
     }
@@ -467,22 +479,27 @@ sub dump_target_info {
         }
         else {
             nprint("+ Target IP:          (proxied)", "", ($mark->{'ip'}));
-            }
+        }
 
-        nprint("+ Target Hostname:    $mark->{hostname}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        nprint("+ Target Hostname:    $mark->{hostname}",
+               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         nprint("+ Target Port:        $mark->{port}");
         if (defined $CLI{'root'}) {
-            nprint("+ Target Path:        $CLI{'root'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint("+ Target Path:        $CLI{'root'}",
+                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ((defined $CLI{'vhost'}) && ($CLI{'vhost'} ne $mark->{hostname})) {
-            nprint("+ Virtual Host:       $CLI{'vhost'}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint("+ Virtual Host:       $CLI{'vhost'}",
+                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ($request{'whisker'}->{'proxy_host'} ne '') {
             nprint(
                 "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}",
-                "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                "",
+                ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+                );
         }
 
         if ($mark->{ssl}) {
@@ -504,12 +521,13 @@ sub dump_target_info {
             }
         }
 
-	if (defined $mark->{'messages'}) {
-		my @msgs = @{ $mark->{'messages'} };
-		foreach my $m (@msgs) {
-        		nprint("+ Message:            $m", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-		}
-	}
+        if (defined $mark->{'messages'}) {
+            my @msgs = @{ $mark->{'messages'} };
+            foreach my $m (@msgs) {
+                nprint("+ Message:            $m",
+                       "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            }
+        }
 
         my $time = date_disp($mark->{start_time});
         nprint("+ Start Time:         $time (GMT$VARIABLES{'GMTOFFSET'})");
@@ -517,7 +535,8 @@ sub dump_target_info {
     }
 
     if ($mark->{banner} ne "") {
-        nprint("+ Server: $mark->{banner}", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        nprint("+ Server: $mark->{banner}",
+               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
     else {
         nprint("+ Server: No banner retrieved");
@@ -530,6 +549,7 @@ sub dump_target_info {
 sub general_config {
     ## gotta set these first
     $| = 1;
+
     # internal array, this should never be used outside this sub
     my @options;
 
@@ -549,9 +569,12 @@ sub general_config {
     $NIKTO{'mutate_opts'}{'1'} = "Test all files with all root directories";
     $NIKTO{'mutate_opts'}{'2'} = "Guess for password file names";
     $NIKTO{'mutate_opts'}{'3'} = "Enumerate user names via Apache (/~user type requests)";
-    $NIKTO{'mutate_opts'}{'4'} = "Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)";
-    $NIKTO{'mutate_opts'}{'5'} = "Attempt to brute force sub-domain names, assume that the host name is the parent domain";
-    $NIKTO{'mutate_opts'}{'6'} = "Attempt to guess directory names from the supplied dictionary file";
+    $NIKTO{'mutate_opts'}{'4'} =
+      "Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)";
+    $NIKTO{'mutate_opts'}{'5'} =
+      "Attempt to brute force sub-domain names, assume that the host name is the parent domain";
+    $NIKTO{'mutate_opts'}{'6'} =
+      "Attempt to guess directory names from the supplied dictionary file";
 
     ### CLI STUFF
     $CLI{'pause'} = $CLI{'html'} = $OUTPUT{'verbose'} = $CLI{'skiplookup'} =
@@ -604,23 +627,25 @@ sub general_config {
                "404code=s"        => \$CLI{'404code'},
                "ipv6"             => \$CLI{'ipv6'},
                "ipv4"             => \$CLI{'ipv4'},
-               ) or usage();
+               )
+      or usage();
 
     # Run a test for IPv6 connectivity
     if ($CLI{'check6'}) {
         check_ipv6();
     }
+
     # both -host and -url
     if (($CLI{'host'} ne '') && ($CLI{'url'} ne '')) {
         nprint("+ ERROR: Cannot use -url and -host at the same time");
         exit 1;
-	}
+    }
 
     # -ipv4 and -ipv6 validations
     if ($CLI{'ipv4'} && $CLI{'ipv6'}) {
         nprint("+ ERROR: Cannot use -ipv4 and -ipv6 at the same time");
         exit 1;
-	}
+    }
     if ($CLI{'ipv6'}) {
         $CLI{'ipv4'} = 0;
     }
@@ -632,15 +657,15 @@ sub general_config {
     if ($CLI{'404string'} ne '') {
         my $s = validate_and_fix_regex($CLI{'404string'});
         $VARIABLES->{'ERRSTRINGS'}->{$s} = 1;
-        }
+    }
 
     # 404code
     if ($CLI{'404code'} ne '') {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
             if ($code =~ /[^\d]/) {
-                 nprint("+ ERROR: Invalid 404code, must be an integer");
-                 exit 1;
-                 }
+                nprint("+ ERROR: Invalid 404code, must be an integer");
+                exit 1;
+            }
             $VARIABLES->{'ERRCODES'}->{$code} = 1;
         }
     }
@@ -702,13 +727,13 @@ sub general_config {
     }
 
     if ($CLI{'useragent'}) {
-        push(@options,"USERAGENT=" . $CLI{'useragent'});
+        push(@options, "USERAGENT=" . $CLI{'useragent'});
     }
 
     # options allows overriding of nikto.conf entries on command line
     foreach my $option (@options) {
-        my @optione=split("=", $option, 2);
-        $CONFIGFILE{$optione[0]}=$optione[1];
+        my @optione = split("=", $option, 2);
+        $CONFIGFILE{ $optione[0] } = $optione[1];
     }
 
     # Userdb type: blank is db_tests only, so 'all' is only valid option
@@ -728,10 +753,10 @@ sub general_config {
     }
     elsif (defined($CLI{'useproxy'})) { $CLI{'useproxy'} = 1; }
     else {
-      undef $CONFIGFILE{'PROXYHOST'};
-      undef $CONFIGFILE{'PROXYPORT'};
-      undef $CONFIGFILE{'PROXYUSER'};
-      undef $CONFIGFILE{'PROXYPASS'};
+        undef $CONFIGFILE{'PROXYHOST'};
+        undef $CONFIGFILE{'PROXYPORT'};
+        undef $CONFIGFILE{'PROXYUSER'};
+        undef $CONFIGFILE{'PROXYPASS'};
     }
 
     # Save Results
@@ -759,9 +784,9 @@ sub general_config {
 
     # auto-generate file name
     if (($CLI{'file'} eq '.') && ($CLI{'format'} eq '')) {
-            nprint("+ ERROR: Output format must be used with auto file naming");
-            exit 1;
-        }
+        nprint("+ ERROR: Output format must be used with auto file naming");
+        exit 1;
+    }
 
     if ($CLI{'file'} eq '.') {
 
@@ -791,7 +816,8 @@ sub general_config {
                 }
             }
         }
-        nprint("- Auto-generated save file: $CLI{'file'}", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        nprint("- Auto-generated save file: $CLI{'file'}",
+               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 
     # output file
@@ -805,14 +831,14 @@ sub general_config {
         }
     }
 
-    $CLI{'format'}=lc($CLI{'format'});
-    $CLI{'format'}='txt' if $CLI{'format'} eq 'text';
-    $CLI{'format'}='htm' if $CLI{'format'} eq 'html';
+    $CLI{'format'} = lc($CLI{'format'});
+    $CLI{'format'} = 'txt' if $CLI{'format'} eq 'text';
+    $CLI{'format'} = 'htm' if $CLI{'format'} eq 'html';
 
     if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) {
         nprint("+ ERROR: Invalid output format");
         exit 1;
-	}
+    }
 
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
         nprint("+ERROR: Output file specified without a format");
@@ -916,7 +942,7 @@ sub general_config {
         if ($CLI{'ssl'}) {
             nprint("- ERROR: -ssl was specified but TLS/SSL is not available.");
             exit;
-            }
+        }
     }
 
     # get core version
@@ -928,18 +954,19 @@ sub general_config {
     $VARIABLES{'core_version'} =~ s/\#VERSION,//;
     chomp($VARIABLES{'core_version'});
     $VARIABLES{'TEMPL_HCTR'} = 0;
-	if ($^O !~ /MSWin32/) {
-		$NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
-		$NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
-		$NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
-		$NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
-		$NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
-		$NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
-	}
+
+    if ($^O !~ /MSWin32/) {
+        $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
+        $NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
+        $NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
+        $NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
+        $NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
+        $NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
+    }
 
     if ($CLI{'pause'} > 0) {
         nprint("-***** Pausing $CLI{'pause'} second(s) per request");
-    	}
+    }
 
     # Default values
     $COUNTERS{'totalrequests'} = 0;
@@ -985,7 +1012,7 @@ sub safe_quit {
     report_host_end($mark);
     report_summary($mark);
     report_close($mark);
-    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);;
+    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);
     exit(1);
 }
 
@@ -1046,7 +1073,7 @@ sub check_input {
 }
 ###############################################################################
 sub pause {
-	return if ($^O =~ /MSWin32/);
+    return if ($^O =~ /MSWin32/);
     if ($_[0] eq 'u') {
         nprint("- Pausing due to 'until' flag--press P to resume.");
     }
@@ -1060,7 +1087,7 @@ sub pause {
 ###############################################################################
 sub readkey {
     my $key;
-	return if ($^O =~ /MSWin32/);
+    return if ($^O =~ /MSWin32/);
 
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'noecho'});
     $NIKTO{'POSIX'}{'term'}->setattr($NIKTO{'POSIX'}{'fd_stdin'}, TCSANOW);
@@ -1087,42 +1114,45 @@ sub resolve {
         return $ident, $ident, $ident;
     }
 
-    if ($ident =~ /^$LW2::IPv4_re$/) {  # ident is IPv4
-        $ip = $name = $ident;   
-    } elsif ( $ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/ ) {
-        $ip = $1;
-        $name = $ident; # HTTP host header uses [IPv6] rather than the raw IPv6 address
+    if ($ident =~ /^$LW2::IPv4_re$/) {    # ident is IPv4
+        $ip = $name = $ident;
     }
-    else  # not an IP, assume name & resolve
+    elsif ($ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/) {
+        $ip   = $1;
+        $name = $ident;    # HTTP host header uses [IPv6] rather than the raw IPv6 address
+    }
+    else                   # not an IP, assume name & resolve
     {
         if ($CLI{'skiplookup'}) {
             nprint("+ ERROR: -nolookup set, but given name\n");
             exit;
         }
 
-        if ( $LW2::LW2_CAN_IPv6 ) { # IPv4/v6 resolve
+        if ($LW2::LW2_CAN_IPv6) {    # IPv4/v6 resolve
             use Socket qw(:addrinfo SOCK_RAW);
-            my ($err, @res) = Socket::getaddrinfo($ident, "", {socktype => SOCK_RAW });
+            my ($err, @res) = Socket::getaddrinfo($ident, "", { socktype => SOCK_RAW });
             if ($err) {
                 my $msg = "ERROR: Cannot resolve hostname '$ident' because '$err'.";
-                if ($ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/ ) {
-                    $msg .= " Use the -ipv6 flag if needed."
+                if ($ident =~ /^\[?($LW2::IPv6_re_inc_zoneid)\]?$/) {
+                    $msg .= " Use the -ipv6 flag if needed.";
                 }
                 if ($CLI{'ipv6'}) {
-                    $msg .= " Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag."
+                    $msg .=
+                      " Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
                 }
                 return $mark->{'hostname'}, '', $mark->{'display_name'}, $msg;
             }
 
             foreach my $res (@res) {
-                my ($err, $ip) = Socket::getnameinfo( $res->{addr}, NI_NUMERICHOST, NIx_NOSERV );
+                my ($err, $ip) = Socket::getnameinfo($res->{addr}, NI_NUMERICHOST, NIx_NOSERV);
                 push @addresses, $ip unless $err;
             }
 
-        } else { # Traditional IPv4 resolve
+        }
+        else {    # Traditional IPv4 resolve
             if ($hent = gethostbyname($ident)) {
-                 my $addr_ref  = $hent->addr_list;
-                 @addresses = map { inet_ntoa($_) } @$addr_ref;
+                my $addr_ref = $hent->addr_list;
+                @addresses = map { inet_ntoa($_) } @$addr_ref;
             }
         }
 
@@ -1131,21 +1161,27 @@ sub resolve {
         my %seen;
         foreach $temp_ip (@addresses) {
             if ($temp_ip =~ /:/) {
-                push @temp6_ipcache, $temp_ip if !$seen{ $temp_ip }++;
-            } else {
-                push @temp4_ipcache, $temp_ip if !$seen{ $temp_ip }++;
+                push @temp6_ipcache, $temp_ip if !$seen{$temp_ip}++;
+            }
+            else {
+                push @temp4_ipcache, $temp_ip if !$seen{$temp_ip}++;
             }
         }
 
-        $ip = ( $CLI{'ipv6'} ) ? shift @temp6_ipcache : shift @temp4_ipcache;
+        $ip = ($CLI{'ipv6'}) ? shift @temp6_ipcache : shift @temp4_ipcache;
         push(@scrub, $ip, @temp4_ipcache, @temp6_ipcache);
         $ipcache = join ", ", (@temp4_ipcache, @temp6_ipcache);
 
-        if ( $ip eq '' ) {
-            if ( $CLI{'ipv6'} && scalar @temp4_ipcache ) {
-                nprint("+ ERROR: IPv6 scanning mode requested but only IPv4 addresses found ($ipcache)");
-            } elsif ( $CLI{'ipv4'} && scalar @temp6_ipcache ) {
-                nprint("+ ERROR: IPv4 scanning mode requested but only IPv6 addresses found ($ipcache)");
+        if ($ip eq '') {
+            if ($CLI{'ipv6'} && scalar @temp4_ipcache) {
+                nprint(
+                    "+ ERROR: IPv6 scanning mode requested but only IPv4 addresses found ($ipcache)"
+                    );
+            }
+            elsif ($CLI{'ipv4'} && scalar @temp6_ipcache) {
+                nprint(
+                    "+ ERROR: IPv4 scanning mode requested but only IPv6 addresses found ($ipcache)"
+                    );
             }
             exit;
         }
@@ -1154,15 +1190,15 @@ sub resolve {
             nprint("+ Multiple IPs found: $ip, $ipcache", "", @scrub);
         }
 
-        if ( $ip !~ /^$LW2::IPv4_re$/ &&
-             $ip !~ /^$LW2::IPv6_re$/
-        ) {
-            nprint("+ ERROR: Invalid IP: $ip\n\n", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        if (   $ip !~ /^$LW2::IPv4_re$/
+            && $ip !~ /^$LW2::IPv6_re$/) {
+            nprint("+ ERROR: Invalid IP: $ip\n\n",
+                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit;
         }
 
         $name = $ident;
-     }
+    }
 
     my $displayname = ($name) ? $name : $ip;
     return $name, $ip, $displayname;
@@ -1187,7 +1223,7 @@ sub set_targets {
             $start = $temp[0];
             $end   = $temp[1];
             if ($start eq "") { $start = 0; }
-            if ($end   eq "") { $end   = 65535; }
+            if ($end eq "")   { $end   = 65535; }
             if ($start > $end) {
                 nprint("+ ERROR port range $port doesn't make sense - assuming 80/tcp");
                 next;
@@ -1228,40 +1264,50 @@ sub set_targets {
         if ($host =~ /^https?:\/\//) {
 
             if ($CLI{'ports'} ne '') {
-		nprint("- ERROR: The -port option cannot be used with a full URI");
-		exit 1;
-		}
+                nprint("- ERROR: The -port option cannot be used with a full URI");
+                exit 1;
+            }
             my @hostdata = LW2::uri_split($host);
 
-            $defhost = $hostdata[2];
-            $defport = $hostdata[3];
+            $defhost                            = $hostdata[2];
+            $defport                            = $hostdata[3];
             $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
 
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
                 $hostdata[0] =~ s/\/$//;
                 $targs{ $defhost . "_" . $defport } = $hostdata[0];
-                nprint("- Added -root value of '$hostdata[0]' from URI", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                nprint("- Added -root value of '$hostdata[0]' from URI",
+                       "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
         }
         else {
-            if ( (index $host, '[') == 0) { # looks like accepted IPv6 format
+            if ((index $host, '[') == 0) {    # looks like accepted IPv6 format
                 if ($host =~ /^(\[?$LW2::IPv6_re_inc_zoneid\]?)(?:[:](\d+))?$/) {
                     $defhost = $1;
-                    $defport = $2;                
-                } else {
-                    nprint("- ERROR: Unrecognised target host format: $host", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                    $defport = $2;
                 }
-            } else {
-                my @h = split(/\:|\,/, $host); # Q. Is host,port format ever going to reach here, or will the port be incorrectly split off earlier as another host
+                else {
+                    nprint("- ERROR: Unrecognised target host format: $host",
+                           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                }
+            }
+            else {
+                my @h = split(/\:|\,/, $host)
+                  ; # Q. Is host,port format ever going to reach here, or will the port be incorrectly split off earlier as another host
                 $defhost = $h[0];
                 $defport = $h[1];
-                if (scalar @h > 2) { # Possible invalid IPv6 format has been supplied
-                  nprint("- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-                  # TODO skip this host if going through a file of targets
+                if (scalar @h > 2) {    # Possible invalid IPv6 format has been supplied
+                    nprint(
+                        "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
+                        "",
+                        ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+                        );
+
+                    # TODO skip this host if going through a file of targets
                 }
             }
             $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
-            }
+        }
     }
 
     foreach my $host (keys %targs) {
@@ -1277,7 +1323,9 @@ sub set_targets {
                 $markhash->{'ident'} = $h;
                 $markhash->{'port'}  = $port;
                 if ($targs{$host} ne '/') { $markhash->{'root'} = $targs{$host}; }
-                nprint("- Target:$markhash->{'ident'} port:$markhash->{'port'}", "v", ($markhash->{'hostname'}, $markhash->{'ip'}, $markhash->{'displayname'}));
+                nprint("- Target:$markhash->{'ident'} port:$markhash->{'port'}",
+                       "v",
+                       ($markhash->{'hostname'}, $markhash->{'ip'}, $markhash->{'displayname'}));
                 push(@marks, $markhash);
             }
         }
@@ -1296,7 +1344,7 @@ sub set_targets {
 
 ###############################################################################
 sub load_databases {
-    my @dbs = qw/db_parked_strings db_404_strings  db_outdated  db_variables/;
+    my @dbs    = qw/db_parked_strings db_404_strings  db_outdated  db_variables/;
     my $prefix = $_[0] || '';
 
     # Only load the right databases if -Userdbs is set
@@ -1317,7 +1365,7 @@ sub load_databases {
     for my $file (@dbs) {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
-	    nprint("- Loading DB: $filename","d");
+        nprint("- Loading DB: $filename", "d");
         open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$@\n");
 
         # db_tests
@@ -1403,7 +1451,7 @@ sub check_dbs {
         nprint("Syntax Check: $filename");
 
         if ($file =~ /u?db_outdated/) {
-            my $count=0;
+            my $count = 0;
             my %BANNER;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
@@ -1413,20 +1461,22 @@ sub check_dbs {
                 $count++;
                 my @L = parse_csv($line);
                 if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
-                else { $ALL_IDS{$L[0]}=1; }
-                if (exists($BANNER{$L[1]}) && $L[0] !~ /(600067|600068|601085)/i) {
+                else { $ALL_IDS{ $L[0] } = 1; }
+                if (exists($BANNER{ $L[1] }) && $L[0] !~ /(600067|600068|601085)/i) {
                     nprint("\t+ ERROR: Duplicate Server Banner: $line");
-                    nprint("\t+ If this expected/needed: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+                    nprint(  "\t+ If this expected/needed: Please add the ID $L[0] at line "
+                           . (__LINE__- 2)
+                           . " in the nikto_core.plugin.");
                 }
-                else { $BANNER{$L[1]}=1; }
+                else { $BANNER{ $L[1] } = 1; }
             }
             nprint("\t$count entries");
         }
         elsif ($file =~ /u?db_favicon/ || $file =~ /u?db_domino/) {
-            my $counter=0;
+            my $counter = 0;
             my %ENTRY;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
@@ -1436,19 +1486,19 @@ sub check_dbs {
                 $counter++;
                 my @L = parse_csv($line);
                 if ($#L ne 2) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
-                else { $ALL_IDS{$L[0]}=1; }
-                if (exists($ENTRY{$L[1]})) {
+                else { $ALL_IDS{ $L[0] } = 1; }
+                if (exists($ENTRY{ $L[1] })) {
                     nprint("\t+ ERROR: Duplicate entry: $line");
                 }
-                else { $ENTRY{$L[1]}=1; }
+                else { $ENTRY{ $L[1] } = 1; }
             }
             nprint("\t$counter entries");
         }
         elsif ($file =~ /u?db_drupal/) {
-            my $counter=0;
+            my $counter = 0;
             my %ENTRY;
             foreach $line (<IN>) {
                 $line =~ s/^\s+//;
@@ -1458,14 +1508,14 @@ sub check_dbs {
                 $counter++;
                 my @L = parse_csv($line);
                 if ($#L ne 1) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
-                else { $ALL_IDS{$L[0]}=1; }
-                if (exists($ENTRY{$L[1]})) {
+                else { $ALL_IDS{ $L[0] } = 1; }
+                if (exists($ENTRY{ $L[1] })) {
                     nprint("\t+ ERROR: Duplicate entry: $line");
                 }
-                else { $ENTRY{$L[1]}=1; }
+                else { $ENTRY{ $L[1] } = 1; }
             }
             nprint("\t$counter entries");
         }
@@ -1477,7 +1527,7 @@ sub check_dbs {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
                 my @L = parse_csv($line);
-                if (($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
+                if (   ($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
                     && ($L[0] ne '006433')) {
                     nprint("\t+ ERROR: Possibly invalid method: $L[4] on ($line)");
                 }
@@ -1500,30 +1550,47 @@ sub check_dbs {
                 }
                 for (my $i = 5 ; $i <= 9 ; $i++) {
                     my ($result, $bad) = validate_and_fix_regex($L[$i], 1);
-                    if ($bad) { nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\", line: $line"); }
+                    if ($bad) {
+                        nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\", line: $line");
+                    }
                 }
-                if (($L[0] ne 0) && exists($ALL_IDS{$L[0]})) {
+                if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
                 else {
-                    $ALL_IDS{$L[0]}=1;
+                    $ALL_IDS{ $L[0] } = 1;
                 }
                 if ($L[2] eq "" || $L[2] =~ /[^a-f0-9]/) {
                     nprint("\t+ ERROR: Invalid Tuning Type: $line");
                 }
-                if ($L[3] =~ '^(/@|//)' && $L[0] !~ /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i) {
+                if (   $L[3] =~ '^(/@|//)'
+                    && $L[0] !~
+                    /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i
+                    ) {
                     nprint("\t+ ERROR: Possible incorrect slashes: $line");
-                    nprint("\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+                    nprint(
+                        "\t+ If two or more slashes are needed for this test: Please add the ID $L[0] at line "
+                          . (__LINE__- 2)
+                          . " in the nikto_core.plugin.");
                 }
                 if ($L[3] =~ '^@[A-Z]+/' && $L[0] !~ /(003348|003349)/i) {
                     nprint("\t+ ERROR: Possible incorrect slash after \@VARIABLE: $line");
-                    nprint("\t+ If this slash is needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+                    nprint(
+                        "\t+ If this slash is needed for this test: Please add the ID $L[0] at line "
+                          . (__LINE__- 2)
+                          . " in the nikto_core.plugin.");
                 }
                 if ((($L[4] ne 'POST') && ($L[4] ne 'SEARCH')) && ($L[11] ne '')) {
+
                     # Some test IDs need this
                     if ($L[0] !~ /(006992|000126|000291|001153)/i) {
-                        nprint("\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line");
-                        nprint("\t+ If the POST data is needed for this test: Please add the ID $L[0] at line " . (__LINE__-2) . " in the nikto_core.plugin.");
+                        nprint(
+                            "\t+ ERROR: Possible incorrect use of POST data without POST method on line: $line"
+                            );
+                        nprint(
+                            "\t+ If the POST data is needed for this test: Please add the ID $L[0] at line "
+                              . (__LINE__- 2)
+                              . " in the nikto_core.plugin.");
                     }
                 }
             }
@@ -1553,9 +1620,9 @@ sub check_dbs {
                 my ($result, $bad) = validate_and_fix_regex($line, 1);
                 if ($bad) { nprint("\t+ ERROR: Invalid regex on line $ctr: \"$line\""); }
                 if (exists($STRINGS{$line})) {
-                        nprint("\t+ ERROR: Duplicate String: $line");
-                        }
-                else { $STRINGS{$line}=1; }
+                    nprint("\t+ ERROR: Duplicate String: $line");
+                }
+                else { $STRINGS{$line} = 1; }
                 $ctr++;
             }
             $ctr--;
@@ -1578,16 +1645,16 @@ sub check_dbs {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<IN>) {
-		chomp($line);
+                chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
                 if (exists($HEADERS{$line})) {
-                        nprint("\t+ ERROR: Duplicate Header: $line");
-                        }
-                else { $HEADERS{$line}=1; }
+                    nprint("\t+ ERROR: Duplicate Header: $line");
+                }
+                else { $HEADERS{$line} = 1; }
                 $ctr++;
             }
             nprint("\t$ctr entries");
@@ -1609,6 +1676,7 @@ sub check_dbs {
             foreach $line (<IN>) {
                 $line =~ s/^#.*//;
                 next if $line eq "";
+
                 # first, grab the headers
                 if ($fields == 0) {
                     @headers = parse_csv($line);
@@ -1625,7 +1693,7 @@ sub check_dbs {
                     next;
                 }
 
-		chomp($line);
+                chomp($line);
                 next if $line eq "";
                 my @entry = parse_csv($line);
                 if ($regex_fields[0] ne '') {
@@ -1642,12 +1710,12 @@ sub check_dbs {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
 
-                if (($entry[0] ne 0) && exists($ALL_IDS{$entry[0]})) {
-                        nprint("\t+ ERROR: Duplicate Test ID: $entry[0]");
-                        }
-                else { $ALL_IDS{$entry[0]}=1; }
+                if (($entry[0] ne 0) && exists($ALL_IDS{ $entry[0] })) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $entry[0]");
+                }
+                else { $ALL_IDS{ $entry[0] } = 1; }
 
-            $ctr++;
+                $ctr++;
             }
             nprint("\t$ctr entries");
         }
@@ -1659,43 +1727,44 @@ sub check_dbs {
     nprint("Checking plugins for duplicate test IDs");
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
-	open(PF,"<$CONFIGFILE{'PLUGINDIR'}/$pf") || die print STDERR "+ ERROR: Unable to open '$pf': $@\n";
-	my @file=<PF>;
-	close(PF);
-  	my @adds= grep(/add_vulnerability\(/, @file);
-	foreach my $addv (@adds) {
-		chomp($addv);
-		my @bits = parse_csv($addv);
-		$bits[2] =~ s/\s+//g;
-        $bits[2] =~ s/\"//g;
-		if ($bits[2] =~ /^[\d]+$/) {
-                	if (($bits[2] ne 0) && exists($ALL_IDS{$bits[2]})) {
-                        nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
-                        }
-                	else { $ALL_IDS{$bits[2]}=1; }
-			}
-		}
-	}
-    # Bad practice here but this one won't parse right above ¯\_(ツ)_/¯
-    $ALL_IDS{'000029'}=1;
+        open(PF, "<$CONFIGFILE{'PLUGINDIR'}/$pf")
+          || die print STDERR "+ ERROR: Unable to open '$pf': $@\n";
+        my @file = <PF>;
+        close(PF);
+        my @adds = grep(/add_vulnerability\(/, @file);
+        foreach my $addv (@adds) {
+            chomp($addv);
+            my @bits = parse_csv($addv);
+            $bits[2] =~ s/\s+//g;
+            $bits[2] =~ s/\"//g;
+            if ($bits[2] =~ /^[\d]+$/) {
+                if (($bits[2] ne 0) && exists($ALL_IDS{ $bits[2] })) {
+                    nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
+                }
+                else { $ALL_IDS{ $bits[2] } = 1; }
+            }
+        }
+    }
 
+    # Bad practice here but this one won't parse right above ¯\_(ツ)_/¯
+    $ALL_IDS{'000029'} = 1;
 
     # Look for bad/invalid IDs
     foreach my $id (keys %ALL_IDS) {
-	chomp($id);
-	next if (($id eq 0) || ($id eq '') || ($id eq 'nikto_id'));
-	if ($id =~ /[^\d]/) { nprint("+ERROR: Invalid test ID: $id"); next; }
-	if (length($id) < 6) {  nprint("+WARNING: Possibly invalid test ID: $id"); }
-	}
+        chomp($id);
+        next if (($id eq 0) || ($id eq '') || ($id eq 'nikto_id'));
+        if ($id =~ /[^\d]/)  { nprint("+ERROR: Invalid test ID: $id"); next; }
+        if (length($id) < 6) { nprint("+WARNING: Possibly invalid test ID: $id"); }
+    }
 
     # Suggest some open IDs
-    my $open=();
-    my $id='000001';
+    my $open = ();
+    my $id   = '000001';
     while ($#open < 6) {
-                if (!exists($ALL_IDS{$id})) { push(@open,$id); }
- 		$id++;
-		}
-    nprint("\nSome (probably) open IDs: " . join(", ",@open) );
+        if (!exists($ALL_IDS{$id})) { push(@open, $id); }
+        $id++;
+    }
+    nprint("\nSome (probably) open IDs: " . join(", ", @open));
 
     nprint("\n");
     exit 1;
@@ -1726,15 +1795,15 @@ sub port_check {
     }
 
     $m->{'start_time'} = $start_time;
-    $m->{'hostname'} = $vhost || $hostname;
-    $m->{'ip'}       = $ip;
-    $m->{'port'}     = $port;
-    $m->{'ssl'}      = 0;
+    $m->{'hostname'}   = $vhost || $hostname;
+    $m->{'ip'}         = $ip;
+    $m->{'port'}       = $port;
+    $m->{'ssl'}        = 0;
 
     my @checktypes;
-    if ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
-    elsif ($CLI{'ssl'}) { @checktypes = ('HTTPS'); }
-    else { @checktypes = ('HTTP', 'HTTPS'); }
+    if    ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
+    elsif ($CLI{'ssl'})   { @checktypes = ('HTTPS'); }
+    else                  { @checktypes = ('HTTP', 'HTTPS'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
         $request{'whisker'}->{'method'} = $method;
@@ -1751,17 +1820,22 @@ sub port_check {
                 $m->{'cert'} = $cert;
             }
             proxy_check($m);
-            my ($res, $content, $error, $request, $response) = nfetch($m, "/", $method, "", "", { noerror => 1, noprefetch => 1, nopostfetch => 1 }, "Port Check");
+            my ($res, $content, $error, $request, $response) =
+              nfetch($m, "/", $method, "", "", { noerror => 1, noprefetch => 1, nopostfetch => 1 },
+                     "Port Check");
 
             if ($res) {
 
-                # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
+   # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
                 if (defined $content
-                    && ( $content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
-                    dump_var("Result Hash", \%result, ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
+                    && ($content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
+                    dump_var("Result Hash", \%result,
+                             ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
-                nprint("- $checkssl server found: " . ($m->{'hostname'} || $m->{'ip'}) . ":$port \t$response->{server}",
+                nprint("- $checkssl server found: "
+                         . ($m->{'hostname'} || $m->{'ip'})
+                         . ":$port \t$response->{server}",
                        "d",
                        ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                        );
@@ -1772,7 +1846,8 @@ sub port_check {
 
     my $msg = "Unable to connect to " . ($hostname || $ip) . ":$port";
     if ($CLI{'ipv6'}) {
-        $msg .= ". Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
+        $msg .=
+          ". Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
     }
 
     nprint($VARIABLES{'DIV'});
@@ -1781,23 +1856,23 @@ sub port_check {
 
 ###############################################################################
 # Directory listing
-    sub dirlist {
-        my $DIR     = $_[0] || return;
-        my $PATTERN = $_[1] || "";
-        my @FILES_TMP = ();
+sub dirlist {
+    my $DIR       = $_[0] || return;
+    my $PATTERN   = $_[1] || "";
+    my @FILES_TMP = ();
 
-        opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
-        foreach my $file (readdir(DIRECTORY)) {
-            if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
-            if ($PATTERN ne "") {
-                if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
-            }
-            else { push(@FILES_TMP, $file); }
+    opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
+    foreach my $file (readdir(DIRECTORY)) {
+        if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
+        if ($PATTERN ne "") {
+            if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
         }
-        closedir(DIRECTORY);
-
-        return @FILES_TMP;
+        else { push(@FILES_TMP, $file); }
     }
+    closedir(DIRECTORY);
+
+    return @FILES_TMP;
+}
 
 ###############################################################################
 sub load_plugins {
@@ -1840,23 +1915,24 @@ sub load_plugins {
                 push(@PLUGINS, $pluginhash);
                 nprint("- Loaded \"$pluginhash->{full_name}\" plugin.", "v");
             }
-           else {
-		nprint("WARNING: No init found for $plugin_name\n","d");
-		}
+            else {
+                nprint("WARNING: No init found for $plugin_name\n", "d");
+            }
         }
     }
     $CONFIGFILE{'@@ALL'} = join(';', @all_names);
     my @torun = split(/;/, expand_pluginlist($CLI{'plugins'}, 0));
+
     # Force-enable report plugins if needed
-    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~/\@NONE/)) {
-	push(@torun,'report_csv') if $CLI{'file'} =~ /csv/i;
-	push(@torun,'report_json') if $CLI{'file'} =~ /json/i;
-	push(@torun,'report_html') if $CLI{'file'} =~ /html?/i;
-	push(@torun,'report_nbe') if $CLI{'file'} =~ /nbe/i;
-	push(@torun,'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
-	push(@torun,'report_text') if $CLI{'file'} =~ /txt/i;
-	push(@torun,'report_xml') if $CLI{'file'} =~ /xml/i;
-	}
+    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~ /\@NONE/)) {
+        push(@torun, 'report_csv')  if $CLI{'file'} =~ /csv/i;
+        push(@torun, 'report_json') if $CLI{'file'} =~ /json/i;
+        push(@torun, 'report_html') if $CLI{'file'} =~ /html?/i;
+        push(@torun, 'report_nbe')  if $CLI{'file'} =~ /nbe/i;
+        push(@torun, 'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
+        push(@torun, 'report_text') if $CLI{'file'} =~ /txt/i;
+        push(@torun, 'report_xml')  if $CLI{'file'} =~ /xml/i;
+    }
 
     # Second pass to ensure that @@ALL is configured
     foreach my $plugin (@PLUGINS) {
@@ -1939,6 +2015,7 @@ sub run_hooks {
         # first check for conditionals
         my $condition = $plugin->{'hooks'}->{$type}->{'cond'};
         if (defined $plugin->{'hooks'}->{$type}->{'cond'}) {
+
             # Evaluate condition
             $run = eval($condition);
         }
@@ -1961,8 +2038,8 @@ sub run_hooks {
         unless ($type eq "prefetch" || $type eq "postfetch") {
             $NIKTO{'current_plugin'} = $plugin->{'full_name'};
         }
-        &{ $plugin->{'hooks'}->{$type}->{'method'} }($mark, $plugin->{'parameters'}, $request,
-                                                     $result);
+        &{ $plugin->{'hooks'}->{$type}->{'method'} }
+          ($mark, $plugin->{'parameters'}, $request, $result);
         $OUTPUT{'verbose'} = $oldverbose;
         $OUTPUT{'debug'}   = $olddebug;
         $OUTPUT{'errors'}  = $olderrors;
@@ -2052,8 +2129,8 @@ sub report_summary {
 ###############################################################################
 sub report_item {
     my ($mark, $item) = @_;
-    if (($item->{'uri'} eq 'undef') || ($item->{'uri'} eq '')) { 
-        $item->{'uri'} = '/'; 
+    if (($item->{'uri'} eq 'undef') || ($item->{'uri'} eq '')) {
+        $item->{'uri'} = '/';
     }
 
     # Go through all reporting modules
@@ -2092,53 +2169,53 @@ sub read_data {
                    "\x0a" => 'ENT',    # LF, Enter
                    );
 
-        local (*TTY, *TTYOUT);
-        open TTY,    "<&STDIN"   or return;
-        open TTYOUT, ">>&STDOUT" or return;
+    local (*TTY, *TTYOUT);
+    open TTY,    "<&STDIN"   or return;
+    open TTYOUT, ">>&STDOUT" or return;
 
-        # Don't buffer it!
-        select((select(TTYOUT), $| = 1)[0]);
-        print TTYOUT $prompt;
+    # Don't buffer it!
+    select((select(TTYOUT), $| = 1)[0]);
+    print TTYOUT $prompt;
 
-        # Remember where everything was
-        my $fd_tty = fileno(TTY);
-        my $term   = POSIX::Termios->new();
-        $term->getattr($fd_tty);
-        my $original_flags = $term->getlflag();
+    # Remember where everything was
+    my $fd_tty = fileno(TTY);
+    my $term   = POSIX::Termios->new();
+    $term->getattr($fd_tty);
+    my $original_flags = $term->getlflag();
 
-        if ($mode eq "noecho") {
-            my $new_flags = $original_flags & ~(ISIG | ECHO | ICANON);
-            $term->setlflag($new_flags);
-        }
-        $term->setattr($fd_tty, TCSAFLUSH);
-      KEYSTROKE:
-        while (1) {
-            my $new_keys = '';
-            my $count = sysread(TTY, $new_keys, 99);
-            if ($count) {
-                for my $new_key (split //, $new_keys) {
-                    if (my $meaning = $SPECIAL{$new_key}) {
-                        if    ($meaning eq 'ENT') { last KEYSTROKE; }
-                        elsif ($meaning eq 'DEL') { chop $input; }
-                        elsif ($meaning eq 'INT') { last KEYSTROKE; }
-                        else                      { $input .= $new_key; }
-                    }
-                    else { $input .= $new_key; }
+    if ($mode eq "noecho") {
+        my $new_flags = $original_flags & ~(ISIG | ECHO | ICANON);
+        $term->setlflag($new_flags);
+    }
+    $term->setattr($fd_tty, TCSAFLUSH);
+  KEYSTROKE:
+    while (1) {
+        my $new_keys = '';
+        my $count    = sysread(TTY, $new_keys, 99);
+        if ($count) {
+            for my $new_key (split //, $new_keys) {
+                if (my $meaning = $SPECIAL{$new_key}) {
+                    if    ($meaning eq 'ENT') { last KEYSTROKE; }
+                    elsif ($meaning eq 'DEL') { chop $input; }
+                    elsif ($meaning eq 'INT') { last KEYSTROKE; }
+                    else                      { $input .= $new_key; }
                 }
+                else { $input .= $new_key; }
             }
-            else { last KEYSTROKE; }
         }
+        else { last KEYSTROKE; }
+    }
 
-        # Done with waiting for input. Let's not leave the cursor sitting
-        # there, after the prompt.
-        print TTY "\n";
-        nprint("\n");
+    # Done with waiting for input. Let's not leave the cursor sitting
+    # there, after the prompt.
+    print TTY "\n";
+    nprint("\n");
 
-        # Let's put everything back where we found it.
-        $term->setlflag($original_flags);
-        $term->setattr($fd_tty, TCSAFLUSH);
-        close(TTY);
-        close(TTYOUT);
+    # Let's put everything back where we found it.
+    $term->setlflag($original_flags);
+    $term->setattr($fd_tty, TCSAFLUSH);
+    close(TTY);
+    close(TTYOUT);
 
     return $input;
 }
@@ -2159,8 +2236,10 @@ sub proxy_check {
         sleeper();
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
-        dump_var("Request Hash", \%request, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        dump_var("Result Hash",  \%result, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        dump_var("Request Hash", \%request,
+                 ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        dump_var("Result Hash", \%result,
+                 ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         # First check that we can connect to the proxy
         if (exists $result{'whisker'}{'error'}) {
@@ -2189,13 +2268,16 @@ sub proxy_check {
 
             # test it...
             LW2::http_close(\%request);    # force-close any old connections
-            LW2::auth_set("proxy-basic", \%request, $CONFIGFILE{PROXYUSER}, $CONFIGFILE{PROXYPASS}); # set auth
+            LW2::auth_set("proxy-basic", \%request, $CONFIGFILE{PROXYUSER}, $CONFIGFILE{PROXYPASS})
+              ;                            # set auth
             LW2::http_fixup_request(\%request);
             sleeper();
             LW2::http_do_request_timeout(\%request, \%result);
             $COUNTERS{'totalrequests'}++;
-            dump_var("Request Hash", \%request, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            dump_var("Result Hash",  \%result, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            dump_var("Request Hash", \%request,
+                     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            dump_var("Result Hash", \%result,
+                     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             if ($result{'proxy-authenticate'} ne "") {
                 my @pauthinfo  = split(/ /, $result{'proxy-authenticate'});
@@ -2220,19 +2302,19 @@ sub dump_var {
     my $msg     = $_[0];
     my %hash_in = %{ $_[1] };
     my @scrubs;
-    for (my $i=2;$i<=$#_;$i++) {
+    for (my $i = 2 ; $i <= $#_ ; $i++) {
         push(@scrubs, $_[$i]);
     }
     my $display = LW2::dump('', \%hash_in);
     my $new;
     $display =~ s/^\$/'$msg'/;
     if ($OUTPUT{'scrub'}) {
-	    $new = "";
-	    foreach my $line (split(/\n/, $display)) { 
-        	$line = scrub($line, @scrubs);
-		$new .= "$line\n";
-	}
-	$display = $new;
+        $new = "";
+        foreach my $line (split(/\n/, $display)) {
+            $line = scrub($line, @scrubs);
+            $new .= "$line\n";
+        }
+        $display = $new;
     }
     nprint($display, "d");
     return;
@@ -2270,13 +2352,14 @@ sub setup_hash {
     $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
     $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
     $reqhash->{'whisker'}->{'version'}                    = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
+
     if ($CLI{'evasion'} ne '') {
         $reqhash->{'whisker'}->{'anti_ids'} = $CLI{'evasion'};
     }
     $reqhash->{'User-Agent'} = $VARIABLES{'useragent'};
     $reqhash->{'User-Agent'} =~ s/\@TESTID/$testid/;
     $reqhash->{'whisker'}->{'retry'} = 0;
-    $reqhash->{'whisker'}->{'host'} = $mark->{'hostname'} || $mark->{'ip'};
+    $reqhash->{'whisker'}->{'host'}  = $mark->{'hostname'} || $mark->{'ip'};
 
     if ($mark->{'vhost'} ne '') {
         $reqhash->{'Host'} = $mark->{'vhost'};
@@ -2302,39 +2385,39 @@ sub setup_hash {
 
 #######################################################################
 sub running_average {
-        my $last = shift;
-	my ($mark) = @_;
-        unshift(@{$mark->{'running_avg'}},$last);
-        splice(@{$mark->{'running_avg'}},100);
-        }
+    my $last = shift;
+    my ($mark) = @_;
+    unshift(@{ $mark->{'running_avg'} }, $last);
+    splice(@{ $mark->{'running_avg'} }, 100);
+}
 
 #######################################################################
 sub running_average_print {
-	use List::Util qw(sum);
-	my $message;
-	my ($mark) = @_;
-	my @data = @{$mark->{'running_avg'}};
-	my $elements=$#data;
-	$elements++;
-	if ($elements eq 100 ) {
-		my $s = sum(@data);
-		my $avg = $s / $elements;
-		$avg = sprintf("%.5f", $avg);
-		$message = "100 requests: $avg sec, ";
-		}
-	if ($elements > 10) {
-		@data=splice(@data,9);
-		my $s = sum(@data);
-		$elements=$#data;
-		$elements++;
-		my $avg = $s / $elements;
-		$avg = sprintf("%.4f", $avg);
-		$message .= "10 requests: $avg sec";
-		}
+    use List::Util qw(sum);
+    my $message;
+    my ($mark)   = @_;
+    my @data     = @{ $mark->{'running_avg'} };
+    my $elements = $#data;
+    $elements++;
+    if ($elements eq 100) {
+        my $s   = sum(@data);
+        my $avg = $s / $elements;
+        $avg     = sprintf("%.5f", $avg);
+        $message = "100 requests: $avg sec, ";
+    }
+    if ($elements > 10) {
+        @data = splice(@data, 9);
+        my $s = sum(@data);
+        $elements = $#data;
+        $elements++;
+        my $avg = $s / $elements;
+        $avg = sprintf("%.4f", $avg);
+        $message .= "10 requests: $avg sec";
+    }
 
-	if ($message eq '') { $message="Not enough data"; }
-	return "Running average: $message.";
-	}
+    if ($message eq '') { $message = "Not enough data"; }
+    return "Running average: $message.";
+}
 
 #######################################################################
 sub nfetch {
@@ -2361,8 +2444,8 @@ sub nfetch {
     }
 
     # Prepend -root option's value if set
-    $request{'whisker'}->{'uri'}    = $mark->{'root'} . $uri;
-    
+    $request{'whisker'}->{'uri'} = $mark->{'root'} . $uri;
+
     # Remove trailing slash if requested
     if ($CLI{'noslash'}) { $request{'whisker'}->{'uri'} =~ s/\/$//; }
 
@@ -2376,6 +2459,7 @@ sub nfetch {
 
     # Check for extra HTTP headers
     if (ref($headers_send) eq "HASH") {
+
         # loop through the hash ref passed and add each header to request
         while (my ($key, $value) = each(%$headers_send)) {
             $request{$key} = $value;
@@ -2384,7 +2468,7 @@ sub nfetch {
 
     # Set auth
     if (defined($CLI{'hostauth'})) {
-       LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
+        LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
     }
 
     # Set cookies
@@ -2398,8 +2482,8 @@ sub nfetch {
     }
 
     if ($flags->{'nohost'}) {
-		$request{'whisker'}->{'host'} = $mark->{'ip'};
-	}
+        $request{'whisker'}->{'host'} = $mark->{'ip'};
+    }
 
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
 
@@ -2410,16 +2494,16 @@ sub nfetch {
 
     # Do the request
     sleeper();
-    my $time=[gettimeofday];
+    my $time = [gettimeofday];
     LW2::http_do_request_timeout(\%request, \%result);
     $COUNTERS{'totalrequests'}++;
     if ($^O !~ /MSWin32/) {
-		running_average(tv_interval($time, [gettimeofday]), $mark);
-	}
+        running_average(tv_interval($time, [gettimeofday]), $mark);
+    }
 
     # If we got an error, do 1 retry. This should be configurable
     if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
-	    $mark->{'failures'}++;
+        $mark->{'failures'}++;
         sleeper();
         LW2::http_do_request_timeout(\%request, \%result);
         $COUNTERS{'totalrequests'}++;
@@ -2428,10 +2512,10 @@ sub nfetch {
     # Get cookies from response & add to jar
     if ($CLI{'usecookies'}) {
         my $tmpjar = LW2::cookie_new_jar();
-        LW2::cookie_read(\%tmpjar,\%result, \%request);
+        LW2::cookie_read(\%tmpjar, \%result, \%request);
         foreach my $c (keys %tmpjar) {
-              my @construct = ( $tmpjar{$c}[0], $tmpjar{$c}[1], $tmpjar{$c}[2], undef, $tmpjar{$c}[4] );
-            $mark->{'cookiejar'}{$c}=\@construct;
+            my @construct = ($tmpjar{$c}[0], $tmpjar{$c}[1], $tmpjar{$c}[2], undef, $tmpjar{$c}[4]);
+            $mark->{'cookiejar'}{$c} = \@construct;
         }
     }
 
@@ -2440,8 +2524,10 @@ sub nfetch {
         my $newlocation = $result{'location'};
 
         # Is a full URL redirect the same host?
-        if ($result{'location'} =~ /^https?:\/\/($mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//i) {
-            $newlocation =~ s/^https?:\/\/(?:$mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//\//i;
+        if ($result{'location'} =~
+            /^https?:\/\/($mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//i) {
+            $newlocation =~
+              s/^https?:\/\/(?:$mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//\//i;
         }
         $request{'whisker'}->{'uri'} = $newlocation;
 
@@ -2452,13 +2538,20 @@ sub nfetch {
     }
 
     if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
-	    nprint("+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: " . $result{'whisker'}->{'error'}, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-	    $mark->{'terminate'} = 1;
-	}
+        nprint(
+            "+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: "
+              . $result{'whisker'}->{'error'},
+            "",
+            ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+            );
+        $mark->{'terminate'} = 1;
+    }
 
     if ($OUTPUT{'debug'}) {
-        dump_var("Request Hash", \%request, ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
-        dump_var("Result Hash",  \%result, ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
+        dump_var("Request Hash", \%request,
+                 ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
+        dump_var("Result Hash", \%result,
+                 ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
     }
 
     # Snarf what we can from the whisker hash and put in mark
@@ -2472,9 +2565,10 @@ sub nfetch {
             if (   exists $result{'server'}
                 && !exists $mark->{'bannerchanged'}
                 && ($mark->{'banner'} ne $result{'server'})
-		        && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')
-		) {
-		add_vulnerability($mark, "Server banner changed from '$mark->{banner}' to '$result{server}'", 999962, "", $method, $uri, $request, $response);
+                && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
+                add_vulnerability($mark,
+                                "Server banner changed from '$mark->{banner}' to '$result{server}'",
+                                999962, "", $method, $uri, $request, $response);
                 $mark->{'bannerchanged'} = 1;
             }
         }
@@ -2485,16 +2579,18 @@ sub nfetch {
             $mark->{'ssl_cipher'}       = $result{'whisker'}->{'ssl_cipher'};
             $mark->{'ssl_cert_issuer'}  = $result{'whisker'}->{'ssl_cert_issuer'};
             $mark->{'ssl_cert_subject'} = $result{'whisker'}->{'ssl_cert_subject'};
+
             # ssl_cert_altnaems comes back as an array
-            foreach my $n (@{$result{'whisker'}->{'ssl_cert_altnames'}}) {
-		next if $n =~ /^[\d]+$/; # type
-		$mark->{'ssl_cert_altnames'} .= "$n, ";
-		}
+            foreach my $n (@{ $result{'whisker'}->{'ssl_cert_altnames'} }) {
+                next if $n =~ /^[\d]+$/;    # type
+                $mark->{'ssl_cert_altnames'} .= "$n, ";
+            }
             $mark->{'ssl_cert_altnames'} =~ s/, $//;
         }
     }
 
-    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}",
+           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Check for errors to reduce false positives
     if ((defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '')
@@ -2502,7 +2598,9 @@ sub nfetch {
         $mark->{'total_errors'}++;
         nprint(
             "+ ERROR: $result{'whisker'}->{'uri_requested'} returned an error: $result{'whisker'}{'error'}\n",
-            "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            "e",
+            ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+            );
         if (($result{'whisker'}->{'code'} eq 502) && ($CLI{'useproxy'})) {
             nprint("+ ERROR: Revieved 502 'Bad Gateway' from proxy\n");
         }
@@ -2510,7 +2608,8 @@ sub nfetch {
 
     if ($OUTPUT{'show_cookies'} && (defined($result{'whisker'}->{'cookies'}))) {
         foreach my $c (@{ $result{'whisker'}->{'cookies'} }) {
-            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c",
+                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
 
@@ -2602,6 +2701,7 @@ sub set_scan_items {
             if ($add) {
                 my $ext = get_ext($item[3]);
                 $db_extensions{$ext} = 1;
+
                 # validate...
                 for (my $y = 5 ; $y <= 9 ; $y++) {
                     next if $item[$y] eq '';
@@ -2652,27 +2752,33 @@ sub is_ip {
     my $loopback = 0;
 
     if ($ip =~ /^$LW2::IPv4_re$/) {
+
         # check for internal
         if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
 
         # check for loopback
         if ($ip eq '127.0.0.1') { $loopback = 1; }
 
-    } elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
+    }
+    elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
 
         # check for internal
         if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
 
-        if ( $ip =~ /^(?:fe80     # is a link local unicast address
+        if ($ip =~ /^(?:fe80     # is a link local unicast address
                                           |ff0[1-8] # is a multicast address
                                           |fc00     # private network
-        ):/ix ) { $internal = 1 ;}
+        ):/ix
+            ) {
+            $internal = 1;
+        }
 
         # lastly, loopback?
         # This is a bit rough 'n' ready, could do with some finesse
         if ($ip =~ /^[01:]+(?:\/[0-9]+)?$/) { $loopback = 1; }
 
-    } else {
+    }
+    else {
         return 0, $internal, $loopback;
     }
     return 1, $internal, $loopback;
@@ -2681,7 +2787,7 @@ sub is_ip {
 #######################################################################
 sub parse_csv {
     my $text = $_[0] || return;
-    my @new = ();
+    my @new  = ();
     push(@new, $+) while $text =~ m{
       "([^\"\\]*(?:\\.[^\"\\]*)*)",?
        |  ([^,]+),?
@@ -2692,10 +2798,13 @@ sub parse_csv {
 }
 #######################################################################
 sub check_modules {
+
     # Check dependencies
     eval "require JSON::PP";
     if ($@) {
-        nprint("+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used.");
+        nprint(
+             "+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used."
+             );
     }
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
@@ -2727,9 +2836,9 @@ sub send_updates {
     foreach my $mark (@MARKS) {
         foreach my $component (keys %{ $mark->{'components'} }) {
             if ($mark->{'components'}->{$component} eq 2) {
-                if ($component !~ /\d/) { next; }
-		elsif ($component =~ /^(?:\(?Win32\)?|Linux-Mandrake$)/) { next; }
-                elsif ($component eq "") { next; }
+                if    ($component !~ /\d/)                               { next; }
+                elsif ($component =~ /^(?:\(?Win32\)?|Linux-Mandrake$)/) { next; }
+                elsif ($component eq "")                                 { next; }
                 $have_updates = 1;
                 $updated_version .= "$component ";
             }
@@ -2749,18 +2858,20 @@ sub send_updates {
             "\n
       *********************************************************************
       Portions of the server's headers ($updated_version) are not in
-      the Nikto " . $VARIABLES{'version'} . " database or are newer than the known string. Would you like
+      the Nikto "
+              . $VARIABLES{'version'}
+              . " database or are newer than the known string. Would you like
       to submit this information (*no server specific data*) to CIRT.net
       for a Nikto update (or you may email to sullo\@cirt.net) (y/n)? ", ""
-        );
-    } 
+              );
+    }
 
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
     my %mark = ('ident' => '68.183.58.226',
                 'ssl'   => 0,
-                'port'  => 80 
+                'port'  => 80
                 );
 
     for (my $i = 0 ; $i <= $#ARGV ; $i++) {
@@ -2781,7 +2892,7 @@ sub send_updates {
             $CONFIGFILE{PROXYUSER} = read_data("Proxy ID: ",   "");
             $CONFIGFILE{PROXYPASS} = read_data("Proxy Pass: ", "noecho");
         }
-    	($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
+        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
     if ($code eq "") {
@@ -2790,9 +2901,14 @@ sub send_updates {
         ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
     }
 
-    if (($code != 200) || ($content !~ /SUCCESS/)){
-	nprint("+ ERROR: $code -> " . $response->{'location'} ."\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-	}
+    if (($code != 200) || ($content !~ /SUCCESS/)) {
+        nprint("+ ERROR: $code -> "
+                 . $response->{'location'}
+                 . "\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.",
+               "",
+               ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+               );
+    }
     else {
         nprint("- Sent updated info to cirt.net -- Thank you!");
     }
@@ -2804,7 +2920,7 @@ sub send_updates {
 sub usage {
     my $is_failure = shift;
 
-        print "
+    print "
    Options:
        -ask+               Whether to ask about submitting updates
                                yes   Ask about each (default)
@@ -2826,11 +2942,11 @@ sub usage {
        -dbcheck           Check database and other key files for syntax errors
        -evasion+          Encoding technique:\n";
 
-        foreach my $k (sort keys %{ $NIKTO{'anti_ids'} }) {
-            print "                               $k     $NIKTO{'anti_ids'}{$k}\n";
-        }
+    foreach my $k (sort keys %{ $NIKTO{'anti_ids'} }) {
+        print "                               $k     $NIKTO{'anti_ids'}{$k}\n";
+    }
 
-        print "        -followredirects   Follow 3xx redirects to new location
+    print "        -followredirects   Follow 3xx redirects to new location
         -Format+           Save file (-o) format:
                                csv   Comma-separated-value
                                json  JSON Format
@@ -2850,11 +2966,11 @@ sub usage {
        -maxtime+          Maximum testing time per host (e.g., 1h, 60m, 3600s)
        -mutate+           Guess additional file names:\n";
 
-        foreach my $k (sort keys %{ $NIKTO{'mutate_opts'} }) {
-            print "                               $k     $NIKTO{'mutate_opts'}{$k}\n";
-        }
+    foreach my $k (sort keys %{ $NIKTO{'mutate_opts'} }) {
+        print "                               $k     $NIKTO{'mutate_opts'}{$k}\n";
+    }
 
-        print "       -mutate-options    Provide information for mutates
+    print "       -mutate-options    Provide information for mutates
        -nointeractive     Disables interactive features
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
@@ -2925,7 +3041,7 @@ sub init_db {
         while (<IN>) {
             chomp;
             s/\#.*$//;
-            if ($_ eq "") { next }
+            if     ($_ eq "") { next }
             unless (@headers) {
                 @headers = parse_csv($_);
             }
@@ -2976,11 +3092,11 @@ sub add_vulnerability {
 
     # check to see if we've alerted already (can be from content search, etc.)
     foreach my $r (@RESULTS) {
-        if (   ($uri                       eq $r->{'uri'})
-            && ($message                   eq $r->{'message'})
-            && ($method                    eq $r->{'method'})
+        if (   ($uri eq $r->{'uri'})
+            && ($message eq $r->{'message'})
+            && ($method eq $r->{'method'})
             && (${ $r->{'mark'} }{'ident'} eq $mark->{'ident'})
-            && (${ $r->{'mark'} }{'port'}  eq $mark->{'port'})) {
+            && (${ $r->{'mark'} }{'port'} eq $mark->{'port'})) {
             return;
         }
     }
@@ -3008,7 +3124,7 @@ sub add_vulnerability {
 
     if ($refs ne "") {
         $message .= " See: $refs";
-        }
+    }
 
     nprint("+ $message", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
@@ -3095,7 +3211,7 @@ sub expand_pluginlist {
 
                 # break up into components
                 $prefix = ($entry =~ /^-/) ? "-" : "";
-                $name = $suffix = $entry;
+                $name   = $suffix = $entry;
                 $name   =~ s/(^-?)(@@[[:alpha:]]+)(\(?.*\)?$)/$2/;
                 $suffix =~ s/(.*)(\(.*\))/$2/;
                 if ($suffix eq $entry) {
@@ -3205,30 +3321,32 @@ sub gmt_offset {
 }
 ###############################################################################
 sub expand_range {
-	local $" = '..';
+    local $" = '..';
     my (@range);
 
-	sort {$a <=> $b}
-		map {
-			map {
-				((@range = split /-/) == 2) ? eval('map {$_} '. "@range") : $_
-			} split /\s/
-		} @_;
+    sort { $a <=> $b }
+      map {
+        map { ((@range = split /-/) == 2) ? eval('map {$_} ' . "@range") : $_ }
+          split /\s/
+      } @_;
 }
 ###############################################################################
 sub check_ipv6 {
     nprint("Performing IPv6 connectivity tests:");
+
     # Perform a series of tests and: exit 1 or 0
 
     # Does the version of Socket even support IPv6?
-    if (! $LW2::LW2_CAN_IPv6 ) {
-        nprint("+ ERROR: This version of Socket ($Socket::VERSION) has insufficient (or no) IPv6 support");
+    if (!$LW2::LW2_CAN_IPv6) {
+        nprint(
+            "+ ERROR: This version of Socket ($Socket::VERSION) has insufficient (or no) IPv6 support"
+            );
         exit 1;
     }
     nprint("+ This version of Socket ($Socket::VERSION) does support IPv6");
 
     # Ensure switches are in a known state
-    $CLI{'ipv6'} = 1; 
+    $CLI{'ipv6'} = 1;
     $CLI{'ipv4'} = 0;
 
     if ($CONFIGFILE{'CHECK6HOST'} == "") {
@@ -3238,17 +3356,21 @@ sub check_ipv6 {
 
     # Try to resolve a known IPv6 hostname
     my ($name, $ip, $displayname) = resolve($CONFIGFILE{'CHECK6HOST'});
-    if (! $ip) {
+    if (!$ip) {
         nprint("- DNS resolution of '$CONFIGFILE{'CHECK6HOST'}' using AF_INET6 failed");
-        nprint("\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for $CONFIGFILE{'CHECK6HOST'})");
+        nprint(
+            "\t(Perhaps no DNS server set or server is incapable of resolving an IPv6 address for $CONFIGFILE{'CHECK6HOST'})"
+            );
         exit 1;
     }
     nprint("+ Successful DNS resolution of '$CONFIGFILE{'CHECK6HOST'}': $ip");
 
     # Try to connect to the host
     my $res = LW2::utils_port_open($CONFIGFILE{'CHECK6HOST'}, $CONFIGFILE{'CHECK6PORT'});
-    if (! $res) {
-        nprint("+ ERROR: TCP connection to '$CONFIGFILE{'CHECK6HOST'}:$CONFIGFILE{'CHECK6PORT'}' using AF_INET6 failed");
+    if (!$res) {
+        nprint(
+            "+ ERROR: TCP connection to '$CONFIGFILE{'CHECK6HOST'}:$CONFIGFILE{'CHECK6PORT'}' using AF_INET6 failed"
+            );
         nprint("\t(Likely either no IPv6 connectivity or firewall blocking)");
         exit 1;
     }

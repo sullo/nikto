@@ -19,9 +19,9 @@
 # HTTP options check
 ###############################################################################
 sub nikto_httpoptions_init {
-    my $id = { name      => "httpoptions",
-               full_name => "HTTP Options",
-               author    => "Sullo",
+    my $id = { name        => "httpoptions",
+               full_name   => "HTTP Options",
+               author      => "Sullo",
                description =>
                  "Performs a variety of checks against the HTTP options returned from the server.",
                hooks => { scan => { method => \&nikto_httpoptions,
@@ -39,18 +39,20 @@ sub nikto_httpoptions_init {
 sub nikto_httpoptions {
     return if $mark->{'terminate'};
     my ($mark) = @_;
-    my (%request, %response, $res, $dbarray, $txt, $allow_methods, $public_methods);
-	my $junkmethodresp;
+    my (%request, %response, $dbarray, $txt, $allow_methods, $public_methods);
+    my $junkmethodresp;
     $txt = "";
 
     # test for both OPTIONS / and OPTIONS * as they may give different results
-    my ($res, $content, $errors, $request, $response) = nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
+    my ($res, $content, $errors, $request, $response) =
+      nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
 
     my $aoptions = "$response->{'allow'}, ";
     my $poptions = "$response->{'public'}, ";
     $dbarray = init_db("db_httpoptions");
 
-    ($res, $content, $errors, $request, $response) = nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
+    ($res, $content, $errors, $request, $response) =
+      nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
     $aoptions .= $response->{'allow'};
     $poptions .= $response->{'public'};
 
@@ -69,7 +71,8 @@ sub nikto_httpoptions {
 
     %davmethods = ();
     if ($allow_methods ne "") {
-        add_vulnerability($mark, "Allowed HTTP Methods: $allow_methods $txt", 999990, "", "OPTIONS", "/", $request, $response);
+        add_vulnerability($mark, "Allowed HTTP Methods: $allow_methods $txt",
+                          999990, "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $allow_methods) {
             my $method = eval_methods($m, "Allow", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
@@ -77,7 +80,8 @@ sub nikto_httpoptions {
     }
 
     if ($public_methods ne "") {
-        add_vulnerability($mark, "Public HTTP Methods: $public_methods $txt", 999985, "", "OPTIONS", "/", $request, $response);
+        add_vulnerability($mark, "Public HTTP Methods: $public_methods $txt",
+                          999985, "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $public_methods) {
             my $method = eval_methods($m, "Public", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
@@ -94,32 +98,62 @@ sub nikto_httpoptions {
     }
 
     # Check to see what the web server does on out of standard headers
-	my $junkmethod=LW2::utils_randstr(8,'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-    ($res, $content, $error, $request, $response) = nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
-	if ($res == 200) {
-		add_vulnerability($mark, "Web Server returns a valid response with junk HTTP methods which may cause false positives.", 999967, "", $junkmethod, '/', $request, $response);
-		$junkmethodresp=LW2::md5($content);
-	}
+    my $junkmethod = LW2::utils_randstr(8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
+    if ($res == 200) {
+        add_vulnerability(
+            $mark,
+            "Web Server returns a valid response with junk HTTP methods which may cause false positives.",
+            999967,
+            "",
+            $junkmethod,
+            '/',
+            $request,
+            $response
+            );
+        $junkmethodresp = LW2::md5($content);
+    }
 
     # Check for other weirdness
     # IIS Debug
     return if $mark->{'terminate'};
-    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
     if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
-        add_vulnerability($mark, "DEBUG HTTP verb may show server debugging information.", 999972, "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017", "DEBUG", '/', $request, $response);
+        add_vulnerability(
+            $mark,
+            "DEBUG HTTP verb may show server debugging information.",
+            999972,
+            "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017",
+            "DEBUG",
+            '/',
+            $request,
+            $response
+            );
     }
 
     # IIS PROPFIND HEADER
     return if $mark->{'terminate'};
     my %headers = ("Host"           => "",
-                "Content-Length" => "0",);
-    ($res, $content, $error, $request, $response) = nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
+                   "Content-Length" => "0",);
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
     if ($res == 207) {
         if ($content =~ "<a:href>https?://") {
             my $ipfound = $content;
             $ipfound =~ s/^.*<a:href>//g;
             $ipfound =~ s/<\/a:href>.*$//g;
-            add_vulnerability($mark, "PROPFIND HTTP verb may show the server's internal IP address: $ipfound", 999973, "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)", "PROPFIND", "/", $request, $response);
+            add_vulnerability(
+                $mark,
+                "PROPFIND HTTP verb may show the server's internal IP address: $ipfound",
+                999973,
+                "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)",
+                "PROPFIND",
+                "/",
+                $request,
+                $response
+                );
         }
     }
 
@@ -130,10 +164,20 @@ sub nikto_httpoptions {
         # Check for all flavours of HTTP
         foreach my $version (split(/ /, "1.0 1.1")) {
             return if $mark->{'terminate'};
-            ($res, $content, $error, $request, $response) = nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", $version);
+            ($res, $content, $error, $request, $response) =
+              nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", $version);
             if ($res == 200) {
                 if ($content =~ /Trace-Test: Nikto/) {
-                    add_vulnerability($mark, "HTTP $method method is active which suggests the host is vulnerable to XST", "000434", "https://owasp.org/www-community/attacks/Cross_Site_Tracing", $method, "/", $request, $response);
+                    add_vulnerability(
+                        $mark,
+                        "HTTP $method method is active which suggests the host is vulnerable to XST",
+                        "000434",
+                        "https://owasp.org/www-community/attacks/Cross_Site_Tracing",
+                        $method,
+                        "/",
+                        $request,
+                        $response
+                        );
 
                     # now we know its vulnerable stop testing
                     last;

@@ -51,7 +51,7 @@ sub xml_head {
         while (<IN>) {
             $linectr++;
             if ($_ =~ /DOCTYPE niktoscan/) { $header_present = 1; last; }
-            if ($linectr > 10) { last; }
+            if ($linectr > 10)             { last; }
         }
         close(IN);
     }
@@ -141,10 +141,14 @@ sub xml_change_vars {
     $variables{"#TEMPL_SSL_INFO#"} = "";
     if (defined $mark->{'ssl_cipher'}) {
         $variables{"#TEMPL_SSL_INFO#"} =
-          "<ssl ciphers=\"" . hex_enc($mark->{ssl_cipher}) . "\" issuers=\"" .
-		  hex_enc($mark->{ssl_cert_issuer}) . "\" info=\"" .
-		  hex_enc($mark->{ssl_cert_subject}) . "\" altnames=\"" .
-                  hex_enc($mark->{ssl_cert_altnames}) . "\" />";
+            "<ssl ciphers=\""
+          . hex_enc($mark->{ssl_cipher})
+          . "\" issuers=\""
+          . hex_enc($mark->{ssl_cert_issuer})
+          . "\" info=\""
+          . hex_enc($mark->{ssl_cert_subject})
+          . "\" altnames=\""
+          . hex_enc($mark->{ssl_cert_altnames}) . "\" />";
     }
 
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
@@ -182,9 +186,8 @@ sub xml_change_vars {
 
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
-	my $uri = $item->{'uri'};
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) 
-		{ $uri = $mark->{'root'} . $uri; }
+        my $uri = $item->{'uri'};
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) { $uri = $mark->{'root'} . $uri; }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $item->{'message'};
         $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
@@ -193,7 +196,8 @@ sub xml_change_vars {
           "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
         $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
         if ($hostname ne "") {
-            $variables{"#TEMPL_ITEM_NAME_LINK#"} = "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
+            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
+              "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
         }
     }
 

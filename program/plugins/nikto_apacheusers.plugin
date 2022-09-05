@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -53,12 +53,23 @@ sub nikto_apacheusers {
     $content = quotemeta($content);
     if ($content =~ /forbidden/i)    # good on "bin"
     {
-        my ($result, $content, $errors, $request, $response) = nfetch($mark, "/~" . LW2::utils_randstr(8), "GET", "", "", "", "apacheusers: invalid user");
+        my ($result, $content, $errors, $request, $response) =
+          nfetch($mark, "/~" . LW2::utils_randstr(8),
+                 "GET", "", "", "", "apacheusers: invalid user");
 
         $content = quotemeta($content);
         if ($content !~ /forbidden/i)    # Good, it gave an error instead of forbidden
         {
-            add_vulnerability($mark, "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users and 'not found' for non-existent users).", 999999, "CVE-2001-1013", "GET", "/~bin", $request, $response);
+            add_vulnerability(
+                $mark,
+                "Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users and 'not found' for non-existent users).",
+                999999,
+                "CVE-2001-1013",
+                "GET",
+                "/~bin",
+                $request,
+                $response
+                );
         }
         $apacheusers = 1;
     }
@@ -84,7 +95,8 @@ sub nikto_apacheusers {
         # Check for existence of cgiwrap
         foreach my $cgidir (@CFGCGI) {
             my $curl = "$cgidir" . "cgiwrap";
-            my ($result, $content) = nfetch($mark, $curl, "GET", "", "", "", "user_enum_apache: cgiwrap");
+            my ($result, $content) =
+              nfetch($mark, $curl, "GET", "", "", "", "user_enum_apache: cgiwrap");
             if ($content =~ /check your URL/i) {
                 push(@cgiwraps, "$curl");
             }
@@ -143,7 +155,8 @@ sub nikto_user_enum_apache_brute {
     while (length($text) <= $size) {
         return if $mark->{'terminate'};
         if (($ctr % 500) eq 0) { nprint("- User enumeration guess $ctr ($text)", "v"); }
-        ($result, $content, $errors, $request, $response) = nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
+        ($result, $content, $errors, $request, $response) =
+          nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
         my $user = nikto_user_enum_apache_check($result, $text);
         if (defined $user && $user ne "") {
             push(@foundusers, $user);
@@ -153,7 +166,8 @@ sub nikto_user_enum_apache_brute {
     }
     if (scalar(@foundusers)) {
         my $u = join(', ', @foundusers);
-        add_vulnerability($mark, $message . $u, "000479", "CVE-2001-1013", "HEAD", "/", $request, $response);
+        add_vulnerability($mark, $message . $u,
+                          "000479", "CVE-2001-1013", "HEAD", "/", $request, $response);
     }
 
 }
@@ -178,9 +192,10 @@ sub nikto_user_enum_apache_dictionary {
 
         # remove preceding ~ just in case
         s/^~//;
-        if ($_ eq "") { next }
+        if ($_ eq "")          { next }
         if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v"); }
-        ($result, $content, $errors, $request, $response) = nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
+        ($result, $content, $errors, $request, $response) =
+          nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
         my $user = nikto_user_enum_apache_check($result, $_);
         if ($user) {
             push(@foundusers, $user);
@@ -190,7 +205,8 @@ sub nikto_user_enum_apache_dictionary {
     close(IN);
     if (scalar(@foundusers)) {
         my $u = join(', ', @foundusers);
-        add_vulnerability($mark, $message . $u, "000478", "CVE-2001-1013", "HEAD", "/", $request, $response);
+        add_vulnerability($mark, $message . $u,
+                          "000478", "CVE-2001-1013", "HEAD", "/", $request, $response);
     }
 }
 

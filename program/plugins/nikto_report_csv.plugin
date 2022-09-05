@@ -52,10 +52,11 @@ sub csv_host_start {
     my ($handle, $mark) = @_;
     $mark->{'banner'} =~ s/"/\\"/g;
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
-    print $handle "\"" . csv_safecell($hostname) . "\","
-      . "\"" . csv_safecell($mark->{'ip'}) . "\","
-      . "\"" . csv_safecell($mark->{'port'}) . "\"," . "\"\"," . "\"\"," . "\"\","
-      . "\"" . csv_safecell($mark->{'banner'}) . "\"\n";
+    print $handle "\""
+      . csv_safecell($hostname) . "\"," . "\""
+      . csv_safecell($mark->{'ip'}) . "\"," . "\""
+      . csv_safecell($mark->{'port'}) . "\"," . "\"\"," . "\"\"," . "\"\"," . "\""
+      . csv_safecell($mark->{'banner'}) . "\"\n";
     return;
 }
 
@@ -65,7 +66,8 @@ sub csv_item {
     my ($handle, $mark, $item) = @_;
     foreach my $uri (split(' ', $item->{'uri'})) {
         my $line = '';
-    	my $hostname = $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
+        my $hostname =
+          $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
         $line .= "\"" . csv_safecell($hostname) . "\",";
         $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
         $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
@@ -79,18 +81,19 @@ sub csv_item {
         $line .= "\",";
 
         $line .= "\"";
-        if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/))
-			{ $line .= csv_safecell($mark->{'root'}) . $uri; }
-		else { $line .= csv_safecell($uri); }
+        if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/)) {
+            $line .= csv_safecell($mark->{'root'}) . $uri;
+        }
+        else { $line .= csv_safecell($uri); }
         $line .= "\",";
-	
-	my $msg = $item->{'message'};
-	$uri=quotemeta($uri);
-	my $root = quotemeta($mark->{'root'});
-	$msg =~ s/^$uri:\s//;
-	$msg =~ s/^$root$uri:\s//;
+
+        my $msg = $item->{'message'};
+        $uri = quotemeta($uri);
+        my $root = quotemeta($mark->{'root'});
+        $msg =~ s/^$uri:\s//;
+        $msg =~ s/^$root$uri:\s//;
         $msg =~ s/"/\\"/g;
-        $line .= "\"" . csv_safecell($msg) ."\"";
+        $line .= "\"" . csv_safecell($msg) . "\"";
         print $handle "$line\n";
     }
 }

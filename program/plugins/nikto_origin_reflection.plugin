@@ -23,10 +23,9 @@ sub nikto_origin_reflection_init {
         name        => "origin_reflection",
         full_name   => "CORS Origin Reflection",
         author      => "ss23",
-        description => "Check whether a given Origin header is reflected back in a Access-Control-Allow-Origin header",
-        hooks       => {
-                   scan      => { method => \&nikto_origin_reflection, },
-                   },
+        description =>
+          "Check whether a given Origin header is reflected back in a Access-Control-Allow-Origin header",
+        hooks     => { scan => { method => \&nikto_origin_reflection, }, },
         copyright => "2017 Chris Sullo"
         };
     return $id;
@@ -38,17 +37,32 @@ sub nikto_origin_reflection {
 
     $headers{'Origin'} = 'nikto.example.com';
 
-    my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
     if ($response->{'Access-Control-Allow-Origin'} =~ /nikto\.example\.com/) {
-        add_vulnerability($mark, "$path: Site reflects arbitrary CORS Origin headers without validation.", "000429", "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", "GET", $path, $request, $response);
+        add_vulnerability(
+                 $mark,    "$path: Site reflects arbitrary CORS Origin headers without validation.",
+                 "000429", "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
+                 "GET",    $path,
+                 $request, $response
+                 );
     }
-
 
     $headers{'Origin'} = $mark{'hostname'} . '.example.com';
 
-    ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, $path, "GET", "", \%headers, "", "origin_reflection");
     if ($response->{'Access-Control-Allow-Origin'} =~ /$mark{'hostname'}\.example\.com/) {
-        add_vulnerability($mark, "$path: Site reflects CORS Origin headers which partially match the domain without full validation.", "000499", "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", "GET", $path, $request, $response);
+        add_vulnerability(
+            $mark,
+            "$path: Site reflects CORS Origin headers which partially match the domain without full validation.",
+            "000499",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
+            "GET",
+            $path,
+            $request,
+            $response
+            );
     }
 
 }

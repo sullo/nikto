@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -42,22 +42,32 @@ sub nikto_ms10_070 {
     return if $mark->{'ms100707'};
     my $method = $response->{'whisker'}->{'method'} || "GET";
 
-   while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) { 
-    	return if $mark->{'terminate'};
- 	my $string = $1;
-	next if $MS10070{$string};
-	$MS10070{$string}=1;
- 	$string =~ s/\-/\+/g;
- 	$string =~ s/\_/\//g;
-	next if $string eq '';
- 	my $count = chop($string);
- 	$string = $string . ("=" x int($count));
-	$string = LW2::decode_base64($string);
-	if ((length($string) % 8) == 0) {
-		$mark->{'ms100707'}=1;
-        	add_vulnerability($mark, "Server may be vulnerable to MS10-070 (based on numeric calculation) and thus may allow a cryptographic padding oracle. This vulnerability must be manually validated.", 999959, "http://blog.gdssecurity.com/labs/2010/9/14/automated-padding-oracle-attacks-with-padbuster.html", $method, $response->{'whisker'}->{'uri'}, $request, $response);
-        	}
-	}
+    while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
+        return if $mark->{'terminate'};
+        my $string = $1;
+        next if $MS10070{$string};
+        $MS10070{$string} = 1;
+        $string =~ s/\-/\+/g;
+        $string =~ s/\_/\//g;
+        next if $string eq '';
+        my $count = chop($string);
+        $string = $string . ("=" x int($count));
+        $string = LW2::decode_base64($string);
+
+        if ((length($string) % 8) == 0) {
+            $mark->{'ms100707'} = 1;
+            add_vulnerability(
+                $mark,
+                "Server may be vulnerable to MS10-070 (based on numeric calculation) and thus may allow a cryptographic padding oracle. This vulnerability must be manually validated.",
+                999959,
+                "http://blog.gdssecurity.com/labs/2010/9/14/automated-padding-oracle-attacks-with-padbuster.html",
+                $method,
+                $response->{'whisker'}->{'uri'},
+                $request,
+                $response
+                );
+        }
+    }
 
     return $request, $response;
 }

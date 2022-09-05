@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -37,7 +37,7 @@ sub nikto_paths {
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
-    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
+    my ($res,  $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
 
     if ($res eq 200) {
 
@@ -65,8 +65,8 @@ sub nikto_paths {
             $link = LW2::uri_normalize($link);
 
             # split dirs / files
-            my $dir  = LW2::uri_get_dir($link);
-	    $dir = validate_and_fix_regex($dir);
+            my $dir = LW2::uri_get_dir($link);
+            $dir = validate_and_fix_regex($dir);
             my $file = $link;
             $file =~ s/^$dir//;
 
@@ -81,10 +81,10 @@ sub nikto_paths {
             }
         }
 
-	# Process whole link
+        # Process whole link
         if ($link =~ /\.action(\?|$)/i) {
-                $VARIABLES{"\@STRUTSACTIONS"} .= " $link";
-	}
+            $VARIABLES{"\@STRUTSACTIONS"} .= " $link";
+        }
 
         # Now actually check the unique dirs/files
         foreach my $file (keys %FILES) {

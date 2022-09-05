@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -28,10 +28,9 @@ sub nikto_dictionary_attack_init {
                                      weight => 20,
                                      },
                             },
-               options     => {
-                          dictionary => "Dictionary of paths to look for.",
-                          method => "Method to use to enumerate.",
-                          },
+               options => { dictionary => "Dictionary of paths to look for.",
+                            method     => "Method to use to enumerate.",
+                            },
                copyright => "2009 Chris Sullo"
                };
 
@@ -42,7 +41,7 @@ sub nikto_dictionary_attack {
     return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
 
-    my $method="HEAD";
+    my $method = "HEAD";
 
     my $dictfile = "";
     if (   defined $parameters
@@ -59,7 +58,7 @@ sub nikto_dictionary_attack {
 
     if (   defined $parameters
         && defined $parameters->{'method'}) {
-        $method=$parameters->{'method'};
+        $method = $parameters->{'method'};
     }
     my $ctr = 0;
 
@@ -84,11 +83,13 @@ sub nikto_dictionary_attack {
         next if ($_ eq "");
         my $dir = $_;
         if (($ctr % 100) == 0) { nprint("- File enumeration guess $ctr ($dir): /$dir/", "v"); }
-        my ($code, $content, $error, $request, $response) = nfetch($mark, "/$dir", "${method}", "", "", "", "dictionary_attack");
+        my ($code, $content, $error, $request, $response) =
+          nfetch($mark, "/$dir", "${method}", "", "", "", "dictionary_attack");
         foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
 
             if ($code eq $found) {
-                add_vulnerability($mark, "Found file /$dir", 999969, "", "HEAD", "/$dir", $request, $response);
+                add_vulnerability($mark, "Found file /$dir",
+                                  999969, "", "HEAD", "/$dir", $request, $response);
             }
         }
         $ctr++;

@@ -84,8 +84,8 @@ sub save_item {
 
             # Handle multiple headers with same name, e.g. set-cookie
             if (ref($response->{$header}) eq ARRAY) {
-                if ($cookies_written && ($header eq 'set-cookie')) { next; }
-                elsif ($header eq 'set-cookie') { $cookies_written = 1; }
+                if    ($cookies_written && ($header eq 'set-cookie')) { next; }
+                elsif ($header eq 'set-cookie')                       { $cookies_written = 1; }
                 foreach my $v (@{ $response->{$header} }) {
                     print SAVEFILE $header . ": " . $v . "\n";
                 }
@@ -144,7 +144,8 @@ sub save_createdir {
     if (!-d $savedir) {
         mkdir($savedir);
         if (!-d $savedir) {
-            nprint("+ERROR: Unable to create -Save directory '$savedir'", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint("+ERROR: Unable to create -Save directory '$savedir'",
+                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit;
         }
     }

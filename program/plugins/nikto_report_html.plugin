@@ -113,9 +113,9 @@ sub html_change_vars {
     if ($mark->{'ssl'}) { $protocol .= "s"; }
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
 
-    $variables{"#TEMPL_HCTR#"}        = $VARIABLES{'TEMPL_HCTR'};
-    $variables{"#TEMPL_END#"}         = date_disp($mark->{'end_time'});
-    $variables{"#TEMPL_HOSTNAME#"}    = simple_enc($hostname);
+    $variables{"#TEMPL_HCTR#"}               = $VARIABLES{'TEMPL_HCTR'};
+    $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'});
+    $variables{"#TEMPL_HOSTNAME#"}           = simple_enc($hostname);
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
     $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{'total_checks'};
     $variables{"#TEMPL_PORT#"}               = $mark->{'port'};
@@ -133,9 +133,9 @@ sub html_change_vars {
     $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
     $variables{"#TEMPL_STATISTICS#"} =
       "$COUNTERS{'totalrequests'} requests, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
-    $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
-    $variables{"#TEMPL_ELAPSED#"} = $mark->{'end_time'} - $mark->{'start_time'};
-    $variables{"#TEMPL_REFERENCES#"}      = linkify_refs($item->{'refs'});
+    $variables{"#TEMPL_START#"}      = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_ELAPSED#"}    = $mark->{'end_time'} - $mark->{'start_time'};
+    $variables{"#TEMPL_REFERENCES#"} = linkify_refs($item->{'refs'});
 
     $variables{"#TEMPL_LINK_NAME#"} = "N/A";
     if ($hostname ne "") {
@@ -168,17 +168,18 @@ sub html_change_vars {
             $msg .= join(", ", @links);
         }
 
-  	my $uri = $item->{'uri'};
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/))
-		{ $uri = $mark->{'root'} . $uri; }
+        my $uri = $item->{'uri'};
+        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) { $uri = $mark->{'root'} . $uri; }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $msg;
         $variables{"#TEMPL_HTTP_METHOD#"} = simple_enc($item->{'method'});
         $variables{"#TEMPL_ITEM_IP_LINK#"} =
           "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
         $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
+
         if ($hostname ne "") {
-            $variables{"#TEMPL_ITEM_NAME_LINK#"} = "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
+            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
+              "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
         }
     }
 
@@ -191,33 +192,33 @@ sub html_change_vars {
 ###############################################################################
 sub linkify_refs {
     my $refs = $_[0] || return;
-    my @rs = split(/ /, $refs);
-    for (my $i=0;$i<=$#rs;$i++) {
-      $r = $rs[$i];
-      if ($r =~ /^OSVDB-(\d+)$/) {
-          my $id=$1;
-          $r="<a href='https://vulners.com/osvdb/OSVDB:$id'>$r</a>";
-          }
-      elsif ($r =~ /^CVE-\d{4}-\d{3,4}/) {
-          $r="<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$r'>$r</a>";
-          }
-      elsif ($r =~ /^MS-\d+-\d+/i) {
-          $r="<a href='https://technet.microsoft.com/en-us/library/security/$r.aspx'>$r</a>";
-          }
-      elsif ($r =~ /^BID-(\d+)/) {
-          $r="<a href='https://vulners.com/search?query=$1'>$r</a>";
-          }
-      elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
-              $r="<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
-              }
-      elsif ($r =~ /^CWE-\d+/) {
-              $r="<a href='https://cwe.mitre.org/data/definitions/$r.html'>$r</a>";
-              }
-      elsif ($r =~ /^http/) {
-          $r="<a href='$r'>$r</a>";
-          }
-      $rs[$i]=$r;
-      }
+    my @rs   = split(/ /, $refs);
+    for (my $i = 0 ; $i <= $#rs ; $i++) {
+        $r = $rs[$i];
+        if ($r =~ /^OSVDB-(\d+)$/) {
+            my $id = $1;
+            $r = "<a href='https://vulners.com/osvdb/OSVDB:$id'>$r</a>";
+        }
+        elsif ($r =~ /^CVE-\d{4}-\d{3,4}/) {
+            $r = "<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$r'>$r</a>";
+        }
+        elsif ($r =~ /^MS-\d+-\d+/i) {
+            $r = "<a href='https://technet.microsoft.com/en-us/library/security/$r.aspx'>$r</a>";
+        }
+        elsif ($r =~ /^BID-(\d+)/) {
+            $r = "<a href='https://vulners.com/search?query=$1'>$r</a>";
+        }
+        elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
+            $r = "<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
+        }
+        elsif ($r =~ /^CWE-\d+/) {
+            $r = "<a href='https://cwe.mitre.org/data/definitions/$r.html'>$r</a>";
+        }
+        elsif ($r =~ /^http/) {
+            $r = "<a href='$r'>$r</a>";
+        }
+        $rs[$i] = $r;
+    }
     my $out = join("</br>", @rs);
     $out =~ s/<br>$//;
     return $out;

@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -20,24 +20,19 @@
 ###############################################################################
 
 sub nikto_siebel_init {
-    my $id = {
-            name        => "siebel",
-            full_name   => "Siebel Checks",
-            author      => "Tautology",
-            description => "Performs a set of checks against an installed Siebel application",
-            hooks       => {
-                              scan => {
-                                 method => \&nikto_siebel,
-                              },
-                           },
-            copyright   => "2011 Chris Sullo",
-            options     => {
-                              enumerate    => "Flag to indicate whether we shall attempt to enumerate known apps",
-                              applications => "List of applications",
-                              languages    => "List of Languages",
-                              application  => "Application to attack",
-                           }
-              };
+    my $id = { name        => "siebel",
+               full_name   => "Siebel Checks",
+               author      => "Tautology",
+               description => "Performs a set of checks against an installed Siebel application",
+               hooks       => { scan => { method => \&nikto_siebel, }, },
+               copyright   => "2011 Chris Sullo",
+               options     => {
+                   enumerate => "Flag to indicate whether we shall attempt to enumerate known apps",
+                   applications => "List of applications",
+                   languages    => "List of Languages",
+                   application  => "Application to attack",
+                   }
+                 };
     return $id;
 }
 
@@ -48,25 +43,26 @@ sub nikto_siebel {
 
     # Check whether we have an application
     if (defined $parameters->{'enumerate'}) {
-        my @apps=nikto_siebel_enumerate($mark, $parameters);
-        my $application=$apps[0];
+        my @apps        = nikto_siebel_enumerate($mark, $parameters);
+        my $application = $apps[0];
     }
-    
+
     if ($application eq "" && defined $parameters->{'application'}) {
-        $application=$parameters->{'application'};
+        $application = $parameters->{'application'};
     }
-    
+
     if ($application eq "") {
-        nprint("No Siebel Application defined","v");
+        nprint("No Siebel Application defined", "v");
         return;
     }
-    
+
     # Now we have an application time to perform some tests
     my $path = $application . "/base.txt";
-    my ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
     if ($res eq "200") {
         my ($siebelver, $appver, $hotfix);
-        $siebelver=$content;
+        $siebelver = $content;
         $siebelver =~ s/([ \t]*)([0-9.]*)( .*\n.*)/$2/;
         chomp($siebelver);
         $appver = $content;
@@ -74,56 +70,80 @@ sub nikto_siebel {
         chomp($appver);
         $hotfix = $content;
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
-        add_vulnerability($mark, "Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix", 999901, "https://www.oracle.com/applications/siebel/", "GET", $path, $request, $response);
+        add_vulnerability(
+            $mark,
+            "Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix",
+            999901,
+            "https://www.oracle.com/applications/siebel/",
+            "GET",
+            $path,
+            $request,
+            $response
+            );
     }
-        
+
     $path = $application . "/_stats.swe";
-    ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+    ($res, $content, $error, $request, $response) =
+      nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
     if ($res eq "200") {
-        add_vulnerability($mark, "Siebel stats page found at $path", 999902, "https://docs.oracle.com/cd/E14004_01/books/SysDiag/SysDiagSWSEstats7.html", "GET", $path, $request, $response);
+        add_vulnerability(
+                        $mark, "Siebel stats page found at $path",
+                        999902,
+                        "https://docs.oracle.com/cd/E14004_01/books/SysDiag/SysDiagSWSEstats7.html",
+                        "GET", $path, $request, $response
+                        );
     }
-    
-    foreach my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm")) {
+
+    foreach
+      my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm"))
+    {
         $path = $application . "/$page";
-        ($res, $content, $error, $request, $response) = nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
+        ($res, $content, $error, $request, $response) =
+          nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
         if ($res eq "200") {
-            add_vulnerability($mark, "Siebel default file $path found", 999903, "", "GET", $path, $request, $response);
+            add_vulnerability($mark, "Siebel default file $path found",
+                              999903, "", "GET", $path, $request, $response);
         }
     }
 
     return;
-}    
+}
 
 sub nikto_siebel_enumerate {
     my ($mark, $params) = @_;
-    
+
     # Default apps and languages - allow parameters to over-ride them.
-    my $apps = "emarketing ecustomer pmmanager sales marketing wpeserv salesce econsumerpharma emedia epublicsector eaf echannelcme epharmace siaservicece finseenenrollment ecustomercme loyalty erm etraining esales callcenter wpsales eai smc eprofessionalpharma eenergy pseservice sismarketing econsumer medicalce epharma fins finesales finscustomer htim loyaltyscw ermadmin eevents eauctionswexml cra wpserv eai_anon edealer esitesclinical eautomotive econsumersector echannelaf eEnergyOilGasChemicals cgce eclinical finsconsole finsebanking finssalespam htimpim eloyalty ememb pimportal eservice service wppm servicece edealerscw ecommunications ehospitality eretail echannelcg eCommunicationsWireless siasalesce emedical finsechannel finsebrokerage esalescme";
-    my $langs = "enu euq cht dan fin deu hun kor ptb sky sve pse cat shl nld fra ell ita nor ptg slv tha psl chs csy frc heb jpn plk rus esn trk";
-    
+    my $apps =
+      "emarketing ecustomer pmmanager sales marketing wpeserv salesce econsumerpharma emedia epublicsector eaf echannelcme epharmace siaservicece finseenenrollment ecustomercme loyalty erm etraining esales callcenter wpsales eai smc eprofessionalpharma eenergy pseservice sismarketing econsumer medicalce epharma fins finesales finscustomer htim loyaltyscw ermadmin eevents eauctionswexml cra wpserv eai_anon edealer esitesclinical eautomotive econsumersector echannelaf eEnergyOilGasChemicals cgce eclinical finsconsole finsebanking finssalespam htimpim eloyalty ememb pimportal eservice service wppm servicece edealerscw ecommunications ehospitality eretail echannelcg eCommunicationsWireless siasalesce emedical finsechannel finsebrokerage esalescme";
+    my $langs =
+      "enu euq cht dan fin deu hun kor ptb sky sve pse cat shl nld fra ell ita nor ptg slv tha psl chs csy frc heb jpn plk rus esn trk";
+
     my @foundapps;
-    
+
     if ($params->{applications}) {
-        $apps=$params->{applications};
+        $apps = $params->{applications};
     }
 
     if ($params->{languages}) {
-        $langs=$params->{languages};
-    }   
+        $langs = $params->{languages};
+    }
 
-    foreach my $language (split(/ /,$langs)) {
-        foreach my $application (split(/ /,$apps)) {
-            my $appname = $application . "_" . $language;
+    foreach my $language (split(/ /, $langs)) {
+        foreach my $application (split(/ /, $apps)) {
+            my $appname   = $application . "_" . $language;
             my $startname = $appname . "/start.swe";
-            ($res, $content, $error, $request, $response) = nfetch( $mark, $startname, "GET", "", "", "", "siebel: enumerate application");
+            ($res, $content, $error, $request, $response) =
+              nfetch($mark, $startname, "GET", "", "", "", "siebel: enumerate application");
             if ($res eq "200") {
+
                 # We've found an app
-                add_vulnerability($mark, "Enumerated Siebel application: " . $appname, 999900, "", "GET", $startname, $request, $response);
+                add_vulnerability($mark, "Enumerated Siebel application: " . $appname,
+                                  999900, "", "GET", $startname, $request, $response);
                 push(@foundapps, $appname);
             }
         }
     }
-    
+
     return @foundapps;
 }
 

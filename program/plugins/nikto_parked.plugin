@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -37,7 +37,8 @@ sub nikto_parked {
     return if $mark->{'terminate'};
     my ($mark) = @_;
 
-    my ($res, $content, $error, $request, $response) = nfetch($mark, $item->{'uri'}, "GET", "", "", "", "parked detection");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, $item->{'uri'}, "GET", "", "", "", "parked detection");
 
     foreach my $string (keys %{ $VARIABLES->{'PARKEDSTRINGS'} }) {
         return if $mark->{'terminate'};
@@ -47,7 +48,11 @@ sub nikto_parked {
 
             # Check for the matches and pull out information
             if ($line =~ /$string/) {
-                add_vulnerability($mark, "This domain appears to be parked", 999968, "https://makeawebsitehub.com/parked-domains/", "GET", $item->{'uri'}, $request, $response);
+                add_vulnerability($mark,    "This domain appears to be parked",
+                                  999968,   "https://makeawebsitehub.com/parked-domains/",
+                                  "GET",    $item->{'uri'},
+                                  $request, $response
+                                  );
             }
         }
     }

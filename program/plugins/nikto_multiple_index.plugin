@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to 
+#  along with this program; if not, write to
 #  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 ###############################################################################
 # PURPOSE:
@@ -38,12 +38,13 @@ sub nikto_multiple_index {
         return if $mark->{'terminate'};
 
         # First we need to mangle the host.
-        my ($res, $content, $error, $request, $response) = nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
         if ($res == 200) {
             $content = rm_active_content($content, "$mark->{'root'}/$item->{'index'}");
             my $hash = LW2::md5($content);
-            $found{ "$mark->{'root'}/$item->{'index'}" } = $hash;
+            $found{"$mark->{'root'}/$item->{'index'}"} = $hash;
             $hashes{$hash}++;
         }
 
@@ -70,12 +71,15 @@ sub nikto_multiple_index {
 
         # some unique... report slightly differently
         if ($total_unique < keys(%found)) {
-            add_vulnerability($mark, "Multiple index files found (note: these may not all be unique): $tempstring", 740000, "", "GET", "/", $request, $response);
+            add_vulnerability($mark,
+                      "Multiple index files found (note: these may not all be unique): $tempstring",
+                      740000, "", "GET", "/", $request, $response);
         }
 
         # all unique... report
         if ($total_unique eq keys(%found)) {
-            add_vulnerability($mark, "Multiple index files found: $tempstring", "000473", "", "GET", "/", $request, $response);
+            add_vulnerability($mark, "Multiple index files found: $tempstring",
+                              "000473", "", "GET", "/", $request, $response);
         }
     }
 }
