@@ -14,6 +14,8 @@ Run normally:
 git clone https://github.com/sullo/nikto
 # Main script is in program/
 cd nikto/program
+# Check out the 2.5.0 branch
+git checkout nikto-2.5.0
 # Run using the shebang interpreter
 ./nikto.pl -h http://www.example.com
 # Run using perl (if you forget to chmod)
