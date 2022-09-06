@@ -1801,9 +1801,9 @@ sub port_check {
     $m->{'ssl'}        = 0;
 
     my @checktypes;
-    if    ($CLI{'nossl'}) { @checktypes = ('HTTP'); }
-    elsif ($CLI{'ssl'})   { @checktypes = ('HTTPS'); }
-    else                  { @checktypes = ('HTTP', 'HTTPS'); }
+    if    ($CLI{'nossl'})                            { @checktypes = ('HTTP'); }
+    elsif ($CLI{'ssl'} || $CLI{'host'} =~ /^https/i) { @checktypes = ('HTTPS'); }
+    else                                             { @checktypes = ('HTTP', 'HTTPS'); }
 
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
         $request{'whisker'}->{'method'} = $method;
@@ -2566,9 +2566,17 @@ sub nfetch {
                 && !exists $mark->{'bannerchanged'}
                 && ($mark->{'banner'} ne $result{'server'})
                 && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
-                add_vulnerability($mark,
-                                $request->{'whisker'}->{'uri'} . ": Server banner changed from '$mark->{banner}' to '$result{server}'",
-                                999962, "", $method, $uri, $request, $response);
+                add_vulnerability(
+                          $mark,
+                          $request->{'whisker'}->{'uri'}
+                            . ": Server banner changed from '$mark->{banner}' to '$result{server}'",
+                          999962,
+                          "",
+                          $method,
+                          $uri,
+                          $request,
+                          $response
+                          );
                 $mark->{'bannerchanged'} = 1;
             }
         }
