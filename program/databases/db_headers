@@ -11,9 +11,8 @@
 # relicensed or reused.
 #######################################################################
 # Notes:
-# - Use lower case letters
-# - Keep list alphabetically (for readability and easy human lookup)
-# Example to get the server headers: $ curl -I www.example.com
+# - Use lowercase only
+# - Keep list alphabetically (for readability)
 #######################################################################
 "header"
 "accept"
@@ -30,7 +29,9 @@
 "age"
 "allow"
 "alternates"
+"alt-svc"
 "authorization"
+"bfcache-opt-in"
 "cache-control"
 "cf-cache-status"
 "cf-ray"

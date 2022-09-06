@@ -352,6 +352,26 @@ sub nikto_headers_postfetch {
         $HEADERS_STS{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
+    # Alt-Svc (HTTP/3)
+    if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} }
+        && defined $result->{'whisker'}->{'code'}) {
+        if (defined $result->{'alt-svc'}) {
+            $result->{'alt-svc'} =~ /.*h3="([^"]+)"/;
+            $endpoint=$1;
+            add_vulnerability(
+                $mark,
+                $request->{'whisker'}{'uri'} . ": An alt-svc header was found which is advertising an HTTP/3 endpoint. The content is: '$endpoint'. Note that Nikto cannot test HTTP/3 over QUIC.",
+                "011799",
+                "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/alt-svc",
+                $request->{'whisker'}->{'method'},
+                $request->{'whisker'}->{'uri'},
+                $request,
+                $result
+                );
+            $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
+        }
+    }
+
     # X-Content-Type-Options
     if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} }
         && defined $result->{'whisker'}->{'code'}) {
