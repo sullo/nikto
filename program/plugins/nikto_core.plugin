@@ -1808,7 +1808,7 @@ sub port_check {
     foreach my $method (split(/ /, $CONFIGFILE{'CHECKMETHODS'})) {
         $request{'whisker'}->{'method'} = $method;
         foreach my $checkssl (@checktypes) {
-            nprint("- Checking for $checkssl on port "
+            nprint("- Checking for $checkssl on "
                      . ($m->{'hostname'} || $m->{'ip'})
                      . ":$port, using $method",
                    "v",
