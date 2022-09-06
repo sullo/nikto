@@ -52,7 +52,6 @@ sub nikto_headers_postfetch {
     # Skip OPTIONS
     return if $request->{'whisker'}{'method'} eq "OPTIONS";
 
-
     # look for internal IPs
     foreach my $header (keys %$result) {
 
@@ -80,7 +79,8 @@ sub nikto_headers_postfetch {
                     # is it an internal, or just different?
                     my $msg;
                     if ($internal) { $msg .= "RFC-1918 "; }
-                    $msg .= $request->{'whisker'}{'uri'}. ": IP address found in the '$header' header. The IP is \"$ip\".";
+                    $msg .= $request->{'whisker'}{'uri'}
+                      . ": IP address found in the '$header' header. The IP is \"$ip\".";
                     add_vulnerability(
                         $mark,
                         $msg,
@@ -107,7 +107,9 @@ sub nikto_headers_postfetch {
 
         # Only report ETags which actually leak inodes...
         if (scalar(@fields) == 3) {
-            my $message = $request->{'whisker'}{'uri'} . ": Server may leak inodes via ETags, header found with file "
+            my $message =
+                $request->{'whisker'}{'uri'}
+              . ": Server may leak inodes via ETags, header found with file "
               . $request->{'whisker'}->{'uri'};
 
             # check for numbers that are too large
@@ -152,7 +154,8 @@ sub nikto_headers_postfetch {
                 $allowed =~ s/^.* //g;
                 add_vulnerability(
                     $mark,
-                    $request->{'whisker'}{'uri'} . ":X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
+                    $request->{'whisker'}{'uri'}
+                      . ":X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
                     999978,
                     "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
                     $request->{'whisker'}->{'method'},
@@ -165,7 +168,8 @@ sub nikto_headers_postfetch {
         else {
             add_vulnerability(
                         $mark,
-                        $request->{'whisker'}{'uri'} . ": The anti-clickjacking X-Frame-Options header is not present.",
+                        $request->{'whisker'}{'uri'}
+                          . ": The anti-clickjacking X-Frame-Options header is not present.",
                         999957,
                         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
                         $request->{'whisker'}->{'method'},
@@ -213,15 +217,16 @@ sub nikto_headers_postfetch {
     if (defined $result->{'x-generator'} && $HFOUND{'x-generator'} != 1) {
         my $drupal = $result->{'x-generator'};
         $drupal =~ s/ \(.*$//;
-        add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'} . ": $drupal was identified via the x-generator header.",
-                          "000326",
-                          "https://www.drupal.org/project/remove_http_headers",
-                          $request->{'whisker'}->{'method'},
-                          $request->{'whisker'}->{'uri'},
-                          $request,
-                          $result
-                          );
+        add_vulnerability(
+              $mark,
+              $request->{'whisker'}{'uri'} . ": $drupal was identified via the x-generator header.",
+              "000326",
+              "https://www.drupal.org/project/remove_http_headers",
+              $request->{'whisker'}->{'method'},
+              $request->{'whisker'}->{'uri'},
+              $request,
+              $result
+              );
         $HFOUND{'x-generator'} = 1;
     }
     elsif (   defined $result->{'x-drupal-cache'}
@@ -241,7 +246,8 @@ sub nikto_headers_postfetch {
     }
     if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
         add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'} . ": Drupal Link header found with value: $result->{'link'}.",
+                          $request->{'whisker'}{'uri'}
+                            . ": Drupal Link header found with value: $result->{'link'}.",
                           "000427",
                           "https://www.drupal.org/",
                           $request->{'whisker'}->{'method'},
@@ -254,20 +260,22 @@ sub nikto_headers_postfetch {
 
     # Fastly
     if (defined $result->{'x-timer'} && $HFOUND{'x-timer'} != 1) {
-        add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'} . ": Fastly CDN was identified by the x-timer header.",
-                          "000432",
-                          "https://www.fastly.com/",
-                          $request->{'whisker'}->{'method'},
-                          $request->{'whisker'}->{'uri'},
-                          $request,
-                          $result
-                          );
+        add_vulnerability(
+                $mark,
+                $request->{'whisker'}{'uri'} . ": Fastly CDN was identified by the x-timer header.",
+                "000432",
+                "https://www.fastly.com/",
+                $request->{'whisker'}->{'method'},
+                $request->{'whisker'}->{'uri'},
+                $request,
+                $result
+                );
         $HFOUND{'x-timer'} = 1;
     }
     if (defined $result->{'fastly-restarts'} && $HFOUND{'fastly-restarts'} != 1) {
         add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'} . ": Fastly CDN was identified by the fastly-restarts header.",
+                          $request->{'whisker'}{'uri'}
+                            . ": Fastly CDN was identified by the fastly-restarts header.",
                           "000430",
                           "https://www.fastly.com/",
                           $request->{'whisker'}->{'method'},
@@ -281,7 +289,8 @@ sub nikto_headers_postfetch {
     # Netlify
     if (defined $result->{'x-nf-request-id'} && $HFOUND{'x-nf-request-id'} != 1) {
         add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'} . ": Netlify was identified by the x-nf-request-id header.",
+                          $request->{'whisker'}{'uri'}
+                            . ": Netlify was identified by the x-nf-request-id header.",
                           "000287",
                           "https://www.netlify.com/",
                           $request->{'whisker'}->{'method'},
@@ -305,14 +314,16 @@ sub nikto_headers_postfetch {
             my $x = $result->{$header};
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
-            $vuln = $request->{'whisker'}{'uri'} . ": Uncommon header '$header' found, with contents: $result->{$header}";
+            $vuln = $request->{'whisker'}{'uri'}
+              . ": Uncommon header '$header' found, with contents: $result->{$header}";
             if (ref($x) eq 'ARRAY') {
                 $multiheader = '(';
                 foreach $k (@{$x}) {
                     $multiheader .= "$k,";
                 }
                 $multiheader .= ')';
-                $vuln = $request->{'whisker'}{'uri'} . ": Uncommon header '$header' found, with multiple values: $multiheader";
+                $vuln = $request->{'whisker'}{'uri'}
+                  . ": Uncommon header '$header' found, with multiple values: $multiheader";
             }
             add_vulnerability($mark, $vuln, 999100, "",
                               $request->{'whisker'}->{'method'},
@@ -327,7 +338,8 @@ sub nikto_headers_postfetch {
         if (!defined $result->{'strict-transport-security'}) {
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": The site uses TLS and the Strict-Transport-Security HTTP header is not defined.",
+                $request->{'whisker'}{'uri'}
+                  . ": The site uses TLS and the Strict-Transport-Security HTTP header is not defined.",
                 999970,
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
                 $request->{'whisker'}->{'method'},
@@ -339,7 +351,8 @@ sub nikto_headers_postfetch {
         elsif ($result->{'strict-transport-security'} =~ /max-age="?0"?/i) {
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": The site uses TLS and the Strict-Transport-Security HTTP header is set with max-age=0.",
+                $request->{'whisker'}{'uri'}
+                  . ": The site uses TLS and the Strict-Transport-Security HTTP header is set with max-age=0.",
                 999971,
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
                 $request->{'whisker'}->{'method'},
@@ -356,11 +369,28 @@ sub nikto_headers_postfetch {
     if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} }
         && defined $result->{'whisker'}->{'code'}) {
         if (defined $result->{'alt-svc'}) {
-            $result->{'alt-svc'} =~ /.*h3="([^"]+)"/;
-            $endpoint=$1;
+            my ($protocol, $msg);
+            $result->{'alt-svc'} =~ /.*(h[23])="([^"]+)"/;
+            my $endpoint = $2;
+            if    ($1 eq "h2")  { 
+                $protocol = "HTTP/2 over TLS"; 
+            }
+            elsif ($1 eq "h2c") { 
+                $protocol = "HTTP/2 over TCP"; 
+                $msg = " Unencrypted."; 
+            }
+            elsif ($1 eq "h3") {
+                $protocol = "HTTP/3";
+                $msg      = " Nikto cannot test HTTP/3 over QUIC.";
+            }
+            else { 
+                $protocol = $1; 
+            }
+
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": An alt-svc header was found which is advertising an HTTP/3 endpoint. The content is: '$endpoint'. Note that Nikto cannot test HTTP/3 over QUIC.",
+                $request->{'whisker'}{'uri'}
+                  . ": An alt-svc header was found which is advertising $protocol. The endpoint is: '$endpoint'.$msg",
                 "011799",
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/alt-svc",
                 $request->{'whisker'}->{'method'},
@@ -378,7 +408,8 @@ sub nikto_headers_postfetch {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type.",
+                $request->{'whisker'}{'uri'}
+                  . ": The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type.",
                 999103,
                 "https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/",
                 $request->{'whisker'}->{'method'},
@@ -396,7 +427,8 @@ sub nikto_headers_postfetch {
         if (defined $result->{'x-clacks-overhead'}) {
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": There appears to be Clacks Overhead on the server and the message is: $result->{'x-clacks-overhead'}",
+                $request->{'whisker'}{'uri'}
+                  . ": There appears to be Clacks Overhead on the server and the message is: $result->{'x-clacks-overhead'}",
                 999104,
                 "https://xclacksoverhead.org/home/about",
                 $request->{'whisker'}->{'method'},
@@ -414,7 +446,8 @@ sub nikto_headers_postfetch {
         if (defined $result->{'report-uri'}) {
             add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": A CSP report-uri header was found. The URL is: $result->{'report-uri'}",
+                $request->{'whisker'}{'uri'}
+                  . ": A CSP report-uri header was found. The URL is: $result->{'report-uri'}",
                 000433,
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-uri",
                 $request->{'whisker'}->{'method'},
@@ -454,15 +487,16 @@ sub nikto_headers_check {
                     $value = $result->{$header};
                 }
                 $HFOUND{$key} = 1;
-                add_vulnerability($mark,
-                                  $request->{'whisker'}{'uri'} . ": Retrieved $header header: $value",
-                                  $tid,
-                                  "",
-                                  $request->{'whisker'}->{'method'},
-                                  $request->{'whisker'}->{'uri'},
-                                  $request,
-                                  $result
-                                  );
+                add_vulnerability(
+                                $mark,
+                                $request->{'whisker'}{'uri'} . ": Retrieved $header header: $value",
+                                $tid,
+                                "",
+                                $request->{'whisker'}->{'method'},
+                                $request->{'whisker'}->{'uri'},
+                                $request,
+                                $result
+                                );
             }
         }
     }
@@ -488,7 +522,8 @@ sub nikto_headers {
                 if ($content =~ /<asp:/ || $content =~ /<\/asp:/) {
                     add_vulnerability(
                         $mark,
-                        $request->{'whisker'}{'uri'} . ": Host may be vulnerable to a source disclosure using the Translate: header",
+                        $request->{'whisker'}{'uri'}
+                          . ": Host may be vulnerable to a source disclosure using the Translate: header",
                         999983,
                         "CVE-2000-0778",
                         "GET",
@@ -533,7 +568,8 @@ sub nikto_headers {
                 $cl = 1;
                 add_vulnerability(
                     $mark,
-                    $uri . ": IIS may reveal its internal or real IP in the Content-Location header via a request with HTTP/1.0. The value is \"$ips[0]\".",
+                    $uri
+                      . ": IIS may reveal its internal or real IP in the Content-Location header via a request with HTTP/1.0. The value is \"$ips[0]\".",
                     999989,
                     "CVE-2000-0649",
                     "GET",
@@ -551,7 +587,8 @@ sub nikto_headers {
                 $l = 1;
                 add_vulnerability(
                     $mark,
-                    $uri . ": The web server may reveal its internal or real IP in the Location header via a request to with HTTP/1.0. The value is \"$ips[0]\".",
+                    $uri
+                      . ": The web server may reveal its internal or real IP in the Location header via a request to with HTTP/1.0. The value is \"$ips[0]\".",
                     999988,
                     "CVE-2000-0649",
                     "GET",
@@ -569,7 +606,8 @@ sub nikto_headers {
                 $wa = 1;
                 add_vulnerability(
                     $mark,
-                    $request->{'whisker'}{'uri'} . ": Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
+                    $request->{'whisker'}{'uri'}
+                      . ": Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
                     999986,
                     "CVE-2000-0649",
                     "GET",
@@ -595,7 +633,8 @@ sub nikto_headers {
             if ($have) {
                 add_vulnerability(
                     $mark,
-                    $request->{'whisker'}{'uri'} . ": A CSP report-to header was found with the following URLs: "
+                    $request->{'whisker'}{'uri'}
+                      . ": A CSP report-to header was found with the following URLs: "
                       . join(", ", @urls),
                     999945,
                     "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to",
@@ -652,7 +691,8 @@ sub nikto_headers {
                 $BREACH = 1;
                 add_vulnerability(
                     $mark,
-                    $request->{'whisker'}{'uri'} . ": The Content-Encoding header is set to \"deflate\" which may mean that the server is vulnerable to the BREACH attack.",
+                    $request->{'whisker'}{'uri'}
+                      . ": The Content-Encoding header is set to \"deflate\" which may mean that the server is vulnerable to the BREACH attack.",
                     999966,
                     "http://breachattack.com/",
                     $request->{'whisker'}->{'method'},
@@ -678,7 +718,8 @@ sub nikto_headers {
     if (($res eq "400") && ($result->{'whisker'}->{'message'} =~ /x1f<<</)) {
         add_vulnerability(
             $mark,
-            $request->{'whisker'}{'uri'} . ": Jetty > 9.2.3 and < 9.2.9 may reveal the contents of internal memory if illegal characters are passed.",
+            $request->{'whisker'}{'uri'}
+              . ": Jetty > 9.2.3 and < 9.2.9 may reveal the contents of internal memory if illegal characters are passed.",
             "000477",
             "CVE-2015-2080",
             "GET",
