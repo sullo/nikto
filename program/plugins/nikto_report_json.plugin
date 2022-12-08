@@ -32,6 +32,7 @@ sub nikto_report_json_init {
                report_format     => 'json',
                copyright         => "2016 Chris Sullo"
                };
+    use JSON;
     return $id;
 }
 
@@ -105,7 +106,8 @@ sub json_item {
 		$msg =~ s/^$uri:\s//;
 		$msg =~ s/^$root$uri:\s//;
         $msg =~ s/"/\\"/g;
-        $line .= "\"msg\":\"$msg\"";
+        $msg = JSON->new->encode($msg);
+        $line .= "\"msg\":$msg";
         $line .= "}";
         print $handle "$line";
     }
