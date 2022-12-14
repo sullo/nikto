@@ -1,9 +1,9 @@
-name: ci
+name: docker-image-push
 
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
 
 jobs:
   docker:
