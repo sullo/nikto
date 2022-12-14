@@ -30,4 +30,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: dhupee/nikto:latest
+          tags: sullo/nikto:latest
