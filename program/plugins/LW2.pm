@@ -562,8 +562,8 @@ sub cookie_write {
     return if ( !( defined $jarref && ref($jarref) ) );
     return if ( !( defined $hin    && ref($hin) ) );
 
-    $override = $override || 0;
-    $$hin{'whisker'}->{'ssl'} = $$hin{'whisker'}->{'ssl'} || 0;
+    $override ||= 0;
+    $$hin{'whisker'}->{'ssl'} ||= 0;
 
     foreach $name ( keys %$jarref ) {
         next if ( $name eq '' );
@@ -703,8 +703,8 @@ sub cookie_set {
         delete $$jarref{$name};
         return;
     }
-    $path   = $path   || '/';
-    $secure = $secure || 0;
+    $path ||= '/';
+    $secure ||= 0;
 
     @construct = ( $value, $domain, $path, undef, $secure );
     $$jarref{$name} = \@construct;
@@ -1016,7 +1016,7 @@ Returns the number of URLs actually crawled (not including those skipped).
                     $TRACK->{ $v[0] } = '?'
                       if ( $CONFIG->{params_double_record} > 0
                         && !defined $TRACK->{ $v[0] } );
-                    $v[0] = $v[0] . '?' . $v[4];
+                    $v[0] .= '?' . $v[4];
                 }
 
                 next
@@ -3219,7 +3219,7 @@ sub http_read_body {
                 $stream->{'close'}->();
                 return 0;
             }
-            $$hout{whisker}->{'data'} = $$hout{whisker}->{'data'} . $temp;
+            $$hout{whisker}->{'data'} .= $temp;
             $total += $len;
             if ( $max_size && $total >= $max_size ) {
                 $stream->{'close'}->();
