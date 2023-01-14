@@ -1244,7 +1244,7 @@ sub set_targets {
 
     # check whether -h is a file or an entry
     foreach my $host (@hosts) {
-        if (-e $host || $host eq "-") {
+        if (-f $host || $host eq "-") {
             @results = parse_hostfile($host);
             push(@checkhosts, @results);
         }
