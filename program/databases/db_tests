@@ -6296,7 +6296,7 @@
 "006527","0","b","/platform/","GET","\.\.\/base\/index\.jsp","","","","","Platform Management Console found","",""
 "006528","3092","123","/.svn/entries","GET","200","","","","","Subversion Entries file may contain directory listing information.","",""
 "006529","3092","123","/.svn/wc.db","GET","_autoindex","","","","","Subversion SQLite DB file may contain directory listing information. See http://pen-testing.sans.org/blog/pen-testing/2012/12/06/all-your-svn-are-belong-to-us","",""
-"006530","3092","123","/.git/index","GET","200","","","","","Git Index file may contain directory listing information.","",""
+"006530","3092","123","/.git/index","GET","^DIRC","","","","","Git Index file may contain directory listing information.","",""
 "006531","3092","123","/.hg/dirstate","GET","200","","","","","Mercurial DirState file may contain directory listing information.","",""
 "006532","3092","1","/test.jsp","GET","200","","","","","This might be interesting.","",""
 "006533","3093","1b","/em","GET","Oracle Enterprise Manager","","","","","Oracle Application Server oc4j admin page found.","",""
