@@ -6989,3 +6989,5 @@
 "007319","","e","/graphql","GET","GraphQL\sPlayground","","","","","The GraphQL Playground may allow direct querying of the database","",""
 "007320","","35","/+CSCOT+/translation-table?type=mst&textdomain=/%2bCSCOE%2b/portal_inc.lua&default-language&lang=../","GET","INTERNAL_PASSWORD_ENABLED","","","","","Cisco VPN host is vulnerable to CVE-2020-3452 which may allow disclosure oof information","",""
 "007321","","23","@WORDPRESSwp-config.php","GET","DB_NAME","","","","","wp-config.php file found without PHP processing. This file contains the database credentials.","",""
+"007322","","1","/sellers.json","GET","\"seller_id\"","\"domain\"","","","","The sellers.json file can reveal information about Google Adwords or other advertising networks in use.","",""
+"007323","","1","/ads.txt","GET","DIRECT","google.com","","","","The ads.txt file can reveal information about Google Adwords or other advertising networks in use.","",""
