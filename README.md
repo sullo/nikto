@@ -12,10 +12,16 @@ Run normally:
 
 ~~~
 git clone https://github.com/sullo/nikto
+
 # Main script is in program/
 cd nikto/program
+
+# Check out the 2.5.0 branch
+git checkout nikto-2.5.0
+
 # Run using the shebang interpreter
 ./nikto.pl -h http://www.example.com
+
 # Run using perl (if you forget to chmod)
 perl nikto.pl -h http://www.example.com
 ~~~
@@ -26,10 +32,13 @@ Run as a Docker container:
 git clone https://github.com/sullo/nikto.git
 cd nikto
 docker build -t sullo/nikto .
+
 # Call it without arguments to display the full help
 docker run --rm sullo/nikto
+
 # Basic usage
 docker run --rm sullo/nikto -h http://www.example.com
+
 # To save the report in a specific format, mount /tmp as a volume:
 docker run --rm -v $(pwd):/tmp sullo/nikto -h http://www.example.com -o /tmp/out.json
 ~~~

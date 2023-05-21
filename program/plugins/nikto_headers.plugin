@@ -57,14 +57,14 @@ sub nikto_headers_postfetch {
     foreach my $header (keys %$result) {
 
         # skip some very unlikely headers
-        if    ($header eq 'whisker')         { next; }
+        if (defined $HFOUND{$header}) { next; }
+        elsif    ($header eq 'whisker')         { next; }
         elsif ($header eq 'date')            { next; }
         elsif ($header eq 'content-type')    { next; }
         elsif ($header eq 'content-length')  { next; }
         elsif ($header eq 'connection')      { next; }
         elsif ($header eq 'x-mod-pagespeed') { next; }
         elsif ($header eq 'x-page-speed')    { next; }
-        elsif (defined $HFOUND{$header}) { next; }
 
 	next if $header eq 'server' && substr($result->{$header}, 0, 8) eq 'WebSEAL/';
 	next if $header eq 'x-powered-by' && $result->{$header} =~ /Oracle GlassFish Server [0-9]/;
@@ -217,10 +217,10 @@ sub nikto_headers_postfetch {
         }
     }
 
-    # CSP Report URLs
+    # CSP report-to URI
       if (!$HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
-        if (defined $result->{'x-clacks-overhead'}) {
-            add_vulnerability( $mark, "There appears to be clacks overhead on the server, the message is: $result->{'x-clacks-overhead'}", 999104, 0,
+        if (defined $result->{'report-to'}) {
+            add_vulnerability( $mark, "A report-to header was sent by the server, the URI is: $result->{'report-to'}", 000137, 0,
                 $request->{'whisker'}->{'method'}, $request->{'whisker'}->{'uri'}, $request, $result);
             $HEADERS_XCO{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
