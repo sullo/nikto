@@ -14,7 +14,7 @@
 # Notes:
 # NiktoDB 1.0
 #######################################################################
-"nikto_id","server","version","message"
+# "nikto_id","server","version","message"
 "600000","\(www\.ebdesk\.com\)/","1.3.20","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600001","0W/","0.6","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600002","3Com/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
