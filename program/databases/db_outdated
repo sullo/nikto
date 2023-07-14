@@ -604,7 +604,7 @@
 "600592","Open-Market-SecureLink-Bridge/","V2.1.RC0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600593","OpenPKG/","2.5","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600594","OpenSA/","1.0.4","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600595","OpenSSL/","3.0.7","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). OpenSSL 1.1.1s is current for the 1.x branch and will be supported until Nov 11 2023"
+"600595","OpenSSL/","3.1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). OpenSSL 1.1.1u is current for the 1.x branch and will be supported until Nov 11 2023, and OpenSSL 3.0.9 for the 3.0 branch."
 "600596","oplweb/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600597","Oracle HTTP Server Powered by Apache/","1.3.22","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600598","Oracle_Web_Listener_NT_","2.1.0.3.1/1.20in2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
