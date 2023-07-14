@@ -247,9 +247,9 @@ sub nikto_headers_postfetch {
     if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
         add_vulnerability($mark,
                           $request->{'whisker'}{'uri'}
-                            . ": Drupal Link header found with value: $result->{'link'}.",
+                            . ": Link header found with value: $result->{'link'}.",
                           "000427",
-                          "https://www.drupal.org/",
+                          "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link",
                           $request->{'whisker'}->{'method'},
                           $request->{'whisker'}->{'uri'},
                           $request,
