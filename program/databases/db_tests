@@ -6992,3 +6992,4 @@
 "007322","","1","/sellers.json","GET","\"seller_id\"","\"domain\"","","","","The sellers.json file can reveal information about Google Adwords or other advertising networks in use.","",""
 "007323","","1","/ads.txt","GET","DIRECT","google.com","","","","The ads.txt file can reveal information about Google Adwords or other advertising networks in use.","",""
 "007324","","be","/session_login.cgi","GET","Webmin","","enter a username","","","Webmin allows system administration via root login","",""
+"007325","","8","/radio.php","GET","Login Page","","password","","","PHP backdoor found.","",""
