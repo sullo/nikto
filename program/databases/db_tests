@@ -5938,7 +5938,7 @@
 "006182","CVE-2005-4463","3","@WORDPRESSwp-content/plugins/hello.php","GET","Call to undefined function add_action\(\) in","","","","","The WordPress hello.php plugin reveals a file system path","",""
 "006183","","3","@WORDPRESSreadme.html","GET","Version","","5-minute install","","","This WordPress file reveals the installed version.","",""
 "006184","","3","@WORDPRESSwp-links-opml.php","GET","generator=\"WordPress\/","","","","","This WordPress script reveals the installed version.","",""
-"006185","","1","/includes/sendmail.inc","GET","200","<\?php","","","","Include files (.inc) should not be served in plain text.","",""
+"006185","","1","/includes/sendmail.inc","GET","200","","<\?php","","","Include files (.inc) should not be served in plain text.","",""
 "006186","","1b","/license.txt","GET","200","","","","","License file found may identify site software.","",""
 "006187","","1b","/install.txt","GET","200","","","","","Install file found may identify site software.","",""
 "006188","","1b","/LICENSE.TXT","GET","200","","","","","License file found may identify site software.","",""
