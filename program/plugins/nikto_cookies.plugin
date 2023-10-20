@@ -96,7 +96,7 @@ sub nikto_cookies_postfetch {
                         # is it an internal, or just different?
                         my $int;
                         if ($internal) { $int = "RFC-1918 "; }
-                        $msg = $request->{'whisker'}->{'uri'} . ": $int IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                        $msg = $request->{'whisker'}->{'uri'} . ": ${int}IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
                     add_vulnerability($mark, $msg, 999991, $refs,
                                       $request->{'whisker'}->{'method'},
