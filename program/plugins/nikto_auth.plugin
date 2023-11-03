@@ -55,8 +55,8 @@ sub nikto_auth_load {
 
             my $HOSTAUTH = { nikto_id => "700500",
                              realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
-                             password => $array[0][1],
-                             id       => $array[0][0],
+                             password => $array[0][1] || "",
+                             id       => $array[0][0] || "",
                              message  => "Credentials provided via CLI.",
                              };
             unshift(@{$REALMS}, $HOSTAUTH);
