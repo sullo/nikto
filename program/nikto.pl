@@ -281,7 +281,7 @@ sub load_modules {
     foreach my $mod (@modules) {
         eval "use $mod";
         if ($@) {
-            print "ERROR: Required module not found: $mod\n";
+            print STDERR "ERROR: Required module not found: $mod\n";
             $errors = 1;
         }
     }
@@ -294,7 +294,7 @@ sub load_modules {
         if ($@ && $^O !~ /MSWin32/) {
 
             # Allow this to work on Windows
-            if ($@) { print "ERROR: Required module not found: $mod\n"; $errors = 1; }
+            if ($@) { print STDERR "ERROR: Required module not found: $mod\n"; $errors = 1; }
         }
     }
 
@@ -354,7 +354,7 @@ sub setup_dirs {
         }
         else {
             print STDERR "Could not work out the nikto EXECDIR, try setting it in nikto.conf\n";
-            exit;
+            exit 1;
         }
     }
     unless (defined $CONFIGFILE{'PLUGINDIR'}) {
