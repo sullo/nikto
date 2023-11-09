@@ -109,7 +109,7 @@ sub init_ssl_engine {
         	Net::SSLeay::SSLeay_add_ssl_algorithms();
         	Net::SSLeay::randomize();
 		}
-	else  { print "ERROR: $@\n"; exit; }
+	else  { print STDERR "ERROR: $@\n"; exit 1; }
     } elsif ($lw_ssl_engine eq 'SSL'){
         # use Net:SSL
         eval "use Net::SSL";
@@ -117,7 +117,7 @@ sub init_ssl_engine {
         	$LW_SSL_LIB   = 2;
         	$_SSL_LIBRARY = 'Net::SSL';
 		}
-	else  { print "ERROR: $@\n"; exit; }
+	else  { print STDERR "ERROR: $@\n"; exit 1; }
     } 
 	else {
 	# assuming autodetection
