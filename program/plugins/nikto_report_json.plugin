@@ -19,6 +19,7 @@
 # JSON Reporting
 ###############################################################################
 sub nikto_report_json_init {
+    use JSON::PP;
     my $id = { name              => "report_json",
                full_name         => "JSON reports",
                author            => "Gijs Kwakkel",
@@ -98,6 +99,7 @@ sub json_item {
     $msg =~ s/^$uri:\s//;
     $msg =~ s/^$root$uri:\s//;
     $msg =~ s/"/\\"/g;
+    $msg = JSON->new->encode($msg);
     $line .= "\"msg\":\"$msg\"";
     $line .= "},";
     print $handle $line;
