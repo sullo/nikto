@@ -111,34 +111,29 @@ sub split_auth_header {
 sub nikto_auth {
     my ($mark, $parameters, $request, $response) = @_;
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
+    $authtype = 'basic' if $authtype eq '';
 
     # did we already test this realm?
     if (exists $mark->{'realms'}{$realm}{'status'}) {
         return $request, $response;
     }
 
-    $authtype = 'basic' if $authtype eq '';
-    my ($body)   = $response->{'whisker'}->{'data'};
-    my ($uri)    = $response->{'whisker'}->{'uri'};
-    my ($method) = $response->{'whisker'}->{'method'} || "GET";
-
     unless (defined $response->{'www-authenticate'}) {
-        nprint("+ ERROR: No authentication header defined: $uri",
+        nprint("+ ERROR: No authentication header defined: $response->{'whisker'}->{'uri'}",
                "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
-    nprint("+ $uri - Requires Authentication for realm '$realm'",
+    nprint("+ $response->{'whisker'}->{'uri'} - Requires Authentication for realm '$realm'",
            "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
-      if ($OUTPUT{'show_auth'} || $uri =~ /^$CLI{'root'}\/?$/);
+      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^$CLI{'root'}\/?$/);
 
     # Save to revert
     $save_auth = $response->{'www-authenticate'};
 
-    nprint("- : Testing credentials against '$realm'",
-           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-
-    # Now we have this we can try guessing the password
+    # Now we can try the passwords
+    nprint("Testing creds for '$realm'", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    my $success = 0;
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
         unless ($realm =~ /$entry->{'realm'}/i || $entry->{'realm'} eq '@ANY') { next; }
@@ -194,6 +189,7 @@ sub nikto_auth {
                                   $request, $response);
 
                 # Mark it successful
+                $success = 1;
                 $entry->{'checked'}                 = 1;
                 $mark->{'realms'}{$realm}{'status'} = 1;
                 $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
@@ -206,6 +202,10 @@ sub nikto_auth {
         }
     }
     LW2::auth_unset(\%request);
+    if (!$success) {
+        nprint("+ No creds found for realm '$realm'",
+               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    }
 
     return $request, $response;
 }

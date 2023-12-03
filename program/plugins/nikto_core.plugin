@@ -2475,8 +2475,8 @@ sub nfetch {
     }
 
     # Set auth
-    if (defined($CLI{'hostauth'})) {
-        LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
+    if ($mark->{'realms'}{'default'}{'authtype'} ne '') {
+        LW2::auth_set($mark->{'realms'}{'default'}{'authtype'}, $request, $mark->{'realms'}{'default'}{'id'}, $mark->{'realms'}{'default'}{'password'});
     }
 
     # Set cookies
