@@ -1544,13 +1544,13 @@ sub check_dbs {
                     nprint("\t+ ERROR: Possible \@CGIDIRS misspelling: $line");
                 }
                 if ($L[3] =~ /[\s]/) {
-                        nprint("\t+ ERROR: space in file portion test #$L[0]: '$L[3]'");
+                    nprint("\t+ ERROR: space in file portion test #$L[0]: '$L[3]'");
                 }
                 if ($line =~ /[^\\]"\s/) {
-                        nprint("\t+ ERROR: space after quote #$L[0]: $line");
+                    nprint("\t+ ERROR: space after quote #$L[0]: $line");
                 }
                 if ($line =~ /\s"/) {
-                        nprint("\t+ ERROR: space before quote #$L[0]: $line");
+                    nprint("\t+ ERROR: space before quote #$L[0]: $line");
                 }
                 $ENTRIES{"$L[3],$L[4],$L[5],$L[6],$L[7],$L[8],$L[9],$L[11],$L[12]"}++;
                 if ((count_fields($line, 1) ne 12) && (count_fields($line) ne '')) {
@@ -2476,7 +2476,10 @@ sub nfetch {
 
     # Set auth
     if ($mark->{'realms'}{'default'}{'authtype'} ne '') {
-        LW2::auth_set($mark->{'realms'}{'default'}{'authtype'}, $request, $mark->{'realms'}{'default'}{'id'}, $mark->{'realms'}{'default'}{'password'});
+        LW2::auth_set($mark->{'realms'}{'default'}{'authtype'},
+                      $request,
+                      $mark->{'realms'}{'default'}{'id'},
+                      $mark->{'realms'}{'default'}{'password'});
     }
 
     # Set cookies

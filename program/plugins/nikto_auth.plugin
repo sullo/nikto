@@ -132,7 +132,8 @@ sub nikto_auth {
     $save_auth = $response->{'www-authenticate'};
 
     # Now we can try the passwords
-    nprint("Testing creds for '$realm'", "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    nprint("Testing creds for '$realm'",
+           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     my $success = 0;
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
@@ -164,7 +165,7 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        if ($response->{'whisker'}->{'code'} !~ /40[13]/
+        if (   $response->{'whisker'}->{'code'} !~ /40[13]/
             && $response->{'whisker'}->{'code'} ne "500"
             && !defined $response->{'whisker'}->{'error'}) {
             unless ($entry->{'checked'} == 1) {
@@ -180,7 +181,8 @@ sub nikto_auth {
                     $ref = "CWE-16";
                 }
                 else {
-                    $message = $request->{'whisker'}->{'uri'} .": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
+                    $message = $request->{'whisker'}->{'uri'}
+                      . ": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
                     $ref = "CWE-16";
                 }
 
@@ -189,7 +191,7 @@ sub nikto_auth {
                                   $request, $response);
 
                 # Mark it successful
-                $success = 1;
+                $success                            = 1;
                 $entry->{'checked'}                 = 1;
                 $mark->{'realms'}{$realm}{'status'} = 1;
                 $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};

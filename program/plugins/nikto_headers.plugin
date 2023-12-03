@@ -245,16 +245,16 @@ sub nikto_headers_postfetch {
         $HFOUND{'x-drupal-cache'} = 1;
     }
     if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
-        add_vulnerability($mark,
-                          $request->{'whisker'}{'uri'}
-                            . ": Link header found with value: $result->{'link'}.",
-                          "000427",
-                          "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link",
-                          $request->{'whisker'}->{'method'},
-                          $request->{'whisker'}->{'uri'},
-                          $request,
-                          $result
-                          );
+        add_vulnerability(
+                $mark,
+                $request->{'whisker'}{'uri'} . ": Link header found with value: $result->{'link'}.",
+                "000427",
+                "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link",
+                $request->{'whisker'}->{'method'},
+                $request->{'whisker'}->{'uri'},
+                $request,
+                $result
+                );
         $HFOUND{'link'} = 1;
     }
 
@@ -372,19 +372,19 @@ sub nikto_headers_postfetch {
             my ($protocol, $msg);
             $result->{'alt-svc'} =~ /.*(h[23])="([^"]+)"/;
             my $endpoint = $2;
-            if    ($1 eq "h2")  { 
-                $protocol = "HTTP/2 over TLS"; 
+            if ($1 eq "h2") {
+                $protocol = "HTTP/2 over TLS";
             }
-            elsif ($1 eq "h2c") { 
-                $protocol = "HTTP/2 over TCP"; 
-                $msg = " Unencrypted."; 
+            elsif ($1 eq "h2c") {
+                $protocol = "HTTP/2 over TCP";
+                $msg      = " Unencrypted.";
             }
             elsif ($1 eq "h3") {
                 $protocol = "HTTP/3";
                 $msg      = " Nikto cannot test HTTP/3 over QUIC.";
             }
-            else { 
-                $protocol = $1; 
+            else {
+                $protocol = $1;
             }
 
             add_vulnerability(

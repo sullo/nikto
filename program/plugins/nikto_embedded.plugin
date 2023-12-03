@@ -59,9 +59,15 @@ sub nikto_embedded {
                     $model =~ s/\+/ /g;
 
                     if ($model ne "") {
-                        add_vulnerability($mark, "$item->{'uri'}: $item->{'message'} $model",
-                                          $item->{'nikto_id'}, "", "GET", $item->{'uri'}, $request,
-                                          $response);
+                        add_vulnerability($mark,
+                                          "$item->{'uri'}: $item->{'message'} $model",
+                                          $item->{'nikto_id'},
+                                          "",
+                                          "GET",
+                                          $item->{'uri'},
+                                          $request,
+                                          $response
+                                          );
                     }
                 }
             }
