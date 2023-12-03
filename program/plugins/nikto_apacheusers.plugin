@@ -80,7 +80,7 @@ sub nikto_apacheusers {
     # Now we can attempt to enumerate the users
     my ($url, $dictfile, $size);
     my @cgiwraps;
-    my @cfgcgi = split(/ /, $VARIABLES{"\@CGIDIRS"});
+    my @CFGCGI = split(/ /, $VARIABLES{"\@CGIDIRS"});
 
     if (defined $parameters->{'dictionary'}) {
         $dictfile = $parameters->{'dictionary'};

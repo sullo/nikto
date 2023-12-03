@@ -285,7 +285,7 @@ sub map_codes {
                 for (my $i = scalar(@pathparts) - 1 ; $i >= 1 ; $i--) {
                     $uriparts[0] =~ s/$pathparts[$i]//;
                     $uriparts[0] =~ s/\/\//\//;
-                    next if ($path eq '/');
+                    next if ($uriparts[0] eq '/');
                     my ($res, $content, $error, $request, $response) =
                       nfetch($mark, $uriparts[0], "GET", "", "", "", "Redirect Follow");
                 }
@@ -3163,7 +3163,6 @@ sub list_plugins {
 
     foreach my $plugin (@PLUGINS) {
         nprint("Plugin: $plugin->{'name'}");
-        push(@all_names, $plugin->{'name'});
         nprint(" $plugin->{'full_name'} - $plugin->{'description'}");
         nprint(" Written by $plugin->{'author'}, Copyright (C) $plugin->{'copyright'}");
         if (defined $plugin->{'options'}) {
