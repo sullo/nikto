@@ -46,7 +46,7 @@ MAX_WARN=20
 #PROMPTS=no
 
 # cirt.net : set the IP so that updates can work without name resolution -- just in case
-CIRT=107.170.99.251
+CIRT=159.65.167.152
 
 # Proxy settings -- still must be enabled by -useproxy
 #PROXYHOST=127.0.0.1
