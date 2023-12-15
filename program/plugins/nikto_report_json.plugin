@@ -99,7 +99,7 @@ sub json_item {
     $msg =~ s/^$uri:\s//;
     $msg =~ s/^$root$uri:\s//;
     $msg =~ s/"/\\"/g;
-    $msg = JSON->new->encode($msg);
+    $msg = JSON::PP->new->encode($msg);
     $line .= "\"msg\":\"$msg\"";
     $line .= "},";
     print $handle $line;
