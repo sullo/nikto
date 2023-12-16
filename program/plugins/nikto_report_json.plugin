@@ -42,21 +42,25 @@ sub json_open {
 
     # Open file and produce header
     open(OUT, "+>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    print OUT "{";
 
     return OUT;
 }
 
 ###############################################################################
 # start output
+$json_host_started = false;
 sub json_host_start {
     my ($handle, $mark) = @_;
     $mark->{'banner'} =~ s/"/\\"/g;
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
-    print $handle "{\"host\":\"$hostname\","
+    print $handle "\"host\":\"$hostname\","
       . "\"ip\":\"$mark->{'ip'}\","
       . "\"port\":\"$mark->{'port'}\","
       . "\"banner\":\"$mark->{'banner'}\","
       . "\"vulnerabilities\":[";
+
+    $json_host_started = true;
     return;
 }
 
@@ -65,7 +69,7 @@ sub json_host_start {
 sub json_host_end {
     my ($handle, $mark, $file) = @_;
 
-    print OUT "]";
+    if ($json_host_started eq true) { print OUT "]"; }
     return;
 }
 
