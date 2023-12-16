@@ -65,8 +65,6 @@ sub json_host_start {
 sub json_host_end {
     my ($handle, $mark, $file) = @_;
 
-    # this is remove the last , that json_item() left, and overwrite with ] to close the host
-    seek($handle, -1, 2);
     print OUT "]";
     return;
 }
@@ -82,10 +80,17 @@ sub json_close {
 
 ###############################################################################
 # print an item
+$json_item_count = 0;
 sub json_item {
     my ($handle, $mark, $item) = @_;
+    $json_item_count++;
+
     $uri = $item->{'uri'};
-    my $line = "{";
+    my $line = "";
+
+    if ($json_item_count gt 1) { $line .= ","; }
+
+    $line .= "{";
     $line .= "\"id\": \"" . $item->{'nikto_id'} . "\",";
     if ($item->{'refs'} ne '')   { $line .= "\"references\": \"" . $item->{'refs'} . "\","; }
     if ($item->{'method'} ne '') { $line .= "\"method\":\"" . $item->{'method'} . "\","; }
@@ -102,7 +107,7 @@ sub json_item {
     $msg =~ s/"/\\"/g;
     $msg = JSON::PP->new->encode($msg);
     $line .= "\"msg\":$msg";
-    $line .= "},";
+    $line .= "}";
     print $handle $line;
 }
 
