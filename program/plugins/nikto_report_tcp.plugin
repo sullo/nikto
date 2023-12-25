@@ -1,0 +1,120 @@
+###############################################################################
+#  Copyright (C) 2023 Chris Sullo
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# JSON Reporting
+###############################################################################
+sub nikto_report_tcp_init {
+    use IO::Socket::INET;
+    my $id = { name              => "report_tcp",
+               full_name         => "Reports over TCP",
+               author            => "Dawid Józwik",
+               description       => "Sends vulnerabilities over TCP in real time",
+               report_head       => \&tcp_open,
+               report_host_start => \&tcp_host_start,
+               report_close      => \&tcp_close,
+               report_item       => \&tcp_item,
+               report_format     => "tcp",
+               copyright         => "2023 Chris Sullo"
+               };
+    return $id;
+}
+
+
+###############################################################################
+# send data in length prefixed format
+sub send_data {
+    my ($handle, $data) = @_;
+
+    $length = pack("I", length($data));
+    $handle->send($length . $data);
+    return;
+}
+
+###############################################################################
+# open TCP connection
+$tcp_id = "";
+sub tcp_open {
+    my ($file) = @_;
+    $tcp_id = $ENV{'NIKTO_TCP_ID'};
+
+    my ($host, $port) = split(":", $file);
+    my $socket = new IO::Socket::INET (
+        PeerHost => $host,
+        PeerPort => $port,
+        Proto => 'tcp',
+    );
+
+    die "cannot connect with tcp listenner" unless $socket;
+    return $socket;
+}
+
+###############################################################################
+# send host info over TCP
+sub tcp_host_start {
+    my ($handle, $mark) = @_;
+    $mark->{'banner'} =~ s/"/\\"/g;
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+
+    $prefix = ($tcp_id) ? "\"tcp_id\":$tcp_id," : "";
+    $line = "{$prefix"
+      . "\"host\":\"$hostname\","
+      . "\"ip\":\"$mark->{'ip'}\","
+      . "\"port\":\"$mark->{'port'}\","
+      . "\"banner\":\"$mark->{'banner'}\"}";
+
+    send_data($handle, $line);
+    return;
+}
+
+###############################################################################
+# close TCP connection
+sub tcp_close {
+    my ($handle, $mark) = @_;
+    $handle->close();
+    return;
+}
+
+###############################################################################
+# send item over TCP
+sub tcp_item {
+    my ($handle, $mark, $item) = @_;
+
+    $uri = $item->{'uri'};
+
+    $prefix = ($tcp_id) ? "\"tcp_id\":$tcp_id," : "";
+    my $line .= "{$prefix\"id\":\"$item->{'nikto_id'}\",";
+
+    if ($item->{'refs'} ne '')   { $line .= "\"references\":\"$item->{'refs'}\","; }
+    if (!$item->{'method'}) { $line .= "\"method\":\"$item->{'method'}\","; }
+    if (!$uri ne '' && !$mark->{'root'} && $uri !~ /^$mark->{'root'}/) {
+        $line .= "\"url\":\"$mark->{'root'}$uri\",";
+    }
+    else { $line .= "\"url\":\"$uri\","; }
+
+    my $msg = $item->{'message'};
+    $uri = quotemeta($uri);
+    my $root = quotemeta($mark->{'root'});
+    $msg =~ s/^$uri:\s//;
+    $msg =~ s/^$root$uri:\s//;
+    $msg =~ s/"/\\"/g;
+    $msg = JSON::PP->new->encode($msg);
+    $line .= "\"msg\":$msg}";
+
+    send_data($handle, $line);
+}
+1;

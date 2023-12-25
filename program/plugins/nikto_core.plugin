@@ -835,7 +835,7 @@ sub general_config {
     $CLI{'format'} = 'txt' if $CLI{'format'} eq 'text';
     $CLI{'format'} = 'htm' if $CLI{'format'} eq 'html';
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) {
+    if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|tcp|sql|nbe|xml|none)$/) {
         nprint("+ ERROR: Invalid output format");
         exit 1;
     }
