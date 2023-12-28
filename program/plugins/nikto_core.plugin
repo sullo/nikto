@@ -841,12 +841,12 @@ sub general_config {
     }
 
     if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
-        nprint("+ERROR: Output file specified without a format");
+        nprint("+ ERROR: Output file specified without a format");
         exit 1;
     }
 
     if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "none")) {
-        nprint("+ERROR: Output file format specified without a name");
+        nprint("+ ERROR: Output file format specified without a name");
         exit 1;
     }
 
@@ -1761,7 +1761,7 @@ sub check_dbs {
     foreach my $id (keys %ALL_IDS) {
         chomp($id);
         next if (($id eq 0) || ($id eq '') || ($id eq 'nikto_id'));
-        if ($id =~ /[^\d]/)  { nprint("+ERROR: Invalid test ID: $id"); next; }
+        if ($id =~ /[^\d]/)  { nprint("+ ERROR: Invalid test ID: $id"); next; }
         if (length($id) < 6) { nprint("+WARNING: Possibly invalid test ID: $id"); }
     }
 
