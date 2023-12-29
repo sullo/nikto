@@ -42,21 +42,28 @@ sub json_open {
 
     # Open file and produce header
     open(OUT, "+>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    print OUT "[";
 
     return OUT;
 }
 
 ###############################################################################
 # start output
+$json_host_started = false;
 sub json_host_start {
     my ($handle, $mark) = @_;
     $mark->{'banner'} =~ s/"/\\"/g;
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+
+    if ($json_host_started eq true) { print $handle ","; }
+
     print $handle "{\"host\":\"$hostname\","
       . "\"ip\":\"$mark->{'ip'}\","
       . "\"port\":\"$mark->{'port'}\","
       . "\"banner\":\"$mark->{'banner'}\","
       . "\"vulnerabilities\":[";
+
+    $json_host_started = true;
     return;
 }
 
@@ -65,9 +72,8 @@ sub json_host_start {
 sub json_host_end {
     my ($handle, $mark, $file) = @_;
 
-    # this is remove the last , that json_item() left, and overwrite with ] to close the host
-    seek($handle, -1, 2);
-    print OUT "]";
+    if ($json_host_started eq true) { print OUT "]}"; }
+    $json_item_count = 0;
     return;
 }
 
@@ -75,16 +81,24 @@ sub json_host_end {
 # close output file
 sub json_close {
     my ($handle, $mark) = @_;
-    print $handle "}\n";
+    print $handle "]";
     close($handle);
     return;
 }
 
 ###############################################################################
 # print an item
+$json_item_count = 0;
 sub json_item {
     my ($handle, $mark, $item) = @_;
-    my $line = "{";
+    $json_item_count++;
+
+    $uri = $item->{'uri'};
+    my $line = "";
+
+    if ($json_item_count gt 1) { $line .= ","; }
+
+    $line .= "{";
     $line .= "\"id\": \"" . $item->{'nikto_id'} . "\",";
     if ($item->{'refs'} ne '')   { $line .= "\"references\": \"" . $item->{'refs'} . "\","; }
     if ($item->{'method'} ne '') { $line .= "\"method\":\"" . $item->{'method'} . "\","; }
@@ -100,8 +114,8 @@ sub json_item {
     $msg =~ s/^$root$uri:\s//;
     $msg =~ s/"/\\"/g;
     $msg = JSON::PP->new->encode($msg);
-    $line .= "\"msg\":\"$msg\"";
-    $line .= "},";
+    $line .= "\"msg\":$msg";
+    $line .= "}";
     print $handle $line;
 }
 

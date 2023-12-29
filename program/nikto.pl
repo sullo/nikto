@@ -153,8 +153,13 @@ foreach my $mark (@MARKS) {
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
     my %FoF = ();
+    report_host_start($mark);
 
     if (!$mark->{'test'}) {
+        if ($mark->{'errmsg'} ne "") {
+            add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
+        }
+
         report_host_end($mark);
         next;
     }
@@ -175,11 +180,6 @@ foreach my $mark (@MARKS) {
 
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
 
-    report_host_start($mark);
-
-    if ($mark->{'errmsg'} ne "") {
-        add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
-    }
 
     dump_target_info($mark);
     unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
