@@ -136,7 +136,7 @@ sub save_createdir {
         $savedir .= "_" . $now;
     }
     elsif (-f $savedir) {
-        nprint("+ERROR: Directory from -Savedir is a file.");
+        nprint("+ ERROR: Directory from -Savedir is a file.");
         exit;
     }
 
@@ -144,7 +144,7 @@ sub save_createdir {
     if (!-d $savedir) {
         mkdir($savedir);
         if (!-d $savedir) {
-            nprint("+ERROR: Unable to create -Save directory '$savedir'",
+            nprint("+ ERROR: Unable to create -Save directory '$savedir'",
                    "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit;
         }
