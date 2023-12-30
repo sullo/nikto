@@ -147,7 +147,9 @@ sub nikto_headers_postfetch {
     }
 
     # Look for X-Frame-Options
-    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'} && $result->{'whisker'}->{'code'} == 200) {
+    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } 
+	&& defined $result->{'whisker'}->{'code'} 
+	&& $result->{'whisker'}->{'code'} == 200) {
         if (defined $result->{'x-frame-options'}) {
                 add_vulnerability(
                     $mark,
@@ -387,7 +389,8 @@ sub nikto_headers_postfetch {
 
     # X-Content-Type-Options
     if (!$HEADERS_XCTO{ $mark->{hostname} }{ $mark->{port} }
-        && defined $result->{'whisker'}->{'code'}) {
+        && defined $result->{'whisker'}->{'code'}
+	&& $result->{'whisker'}->{'code'} == 200) {
         if (!defined $result->{'x-content-type-options'}) {
             add_vulnerability(
                 $mark,
