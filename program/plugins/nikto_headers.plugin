@@ -147,15 +147,12 @@ sub nikto_headers_postfetch {
     }
 
     # Look for X-Frame-Options
-    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'}) {
+    if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } && defined $result->{'whisker'}->{'code'} && $result->{'whisker'}->{'code'} == 200) {
         if (defined $result->{'x-frame-options'}) {
-            if ($result->{'x-frame-options'} =~ /^ALLOW-FROM/) {
-                my $allowed = $result->{'x-frame-options'};
-                $allowed =~ s/^.* //g;
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
-                      . ":X-Frame-Options header is set to allow framing from $allowed. This does not have full cross-browser support (only in IE and Firefox) and may lead to the header being ignored.",
+                      . ":X-Frame-Options header is deprecated and has been replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead.",
                     999978,
                     "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
                     $request->{'whisker'}->{'method'},
@@ -163,22 +160,8 @@ sub nikto_headers_postfetch {
                     $request,
                     $result
                     );
-            }
+        	$XFRAME{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
-        else {
-            add_vulnerability(
-                        $mark,
-                        $request->{'whisker'}{'uri'}
-                          . ": The anti-clickjacking X-Frame-Options header is not present.",
-                        999957,
-                        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
-                        $request->{'whisker'}->{'method'},
-                        $request->{'whisker'}->{'uri'},
-                        $request,
-                        $result
-                        );
-        }
-        $XFRAME{ $mark->{hostname} }{ $mark->{port} } = 1;
     }
 
     # Incapsula WAF
