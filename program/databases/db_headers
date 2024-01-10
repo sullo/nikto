@@ -91,6 +91,7 @@
 "strict-transport-security"
 "te"
 "timing-allow-origin"
+"traceparent"
 "trailer"
 "transfer-encoding"
 "upgrade"
