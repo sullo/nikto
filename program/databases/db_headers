@@ -93,6 +93,7 @@
 "te"
 "timing-allow-origin"
 "trailer"
+"traceparent"
 "transfer-encoding"
 "upgrade"
 "user-agent"
