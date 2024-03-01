@@ -4,7 +4,7 @@ nikto
 [![alt text](https://cirt.net/images/patreon.png "Become a patron of Nikto!")](https://www.patreon.com/sullo)
 
 
-Nikto web server scanner  - https://cirt.net/Nikto2
+Nikto web server scanner  - https://cirt.net/Nikto2 
 
 Full documentation - https://github.com/sullo/nikto/wiki
 
