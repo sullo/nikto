@@ -2556,6 +2556,7 @@ sub nfetch {
             ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
             );
         $mark->{'terminate'} = 1;
+        status_report();
     }
 
     if ($OUTPUT{'debug'}) {
