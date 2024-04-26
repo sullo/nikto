@@ -1436,7 +1436,7 @@
 "001446","OSVDB-2117","2","/","GET","Web Server, Enterprise Edition 6\.0","","","","","Appears to be a default Netscape/iPlanet 6 install.","",""
 "001447","OSVDB-2117","b","/main_page.php","GET","mazu\.css","","","","","Mazu Networks Profiler or Sensor is running.","",""
 "001448","OSVDB-2117","b","/","GET","samba is configured to deny","","","","","Samba-swat web server. Used to administer Samba.","",""
-"001449","OSVDB-2117","b","/cpanel/","GET","200","","","","","Web-based control panel","",""
+"001449","https://cpanel.net/","b","/cpanel/","GET","200","","","","","Web-based control panel","",""
 "001450","CVE-2003-0560","9","/shopexd.asp?catalogid='42","GET","catalogid='42'","","","","","VP-ASP Shopping Cart 5.0 contains multiple SQL injection vulnerabilities.","",""
 "001451","CVE-2003-0560","9","/shopping/diag_dbtest.asp","GET","200","","","","","VP-ASP Shopping Cart 5.0 contains multiple SQL injection vulnerabilities.","",""
 "001452","CVE-1999-1376 BID-2252","3","/_vti_bin/fpcount.exe/","GET","Empty output from CGI program","","","","","The VisNetic WebSite 3.5, Service release 17 reveals system paths when certain non-existing files are requested.","",""
