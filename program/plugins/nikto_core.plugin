@@ -395,7 +395,6 @@ sub map_codes {
 
     return;
 }
-
 ###############################################################################
 sub rm_active_content {
 
@@ -1303,7 +1302,7 @@ sub set_targets {
                         ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                         );
 
-                    # TODO skip this host if going through a file of targets
+                    next;
                 }
             }
             $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';

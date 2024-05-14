@@ -4025,8 +4025,9 @@ sub _multipart_read_data_part {
         $$mp{$NAME} = "\0FILE";
         return 0 if ( !defined $fp );
 
-        # TODO: funky content types, like application/x-macbinary
         if ( $CTYPE ne 'application/octet-stream' ) {
+            # Treat as parameter if content type is not octet-stream
+            $$mp{$NAME} = $VALUE;
             return 0;
         }
 
@@ -4864,7 +4865,6 @@ sub __bad_netssleay_error {
         || $err == Net::SSLeay::ERROR_WANT_WRITE );
     return 1;
 }
-
 sub _stream_netssleay_valid {
     my $xr = shift;
     return 0 if ( $LW_SSL_KEEPALIVE == 0 || $xr->{state} == 0 );
@@ -4876,9 +4876,11 @@ sub _stream_netssleay_valid {
             return 0 if ( !_stream_ssl_read($xr) );
         }
         else {
-
-            # todo
-            #$xr->{slurped}.=$x."\0";
+            my $x;
+            while ( defined( $x = Net::SSLeay::peek( $xr->{sock}, 1 ) ) && $x > 0 ) {
+                $xr->{slurped} .= Net::SSLeay::read( $xr->{sock}, my $buffer, $x );
+            }
+            return 0 if ( __bad_netssleay_error() );
         }
     }
     return 0 if ( __bad_netssleay_error() );
@@ -4897,6 +4899,7 @@ sub _stream_netssleay_valid {
 
     return 1;
 }
+
 
 sub _stream_socket_valid {
     my $xr = shift;
