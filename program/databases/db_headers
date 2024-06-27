@@ -94,7 +94,6 @@
 "timing-allow-origin"
 "traceparent"
 "trailer"
-"traceparent"
 "transfer-encoding"
 "upgrade"
 "user-agent"
