@@ -39,9 +39,6 @@ DEFAULTHTTPVER=1.1
 # UPDATES=auto 	- automatically attempt submission *without prompting*
 UPDATES=yes
 
-# Warning if MAX_WARN OK or MOVED responses are retrieved
-MAX_WARN=20
-
 # Prompt... if set to 'no' you'll never be asked for anything. Good for automation.
 #PROMPTS=no
 
