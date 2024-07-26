@@ -939,7 +939,7 @@ sub general_config {
     # SSL Test
     if (!LW2::ssl_is_available()) {
         nprint("- ***** TLS/SSL support not available (see docs for SSL install) *****");
-        if ($CLI{'ssl'}) {
+        if ($CLI{'ssl'} || ($CLI{'host'} =~ /^https/i)) {
             nprint("- ERROR: -ssl was specified but TLS/SSL is not available.");
             exit;
         }
