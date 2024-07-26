@@ -6990,3 +6990,4 @@
 "007329","https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/certificate-authority-web-enrollment","1","/certsrv/certfnsh.asp","GET","401","","","","","Active Directory Certificate Services found (requires authentication)","",""
 "007330","https://getcomposer.org/","23","/vendor/composer/installed.json","GET","\"(require|name)\":\s","","","","","PHP Composer configuration file reveals configuration information.","",""
 "007331","https://getcomposer.org/","23","/.composer/composer.json","GET","\"(require|name)\":\s","","","","","PHP Composer configuration file reveals configuration information.","",""
+"007332","https://swagger.io/","e3","/swagger/index.html","GET","Swagger UI","","","","","Swagger UI was found.","",""
