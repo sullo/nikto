@@ -6985,7 +6985,7 @@
 "007324","","be","/session_login.cgi","GET","Webmin","","enter a username","","","Webmin allows system administration via root login","",""
 "007325","","8","/radio.php","GET","Login Page","","password","","","PHP backdoor found.","",""
 "007326","","1","/app-ads.txt","GET","DIRECT","google.com,","","","","The ads.txt file can reveal information about Google Adwords or other advertising networks in use.","",""
-"007327","RFC-5785","3","/.well-known/jwks","GET","keys","","alg","","","JWKS file found","",""
+"007327","RFC-5785","3","/.well-known/jwks","GET","keys","","kty","","","JWKS file found","",""
 "007328","https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/certificate-authority-web-enrollment","1","/certsrv/certfnsh.asp","GET","Active Directory Certificate Services","","200","","","Active Directory Certificate Services found","",""
 "007329","https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/certificate-authority-web-enrollment","1","/certsrv/certfnsh.asp","GET","401","","","","","Active Directory Certificate Services found (requires authentication)","",""
 "007330","https://getcomposer.org/","23","/vendor/composer/installed.json","GET","\"(require|name)\":\s","","","","","PHP Composer configuration file reveals configuration information.","",""
