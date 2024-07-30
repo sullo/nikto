@@ -941,7 +941,7 @@ sub general_config {
         nprint("- ***** TLS/SSL support not available (see docs for SSL install) *****");
         if ($CLI{'ssl'} || ($CLI{'host'} =~ /^https/i)) {
             nprint("- ERROR: -ssl was specified but TLS/SSL is not available.");
-            exit;
+            exit 1;
         }
     }
 
@@ -1013,7 +1013,7 @@ sub safe_quit {
     report_summary($mark);
     report_close($mark);
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);
-    exit(1);
+    exit 1;
 }
 
 ###############################################################################
@@ -1125,7 +1125,7 @@ sub resolve {
     {
         if ($CLI{'skiplookup'}) {
             nprint("+ ERROR: -nolookup set, but given name\n");
-            exit;
+            exit 1;
         }
 
         if ($LW2::LW2_CAN_IPv6) {    # IPv4/v6 resolve
@@ -1183,7 +1183,7 @@ sub resolve {
                     "+ ERROR: IPv4 scanning mode requested but only IPv6 addresses found ($ipcache)"
                     );
             }
-            exit;
+            exit 1;
         }
 
         if ($ipcache != "") {
@@ -1194,7 +1194,7 @@ sub resolve {
             && $ip !~ /^$LW2::IPv6_re$/) {
             nprint("+ ERROR: Invalid IP: $ip\n\n",
                    "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            exit;
+            exit 1;
         }
 
         $name = $ident;
@@ -2843,7 +2843,7 @@ sub version {
     # Check dependencies
     check_modules();
 
-    exit;
+    exit 0;
 }
 
 #######################################################################
@@ -2938,8 +2938,6 @@ sub send_updates {
 
 #######################################################################
 sub usage {
-    my $is_failure = shift;
-
     print "
    Options:
        -ask+               Whether to ask about submitting updates
@@ -3039,7 +3037,7 @@ sub usage {
 
     check_modules();
 
-    exit $is_failure;
+    exit 0;
 }
 
 #######################################################################
@@ -3190,7 +3188,7 @@ sub list_plugins {
         }
     }
 
-    exit(0);
+    exit 0;
 }
 
 ###############################################################################
