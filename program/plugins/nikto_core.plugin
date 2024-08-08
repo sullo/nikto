@@ -466,11 +466,11 @@ sub dump_target_info {
     if ($mark->{ssl}) {
 
         $sslprint = "$VARIABLES{'DIV'}\n";
-        $sslprint .= "+ SSL Info:        Subject:  $mark->{'ssl_cert_subject'}\n";
-        $sslprint .= "                   Altnames: $mark->{'ssl_cert_altnames'}\n"
+        $sslprint .= "+ SSL Info:           Subject:  $mark->{'ssl_cert_subject'}\n";
+        $sslprint .= "                      Altnames: $mark->{'ssl_cert_altnames'}\n"
           if $mark->{'ssl_cert_altnames'} ne '';
-        $sslprint .= "                   Ciphers:  $mark->{'ssl_cipher'}\n";
-        $sslprint .= "                   Issuer:   $mark->{'ssl_cert_issuer'}";
+        $sslprint .= "                      Ciphers:  $mark->{'ssl_cipher'}\n";
+        $sslprint .= "                      Issuer:   $mark->{'ssl_cert_issuer'}";
     }
 
     if ($CLI{'plugins'} ne '@@NONE') {
