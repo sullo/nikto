@@ -443,10 +443,8 @@ sub nikto_headers_postfetch {
 # If multiple headers were sent with the same name, turn the array into a string for reporting
 sub report_multiheaders {
     my $header = $_[0] || return;
-    my $values;
     if (ref($header) eq 'ARRAY') {
-        $values = join(',', @{$header});
-        return $values;
+        return join(',', @{$header});
     }
     else {
         return $header;
