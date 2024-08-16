@@ -230,9 +230,10 @@ sub nikto_headers_postfetch {
         $HFOUND{'x-drupal-cache'} = 1;
     }
     if (defined $result->{'link'} && $HFOUND{'link'} != 1) {
+        my $values = report_multiheaders($result->{'link'});
         add_vulnerability(
                 $mark,
-                $request->{'whisker'}{'uri'} . ": Link header found with value: $result->{'link'}.",
+                $request->{'whisker'}{'uri'} . ": Link header(s) found with value(s): $values.",
                 "000427",
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link",
                 $request->{'whisker'}->{'method'},
@@ -299,17 +300,8 @@ sub nikto_headers_postfetch {
             my $x = $result->{$header};
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
-            $vuln = $request->{'whisker'}{'uri'}
-              . ": Uncommon header '$header' found, with contents: $result->{$header}";
-            if (ref($x) eq 'ARRAY') {
-                $multiheader = '(';
-                foreach $k (@{$x}) {
-                    $multiheader .= "$k,";
-                }
-                $multiheader .= ')';
-                $vuln = $request->{'whisker'}{'uri'}
-                  . ": Uncommon header '$header' found, with multiple values: $multiheader";
-            }
+            my $values = report_multiheaders($result->{$header});
+            $vuln = $request->{'whisker'}{'uri'} . ": Uncommon header(s) '$header' found, with contents: $values.";
             add_vulnerability($mark, $vuln, 999100, "",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
@@ -446,6 +438,19 @@ sub nikto_headers_postfetch {
     }
 
     return $request, $result;
+}
+
+# If multiple headers were sent with the same name, turn the array into a string for reporting
+sub report_multiheaders {
+    my $header = $_[0] || return;
+    my $values;
+    if (ref($header) eq 'ARRAY') {
+        $values = join(',', @{$header});
+        return $values;
+    }
+    else {
+        return $header;
+    }
 }
 
 sub nikto_headers_check {
