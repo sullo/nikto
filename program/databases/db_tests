@@ -6992,3 +6992,4 @@
 "007331","https://getcomposer.org/","23","/.composer/composer.json","GET","\"(require|name)\":\s","","","","","PHP Composer configuration file reveals configuration information.","",""
 "007332","https://swagger.io/","e3","/swagger/index.html","GET","Swagger UI","","","","","Swagger UI was found.","",""
 "007333","","e","/graphql","GET","category\"\:\"graphql","","","","","GraphQL endpoint found","",""
+"007334","","b","/","GET","Cockpit\sfrom\srunning","","","","","Cockpit server admin is running. https://cockpit-project.org/","",""
