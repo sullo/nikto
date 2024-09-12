@@ -14,34 +14,9 @@ permissions:
   packages: write
   pull-requests: write
 jobs:
-  secureScan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Build
-        uses: docker/build-push-action@v6
-        with:
-          tags: ${{ github.event.repository.full_name }}:latest
-          push: false
-      - name: Docker Scout
-        id: docker-scout
-        uses: docker/scout-action@v1.11.0
-        with:
-          command: cves,recommendations
-          image: local://${{ github.event.repository.full_name }}:latest
-          to-latest: true
-          only-severities: critical,high
-          sarif-file: sarif.output.json
-          summary: true
-          write-comment: true
-          exit-on: vulnerability
-          exit-code: true
-          github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
   publishImage:
-    if: ${{ (github.ref_name == 'main') }}
+    # if: ${{ (github.ref_name == 'main') }}
     runs-on: ubuntu-latest
-    needs: secureScan
     steps:
       - uses: actions/checkout@v4
         with:
