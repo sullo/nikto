@@ -3,6 +3,7 @@ concurrency:
   group: ${{ github.event_name }}-${{ github.repository }}-${{ github.ref_name }}
   cancel-in-progress: true
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
