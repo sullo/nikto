@@ -36,10 +36,6 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ github.event.repository.full_name }}
-          tags: |
-            type=sha,prefix={{branch}}-
-            type=sha
-            type=tag
       - name: Extract version from package.json
         id: getVersion
         run: echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
