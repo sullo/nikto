@@ -39,7 +39,7 @@ jobs:
           tags: |
             type=sha,prefix={{branch}}-
             type=sha
-            type={{tag}}
+            type=tag
       - name: Extract version from package.json
         id: getVersion
         run: echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
