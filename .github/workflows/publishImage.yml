@@ -21,7 +21,7 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v6
         with:
-          tags: local://${{ github.event.organization }}/${{ github.event.repository.name }}:latest
+          tags: local://${{ github.event.repository.name }}:latest
           push: false
       - name: Docker Scout
         id: docker-scout
