@@ -21,14 +21,14 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v6
         with:
-          tags: local://${{ github.event.repository.name }}:latest
+          tags: local://${{ github.event.repository.full_name }}:latest
           push: false
       - name: Docker Scout
         id: docker-scout
         uses: docker/scout-action@v1.11.0
         with:
           command: cves,recommendations
-          image: local://${{ github.event.repository.name }}:latest
+          image: local://${{ github.event.repository.full_name }}:latest
           to-latest: true
           only-severities: critical,high
           sarif-file: sarif.output.json
@@ -59,7 +59,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ github.event.repository.name }}
+          images: ${{ github.event.repository.full_name }}
           tags: |
             type=sha,prefix={{branch}}-
             type=sha
