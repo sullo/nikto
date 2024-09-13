@@ -35,16 +35,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ github.event.repository.full_name }}
-      - name: Extract version from package.json
-        id: getVersion
-        run: echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+          images: ghcr.io/${{ github.event.repository.full_name }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          registry: ghcr.io
           cache-from: type=gha
           cache-to: type=gha
           tags: ${{ steps.meta.outputs.tags }}
