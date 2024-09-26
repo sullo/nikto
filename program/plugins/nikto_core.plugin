@@ -1253,7 +1253,7 @@ sub set_targets {
         }
     }
 
-    # Now parse the list of checkhosts, store in %targs by host_port
+    # Now parse the list of checkhosts, store in %targs by host_-_port
     my $targs = {};
     foreach my $host (@checkhosts) {
         $host =~ s/\s+//g;
@@ -1271,11 +1271,11 @@ sub set_targets {
 
             $defhost                            = $hostdata[2];
             $defport                            = $hostdata[3];
-            $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
+            $targs{ $defhost . "_-_" . $defport } = ($root ne "") ? $root : '/';
 
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
                 $hostdata[0] =~ s/\/$//;
-                $targs{ $defhost . "_" . $defport } = $hostdata[0];
+                $targs{ $defhost . "_-_" . $defport } = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
                        "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
@@ -1306,12 +1306,12 @@ sub set_targets {
                     # TODO skip this host if going through a file of targets
                 }
             }
-            $targs{ $defhost . "_" . $defport } = ($root ne "") ? $root : '/';
+            $targs{ $defhost . "_-_" . $defport } = ($root ne "") ? $root : '/';
         }
     }
 
     foreach my $host (keys %targs) {
-        my ($h, $p) = split(/_/, $host);
+        my ($h, $p) = split(/_-_/, $host);
         if ($p eq '') {
             foreach my $port (@ports) {
                 my $markhash = {};
