@@ -1253,12 +1253,11 @@ sub set_targets {
         }
     }
 
-    # Now parse the list of checkhosts, store in %targs by host_-_port
-    my $targs = {};
+    # Now parse the list of checkhosts
     foreach my $host (@checkhosts) {
         $host =~ s/\s+//g;
         if ($host eq '') { next; }
-        my ($defhost, $defport) = '';
+        my $markhash = {};
 
         # is it a URL?
         if ($host =~ /^https?:\/\//) {
@@ -1268,14 +1267,17 @@ sub set_targets {
                 exit 1;
             }
             my @hostdata = LW2::uri_split($host);
-
-            $defhost                            = $hostdata[2];
-            $defport                            = $hostdata[3];
-            $targs{ $defhost . "_-_" . $defport } = ($root ne "") ? $root : '/';
+            $markhash->{'ident'}               = $hostdata[2];
+            $markhash->{'port'}                = $hostdata[3];
+            if ($markhash->{'port'} eq '') {
+                if ($host =~ /^https:/) { $markhash->{'port'}=443; }
+                else { $markhash->{'port'}=$defaultport;}
+            }
+            $markhash->{'root'} = $root || '/';
 
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
                 $hostdata[0] =~ s/\/$//;
-                $targs{ $defhost . "_-_" . $defport } = $hostdata[0];
+                $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
                        "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
@@ -1283,8 +1285,8 @@ sub set_targets {
         else {
             if ((index $host, '[') == 0) {    # looks like accepted IPv6 format
                 if ($host =~ /^(\[?$LW2::IPv6_re_inc_zoneid\]?)(?:[:](\d+))?$/) {
-                    $defhost = $1;
-                    $defport = $2;
+                    $markhash->{'ident'} = $1;
+                    $markhash->{'port'} = $2;
                 }
                 else {
                     nprint("- ERROR: Unrecognised target host format: $host",
@@ -1292,51 +1294,21 @@ sub set_targets {
                 }
             }
             else {
-                my @h = split(/\:|\,/, $host)
-                  ; # Q. Is host,port format ever going to reach here, or will the port be incorrectly split off earlier as another host
-                $defhost = $h[0];
-                $defport = $h[1];
-                if (scalar @h > 2) {    # Possible invalid IPv6 format has been supplied
+                my @h = split(/\:|\,/, $host);
+                if (scalar @h > 2 || $h[0] eq '') {    # Possible invalid IPv6 format has been supplied
                     nprint(
-                        "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
-                        "",
+                        "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",                        "",
                         ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                         );
-
-                    # TODO skip this host if going through a file of targets
+                }
+                else {
+                $markhash->{'ident'} = $h[0];
+                $markhash->{'port'} = $h[1] || $defaultport;
                 }
             }
-            $targs{ $defhost . "_-_" . $defport } = ($root ne "") ? $root : '/';
+            $markhash->{'root'} = $root || '/';
         }
-    }
-
-    foreach my $host (keys %targs) {
-        my ($h, $p) = split(/_-_/, $host);
-        if ($p eq '') {
-            foreach my $port (@ports) {
-                my $markhash = {};
-                if ($root ne '') {
-                    $markhash->{'root'} = $root;
-                    nprint("- Added -root value of '$root' from CLI", "v");
-                }
-
-                $markhash->{'ident'} = $h;
-                $markhash->{'port'}  = $port;
-                if ($targs{$host} ne '/') { $markhash->{'root'} = $targs{$host}; }
-                nprint("- Target:$markhash->{'ident'} port:$markhash->{'port'}",
-                       "v",
-                       ($markhash->{'hostname'}, $markhash->{'ip'}, $markhash->{'displayname'}));
-                push(@marks, $markhash);
-            }
-        }
-        else {
-            my $markhash = {};
-            if ($targs{$host} ne '/') { $markhash->{'root'} = $targs{$host}; }
-
-            $markhash->{'ident'} = $h;
-            $markhash->{'port'}  = $p;
-            push(@marks, $markhash);
-        }
+    push(@marks, $markhash);
     }
 
     return @marks;
