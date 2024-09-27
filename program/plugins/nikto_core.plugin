@@ -1258,6 +1258,7 @@ sub set_targets {
         $host =~ s/\s+//g;
         if ($host eq '') { next; }
         my $markhash = {};
+        $markhash->{'root'} = $root;
 
         # is it a URL?
         if ($host =~ /^https?:\/\//) {
@@ -1273,9 +1274,8 @@ sub set_targets {
                 if ($host =~ /^https:/) { $markhash->{'port'}=443; }
                 else { $markhash->{'port'}=$defaultport;}
             }
-            $markhash->{'root'} = $root || '/';
 
-            if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($root eq '')) {
+            if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($markhash->{'root'} eq '')) {
                 $hostdata[0] =~ s/\/$//;
                 $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
@@ -1306,7 +1306,7 @@ sub set_targets {
                 $markhash->{'port'} = $h[1] || $defaultport;
                 }
             }
-            $markhash->{'root'} = $root || '/';
+            $markhash->{'root'} = $root;
         }
     push(@marks, $markhash);
     }
