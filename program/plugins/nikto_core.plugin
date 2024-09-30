@@ -1238,9 +1238,9 @@ sub set_targets {
     }
 
     # no ports explicitly set, so use default port
-    if (scalar(@ports) == 0) {
-        push(@ports, $defaultport);
-    }
+     if (scalar(@ports) == 0) {
+         push(@ports, $defaultport);
+     }
 
     # check whether -h is a file or an entry
     foreach my $host (@hosts) {
@@ -1275,18 +1275,21 @@ sub set_targets {
                 else { $markhash->{'port'}=$defaultport;}
             }
 
+            # If URL included a path, add that as the root unless -root was specified
             if (($hostdata[0] ne '/') && ($hostdata[0] ne '') && ($markhash->{'root'} eq '')) {
                 $hostdata[0] =~ s/\/$//;
                 $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
                        "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
+            push(@marks, $markhash);
         }
         else {
             if ((index $host, '[') == 0) {    # looks like accepted IPv6 format
                 if ($host =~ /^(\[?$LW2::IPv6_re_inc_zoneid\]?)(?:[:](\d+))?$/) {
                     $markhash->{'ident'} = $1;
                     $markhash->{'port'} = $2;
+                    push(@marks, $markhash);
                 }
                 else {
                     nprint("- ERROR: Unrecognised target host format: $host",
@@ -1302,15 +1305,30 @@ sub set_targets {
                         );
                 }
                 else {
-                $markhash->{'ident'} = $h[0];
-                $markhash->{'port'} = $h[1] || $defaultport;
+                    $markhash->{'ident'} = $h[0];
+                    if ($h[1] !~ /[^0-9]/ && $h[1] ne '') {
+                        $markhash->{'port'} = $h[1];
+                        push(@marks, $markhash);
+                    }
+                    else {
+                        # push unique array ref for each port
+                        my $ti = $markhash->{'ident'};
+                        my $tr = $markhash->{'root'};
+                        foreach my $p (@ports) { 
+                                my $markhash = {
+                                    'port' => $p,
+                                    'root' => $ti,
+                                    'ident' => $th };
+
+                            $markhash->{'port'} = $p;
+                            push(@marks, $markhash);
+
+                        }
+                    }
                 }
             }
-            $markhash->{'root'} = $root;
         }
-    push(@marks, $markhash);
     }
-
     return @marks;
 }
 
