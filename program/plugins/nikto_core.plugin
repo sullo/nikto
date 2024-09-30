@@ -1252,7 +1252,6 @@ sub set_targets {
             push(@checkhosts, $host);
         }
     }
-
     # Now parse the list of checkhosts
     foreach my $host (@checkhosts) {
         $host =~ s/\s+//g;
@@ -1317,12 +1316,11 @@ sub set_targets {
                         foreach my $p (@ports) { 
                                 my $markhash = {
                                     'port' => $p,
-                                    'root' => $ti,
-                                    'ident' => $th };
+                                    'root' => $tr,
+                                    'ident' => $ti };
 
                             $markhash->{'port'} = $p;
                             push(@marks, $markhash);
-
                         }
                     }
                 }
