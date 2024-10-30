@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 use strict;
+use feature 'state';
+
 ###############################################################################
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
