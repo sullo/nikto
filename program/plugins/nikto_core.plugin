@@ -2744,12 +2744,9 @@ sub set_scan_items {
 #######################################################################
 # extract IP like strings and return an array
 sub get_ips {
-    my $string = $_[0] || return;
-    my @ips;
-    while ($string =~ /(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/g) {
-        push(@ips, $1);
-    }
-    return @ips;
+    my $string =shift || return;
+    state $ip_regex = qr/(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/;
+    return $string =~ /$ip_regex/g;
 }
 
 #######################################################################
