@@ -18,7 +18,7 @@
 # PURPOSE:
 # General HTTP headers checks
 ###############################################################################
-use vars qw/$HEADERSDB/;
+use vars qw/$HEADERSDB %HEADERSSUG/;
 
 sub nikto_headers_init {
     my $id = {
@@ -42,7 +42,8 @@ sub nikto_headers_init {
 }
 
 sub nikto_headers_load {
-    $HEADERSDB = init_db("db_headers");
+    $HEADERSDB = init_db("db_headers_common");
+    $HEADERSSUG = init_db("db_headers_suggested")
 }
 
 sub nikto_headers_postfetch {
@@ -52,19 +53,20 @@ sub nikto_headers_postfetch {
     # Skip OPTIONS
     return if $request->{'whisker'}{'method'} eq "OPTIONS";
 
+    # These headers are very common but unlikely to be useful, so we can quickly skip them
+    my %skip_headers = map { $_ => 1 } qw(
+        whisker
+        date
+        content-type
+        content-length
+        connection
+        x-mod-pagespeed
+        x-page-speed
+    );
+
     # look for internal IPs
     foreach my $header (keys %$result) {
-
-        # skip some headers unlikely to have security implications, for speed
-        if    ($header eq 'whisker')         { next; }
-        elsif ($header eq 'date')            { next; }
-        elsif ($header eq 'content-type')    { next; }
-        elsif ($header eq 'content-length')  { next; }
-        elsif ($header eq 'connection')      { next; }
-        elsif ($header eq 'x-mod-pagespeed') { next; }
-        elsif ($header eq 'x-page-speed')    { next; }
-        elsif (defined $HFOUND{$header})     { next; }
-
+        next if exists $skip_headers{$header} || exists $HFOUND{$header};
         next if $header eq 'server'       && substr($result->{$header}, 0, 8) eq 'WebSEAL/';
         next if $header eq 'x-powered-by' && $result->{$header} =~ /Oracle GlassFish Server [0-9]/;
 
@@ -146,7 +148,7 @@ sub nikto_headers_postfetch {
         }
     }
 
-    # Look for X-Frame-Options
+    # Look for X-Frame-Options - Deprecated
     if (!$XFRAME{ $mark->{hostname} }{ $mark->{port} } 
 	&& defined $result->{'whisker'}->{'code'} 
 	&& $result->{'whisker'}->{'code'} == 200) {
@@ -154,7 +156,7 @@ sub nikto_headers_postfetch {
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
-                      . ":X-Frame-Options header is deprecated and has been replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead.",
+                      . ":X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead.",
                     999978,
                     "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
                     $request->{'whisker'}->{'method'},
@@ -164,6 +166,21 @@ sub nikto_headers_postfetch {
                     );
         	$XFRAME{ $mark->{hostname} }{ $mark->{port} } = 1;
         }
+    }
+
+    # Look for Expect-CT - Deprecated
+   if (defined $result->{'expect-ct'} && $HFOUND{'expect-ct'} != 1) {
+        add_vulnerability(
+            $mark,
+            $request->{'whisker'}{'uri'} . ": The Expect-CT header is deprecated and was replaced with Signed Certificate Timestamps (SCTs).",
+            "011379",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expect-CT",
+            $request->{'whisker'}->{'method'},
+            $request->{'whisker'}->{'uri'},
+            $request,
+            $result
+            );
+        $HFOUND{'expect-ct'} = 1;
     }
 
     # Incapsula WAF
@@ -546,6 +563,8 @@ sub nikto_headers {
                      '/aspnet_client',                 '/PowerShell'
                      ) {
 
+        return if $mark->{'terminate'};
+
         my ($res, $content, $errors, $request, $result) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "headers: HTTP 1.0 internal IP",
                  "1.0");
@@ -718,5 +737,8 @@ sub nikto_headers {
             );
     }
 
+    #######################################################################
+    # Missing suggested headers
+    print "called once\n";
 }
 1;
