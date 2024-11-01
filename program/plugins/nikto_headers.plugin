@@ -18,7 +18,7 @@
 # PURPOSE:
 # General HTTP headers checks
 ###############################################################################
-use vars qw/$HEADERSDB %HEADERSSUG/;
+use vars qw/$HEADERSDB/;
 
 sub nikto_headers_init {
     my $id = {
@@ -43,7 +43,6 @@ sub nikto_headers_init {
 
 sub nikto_headers_load {
     $HEADERSDB = init_db("db_headers_common");
-    $HEADERSSUG = init_db("db_headers_suggested")
 }
 
 sub nikto_headers_postfetch {
@@ -739,6 +738,22 @@ sub nikto_headers {
 
     #######################################################################
     # Missing suggested headers
-    print "called once\n";
+    ($res, $content, $errors, $request, $result) =
+      nfetch($mark, '/', "GET", "", , , "headers: Suggested Headers Test", "1.1");
+
+    while (my ($header, $ref) = each %{ $VARIABLES->{'SUGGESTED_HEADERS'} }) {
+        if (!exists $result->{$header}) {
+             add_vulnerability(
+                 $mark,
+                 $request->{'whisker'}{'uri'} . ": Suggested security header missing: " . $header,
+                 "013587",
+                 $ref,
+                 "GET",
+                 "/",
+                 $request,
+                 $result
+                 );
+             }
+     }
 }
 1;

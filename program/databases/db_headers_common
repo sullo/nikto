@@ -34,6 +34,7 @@
 "bfcache-opt-in"
 "cache-control"
 "cf-cache-status"
+"cf-edge-cache"
 "cf-ray"
 "cf-request-id"
 "commerce-server-software"
