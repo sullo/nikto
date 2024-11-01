@@ -1637,7 +1637,7 @@ sub check_dbs {
             $ctr--;
             nprint("\t$ctr entries");
         }
-        elsif ($file =~ /u?db_headers/) {
+        elsif ($file =~ /u?db_headers_(common|suggested)/) {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<IN>) {
@@ -2744,12 +2744,9 @@ sub set_scan_items {
 #######################################################################
 # extract IP like strings and return an array
 sub get_ips {
-    my $string = $_[0] || return;
-    my @ips;
-    while ($string =~ /(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/g) {
-        push(@ips, $1);
-    }
-    return @ips;
+    my $string =shift || return;
+    my $ip_regex = qr/(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/;
+    return $string =~ /$ip_regex/g;
 }
 
 #######################################################################
