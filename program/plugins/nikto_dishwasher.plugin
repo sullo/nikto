@@ -41,7 +41,7 @@ sub nikto_dishwasher {
         add_vulnerability(
               $mark,
               "$path: Site appears vulnerable to the dishwasher directory traversal vulnerability.",
-              999951, CVE- 2017 - 7240,
+              999951, CVE-2017-7240,
               "GET",  $path, $request, $response
               );
     }
