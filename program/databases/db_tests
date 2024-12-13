@@ -301,7 +301,6 @@
 "000268","","3","/blah123.php","GET","Failed opening","","","","","PHP is configured to give descriptive error messages that can reveal file system paths.","",""
 "000269","CVE-2002-0446","3","/categorie.php3?cid=june","GET","Unable to jump to row","","","","","Black Tie Project (BTP) can reveal MySQL errors and file system paths if an invalid cid is sent.","",""
 "000270","CWE-552","3","/CFIDE/probe.cfm","GET","coldfusion\.tagext\.lang","","","","","Cold Fusion file probe.cfm reveals system information, such as the path to the web server. In the 'Debugging Settings' page in the Administrator console, suppress the installation path displayed in error messages by selecting 'Enable Robust Exception Info","",""
-"000271","","3","/contents.php?new_language=elvish&mode=select","GET","200","","","","","Requesting a file with an invalid language selection from DC Portal may reveal the system path.","",""
 "000272","","3","/download.php?op=viewdownload","GET","Failed opening","","","","","PHP-Nuke allows file system paths to be revealed.","",""
 "000273","","3","/download.php?op=viewdownload","GET","Fatal error","","","","","PHP-Nuke allows file system paths to be revealed.","",""
 "000274","CVE-2002-1990","3","/examples/basic/servlet/HelloServlet","GET","The source of this servlet is in","","","","","Caucho Resin reveals file system paths with a default servlet.","",""
