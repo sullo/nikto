@@ -123,6 +123,7 @@
 "xmlns"
 "x-amz-cf-id"
 "x-amz-cf-pop"
+"x-amzn-requestid"
 "x-amz-version-id"
 "x-azure-ref"
 "x-cache"
