@@ -1332,7 +1332,7 @@ sub set_targets {
 
 ###############################################################################
 sub load_databases {
-    my @dbs    = qw/db_parked_strings db_404_strings  db_outdated  db_variables/;
+    my @dbs    = qw/db_parked_strings db_404_strings  db_outdated  db_variables db_headers_suggested/;
     my $prefix = $_[0] || '';
 
     # Only load the right databases if -Userdbs is set
@@ -1388,6 +1388,15 @@ sub load_databases {
                 foreach my $l (@file) {
                     $l = validate_and_fix_regex($l);
                     $VARIABLES->{'PARKEDSTRINGS'}->{$l} = 1;
+                }
+            }
+
+            # db_headers_suggested
+            elsif ($file =~ /u?db_headers_suggested/) {
+                foreach my $l (@file) {
+                    my @T = parse_csv($l);
+                    next if $T[0] eq '';
+                    $VARIABLES->{'SUGGESTED_HEADERS'}->{$T[0]} = $T[1];
                 }
             }
 
@@ -3027,7 +3036,8 @@ sub usage {
 
 #######################################################################
 sub init_db {
-    my $dbname   = $_[0];
+    my $dbname   = shift;
+    return if $dbname eq "";
     my $filename = "$CONFIGFILE{'DBDIR'}/" . $dbname;
     my (@dbarray, @headers);
     my $hashref = {};

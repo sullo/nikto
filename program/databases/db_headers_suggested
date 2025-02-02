@@ -1,0 +1,22 @@
+#######################################################################
+# File Source: https://cirt.net
+# (c) 2024 Chris Sullo, All Rights Reserved.
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (csullo@gmail.com)
+#
+# Note:
+# By submitting updates to this file you are transferring any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
+#######################################################################
+# Notes:
+# - Use lowercase only
+# - Keep list alphabetically (for readability)
+#######################################################################
+#"header","reference"
+"content-security-policy","https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"
+"permissions-policy","https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
+"referrer-policy","https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
+"strict-transport-security","https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security"
+"x-content-type-options","https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
