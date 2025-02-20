@@ -71,6 +71,9 @@ sub unslash {
 sub is_404 {
     my ($uri, $content, $rescode, $loc_header) = @_;
     $ext = get_ext($uri);
+    #$rescode=404;
+    #print "mode: " . $FoF{$ext}{'mode'} . "\n";
+    #print "code: " . $rescode . "\n";
 
     if (   (($FoF{$ext}{'mode'} eq "STD") || ($FoF{$ext}{'mode'} eq ''))
         && ($rescode =~ /4[0-9][0-9]/)) {

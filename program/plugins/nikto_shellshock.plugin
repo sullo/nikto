@@ -40,8 +40,8 @@ sub nikto_shellshock {
 
     push(@files, "");
     my %headers;
-    $headers{'User-Agent'} = '() { :; }; echo 93e4r0-CVE-2014-6271: true;echo;echo;';
-    $headers{'Referer'}    = '() { _; } >_[$($())] { echo 93e4r0-CVE-2014-6278: true; echo;echo; }';
+    $headers{'User-Agent'} = '() { :; }; echo 93e4r0-cve-2014-6271: true;echo;echo;';
+    $headers{'Referer'}    = '() { _; } >_[$($())] { echo 93e4r0-cve-2014-6278: true; echo;echo; }';
     my @dirs = split(/ /, $VARIABLES{'@CGIDIRS'});
     push(@dirs, "/");
 
@@ -49,7 +49,7 @@ sub nikto_shellshock {
     my $checkcontent = 1;
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", \%headers, "", "shellshock");
-    if ($content =~ /93e4r0-CVE/) {
+    if ($content =~ /93e4r0-cve/) {
         $checkcontent = 0;
         nprint(
               "Content seems to contain error headers, ignoring content match in shellshock plugin",
@@ -61,8 +61,8 @@ sub nikto_shellshock {
         # request by hostname
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-        if (   ($response->{'93e4r0-CVE-2014-6271'} eq 'true')
-            || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+        if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
+            || ($checkcontent && ($content =~ /93e4r0-cve-2014-6271: true/))) {
             add_vulnerability(
                 $mark,
                 "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).",
@@ -74,8 +74,8 @@ sub nikto_shellshock {
                 $response
                 );
         }
-        if (   ($response->{'93e4r0-CVE-2014-6278'} eq 'true')
-            || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+        if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
+            || ($checkcontent && ($content =~ /93e4r0-cve-2014-6278: true/))) {
             add_vulnerability(
                  $mark,
                  "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -96,8 +96,8 @@ sub nikto_shellshock {
                 # request by hostname
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
-                if (   ($response->{'93e4r0-CVE-2014-6271'} eq 'true')
-                    || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6271: true/))) {
+                if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
+                    || ($checkcontent && ($content =~ /93e4r0-cve-2014-6271: true/))) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -109,8 +109,8 @@ sub nikto_shellshock {
                          $response
                          );
                 }
-                if (   ($response->{'93e4r0-CVE-2014-6278'} eq 'true')
-                    || ($checkcontent && ($content =~ /93e4r0-CVE-2014-6278: true/))) {
+                if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
+                    || ($checkcontent && ($content =~ /93e4r0-cve-2014-6278: true/))) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
