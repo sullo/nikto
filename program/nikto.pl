@@ -64,17 +64,17 @@ LW2::init_ssl_engine($CONFIGFILE{'LW_SSL_ENGINE'});
 my ($a, $b) = split(/\./, $LW2::VERSION);
 die("- You must use LW2 2.4 or later\n") if ($a != 2 || $b < 4);
 
-general_config();
-load_databases();
-load_databases('u');
-nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
-nprint($VARIABLES{'DIV'});
-
 # No targets - quit before we do anything
 if ($CLI{'host'} eq '') {
     nprint("+ ERROR: No host (-host) specified");
     usage(1);
 }
+
+general_config();
+load_databases();
+load_databases('u');
+nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
+nprint($VARIABLES{'DIV'});
 
 $COUNTERS{'total_targets'} = $COUNTERS{'hosts_completed'} = 0;
 load_plugins();
@@ -177,8 +177,7 @@ foreach my $mark (@MARKS) {
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
 
-    nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "getinfo");
-
+    nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch =>  }, "getinfo");
 
     dump_target_info($mark);
     unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
