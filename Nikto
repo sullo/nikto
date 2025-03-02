@@ -1,0 +1,1 @@
+pkg install git perl make git clone https://github.com/Dareh123/nikto.git cd nikto/program 
