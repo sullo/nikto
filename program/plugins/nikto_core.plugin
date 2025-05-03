@@ -137,9 +137,15 @@ sub scrub {
 
 ###############################################################################
 sub nprint {
-    my $line = shift;    #$_[0];
-    my $mode = shift;    #$_[1];
+    my $line = shift;
+    my $mode = shift;
     chomp($line);
+
+    # Deferred output?
+    if ($VARIABLES{'deferout'}) {
+        push @{ $VARIABLES{'defertxt'} }, $mode . "::" . $line;
+        return;
+    }
 
     # scrub values
     if ($OUTPUT{'scrub'}) {
@@ -242,7 +248,8 @@ sub status_report {
 }
 ###############################################################################
 sub date_disp {
-    my @time   = localtime($_[0]);
+    my $t = $_[0] || return;
+    my @time   = localtime($t);
     my $result = sprintf("%d-%02d-%02d %02d:%02d:%02d",
                          $time[5] + 1900,
                          $time[4] + 1,
@@ -1007,11 +1014,6 @@ sub safe_quit {
 
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
-
-    #if ($mark->{'start_time'} ne '') {
-    #report_host_end($mark);
-    #}
-
     report_host_end($mark);
     report_summary($mark);
     report_close($mark);
@@ -2061,7 +2063,6 @@ sub report_head {
     my ($format, $file) = @_;
     nprint("- Opening reports ($format, $file)", "v");
 
-    # This is a frig until I can think of a better way of achieving it
     foreach my $i (1 .. 100) {
         foreach my $plugin (@PLUGINS) {
             if ($plugin->{run} && defined $plugin->{report_item} && $plugin->{report_weight} == $i)

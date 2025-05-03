@@ -45,6 +45,8 @@ $COUNTERS{'scan_start'} = time();
 $VARIABLES{'DIV'}       = "-" x 75;
 $VARIABLES{'name'}      = "Nikto";
 $VARIABLES{'version'}   = "2.5.0";
+$VARIABLES{'deferout'}  = 0;
+$VARIABLES{'defertxt'}  = [];
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
@@ -89,6 +91,7 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
 
 # Open reporting
 report_head($CLI{'format'}, $CLI{'file'});
+$VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
@@ -151,7 +154,11 @@ foreach my $mark (@MARKS) {
 
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
+    $VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
     my %FoF = ();
+    $mark->{'total_vulns'}  = 0;
+    $mark->{'total_errors'} = 0;
+    $mark->{'start_time'}   = time();
     report_host_start($mark);
 
     if (!$mark->{'test'}) {
@@ -166,9 +173,6 @@ foreach my $mark (@MARKS) {
     if (defined $CLI{'vhost'}) {
         $mark->{'vhost'} = $CLI{'vhost'};
     }
-    $mark->{'total_vulns'}  = 0;
-    $mark->{'total_errors'} = 0;
-    $mark->{'start_time'}   = time();
     $VARIABLES{'TEMPL_HCTR'}++;
 
     # Saving responses
@@ -179,7 +183,21 @@ foreach my $mark (@MARKS) {
 
     nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch =>  }, "getinfo");
 
+    $VARIABLES{'deferout'}  = 0;
     dump_target_info($mark);
+
+    # Now print any deferred output
+    if (@{ $VARIABLES{'defertxt'} }) {
+        foreach my $element (@{ $VARIABLES{'defertxt'} }) {
+            if ($element =~ s/^([a-zA-Z])?:://) {
+                nprint($element, $1);
+            } else {
+                nprint($element);
+            }
+        }
+    }
+    undef $VARIABLES{'defertxt'};
+
     unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
     run_hooks($mark, "recon");
     run_hooks($mark, "scan");
