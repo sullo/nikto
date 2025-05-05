@@ -58,6 +58,7 @@
 "expect"
 "expect-ct"
 "expires"
+"fastly-restarts"
 "feature-policy"
 "from"
 "host"

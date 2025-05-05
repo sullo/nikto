@@ -63,7 +63,7 @@
 "600047","Apache-NeoWebScript/","2.3","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600048","Apache-SSL-US/","1.1.1+1.2+1.3b3-dev","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600049","Apache-SSL/","1.36","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600050","Apache/","2.4.63","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). Apache 2.2.34 is the EOL for the 2.x branch."
+"600050","Apache/","0.4.63","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER). Apache 2.2.34 is the EOL for the 2.x branch."
 "600051","apachejserv/","1.1.2i","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600052","ApacheSSL/","2.0.58","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600053","AppleEmbeddedWebServer/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
