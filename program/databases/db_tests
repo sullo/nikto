@@ -6993,3 +6993,4 @@
 "007333","","e","/graphql","GET","category\"\:\"graphql","","","","","GraphQL endpoint found","",""
 "007334","","b","/","GET","Cockpit\sfrom\srunning","","","","","Cockpit server admin is running. https://cockpit-project.org/","",""
 "007335","","3","/jkmanager;?cmd=list&w=wlb","GET","JK Status Manager","","","","","Apache mod_jk status page is available.","",""
+"007336","https://swagger.io/","e3","/swagger/index.html","GET","Swagger UI","","","","","Swagger UI was found.","",""
