@@ -20,6 +20,10 @@ cd nikto/program
 perl nikto.pl -h http://www.example.com
 ~~~
 
+Run as a Docker container from ghcr.io:
+
+`docker pull ghcr.io/sullo/nikto:latest`
+
 Run as a Docker container:
 
 ~~~bash
