@@ -16,7 +16,7 @@ git clone https://github.com/sullo/nikto
 cd nikto/program
 # Run using the shebang interpreter
 ./nikto.pl -h http://www.example.com
-# Run using perl (if you forget to chmod)
+# Run using perl (if you hate chmod)
 perl nikto.pl -h http://www.example.com
 ~~~
 
