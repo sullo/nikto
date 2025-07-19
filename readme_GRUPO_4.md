@@ -28,3 +28,8 @@ Referencias adicionales:
 **- OWASP Testing Guide, https://owasp.org/www-project-web-security-testing-guide/**
 **- The Web Application Hacker's Handbook, 2nd Edition, Stuttard & Pinto, Wiley, 2011.**
 **- CVE Details, https://www.cvedetails.com/product/59872/Nikto-Nikto.html**
+
+
+**Comentario: Jefferson Gaibor**
+
+La herramienta seleccionada es relevante porque se utiliza en auditorías de seguridad en entornos reales. Su documentación está bien mantenida y permite integración con otros sistemas de escaneo automatizado.
