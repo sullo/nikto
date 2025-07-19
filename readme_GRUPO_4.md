@@ -33,3 +33,4 @@ Referencias adicionales:
 **Comentario: Jefferson Gaibor**
 
 La herramienta seleccionada es relevante porque se utiliza en auditorías de seguridad en entornos reales. Su documentación está bien mantenida y permite integración con otros sistemas de escaneo automatizado.
+Validación de la herramienta: Nikto es una herramienta de escaneo de vulnerabilidades para servidores web que realiza pruebas automatizadas contra más de 6700 archivos y programas potencialmente peligrosos, configuraciones erróneas y vulnerabilidades conocidas. Es ampliamente utilizada en auditorías de seguridad y pruebas de penetración (pentesting).
