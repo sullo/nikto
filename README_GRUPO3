@@ -13,10 +13,39 @@ Elegimos Nikto debido a su amplia cobertura en términos de vulnerabilidades web
 
 La herramienta es confiable, de código abierto y altamente extensible, lo que la convierte en una excelente opción para integrarse en proyectos de seguridad de aplicaciones web.
 
-NMNMNM
-NM
-prueba Roberto
-prueba made
-prueba Patrcio
-bbbb
-prueba roberto
+Por qué es importante en seguridad informática
+a) Detección temprana de vulnerabilidades
+
+Nikto identifica fallas conocidas en el servidor o la aplicación web antes de que los atacantes puedan explotarlas.
+
+Esto incluye vulnerabilidades como:
+
+Scripts obsoletos o inseguros.
+
+Archivos de configuración expuestos.
+
+Versiones de software con exploits conocidos.
+
+b) Auditorías de seguridad periódicas
+
+Permite a los equipos de seguridad realizar pruebas rutinarias de sus servidores web.
+
+Ayuda a mantener el sistema actualizado y seguro frente a amenazas.
+
+c) Facilita el cumplimiento normativo
+
+Muchas normativas de seguridad (ISO 27001, PCI DSS) requieren pruebas de vulnerabilidades.
+
+Nikto es una herramienta rápida y confiable para cumplir estos requerimientos.
+
+d) Complementa otras pruebas de seguridad
+
+No reemplaza herramientas como Nessus o Burp Suite, pero complementa el análisis al enfocarse en configuraciones web.
+
+Permite descubrir problemas que otros escáneres generales podrían pasar por alto.
+
+e) Código abierto y flexible
+
+Al ser de código abierto, se puede personalizar y automatizar en entornos de pruebas y auditorías.
+
+Se integra con scripts y pipelines de seguridad para auditorías continuas.
