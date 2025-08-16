@@ -1,0 +1,15 @@
+# Resumen de Nikto
+
+Nikto es una herramienta de escaneo de vulnerabilidades web que se utiliza en pruebas de penetración para detectar problemas de seguridad en aplicaciones web. Está diseñada para detectar una amplia variedad de vulnerabilidades, incluyendo configuraciones incorrectas, fallos de seguridad en servidores y aplicaciones web, y más.
+
+### Funcionalidades Clave:
+- Detección de más de 6000 vulnerabilidades en servidores web.
+- Soporta la realización de escaneos tanto en HTTP como HTTPS.
+- Permite la configuración avanzada de los escaneos, incluyendo la posibilidad de hacer escaneos a aplicaciones web específicas.
+
+# Justificación para la Elección de Nikto
+
+Elegimos Nikto debido a su amplia cobertura en términos de vulnerabilidades web y su capacidad para integrarse en flujos de trabajo de pruebas de penetración. Según el artículo [Nikto: Open-Source Web Vulnerability Scanner](https://www.exploit-db.com/papers/30245) (Exploit-DB), Nikto ha sido utilizado en una gran cantidad de evaluaciones de seguridad por su capacidad de identificar vulnerabilidades críticas en servidores web.
+
+La herramienta es confiable, de código abierto y altamente extensible, lo que la convierte en una excelente opción para integrarse en proyectos de seguridad de aplicaciones web.
+
