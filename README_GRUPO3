@@ -51,4 +51,8 @@ Al ser de código abierto, se puede personalizar y automatizar en entornos de pr
 Se integra con scripts y pipelines de seguridad para auditorías continuas.
 
 
-Además, Nikto cuenta con una base de datos continuamente actualizada que le permite identificar vulnerabilidades emergentes y configuraciones inseguras de forma eficaz. Su motor de escaneo puede detectar directorios y archivos sensibles expuestos, verificar versiones de software desactualizadas y reconocer prácticas inseguras como el uso de certificados SSL débiles. Al ejecutarse desde línea de comandos, se integra fácilmente con otros entornos de pruebas y herramientas de seguridad, lo que lo convierte en un componente valioso dentro de auditorías web automatizadas o procesos de análisis más complejos.
+Además, Nikto cuenta con una base de datos continuamente actualizada que le permite identificar vulnerabilidades emergentes 
+y configuraciones inseguras de forma eficaz. Su motor de escaneo puede detectar directorios y archivos sensibles expuestos,
+ verificar versiones de software desactualizadas y reconocer prácticas inseguras como el uso de certificados SSL débiles.
+  Al ejecutarse desde línea de comandos, se integra fácilmente con otros entornos de pruebas y herramientas de seguridad, 
+  lo que lo convierte en un componente valioso dentro de auditorías web automatizadas o procesos de análisis más complejos.
