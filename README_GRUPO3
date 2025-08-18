@@ -1,4 +1,4 @@
-# Resumen de Nikto
+                                                                                                        Resumen de Nikto
 
 Nikto es una herramienta de escaneo de vulnerabilidades web que se utiliza en pruebas de penetración para detectar problemas de seguridad en aplicaciones web. Está diseñada para detectar una amplia variedad de vulnerabilidades, incluyendo configuraciones incorrectas, fallos de seguridad en servidores y aplicaciones web, y más.
 
@@ -49,6 +49,30 @@ e) Código abierto y flexible
 Al ser de código abierto, se puede personalizar y automatizar en entornos de pruebas y auditorías.
 
 Se integra con scripts y pipelines de seguridad para auditorías continuas.
+
+
+
+Ventajas de Nikto:
+
+Gratuito y de código abierto:
+  Nikto es una herramienta gratuita y su código fuente está disponible, lo que permite la personalización y la adaptación a necesidades específicas. 
+Facilidad de uso:
+  Su interfaz de línea de comandos es sencilla y facilita la integración con scripts y procesos automatizados. 
+Amplia cobertura:
+  Nikto puede detectar más de 6700 archivos o CGI potencialmente peligrosos, buscar versiones obsoletas de software y problemas específicos de la versión en más de 1250 servidores. 
+Actualizaciones frecuentes:
+  Los elementos de análisis y los complementos se actualizan con frecuencia y pueden actualizarse automáticamente. 
+Versatilidad:
+  Es compatible con una amplia gama de servidores web y plataformas, incluyendo Apache, IIS, Unix y Windows, y se puede integrar con otras herramientas de pruebas de penetración como Metasploit. 
+
+Desventajas de Nikto:
+Falsos positivos y negativos:
+  Al igual que muchas herramientas de escaneo, Nikto puede generar falsos positivos (identificar vulnerabilidades que no existen) o falsos negativos (no detectar vulnerabilidades reales). 
+Limitado a servidores web:
+  Nikto se centra principalmente en servidores web y aplicaciones web, por lo que puede no ser adecuado para evaluar otros aspectos de una red. 
+No realiza explotación:
+  Nikto solo identifica vulnerabilidades, no las explota, lo que significa que no puede verificar la gravedad real de las vulnerabilidades encontradas. 
+
 
 
 Además, Nikto cuenta con una base de datos continuamente actualizada que le permite identificar vulnerabilidades emergentes 
