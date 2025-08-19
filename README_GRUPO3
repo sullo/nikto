@@ -91,39 +91,39 @@ En el ámbito de la seguridad informática, una de las mayores preocupaciones es
 
 1. Identificación de vulnerabilidades en servidores web
 
-Nikto es un escáner de seguridad web de código abierto capaz de analizar servidores HTTP/HTTPS en busca de fallas comunes, como:
-
-Archivos y directorios sensibles expuestos (ej. phpinfo.php, backups, configuraciones).
-
-Versiones obsoletas de servidores web (Apache, Nginx, IIS, etc.).
-
-Módulos inseguros y configuraciones incorrectas.
-
-Presencia de malware o código malicioso en páginas alojadas.
-
-Esto convierte a Nikto en una herramienta fundamental en la etapa de reconocimiento y evaluación dentro de un análisis de seguridad.
+  Nikto es un escáner de seguridad web de código abierto capaz de analizar servidores HTTP/HTTPS en busca de fallas comunes, como:
+  
+  Archivos y directorios sensibles expuestos (ej. phpinfo.php, backups, configuraciones).
+  
+  Versiones obsoletas de servidores web (Apache, Nginx, IIS, etc.).
+  
+  Módulos inseguros y configuraciones incorrectas.
+  
+  Presencia de malware o código malicioso en páginas alojadas.
+  
+  Esto convierte a Nikto en una herramienta fundamental en la etapa de reconocimiento y evaluación dentro de un análisis de seguridad.
 
 2. Prevención de ataques
 
-Al detectar problemas antes que un atacante, la organización puede corregir vulnerabilidades de forma proactiva, reduciendo riesgos de:
-
-Inyecciones de código.
-
-Escalamiento de privilegios.
-
-Filtración de información sensible.
-
-De esta manera, Nikto actúa como una medida preventiva y defensiva dentro de un programa de ciberseguridad.
+  Al detectar problemas antes que un atacante, la organización puede corregir vulnerabilidades de forma proactiva, reduciendo riesgos de:
+  
+  Inyecciones de código.
+  
+  Escalamiento de privilegios.
+  
+  Filtración de información sensible.
+  
+  De esta manera, Nikto actúa como una medida preventiva y defensiva dentro de un programa de ciberseguridad.
 
 3. Valor educativo y práctico
 
-Nikto es muy utilizado en laboratorios académicos y en pruebas de pentesting porque:
-
-Es de fácil uso (un solo comando puede lanzar un escaneo completo).
-
-Ayuda a los estudiantes y profesionales a comprender vulnerabilidades web reales.
-
-Se integra con otras herramientas como Metasploit o Burp Suite, complementando un análisis más avanzado.
+  Nikto es muy utilizado en laboratorios académicos y en pruebas de pentesting porque:
+  
+  Es de fácil uso (un solo comando puede lanzar un escaneo completo).
+  
+  Ayuda a los estudiantes y profesionales a comprender vulnerabilidades web reales.
+  
+  Se integra con otras herramientas como Metasploit o Burp Suite, complementando un análisis más avanzado.
 
 4. Cumplimiento normativo
 
