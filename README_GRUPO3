@@ -84,3 +84,47 @@ verificar versiones de software desactualizadas y reconocer prácticas inseguras
 Al ejecutarse desde línea de comandos, se integra fácilmente con otros entornos de pruebas y herramientas de seguridad, 
 
 lo que lo convierte en un componente valioso dentro de auditorías web automatizadas o procesos de análisis más complejos.
+
+
+
+En el ámbito de la seguridad informática, una de las mayores preocupaciones es la exposición de vulnerabilidades en aplicaciones y servidores web, que suelen ser las principales puertas de entrada para atacantes. Aquí es donde herramientas como Nikto resultan esenciales.
+
+1. Identificación de vulnerabilidades en servidores web
+
+Nikto es un escáner de seguridad web de código abierto capaz de analizar servidores HTTP/HTTPS en busca de fallas comunes, como:
+
+Archivos y directorios sensibles expuestos (ej. phpinfo.php, backups, configuraciones).
+
+Versiones obsoletas de servidores web (Apache, Nginx, IIS, etc.).
+
+Módulos inseguros y configuraciones incorrectas.
+
+Presencia de malware o código malicioso en páginas alojadas.
+
+Esto convierte a Nikto en una herramienta fundamental en la etapa de reconocimiento y evaluación dentro de un análisis de seguridad.
+
+2. Prevención de ataques
+
+Al detectar problemas antes que un atacante, la organización puede corregir vulnerabilidades de forma proactiva, reduciendo riesgos de:
+
+Inyecciones de código.
+
+Escalamiento de privilegios.
+
+Filtración de información sensible.
+
+De esta manera, Nikto actúa como una medida preventiva y defensiva dentro de un programa de ciberseguridad.
+
+3. Valor educativo y práctico
+
+Nikto es muy utilizado en laboratorios académicos y en pruebas de pentesting porque:
+
+Es de fácil uso (un solo comando puede lanzar un escaneo completo).
+
+Ayuda a los estudiantes y profesionales a comprender vulnerabilidades web reales.
+
+Se integra con otras herramientas como Metasploit o Burp Suite, complementando un análisis más avanzado.
+
+4. Cumplimiento normativo
+
+En auditorías de seguridad exigidas por normativas como ISO 27001, PCI DSS o GDPR, es obligatorio demostrar que se realizan pruebas de detección de vulnerabilidades. Nikto ayuda a cubrir esta necesidad, aportando informes claros de riesgos encontrados.
