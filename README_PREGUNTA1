@@ -1,0 +1,18 @@
+a) TP1 – ¿Cómo resolvería merge conflicts en el proyecto?
+
+Como líder del equipo, aplicaría buenas prácticas de trabajo colaborativo en Git desde el inicio. Primero, establecería una política de ramas clara: main para producción, develop para integración y ramas individuales tipo feature/nombre para nuevas funcionalidades. Para prevenir conflictos, fomentaría hacer pull frecuentes y commits pequeños.
+
+Cuando ocurra un merge conflict, instruiría al desarrollador responsable de la fusión a seguir estos pasos:
+
+    -Usar git status para identificar archivos en conflicto.
+    
+    -Abrir los archivos y revisar las secciones conflictivas, delimitadas por <<<<<<<, =======, y >>>>>>>.
+    
+    -Analizar los cambios de ambas ramas y tomar decisiones informadas para fusionar manualmente el mejor código.
+    
+    -Usar herramientas visuales como VS Code, Sourcetree, o git mergetool para facilitar la resolución.
+    
+    -Probar localmente que el proyecto funcione antes de hacer git add, git commit y finalizar el merge.
+
+
+Además, implementaría revisiones de código (Pull Requests con revisores asignados) y pruebas automatizadas en CI/CD para evitar errores en producción derivados de una mala resolución de conflictos.
