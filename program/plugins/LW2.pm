@@ -1090,7 +1090,7 @@ Returns the number of URLs actually crawled (not including those skipped).
           if ( $ret == 2 );     # if there was connection error, do not continue
         if   ( $ret == 0 ) {    # successful request
 
-            # WARNING: what if *all* HEAD respones are 302'd on purpose, but
+            # WARNING: what if *all* HEAD responses are 302'd on purpose, but
             #          all GETs are normal?
             if (   $$hrout{whisker}->{code} < 308
                 && $$hrout{whisker}->{code} > 300 )
