@@ -205,7 +205,7 @@ sub nikto_auth {
     }
     LW2::auth_unset(\%request);
     if (!$success) {
-        nprint("+ No creds found for realm '$realm'",
+        nprint("+ $request->{'whisker'}->{'uri'}: No creds found for realm '$realm'",
                "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 
