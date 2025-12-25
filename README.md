@@ -1,7 +1,7 @@
 
 nikto
 =====
-[![alt text](https://cirt.net/images/patreon.png "Become a patron of Nikto!")](https://www.patreon.com/sullo)
+[![alt text](https://cirt.net/wp-content/uploads/2025/12/patreon.png "Become a patron of Nikto!")](https://www.patreon.com/sullo)
 
 
 Nikto web server scanner  - https://cirt.net/Nikto2 
