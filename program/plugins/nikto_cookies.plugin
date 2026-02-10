@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2010 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# General HTTP cookie checks
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: General HTTP cookie checks
 ###############################################################################
 sub nikto_cookies_init {
     my $id = {
@@ -82,6 +66,12 @@ sub nikto_cookies_postfetch {
         }
 
         foreach my $ip (@ips) {
+
+            # This often contains an IP-like string
+            if ($ip eq '1.0.1.1' && $cname eq '__cf_bm') {
+                next;
+            }
+
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {

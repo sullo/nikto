@@ -1,0 +1,89 @@
+name: Update build timestamp + manifest
+
+on:
+  push:
+    branches: ["main"]
+    # Prevent infinite loops: the commit that only updates program/.timestamp
+    # will NOT trigger this workflow.
+    paths-ignore:
+      - "program/.timestamp"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    # Extra safety: don't run if somehow triggered by the bot anyway
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Compute epoch + parse Nikto version
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EPOCH="$(git log -1 --format=%ct)"
+          echo "epoch=$EPOCH" >> "$GITHUB_OUTPUT"
+
+          # Parse Nikto version from: $VARIABLES{'version'} = "2.6.0";
+          VERSION="$(perl -ne 'if(/\$VARIABLES\{\s*["'\''"]version["'\''"]\s*\}\s*=\s*["'\''"]([^"'\''"]+)["'\''"]\s*;/){print $1; exit}' program/nikto.pl)"
+
+          if [ -z "${VERSION:-}" ]; then
+            echo "Failed to parse version from program/nikto.pl (\$VARIABLES{version})." >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update program/.timestamp
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p program
+          echo "${{ steps.meta.outputs.epoch }}" > program/.timestamp
+
+      - name: Commit and push program/.timestamp if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Stage first so new files are included
+          git add program/.timestamp
+
+          # If staging produced no changes, exit
+          if git diff --cached --quiet; then
+            echo "program/.timestamp unchanged"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update program/.timestamp [skip ci]"
+          git push
+
+      - name: Update Cloudflare Worker manifest
+        shell: bash
+        env:
+          UPDATE_URL: ${{ secrets.CF_WORKER_UPDATE_URL }}
+          UPDATE_TOKEN: ${{ secrets.CF_WORKER_UPDATE_TOKEN }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          EPOCH: ${{ steps.meta.outputs.epoch }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${UPDATE_URL:-}" ] || [ -z "${UPDATE_TOKEN:-}" ]; then
+            echo "Missing CF_WORKER_UPDATE_URL or CF_WORKER_UPDATE_TOKEN secrets." >&2
+            exit 1
+          fi
+
+          curl -fsS -X POST "$UPDATE_URL" \
+            -H "Authorization: Bearer $UPDATE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"version\":\"$VERSION\",\"epoch\":$EPOCH}"

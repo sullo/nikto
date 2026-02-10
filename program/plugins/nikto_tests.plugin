@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Perform the full database of nikto tests against a target
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Perform the full database of nikto tests against a target
 ###############################################################################
 sub nikto_tests_init {
     my $id = { name        => "tests",
@@ -33,31 +17,22 @@ sub nikto_tests_init {
                          passfiles => "Flag to indicate whether to check for common password files",
                          all => "Flag to indicate whether to check all files with all directories",
                          report => "Report a status after the passed number of tests",
-                         tids   => "A range of testids that will only be run",
                          }
                  };
     return $id;
 }
 
 sub nikto_tests {
-    return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
-    my (@tids, $data);
-
-    if (defined $parameters->{'tids'}) {
-        @tids = expand_range($parameters->{'tids'});
-    }
+    return if $mark->{'terminate'};
+    my $data;
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
         return if $mark->{'terminate'};
 
-        #if ($checkid >= 500000) { next; }    # skip TESTS added manually during run (for reports)
-        my $intcheck = int($checkid);
-
         # replace variables in the uri
-        if ((scalar(@tids) > 0) && !grep(/^$intcheck$/, @tids)) { next; }
-        my @urilist = change_variables($TESTS{$checkid}{'uri'});
+        my @urilist = change_variables($TESTS{$checkid}{'uri'}, $mark, $checkid);
 
         # Now repeat for each uri
       URI: foreach my $uri (@urilist) {
@@ -65,10 +40,18 @@ sub nikto_tests {
             my (%headrs, %flags, $data);
             if ($TESTS{$checkid}{'headers'} ne '') {
                 my $header = unslash($TESTS{$checkid}{'headers'});
-                foreach my $h (split /\r\n/, $header) {
+
+                # Apply variable replacement to headers
+                my @header_lines = split /\r\n/, $header;
+                foreach my $h (@header_lines) {
                     my ($key, $value) = split(/: /, $h);
                     $key = lc($key);
-                    $headrs{$key} = $value;
+
+                    # Apply change_variables to the value part
+                    my @replaced_values = change_variables($value, $mark, $checkid);
+                    foreach my $replaced_value (@replaced_values) {
+                        $headrs{$key} = $replaced_value;
+                    }
                 }
                 $headrs{'host'} = $mark->{'hostname'}
                   unless ($headrs{'host'});    # Kludge not to override host injection vectors
@@ -79,213 +62,132 @@ sub nikto_tests {
                 $headrs{'content-length'} = length($data)
                   unless grep(/^(transfer-encoding|content-length)$/i, keys %headrs);
             }
+
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $data, \%headrs, \%flags, $checkid);
 
-            if ($OUTPUT{'show_ok'} && ($res eq 200)) {
-                nprint(
-                     "+ $mark->{'root'}$uri - 200/OK Response could be $TESTS{$checkid}{'message'}",
-                     "",
-                     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
-                     );
-            }
-            elsif ($OUTPUT{'show_redirects'} && ($res =~ /30(?:[0-3]|7)/)) {
-                nprint("+ $mark->{'root'}$uri - Redirects ($res) to "
-                         . $response->{'location'} . " , "
-                         . $TESTS{$checkid}{'message'},
-                       "",
-                       ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
-                       );
-            }
-
-            # If user puts a @CODE= string in db_404_strings, let it take precedence
-            foreach my $code (keys %{ $VARIABLES->{'ERRCODES'} }) {
-                if ($res =~ /$code/) {
-                    next URI;
-                }
-            }
-
-            my $m1_method = my $m1o_method = my $m1a_method = my $f2_method = my $f1_method =
-              "content";
-            my $positive = my $hashme = 0;
-            my $hash     = $reason    = '';
-
-            # how to check each conditional
-            if    ($TESTS{$checkid}{'match_1'} =~ /^[0-9]{3}$/) { $m1_method = "code"; }
-            elsif ($TESTS{$checkid}{'match_1'} =~ /^\@MD5/) {
-                $m1_method = "md5";
-                $hashme    = 1;
-                $TESTS{$checkid}{'match_1'} =~ s/^\@MD5//;
-            }
-
-            if    ($TESTS{$checkid}{'match_1_or'} =~ /^[0-9]{3}$/) { $m1o_method = "code"; }
-            elsif ($TESTS{$checkid}{'match_1_or'} =~ /^\@MD5/) {
-                $m1o_method = "md5";
-                $hashme     = 1;
-                $TESTS{$checkid}{'match_1_or'} =~ s/^\@MD5//;
-            }
-
-            if    ($TESTS{$checkid}{'match_1_and'} =~ /^[0-9]{3}$/) { $m1a_method = "code"; }
-            elsif ($TESTS{$checkid}{'match_1_and'} =~ /^\@MD5/) {
-                $m1a_method = "md5";
-                $hashme     = 1;
-                $TESTS{$checkid}{'match_1_and'} =~ s/^\@MD5//;
-            }
-
-            if    ($TESTS{$checkid}{'fail_1'} =~ /^[0-9]{3}$/) { $f1_method = "code"; }
-            elsif ($TESTS{$checkid}{'fail_1'} =~ /^\@MD5/) {
-                $f1_method = "md5";
-                $hashme    = 1;
-                $TESTS{$checkid}{'fail_1'} =~ s/^\@MD5//;
-            }
-
-            if    ($TESTS{$checkid}{'fail_2'} =~ /^[0-9]{3}$/) { $f2_method = "code"; }
-            elsif ($TESTS{$checkid}{'fail_2'} =~ /^\@MD5/) {
-                $f2_method = "md5";
-                $hashme    = 1;
-                $TESTS{$checkid}{'fail_2'} =~ s/^\@MD5//;
-            }
-
-            if ($hashme) {
-                $hash = LW2::md5($content);
-            }
-
-            # basic match for positive response
-            if ($m1_method eq "content") {
-                if ($content =~ /$TESTS{$checkid}{'match_1'}/) {
-                    $positive = 1;
-                    $reason   = 'Content Match';
-                }
-            }
-            elsif ($m1_method eq "md5") {
-                if ($hash eq $TESTS{$checkid}{'match_1'}) {
-                    $positive = 1;
-                    $reason   = 'MD5 Hash';
-                }
-            }
-            else {
-                if ($res eq $TESTS{$checkid}{'match_1'}) {
-                    $positive = 1;
-                    $reason   = 'Response Code Match';
-                }
-                elsif ($res eq $FoF{'okay'}{'response'}) {
-                    $positive = 1;
-                    $reason   = 'Response Code Match - FoF OK Response)';
-                }
-            }
-
-            # no match, check optional match
-            if ((!$positive) && ($TESTS{$checkid}{'match_1_or'} ne "")) {
-                if ($m1o_method eq "content") {
-                    if ($content =~ /$TESTS{$checkid}{'match_1_or'}/) {
-                        $positive = 1;
-                        $reason   = 'Content Match - Match 1 (Or)';
+            # DSL matcher expects response headers as a hashref
+            my $response_string = rebuild_response($response, 0);
+            my %response_headers;
+            foreach my $line (split(/\r?\n/, $response_string)) {
+                next if $line =~ /^HTTP\//;    # Skip status line
+                last if $line =~ /^\s*$/;      # Stop at blank line (end of headers)
+                if ($line =~ /^([^:]+):\s*(.*)$/) {
+                    my ($name, $value) = (lc($1), $2);
+                    if (exists $response_headers{$name}) {
+                        $response_headers{$name} .= ', ' . $value;
+                    }
+                    else {
+                        $response_headers{$name} = $value;
                     }
                 }
-                elsif ($m1o_method eq "md5") {
-                    if ($hash eq $TESTS{$checkid}{'match_1_or'}) {
-                        $positive = 1;
-                        $reason   = 'MD5 Hash - Match 1 (Or)';
+            }
+            my $response_headers = \%response_headers;
+
+            # Extract cookies as a hashref for matcher
+            my %cookies = ();
+            if (ref $response->{'whisker'}->{'cookies'} eq 'ARRAY') {
+                foreach my $cookie (@{ $response->{'whisker'}->{'cookies'} }) {
+                    if ($cookie =~ /^([^=]+)=([^;]*)/) {
+                        $cookies{ lc($1) } = $2;
                     }
                 }
-                else {
-                    if ($res eq $TESTS{$checkid}{'match_1_or'}) {
-                        $positive = 1;
-                        $reason   = 'Response Code Match - Match 1 (Or)';
-                    }
-                    elsif ($res eq $FoF{'okay'}{'response'}) {
-                        $positive = 1;
-                        $reason   = 'Response Code Match - FoF OK Response / Match 1 (Or)';
-                    }
-                }
+            }
+
+            # Use the DSL matcher - now returns (match_status, captured_groups)
+            my ($positive, $reason, $captures) = (0, '', []);
+            my @matcher_result =
+              $TESTS{$checkid}{'matcher'}->($res, $content, $response_headers, \%cookies);
+
+            my ($match_status, $captured_groups) = @matcher_result;
+            if ($match_status) {
+                $positive = 1;
+                $reason   = 'DSL Match';
+                $captures = $captured_groups || [];
             }
 
             # matched on something, check fails/ands
             if ($positive) {
-                if ($TESTS{$checkid}{'fail_1'} ne "") {
-                    if ($f1_method eq "content") {
-                        if ($content =~ /$TESTS{$checkid}{'fail_1'}/) { next; }
-                    }
-                    elsif ($f1_method eq "md5") {
-                        if ($hash eq $TESTS{$checkid}{'fail_1'}) {
-                            next;
-                        }
-                    }
-                    else {
-                        if ($res eq $TESTS{$checkid}{'fail_1'}) { next; }
-                    }
-                }
-                if ($TESTS{$checkid}{'fail_2'} ne "") {
-                    if ($f2_method eq "content") {
-                        if ($content =~ /$TESTS{$checkid}{'fail_2'}/) { next; }
-                    }
-                    elsif ($f2_method eq "md5") {
-                        if ($hash eq $TESTS{$checkid}{'fail_2'}) {
-                            next;
-                        }
-                    }
-                    else {
-                        if ($res eq $TESTS{$checkid}{'fail_2'}) { next; }
-                    }
-                }
-                if ($TESTS{$checkid}{'match_1_and'} ne "") {
-                    if ($m1a_method eq "content") {
-                        if ($content !~ /$TESTS{$checkid}{'match_1_and'}/) { next; }
-                        else { $reason .= ' and content Match1 (And)'; }
-                    }
-                    elsif ($m1a_method eq "md5") {
-                        if ($hash ne $TESTS{$checkid}{'match_1_and'}) { next; }
-                        else { $reason .= ' and MD5 Match1 (And)'; }
-                    }
-                    else {
-                        if ($res ne $TESTS{$checkid}{'match_1_and'}) { next; }
-                        else { $reason .= ' and Response Code Match1 (And)'; }
-                    }
-                }
 
                 # if it's an index.php, check for normal /index.php to see if it's a FP
-                if ($uri =~ /^\/index.php\?/) {
-                    my $content = rm_active_content($content, $mark->{'root'} . $uri);
-                    if (LW2::md4($content) eq $FoF{'index.php'}{'match'}) { next; }
-                }
+                # if ($uri =~ /^\/index.php\?/i) {
+                #     my $clean_content = rm_active_content($content, $mark->{'root'} . $uri);
+                #     if (LW2::md5($clean_content) eq $mark->{'FoF'}{'index.php'}{'match'}) {
+                #         next;
+                #     }
+                # }
 
-                # lastly check for a false positive based on file extension or type
-                if (($m1_method eq "code") || ($m1o_method eq "code")) {
-                    if (is_404($mark->{'root'} . $uri, $content, $res, $response->{'location'})) {
-                        next;
+                # Check user-specified error codes/strings first (highest priority, always wins)
+                # This must be checked before any other 404 detection logic
+                if (defined $VARIABLES{'ERRCODES'} && ref($VARIABLES{'ERRCODES'}) eq 'HASH') {
+                    my $code_str = "$res";
+                    if (exists $VARIABLES{'ERRCODES'}->{$code_str}) {
+                        next URI;    # Skip this test, it's a 404
+                    }
+                }
+                if (defined $VARIABLES{'ERRSTRINGS'} && ref($VARIABLES{'ERRSTRINGS'}) eq 'HASH') {
+                    foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS'} }) {
+                        if ($content =~ /$pattern/) {
+                            next URI;    # Skip this test, it's a 404
+                        }
                     }
                 }
 
-                if ($positive) {
-                    add_vulnerability($mark,
-                                      "$mark->{'root'}$uri: $TESTS{$checkid}{'message'}",
-                                      $checkid,
-                                      $TESTS{$checkid}{'references'},
-                                      $TESTS{$checkid}{'method'},
-                                      $mark->{'root'} . $uri,
-                                      $request,
-                                      $response,
-                                      $reason
-                                      );
+             # Lastly check for a false positive based on file extension or type.
+             # We check is_404 when the actual response code is 200, because 404 error pages
+             # can return 200 status codes. However, we skip the check if:
+             # 1. There's a positive BODY match (specific body content indicates real content)
+             # 2. The DSL has an explicit non-200 CODE match (like CODE:404, CODE:403)
+             #    without including 200, as those are intentional matches for specific status codes.
+                my $has_code_match = ($TESTS{$checkid}{'dsl'} =~ /CODE:/i);
+
+                # Check if DSL has an explicit non-200 CODE match that doesn't include 200
+                # (e.g., CODE:404, CODE:403, but not CODE:200 or CODE:200|404)
+                my $has_explicit_non200_code = 0;
+                if ($has_code_match) {
+                    my $includes_code_200 = ($TESTS{$checkid}{'dsl'} =~ /\bCODE:\s*200(\D|$)/i);
+
+                    # If there's a CODE match but it doesn't include 200, skip is_404 check
+                    $has_explicit_non200_code = !$includes_code_200;
                 }
+
+                # Check if DSL has positive BODY patterns (BODY: but not !BODY:)
+                my $has_body_match = ($TESTS{$checkid}{'dsl'} =~ /(?:^|[^!])BODY:/i);
+
+                if (   $res == 200
+                    && !$has_body_match
+                    && !$has_explicit_non200_code
+                    && is_404($mark, $mark->{'root'} . $uri, $response)) {
+                    next;
+                }
+
+                # Process message with captured groups (if any)
+                my $message = $TESTS{$checkid}{'message'};
+                if (@$captures && $message =~ /\$\d+/) {
+                    $message = process_captured_groups($message, $captures);
+                }
+
+                # All checks passed, add vulnerability
+                add_vulnerability($mark,                      "$mark->{'root'}$uri: $message",
+                                  $checkid,                   $TESTS{$checkid}{'references'},
+                                  $TESTS{$checkid}{'method'}, $mark->{'root'} . $uri,
+                                  $request,                   $response,
+                                  $reason
+                                  );
             }
         }
 
         # Percentages
-        if (($OUTPUT{'progress'}) && ($parameters->{'report'})) {
-            if (($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
-                status_report();
-            }
+        if (   $OUTPUT{'progress'}
+            && $parameters->{'report'}
+            && ($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
+            status_report();
         }
     }    # end check loop
 
     # Perform mutation tests
-    if ($parameters->{'passfiles'}) {
-        passchecks($mark);
-    }
-    if ($parameters->{'all'}) {
-        allchecks($mark);
-    }
+    passchecks($mark) if $parameters->{'passfiles'};
+    allchecks($mark)  if $parameters->{'all'};
 
     return;
 }
@@ -296,7 +198,7 @@ sub passchecks {
     my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
     my @EXTS   = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
-    nprint("- Performing passfiles mutation.", "v");
+    nprint("- Performing passfiles mutation.", "v", "tests");
 
     # Update total requests for status reports
     my @CGIS = split(/ /, $VARIABLES{'@CGIDIRS'});
@@ -342,11 +244,11 @@ sub allchecks {
     my (%FILES, %DIRS);
 
     # build the arrays
-    nprint("- Loading root level files.", "v");
+    nprint("- Loading root level files.", "v", "tests");
     foreach my $checkid (keys %TESTS) {
 
         # Expand out vars so we get full matches
-        my @uris = change_variables($TESTS{$checkid}{'uri'});
+        my @uris = change_variables($TESTS{$checkid}{'uri'}, $mark, $checkid);
 
         foreach my $uri (@uris) {
             my $dir  = LW2::uri_get_dir($uri);
@@ -392,6 +294,30 @@ sub testfile {
         add_vulnerability($mark, "$uri: file found during $name mutation",
                           $tid, "", "GET", $uri, $request, $response);
     }
+}
+
+###############################################################################
+# Process captured groups in message strings
+# Replaces $1, $2, etc. with captured group values
+sub process_captured_groups {
+    my ($message, $captures) = @_;
+
+    # Quick exit if no message or captures
+    return $message unless $message && $captures && @$captures;
+
+    # Quick exit if message has no placeholder patterns
+    return $message unless $message =~ /\$\d+/;
+
+    # Replace $1, $2, etc. with captured values
+    for my $i (1 .. @$captures) {
+        my $value = $captures->[ $i - 1 ];
+
+        # Replace with captured value or empty string if undefined
+        $value = '' unless defined $value;
+        $message =~ s/\$$i/$value/g;
+    }
+
+    return $message;
 }
 
 1;

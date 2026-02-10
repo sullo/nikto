@@ -1,5 +1,5 @@
 #!perl
-# LW2 version 2.5.1
+# LW2 version 2.5.2
 #   LW2 Copyright (c) 2009, Jeff Forristal (wiretrip.net)
 #   All rights reserved.
 #
@@ -121,22 +121,22 @@ sub init_ssl_engine {
     } 
 	else {
 	# assuming autodetection
-	eval "use Net::SSL";
-        if ( !$@ ) {
-                $LW_SSL_LIB   = 2;
-                $_SSL_LIBRARY = 'Net::SSL';
-		}
-	else {
-        eval "use Net::SSLeay";
-        if ( !$@ ) {
+	eval "use Net::SSLeay";
+    if ( !$@ ) {
                 $LW_SSL_LIB   = 1;
                 $_SSL_LIBRARY = 'Net::SSLeay';
                 Net::SSLeay::load_error_strings();
                 Net::SSLeay::SSLeay_add_ssl_algorithms();
                 Net::SSLeay::randomize();
                 }
+	else {
+        eval "use Net::SSL";
+        if ( !$@ ) {
+                $LW_SSL_LIB   = 2;
+                $_SSL_LIBRARY = 'Net::SSL';
+		        }
 		}
-        }
+    }
 
 return undef;
 
@@ -161,7 +161,6 @@ $PACKAGE='LW2';
     our $IPv4_re = $IPv4;
     $IPv4_re =~ s/\(/(?:/g;
     $IPv4_re = qr/$IPv4_re/;
-
 
     my $G = "[0-9a-fA-F]{1,4}";
 
@@ -241,25 +240,25 @@ won't be able to tell the difference).
 
 =cut
 
-sub auth_brute_force {
-    my ( $auth_method, $hrin, $user, $pwordref, $dom, $fail_code ) = @_;
-    my ( $P, %hout );
-    $fail_code ||= 401;
+# sub auth_brute_force {
+#     my ( $auth_method, $hrin, $user, $pwordref, $dom, $fail_code ) = @_;
+#     my ( $P, %hout );
+#     $fail_code ||= 401;
 
-    return undef if ( !defined $auth_method || length($auth_method) == 0 );
-    return undef if ( !defined $user        || length($user) == 0 );
-    return undef if ( !( defined $hrin     && ref($hrin) ) );
-    return undef if ( !( defined $pwordref && ref($pwordref) ) );
+#     return undef if ( !defined $auth_method || length($auth_method) == 0 );
+#     return undef if ( !defined $user        || length($user) == 0 );
+#     return undef if ( !( defined $hrin     && ref($hrin) ) );
+#     return undef if ( !( defined $pwordref && ref($pwordref) ) );
 
-    map {
-        ( $P = $_ ) =~ tr/\r\n//d;
-        auth_set( $auth_method, $hrin, $user, $P, $dom );
-        return undef if ( http_do_request( $hrin, \%hout ) );
-        return $P if ( $hout{whisker}->{code} != $fail_code );
-    } @$pwordref;
+#     map {
+#         ( $P = $_ ) =~ tr/\r\n//d;
+#         auth_set( $auth_method, $hrin, $user, $P, $dom );
+#         return undef if ( http_do_request( $hrin, \%hout ) );
+#         return $P if ( $hout{whisker}->{code} != $fail_code );
+#     } @$pwordref;
 
-    return undef;
-}
+#     return undef;
+# }
 
 ########################################################################
 
@@ -573,7 +572,7 @@ sub cookie_write {
         }
         next if ( $$hin{'whisker'}->{'ssl'} == 0 && $$jarref{$name}->[4] > 0 );
         if ( $$hin{'whisker'}->{'host'} =~ /$$jarref{$name}->[1]$/i
-                && $$hin{'whisker'}->{'uri'} =~ /^$$jarref{$name}->[2])/ )
+                && $$hin{'whisker'}->{'uri'} =~ /^$$jarref{$name}->[2]/ )
         {
             $out .= "$name=$$jarref{$name}->[0];";
         }
@@ -624,7 +623,7 @@ Params: $jar
 
 Return: @names
 
-Fetch all the cookie names from the jar, which then let you cooke_get()
+Fetch all the cookie names from the jar, which then let you cookei_get()
 them individually.
 
 =cut
@@ -1200,14 +1199,14 @@ mode.
 
 =cut
 
-sub dump_writefile {
-    my $file   = shift;
-    my $output = &dump(@_);
-    return 1 if ( !open( OUT, ">$file" ) || !defined $output );
-    binmode(OUT);
-    print OUT $output;
-    close(OUT);
-}
+# sub dump_writefile {
+#     my $file   = shift;
+#     my $output = &dump(@_);
+#     return 1 if ( !open( OUT, ">$file" ) || !defined $output );
+#     binmode(OUT);
+#     print OUT $output;
+#     close(OUT);
+# }
 
 ########################################################################
 
@@ -1224,7 +1223,7 @@ sub _dump {    # dereference and dump an element
     elsif ( ref($ref) eq 'HASH' ) {
         $out .= "{\n";
         foreach my $k (sort keys %$ref) {
-            my $v = %$ref{$k};
+            my $v = $ref->{$k};
             $out .= "\t" x $t;
             $out .= _dumpd($k) . ' => ';
             if ( ref($v) ) { $out .= _dump( $t + 1, $v, $depth + 1 ); }
@@ -1715,15 +1714,15 @@ actual value is '[1]' (the type is '[0]', and the parameter array is
 ################################################################
 
 # Cluster global variables
-%_forms_ELEMENTS = (
-    'form'     => 1,
-    'input'    => 1,
-    'textarea' => 1,
-    'button'   => 1,
-    'select'   => 1,
-    'option'   => 1,
-    '/select'  => 1
-);
+# %_forms_ELEMENTS = (
+#     'form'     => 1,
+#     'input'    => 1,
+#     'textarea' => 1,
+#     'button'   => 1,
+#     'select'   => 1,
+#     'option'   => 1,
+#     '/select'  => 1
+# );
 
 ################################################################
 
@@ -1739,20 +1738,20 @@ forms.
 
 =cut
 
-sub forms_read {
-    my $dr = shift;
-    return undef if ( !ref($dr) || length($$dr) == 0 );
+# sub forms_read {
+#     my $dr = shift;
+#     return undef if ( !ref($dr) || length($$dr) == 0 );
 
-    my $A = [ {}, [] ];
+#     my $A = [ {}, [] ];
 
-    html_find_tags( $dr, \&_forms_parse_callback, 0, $A, \%_forms_ELEMENTS );
+#     html_find_tags( $dr, \&_forms_parse_callback, 0, $A, \%_forms_ELEMENTS );
 
-    if ( scalar %{ $A->[0] } ) {
-        push( @{ $A->[1] }, $A->[0] );
-    }
+#     if ( scalar %{ $A->[0] } ) {
+#         push( @{ $A->[1] }, $A->[0] );
+#     }
 
-    return $A->[1];
-}
+#     return $A->[1];
+# }
 
 ################################################################
 
@@ -1771,177 +1770,177 @@ embedded in the element values.
 
 =cut
 
-sub forms_write {
-    my $hr = shift;
-    return undef if ( !ref($hr) || !( scalar %$hr ) );
-    return undef if ( !defined $$hr{"\0"} );
+# sub forms_write {
+#     my $hr = shift;
+#     return undef if ( !ref($hr) || !( scalar %$hr ) );
+#     return undef if ( !defined $$hr{"\0"} );
 
-    my $t = '<form name="' . $$hr{"\0"}->[0] . '" method="';
-    $t .= $$hr{"\0"}->[1] . '" action="' . $$hr{"\0"}->[2] . '"';
-    if ( defined $$hr{"\0"}->[3] ) {
-        $t .= ' ' . join( ' ', @{ $$hr{"\0"}->[3] } );
-    }
-    $t .= ">\n";
+#     my $t = '<form name="' . $$hr{"\0"}->[0] . '" method="';
+#     $t .= $$hr{"\0"}->[1] . '" action="' . $$hr{"\0"}->[2] . '"';
+#     if ( defined $$hr{"\0"}->[3] ) {
+#         $t .= ' ' . join( ' ', @{ $$hr{"\0"}->[3] } );
+#     }
+#     $t .= ">\n";
 
-    my ( $name, $ar );
-    while ( ( $name, $ar ) = each(%$hr) ) {
-        next if ( $name eq "\0" );
-        next if ( $name eq '' && $ar->[0]->[0] eq '' );
-        foreach $a (@$ar) {
-            my $P = '';
-            $P = ' ' . join( ' ', @{ $$a[2] } ) if ( defined $$a[2] );
-            $t .= "\t";
+#     my ( $name, $ar );
+#     while ( ( $name, $ar ) = each(%$hr) ) {
+#         next if ( $name eq "\0" );
+#         next if ( $name eq '' && $ar->[0]->[0] eq '' );
+#         foreach $a (@$ar) {
+#             my $P = '';
+#             $P = ' ' . join( ' ', @{ $$a[2] } ) if ( defined $$a[2] );
+#             $t .= "\t";
 
-            if ( $$a[0] eq 'textarea' ) {
-                $t .= "<textarea name=\"$name\"$P>$$a[1]";
-                $t .= "</textarea>\n";
+#             if ( $$a[0] eq 'textarea' ) {
+#                 $t .= "<textarea name=\"$name\"$P>$$a[1]";
+#                 $t .= "</textarea>\n";
 
-            }
-            elsif ( $$a[0] =~ m/^input-(.+)$/ ) {
-                $t .= "<input type=\"$1\" name=\"$name\" ";
-                $t .= "value=\"$$a[1]\"$P>\n";
+#             }
+#             elsif ( $$a[0] =~ m/^input-(.+)$/ ) {
+#                 $t .= "<input type=\"$1\" name=\"$name\" ";
+#                 $t .= "value=\"$$a[1]\"$P>\n";
 
-            }
-            elsif ( $$a[0] eq 'option' ) {
-                $t .= "\t<option value=\"$$a[1]\"$P>$$a[1]\n";
+#             }
+#             elsif ( $$a[0] eq 'option' ) {
+#                 $t .= "\t<option value=\"$$a[1]\"$P>$$a[1]\n";
 
-            }
-            elsif ( $$a[0] eq 'select' ) {
-                $t .= "<select name=\"$name\"$P>\n";
+#             }
+#             elsif ( $$a[0] eq 'select' ) {
+#                 $t .= "<select name=\"$name\"$P>\n";
 
-            }
-            elsif ( $$a[0] eq '/select' ) {
-                $t .= "</select$P>\n";
+#             }
+#             elsif ( $$a[0] eq '/select' ) {
+#                 $t .= "</select$P>\n";
 
-            }
-            else {    # button
-                $t .= "<button name=\"$name\" value=\"$$a[1]\">\n";
-            }
-        }
-    }
+#             }
+#             else {    # button
+#                 $t .= "<button name=\"$name\" value=\"$$a[1]\">\n";
+#             }
+#         }
+#     }
 
-    $t .= "</form>\n";
-    return $t;
-}
+#     $t .= "</form>\n";
+#     return $t;
+# }
 
 ################################################################
 
-{    # these are 'private' static variables for &_forms_parse_html
-    my $CURRENT_SELECT = undef;
-    my $UNKNOWNS       = 0;
+# {    # these are 'private' static variables for &_forms_parse_html
+#     my $CURRENT_SELECT = undef;
+#     my $UNKNOWNS       = 0;
 
-    sub _forms_parse_callback {
-        my ( $TAG, $hr, $dr, $start, $len, $ar ) = ( lc(shift), @_ );
-        my ( $saveparam, $parr, $key ) = ( 0, undef, '' );
+#     sub _forms_parse_callback {
+#         my ( $TAG, $hr, $dr, $start, $len, $ar ) = ( lc(shift), @_ );
+#         my ( $saveparam, $parr, $key ) = ( 0, undef, '' );
 
-        my $_forms_CURRENT = $ar->[0];
-        my $_forms_FOUND   = $ar->[1];
+#         my $_forms_CURRENT = $ar->[0];
+#         my $_forms_FOUND   = $ar->[1];
 
-        if ( scalar %$hr ) {
-            while ( my ( $key, $val ) = each %$hr ) {
-                if ( $key =~ tr/A-Z// ) {
-                    delete $$hr{$key};
-                    if ( defined $val ) { $$hr{ lc($key) } = $val; }
-                    else { $$hr{ lc($key) } = undef; }
-                }
-            }
-        }
+#         if ( scalar %$hr ) {
+#             while ( my ( $key, $val ) = each %$hr ) {
+#                 if ( $key =~ tr/A-Z// ) {
+#                     delete $$hr{$key};
+#                     if ( defined $val ) { $$hr{ lc($key) } = $val; }
+#                     else { $$hr{ lc($key) } = undef; }
+#                 }
+#             }
+#         }
 
-        if ( $TAG eq 'form' ) {
-            if ( scalar %$_forms_CURRENT ) {    # save last form
-                push( @$_forms_FOUND, $_forms_CURRENT );
-                $ar->[0] = {};
-                $_forms_CURRENT = $ar->[0];
-            }
+#         if ( $TAG eq 'form' ) {
+#             if ( scalar %$_forms_CURRENT ) {    # save last form
+#                 push( @$_forms_FOUND, $_forms_CURRENT );
+#                 $ar->[0] = {};
+#                 $_forms_CURRENT = $ar->[0];
+#             }
 
-            $_forms_CURRENT->{"\0"} =
-              [ $$hr{name}, $$hr{method}, $$hr{action}, [] ];
-            delete $$hr{'name'};
-            delete $$hr{'method'};
-            delete $$hr{'action'};
-            $key      = "\0";
-            $UNKNOWNS = 0;
+#             $_forms_CURRENT->{"\0"} =
+#               [ $$hr{name}, $$hr{method}, $$hr{action}, [] ];
+#             delete $$hr{'name'};
+#             delete $$hr{'method'};
+#             delete $$hr{'action'};
+#             $key      = "\0";
+#             $UNKNOWNS = 0;
 
-        }
-        elsif ( $TAG eq 'input' ) {
-            $$hr{type}  = 'text'                  if ( !defined $$hr{type} );
-            $$hr{name}  = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
-            $$hr{value} = undef                   if ( !defined $$hr{value} );
-            $key        = $$hr{name};
+#         }
+#         elsif ( $TAG eq 'input' ) {
+#             $$hr{type}  = 'text'                  if ( !defined $$hr{type} );
+#             $$hr{name}  = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
+#             $$hr{value} = undef                   if ( !defined $$hr{value} );
+#             $key        = $$hr{name};
 
-            push @{ $_forms_CURRENT->{$key} },
-              [ 'input-' . $$hr{type}, $$hr{value}, [] ];
-            delete $$hr{'name'};
-            delete $$hr{'type'};
-            delete $$hr{'value'};
+#             push @{ $_forms_CURRENT->{$key} },
+#               [ 'input-' . $$hr{type}, $$hr{value}, [] ];
+#             delete $$hr{'name'};
+#             delete $$hr{'type'};
+#             delete $$hr{'value'};
 
-        }
-        elsif ( $TAG eq 'select' ) {
-            $$hr{name} = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
-            $key = $$hr{name};
-            push @{ $_forms_CURRENT->{$key} }, [ 'select', undef, [] ];
-            $CURRENT_SELECT = $key;
-            delete $$hr{name};
+#         }
+#         elsif ( $TAG eq 'select' ) {
+#             $$hr{name} = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
+#             $key = $$hr{name};
+#             push @{ $_forms_CURRENT->{$key} }, [ 'select', undef, [] ];
+#             $CURRENT_SELECT = $key;
+#             delete $$hr{name};
 
-        }
-        elsif ( $TAG eq '/select' ) {
-            push @{ $_forms_CURRENT->{$CURRENT_SELECT} },
-              [ '/select', undef, [] ];
-            $CURRENT_SELECT = undef;
-            return undef;
+#         }
+#         elsif ( $TAG eq '/select' ) {
+#             push @{ $_forms_CURRENT->{$CURRENT_SELECT} },
+#               [ '/select', undef, [] ];
+#             $CURRENT_SELECT = undef;
+#             return undef;
 
-        }
-        elsif ( $TAG eq 'option' ) {
-            return undef if ( !defined $CURRENT_SELECT );
-            if ( !defined $$hr{value} ) {
-                my $stop = index( $$dr, '<', $start + $len );
-                return undef if ( $stop == -1 );    # MAJOR PUKE
-                $$hr{value} =
-                  substr( $$dr, $start + $len, ( $stop - $start - $len ) );
-                $$hr{value} =~ tr/\r\n//d;
-            }
-            push @{ $_forms_CURRENT->{$CURRENT_SELECT} },
-              [ 'option', $$hr{value}, [] ];
-            delete $$hr{value};
+#         }
+#         elsif ( $TAG eq 'option' ) {
+#             return undef if ( !defined $CURRENT_SELECT );
+#             if ( !defined $$hr{value} ) {
+#                 my $stop = index( $$dr, '<', $start + $len );
+#                 return undef if ( $stop == -1 );    # MAJOR PUKE
+#                 $$hr{value} =
+#                   substr( $$dr, $start + $len, ( $stop - $start - $len ) );
+#                 $$hr{value} =~ tr/\r\n//d;
+#             }
+#             push @{ $_forms_CURRENT->{$CURRENT_SELECT} },
+#               [ 'option', $$hr{value}, [] ];
+#             delete $$hr{value};
 
-        }
-        elsif ( $TAG eq 'textarea' ) {
-            my $stop = $start + $len;
-            $$hr{value} = $$hr{'='};
-            delete $$hr{'='};
-            $$hr{name} = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
-            $key = $$hr{name};
-            push @{ $_forms_CURRENT->{$key} }, [ 'textarea', $$hr{value}, [] ];
-            delete $$hr{'name'};
-            delete $$hr{'value'};
+#         }
+#         elsif ( $TAG eq 'textarea' ) {
+#             my $stop = $start + $len;
+#             $$hr{value} = $$hr{'='};
+#             delete $$hr{'='};
+#             $$hr{name} = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
+#             $key = $$hr{name};
+#             push @{ $_forms_CURRENT->{$key} }, [ 'textarea', $$hr{value}, [] ];
+#             delete $$hr{'name'};
+#             delete $$hr{'value'};
 
-        }
-        else {    # button
-            $$hr{name}  = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
-            $$hr{value} = undef                   if ( !defined $$hr{value} );
-            $key        = $$hr{name};
-            push @{ $_forms_CURRENT->{$key} }, [ 'button', $$hr{value}, [] ];
-            delete $$hr{'name'};
-            delete $$hr{'value'};
-        }
+#         }
+#         else {    # button
+#             $$hr{name}  = 'unknown' . $UNKNOWNS++ if ( !defined $$hr{name} );
+#             $$hr{value} = undef                   if ( !defined $$hr{value} );
+#             $key        = $$hr{name};
+#             push @{ $_forms_CURRENT->{$key} }, [ 'button', $$hr{value}, [] ];
+#             delete $$hr{'name'};
+#             delete $$hr{'value'};
+#         }
 
-        if ( scalar %$hr ) {
-            if ( $TAG eq 'form' ) { $parr = $_forms_CURRENT->{$key}->[3]; }
-            else {
-                $parr = $_forms_CURRENT->{$key}->[-1];
-                $parr = $parr->[2];
-            }
+#         if ( scalar %$hr ) {
+#             if ( $TAG eq 'form' ) { $parr = $_forms_CURRENT->{$key}->[3]; }
+#             else {
+#                 $parr = $_forms_CURRENT->{$key}->[-1];
+#                 $parr = $parr->[2];
+#             }
 
-            my ( $k, $v );
-            while ( ( $k, $v ) = each(%$hr) ) {
-                if ( defined $v ) { push @$parr, "$k=\"$v\""; }
-                else { push @$parr, $k; }
-            }
-        }
+#             my ( $k, $v );
+#             while ( ( $k, $v ) = each(%$hr) ) {
+#                 if ( defined $v ) { push @$parr, "$k=\"$v\""; }
+#                 else { push @$parr, $k; }
+#             }
+#         }
 
-        return undef;
-    }
-}
+#         return undef;
+#     }
+# }
 
 
 ################################################################
@@ -2242,7 +2241,7 @@ will be inserted at the indicated $position.
         $LEN += $l;
     }
 
-################################################################
+###############################################################
 
     sub _html_find_tags_adjust {
         my ( $p, $l ) = @_;
@@ -2292,7 +2291,7 @@ sub html_link_extractor {
         0,                              # xml mode
         \%OBJ,                          # data object
         \%_crawl_linktags
-    );                                  # tagmap
+    );                 
 
     return @{ $OBJ{urls} };
 }
@@ -2424,7 +2423,7 @@ sub http_init_request {    # doesn't return anything
 
     # default header values
     $$hin{'Connection'} = 'Keep-Alive';
-    $$hin{'User-Agent'} = "Mozilla (libwhisker/$LW2::VERSION)";
+    # $$hin{'User-Agent'} = "Mozilla (libwhisker/$LW2::VERSION)";
 }
 
 ##################################################################
@@ -2605,14 +2604,14 @@ sub _http_do_request_ex {
     }
 
     # good time to fingerprint, if requested
-    if ( defined $$W{request_fingerprint} ) {
-        $$hout{whisker}->{request_fingerprint} =
-          'md5:' . md5( $stream->{bufout} )
-          if ( $$W{request_fingerprint} eq 'md5' );
-        $$hout{whisker}->{request_fingerprint} =
-          'md4:' . md4( $stream->{bufout} )
-          if ( $$W{request_fingerprint} eq 'md4' );
-    }
+    # if ( defined $$W{request_fingerprint} ) {
+    #     $$hout{whisker}->{request_fingerprint} =
+    #       'md5:' . md5( $stream->{bufout} )
+    #       if ( $$W{request_fingerprint} eq 'md5' );
+    #     $$hout{whisker}->{request_fingerprint} =
+    #       'md4:' . md4( $stream->{bufout} )
+    #       if ( $$W{request_fingerprint} eq 'md4' );
+    # }
 
     # all data is wrangled...actually send it now
     if ( !$stream->{'write'}->() ) {
@@ -2632,6 +2631,13 @@ sub _http_do_request_ex {
     ##### read and parse response
     my @H;
     if ( $$W{'version'} ne '0.9' ) {
+        # Clear header fields before reading new headers (prevents accumulation on retries)
+        foreach my $key (keys %$hout) {
+            delete $$hout{$key} unless $key eq 'whisker';
+        }
+        # Always initialize header_order to empty array (it's inside whisker hash)
+        $$hout{whisker}->{header_order} = [];
+        
         do {    # catch '100 Continue' responses
             my $resp = _http_getline($stream);
 
@@ -2666,6 +2672,17 @@ sub _http_do_request_ex {
             $$hout{whisker}->{http_eol}    = $7;
             $$hout{whisker}->{'100_continue'}++ if ( $4 == 100 );
             $$hout{whisker}->{'uri_requested'} = $$W{'uri'}; 
+
+            # Clear headers before reading (needed for 100 Continue responses)
+            # Headers from 100 Continue should be discarded, only final response headers kept
+            if ( $4 == 100 ) {
+                foreach my $key (keys %$hout) {
+                    delete $$hout{$key} unless $key eq 'whisker';
+                }
+                $$hout{whisker}->{header_order} = [];
+                # Also clear cookies array if it exists
+                $$hout{whisker}->{cookies} = [] if defined $$hout{whisker}->{cookies};
+            }
 
             @H = http_read_headers( $stream, $hin, $hout );
             if ( !$H[0] ) {
@@ -3055,9 +3072,11 @@ sub _ssl_save_info {
     my ( $hr, $stream ) = @_;
     my $cert;
 
+    # streamtype 4: Net::SSLeay / IO::Socket::SSL path (supports SAN)
     if ( $stream->{streamtype} == 4 ) {
         my $SSL = $stream->{sock};
         $hr->{whisker}->{ssl_cipher} = Net::SSLeay::get_cipher($SSL);
+
         if ( $cert = Net::SSLeay::get_peer_certificate($SSL) ) {
             $hr->{whisker}->{ssl_cert_subject} =
               Net::SSLeay::X509_NAME_oneline(
@@ -3071,14 +3090,22 @@ sub _ssl_save_info {
         return;
     }
 
+    # streamtype 5: Net::SSL / Crypt::SSLeay path
+    # NOTE: SAN extraction is not reliably available in-process from Crypt::SSLeay::X509,
+    # and attempting to mix Net::SSLeay calls here can be unstable. We intentionally do
+    # not set ssl_cert_altnames for streamtype 5.
     if ( $stream->{streamtype} == 5 ) {
-        $hr->{whisker}->{ssl_cipher} = $stream->{sock}->get_cipher();
-        if ( $cert = $stream->{sock}->get_peer_certificate() ) {
-            $hr->{whisker}->{ssl_cert_subject} = $cert->subject_name();
-            $hr->{whisker}->{ssl_cert_issuer}  = $cert->issuer_name();
+        $hr->{whisker}->{ssl_cipher} = eval { $stream->{sock}->get_cipher() };
+
+        if ( $cert = eval { $stream->{sock}->get_peer_certificate() } ) {
+            $hr->{whisker}->{ssl_cert_subject} = eval { $cert->subject_name() };
+            $hr->{whisker}->{ssl_cert_issuer}  = eval { $cert->issuer_name()  };
         }
+
         return;
     }
+
+    return;
 }
 
 ##################################################################
@@ -3555,9 +3582,9 @@ EOT
 
 ########################################################################
 
-{    # start md4 packaged varbs
-    my ( @S, @T, @M );
-    my $code = '';
+# {    # start md4 packaged varbs
+#     my ( @S, @T, @M );
+#     my $code = '';
 
 =item B<md4>
 
@@ -3571,85 +3598,85 @@ available.
 
 =cut
 
-    sub md4 {
-        return undef if ( !defined $_[0] );    # oops, forgot the data
-        my $DATA = _md5_pad( $_[0] );
-        &_md4_init() if ( !defined $M[0] );
-        return _md4_perl_generated( \$DATA );
-    }
+    # sub md4 {
+    #     return undef if ( !defined $_[0] );    # oops, forgot the data
+    #     my $DATA = _md5_pad( $_[0] );
+    #     &_md4_init() if ( !defined $M[0] );
+    #     return _md4_perl_generated( \$DATA );
+    # }
 
 ########################################################################
 
-    sub _md4_init {
-        return if ( defined $S[0] );
-        my $i;
-        my @t = ( 3, 7, 11, 19, 3, 5, 9, 13, 3, 9, 11, 15 );
-        for ( $i = 0 ; $i < 48 ; $i++ ) {
-            $S[$i] = $t[ ( int( $i / 16 ) * 4 ) + ( $i % 4 ) ];
-        }
-        @M = (
-            0, 1, 2, 3,  4, 5,  6, 7,  8, 9, 10, 11, 12, 13, 14, 15,
-            0, 4, 8, 12, 1, 5,  9, 13, 2, 6, 10, 14, 3,  7,  11, 15,
-            0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5,  13, 3,  11, 7,  15
-        );
+#     sub _md4_init {
+#         return if ( defined $S[0] );
+#         my $i;
+#         my @t = ( 3, 7, 11, 19, 3, 5, 9, 13, 3, 9, 11, 15 );
+#         for ( $i = 0 ; $i < 48 ; $i++ ) {
+#             $S[$i] = $t[ ( int( $i / 16 ) * 4 ) + ( $i % 4 ) ];
+#         }
+#         @M = (
+#             0, 1, 2, 3,  4, 5,  6, 7,  8, 9, 10, 11, 12, 13, 14, 15,
+#             0, 4, 8, 12, 1, 5,  9, 13, 2, 6, 10, 14, 3,  7,  11, 15,
+#             0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5,  13, 3,  11, 7,  15
+#         );
 
-        my $N = 'abcddabccdabbcda';
-        my $M = '';
-        $M = '&0xffffffff' if ( ( 1 << 16 ) << 16 );    # mask for 64bit systems
+#         my $N = 'abcddabccdabbcda';
+#         my $M = '';
+#         $M = '&0xffffffff' if ( ( 1 << 16 ) << 16 );    # mask for 64bit systems
 
-        $code = <<EOT;
-        sub _md4_perl_generated {
-	BEGIN { \$^H |= 1; }; # use integer
-        my (\$A,\$B,\$C,\$D)=(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
-        my (\$a,\$b,\$c,\$d,\$t,\$i);
-        my \$dr=shift;
-        my \$l=length(\$\$dr);
-        for my \$L (0 .. ((\$l/64)-1) ) {
-                my \@D = unpack('V16', substr(\$\$dr, \$L*64,64));
-                (\$a,\$b,\$c,\$d)=(\$A,\$B,\$C,\$D);
-EOT
+#         $code = <<EOT;
+#         sub _md4_perl_generated {
+# 	BEGIN { \$^H |= 1; }; # use integer
+#         my (\$A,\$B,\$C,\$D)=(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
+#         my (\$a,\$b,\$c,\$d,\$t,\$i);
+#         my \$dr=shift;
+#         my \$l=length(\$\$dr);
+#         for my \$L (0 .. ((\$l/64)-1) ) {
+#                 my \@D = unpack('V16', substr(\$\$dr, \$L*64,64));
+#                 (\$a,\$b,\$c,\$d)=(\$A,\$B,\$C,\$D);
+# EOT
 
-        for ( $i = 0 ; $i < 16 ; $i++ ) {
-            my ( $a, $b, $c, $d ) =
-              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-            $code .= "\$t=((\$$d^(\$$b\&(\$$c^\$$d)))+\$$a+\$D[$M[$i]])$M;\n";
-            $code .=
-"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-        }
-        for ( ; $i < 32 ; $i++ ) {
-            my ( $a, $b, $c, $d ) =
-              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-            $code .=
-"\$t=(( (\$$b&\$$c)|(\$$b&\$$d)|(\$$c&\$$d) )+\$$a+\$D[$M[$i]]+0x5a827999)$M;\n";
-            $code .=
-"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-        }
-        for ( ; $i < 48 ; $i++ ) {
-            my ( $a, $b, $c, $d ) =
-              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-            $code .=
-              "\$t=(( \$$b^\$$c^\$$d )+\$$a+\$D[$M[$i]]+0x6ed9eba1)$M;\n";
-            $code .=
-"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-        }
+#         for ( $i = 0 ; $i < 16 ; $i++ ) {
+#             my ( $a, $b, $c, $d ) =
+#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+#             $code .= "\$t=((\$$d^(\$$b\&(\$$c^\$$d)))+\$$a+\$D[$M[$i]])$M;\n";
+#             $code .=
+# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+#         }
+#         for ( ; $i < 32 ; $i++ ) {
+#             my ( $a, $b, $c, $d ) =
+#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+#             $code .=
+# "\$t=(( (\$$b&\$$c)|(\$$b&\$$d)|(\$$c&\$$d) )+\$$a+\$D[$M[$i]]+0x5a827999)$M;\n";
+#             $code .=
+# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+#         }
+#         for ( ; $i < 48 ; $i++ ) {
+#             my ( $a, $b, $c, $d ) =
+#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+#             $code .=
+#               "\$t=(( \$$b^\$$c^\$$d )+\$$a+\$D[$M[$i]]+0x6ed9eba1)$M;\n";
+#             $code .=
+# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+#         }
 
-        $code .= <<EOT;
-                \$A=\$A+\$a\&0xffffffff; \$B=\$B+\$b\&0xffffffff;
-                \$C=\$C+\$c\&0xffffffff; \$D=\$D+\$d\&0xffffffff;
-        } # for
-	return unpack('H*', pack('V4',\$A,\$B,\$C,\$D)); }
-EOT
-        eval "$code";
+#         $code .= <<EOT;
+#                 \$A=\$A+\$a\&0xffffffff; \$B=\$B+\$b\&0xffffffff;
+#                 \$C=\$C+\$c\&0xffffffff; \$D=\$D+\$d\&0xffffffff;
+#         } # for
+# 	return unpack('H*', pack('V4',\$A,\$B,\$C,\$D)); }
+# EOT
+#         eval "$code";
 
-        my $TEST = _md5_pad('foobar');
-        if ( _md4_perl_generated( \$TEST ) ne
-            '547aefd231dcbaac398625718336f143' )
-        {
-            utils_carp('md4: MD4 self-test not successful.');
-        }
-    }
+#         my $TEST = _md5_pad('foobar');
+#         if ( _md4_perl_generated( \$TEST ) ne
+#             '547aefd231dcbaac398625718336f143' )
+#         {
+#             utils_carp('md4: MD4 self-test not successful.');
+#         }
+#     }
 
-}    # md4 package container
+# }    # md4 package container
 
 
 ########################################################################
@@ -4560,31 +4587,31 @@ headers and other parameters.
 
 =cut
 
-sub get_page {
-    my ( $URL, $hr ) = ( shift, shift );
-    return ( undef, 'No URL supplied' ) if ( length($URL) == 0 );
+# sub get_page {
+#     my ( $URL, $hr ) = ( shift, shift );
+#     return ( undef, 'No URL supplied' ) if ( length($URL) == 0 );
 
-    my ( %req, %resp );
-    my $rptr;
+#     my ( %req, %resp );
+#     my $rptr;
 
-    if ( defined $hr && ref($hr) ) {
-        $rptr = $hr;
-    }
-    else {
-        $rptr = \%req;
-        http_init_request( \%req );
-    }
+#     if ( defined $hr && ref($hr) ) {
+#         $rptr = $hr;
+#     }
+#     else {
+#         $rptr = \%req;
+#         http_init_request( \%req );
+#     }
 
-    my @u = uri_split( $URL, $rptr );
-    return ( undef, 'Non-HTTP URL supplied' )
-      if ( $u[1] ne 'http' && $u[1] ne 'https' );
-    http_fixup_request($rptr);
+#     my @u = uri_split( $URL, $rptr );
+#     return ( undef, 'Non-HTTP URL supplied' )
+#       if ( $u[1] ne 'http' && $u[1] ne 'https' );
+#     http_fixup_request($rptr);
 
-    if ( http_do_request( $rptr, \%resp ) ) {
-        return ( undef, $resp{'whisker'}->{'error'} );
-    }
-    return ( $resp{'whisker'}->{'code'}, $resp{'whisker'}->{'data'} );
-}
+#     if ( http_do_request( $rptr, \%resp ) ) {
+#         return ( undef, $resp{'whisker'}->{'error'} );
+#     }
+#     return ( $resp{'whisker'}->{'code'}, $resp{'whisker'}->{'data'} );
+# }
 
 ########################################################################
 
@@ -4603,29 +4630,29 @@ Note: undef is returned if no URL is supplied
 
 =cut
 
-sub get_page_hash {
-    my ( $URL, $hr ) = ( shift, shift );
-    return undef if ( length($URL) == 0 );
+# sub get_page_hash {
+#     my ( $URL, $hr ) = ( shift, shift );
+#     return undef if ( length($URL) == 0 );
 
-    my ( %req, %resp );
-    my $rptr;
+#     my ( %req, %resp );
+#     my $rptr;
 
-    if ( defined $hr && ref($hr) ) {
-        $rptr = $hr;
-    }
-    else {
-        $rptr = \%req;
-        http_init_request( \%req );
-    }
+#     if ( defined $hr && ref($hr) ) {
+#         $rptr = $hr;
+#     }
+#     else {
+#         $rptr = \%req;
+#         http_init_request( \%req );
+#     }
 
-    my @u = uri_split( $URL, $rptr );    # this is newer >=1.1 syntax
-    return undef if ( $u[1] ne 'http' && $u[1] ne 'https' );
-    http_fixup_request($rptr);
+#     my @u = uri_split( $URL, $rptr );    # this is newer >=1.1 syntax
+#     return undef if ( $u[1] ne 'http' && $u[1] ne 'https' );
+#     http_fixup_request($rptr);
 
-    my $r = http_do_request( $rptr, \%resp );
-    $resp{whisker}->{get_page_hash} = $r;
-    return \%resp;
-}
+#     my $r = http_do_request( $rptr, \%resp );
+#     $resp{whisker}->{get_page_hash} = $r;
+#     return \%resp;
+# }
 
 ########################################################################
 
@@ -4648,35 +4675,35 @@ write permissions to create/overwrite that file.
 
 =cut
 
-sub get_page_to_file {
-    my ( $URL, $filepath, $hr ) = @_;
+# sub get_page_to_file {
+#     my ( $URL, $filepath, $hr ) = @_;
 
-    return undef if ( length($URL) == 0 );
-    return undef if ( length($filepath) == 0 );
+#     return undef if ( length($URL) == 0 );
+#     return undef if ( length($filepath) == 0 );
 
-    my ( %req, %resp );
-    my $rptr;
+#     my ( %req, %resp );
+#     my $rptr;
 
-    if ( defined $hr && ref($hr) ) {
-        $rptr = $hr;
-    }
-    else {
-        $rptr = \%req;
-        http_init_request( \%req );
-    }
+#     if ( defined $hr && ref($hr) ) {
+#         $rptr = $hr;
+#     }
+#     else {
+#         $rptr = \%req;
+#         http_init_request( \%req );
+#     }
 
-    my @u = uri_split( $URL, $rptr );    # this is newer >=1.1 syntax
-    return undef if ( $u[1] ne 'http' && $u[1] ne 'https' );
-    http_fixup_request($rptr);
-    return undef if ( http_do_request( $rptr, \%resp ) );
+#     my @u = uri_split( $URL, $rptr );    # this is newer >=1.1 syntax
+#     return undef if ( $u[1] ne 'http' && $u[1] ne 'https' );
+#     http_fixup_request($rptr);
+#     return undef if ( http_do_request( $rptr, \%resp ) );
 
-    open( OUT, ">$filepath" ) || return undef;
-    binmode(OUT);                        # stupid Windows
-    print OUT $resp{'whisker'}->{'data'};
-    close(OUT);
+#     open( OUT, ">$filepath" ) || return undef;
+#     binmode(OUT);                        # stupid Windows
+#     print OUT $resp{'whisker'}->{'data'};
+#     close(OUT);
 
-    return $resp{'whisker'}->{'code'};
-}
+#     return $resp{'whisker'}->{'code'};
+# }
 
 
 @_stream_FUNCS = (
@@ -4748,17 +4775,17 @@ sub stream_key {
     return ( $type, $h, $p, $x, $key );
 }
 
-sub stream_setsock {
-    my $fd = shift;
-    my $wh = http_new_request( host => 'localhost', port => 80, ssl => 0 );
-    my $xr = stream_new($wh);
-    return undef if ( $xr->{streamtype} != 1 );
-    $xr->{sock}  = $fd;
-    $xr->{state} = 1;
-    $xr->{eof}   = 0;
-    $xr->{clearall}->();
-    return $xr;
-}
+# sub stream_setsock {
+#     my $fd = shift;
+#     my $wh = http_new_request( host => 'localhost', port => 80, ssl => 0 );
+#     my $xr = stream_new($wh);
+#     return undef if ( $xr->{streamtype} != 1 );
+#     $xr->{sock}  = $fd;
+#     $xr->{state} = 1  ;
+#     $xr->{eof}   = 0;
+#     $xr->{clearall}->();
+#     return $xr;
+# }
 
 {
     $SYMCOUNT = 0;
@@ -5456,22 +5483,22 @@ time, etc.  You must do that yourself.
 
 =cut
 
-sub time_mktime {
-	my ($sec,$min,$hour,$day,$mon,$yr)=@_;
-	my @md=(0,31,59,90,120,151,181,212,243,273,304,334);
-	foreach(@_[0..5]){
-		return -1 if !defined $_ || $_<0; }
-	return -1 if($sec>60 || $min>59 || $hour>23 || $day>31 || $mon>11
-		|| $yr>137 || $yr<70);
-	$yr += 1900;
-	my $res = ($yr-1970)*365+$md[$mon];
-	$res += int(($yr-1969)/4) + int(($yr-1601)/400);
-	$res -= int(($yr-1901)/100);
-	$res = ($res+$day-1)*24;
-	$res = ($res+$hour)*60;
-	$res = ($res+$min)*60;
-	return $res+$sec;
-}
+# sub time_mktime {
+# 	my ($sec,$min,$hour,$day,$mon,$yr)=@_;
+# 	my @md=(0,31,59,90,120,151,181,212,243,273,304,334);
+# 	foreach(@_[0..5]){
+# 		return -1 if !defined $_ || $_<0; }
+# 	return -1 if($sec>60 || $min>59 || $hour>23 || $day>31 || $mon>11
+# 		|| $yr>137 || $yr<70);
+# 	$yr += 1900;
+# 	my $res = ($yr-1970)*365+$md[$mon];
+# 	$res += int(($yr-1969)/4) + int(($yr-1601)/400);
+# 	$res -= int(($yr-1901)/100);
+# 	$res = ($res+$day-1)*24;
+# 	$res = ($res+$hour)*60;
+# 	$res = ($res+$min)*60;
+# 	return $res+$sec;
+# }
 
 
 =item B<time_gmtolocal>
@@ -5495,13 +5522,13 @@ adjustment will not be accounted for unless you recalculate the new delta.
 
 =cut
 
-sub time_gmtolocal {
-	my $t = shift;
-	my $now = time;
-	my $utc = time_mktime(gmtime($now));
-	my $me = time_mktime(localtime($now));
-	return $t - ($utc - $me);
-}
+# sub time_gmtolocal {
+# 	my $t = shift;
+# 	my $now = time;
+# 	my $utc = time_mktime(gmtime($now));
+# 	my $me = time_mktime(localtime($now));
+# 	return $t - ($utc - $me);
+# }
 
 
 #################################################################
@@ -5929,30 +5956,30 @@ exact usage examples.
 =cut
 
 # '/', 0, \@dir.split, \@valid, \&func, \%track, \%arrays, \&cfunc
-sub utils_recperm {
-    my ( $d, $p, $pp, $pn, $r, $fr, $dr, $ar, $cr ) = ( '', shift, shift, @_ );
-    $p =~ s#/+#/#g;
-    if ( $pp >= @$pn ) {
-        push @$r, $p if &$cr( $$dr{$p} );
-    }
-    else {
-        my $c = $$pn[$pp];
-        if ( $c !~ /^\@/ ) {
-            utils_recperm( $p . $c . '/', $pp + 1, @_ )
-              if ( &$fr( $p . $c . '/' ) );
-        }
-        else {
-            $c =~ tr/\@//d;
-            if ( defined $$ar{$c} ) {
-                foreach $d ( @{ $$ar{$c} } ) {
-                    if ( &$fr( $p . $d . '/' ) ) {
-                        utils_recperm( $p . $d . '/', $pp + 1, @_ );
-                    }
-                }
-            }
-        }
-    }
-}
+# sub utils_recperm {
+#     my ( $d, $p, $pp, $pn, $r, $fr, $dr, $ar, $cr ) = ( '', shift, shift, @_ );
+#     $p =~ s#/+#/#g;
+#     if ( $pp >= @$pn ) {
+#         push @$r, $p if &$cr( $$dr{$p} );
+#     }
+#     else {
+#         my $c = $$pn[$pp];
+#         if ( $c !~ /^\@/ ) {
+#             utils_recperm( $p . $c . '/', $pp + 1, @_ )
+#               if ( &$fr( $p . $c . '/' ) );
+#         }
+#         else {
+#             $c =~ tr/\@//d;
+#             if ( defined $$ar{$c} ) {
+#                 foreach $d ( @{ $$ar{$c} } ) {
+#                     if ( &$fr( $p . $d . '/' ) ) {
+#                         utils_recperm( $p . $d . '/', $pp + 1, @_ );
+#                     }
+#                 }
+#             }
+#         }
+#     }
+# }
 
 #################################################################
 
@@ -5966,15 +5993,15 @@ This function will randomize the order of the elements in the given array.
 
 =cut
 
-sub utils_array_shuffle {    # fisher yates shuffle....w00p!
-    my $array = shift;
-    my $i;
-    for ( $i = @$array ; --$i ; ) {
-        my $j = int rand( $i + 1 );
-        next if $i == $j;
-        @$array[ $i, $j ] = @$array[ $j, $i ];
-    }
-}    # end array_shuffle, from Perl Cookbook (rock!)
+# sub utils_array_shuffle {    # fisher yates shuffle....w00p!
+#     my $array = shift;
+#     my $i;
+#     for ( $i = @$array ; --$i ; ) {
+#         my $j = int rand( $i + 1 );
+#         next if $i == $j;
+#         @$array[ $i, $j ] = @$array[ $j, $i ];
+#     }
+# }    # end array_shuffle, from Perl Cookbook (rock!)
 
 #################################################################
 
@@ -6290,18 +6317,18 @@ in overwrite mode.
 
 =cut
 
-sub utils_save_page {
-    my ( $file, $hr ) = @_;
-    return 1 if ( !ref($hr) || ref($file) );
-    return 0
-      if ( !defined $$hr{'whisker'}
-        || !defined $$hr{'whisker'}->{'data'} );
-    open( OUT, ">$file" ) || return 1;
-    binmode(OUT); # Stupid Windows
-    print OUT $$hr{'whisker'}->{'data'};
-    close(OUT);
-    return 0;
-}
+# sub utils_save_page {
+#     my ( $file, $hr ) = @_;
+#     return 1 if ( !ref($hr) || ref($file) );
+#     return 0
+#       if ( !defined $$hr{'whisker'}
+#         || !defined $$hr{'whisker'}->{'data'} );
+#     open( OUT, ">$file" ) || return 1;
+#     binmode(OUT); # Stupid Windows
+#     print OUT $$hr{'whisker'}->{'data'};
+#     close(OUT);
+#     return 0;
+# }
 
 #################################################################
 
@@ -6323,39 +6350,39 @@ argument regardless.
 
 =cut
 
-sub utils_getopts {
-    my ( $str, $ref ) = @_;
-    my ( %O, $l );
-    my @left;
+# sub utils_getopts {
+#     my ( $str, $ref ) = @_;
+#     my ( %O, $l );
+#     my @left;
 
-    return 1 if ( $str =~ tr/-:a-zA-Z0-9//c );
+#     return 1 if ( $str =~ tr/-:a-zA-Z0-9//c );
 
-    while ( $str =~ m/([a-z0-9]:{0,1})/ig ) {
-        $l = $1;
-        if ( $l =~ tr/://d ) {
-            $O{$l} = 1;
-        }
-        else { $O{$l} = 0; }
-    }
+#     while ( $str =~ m/([a-z0-9]:{0,1})/ig ) {
+#         $l = $1;
+#         if ( $l =~ tr/://d ) {
+#             $O{$l} = 1;
+#         }
+#         else { $O{$l} = 0; }
+#     }
 
-    while ( $l = shift(@ARGV) ) {
-        push( @left, $l ) && next if ( substr( $l, 0, 1 ) ne '-' );
-        push( @left, $l ) && next if ( $l eq '-' );
-        substr( $l, 0, 1 ) = '';
-        if ( length($l) != 1 ) {
-            %$ref = ();
-            return 1;
-        }
-        if ( $O{$l} == 1 ) {
-            my $x = shift(@ARGV);
-            $$ref{$l} = $x;
-        }
-        else { $$ref{$l} = 1; }
-    }
+#     while ( $l = shift(@ARGV) ) {
+#         push( @left, $l ) && next if ( substr( $l, 0, 1 ) ne '-' );
+#         push( @left, $l ) && next if ( $l eq '-' );
+#         substr( $l, 0, 1 ) = '';
+#         if ( length($l) != 1 ) {
+#             %$ref = ();
+#             return 1;
+#         }
+#         if ( $O{$l} == 1 ) {
+#             my $x = shift(@ARGV);
+#             $$ref{$l} = $x;
+#         }
+#         else { $$ref{$l} = 1; }
+#     }
 
-    @ARGV = @left;
-    return 0;
-}
+#     @ARGV = @left;
+#     return 0;
+# }
 
 #################################################################
 
@@ -6373,26 +6400,26 @@ $crlf defaults to "\n", and $width defaults to 76.
 
 =cut
 
-sub utils_text_wrapper {
-    my ( $out, $w, $str, $crlf, $width ) = ( '', 0, @_ );
-    $crlf  ||= "\n";
-    $width ||= 76;
-    $str .= $crlf if ( $str !~ /$crlf$/ );
-    return $str if ( length($str) <= $width );
-    while ( length($str) > $width ) {
-        my $w1 = rindex( $str, ' ',  $width );
-        my $w2 = rindex( $str, "\t", $width );
-        if ( $w1 > $w2 ) { $w = $w1; }
-        else { $w = $w2; }
-        if ( $w == -1 ) {
-            $w = $width;
-        }
-        else { substr( $str, $w, 1 ) = ''; }
-        $out .= substr( $str, 0, $w, '' );
-        $out .= $crlf;
-    }
-    return $out . $str;
-}
+# sub utils_text_wrapper {
+#     my ( $out, $w, $str, $crlf, $width ) = ( '', 0, @_ );
+#     $crlf  ||= "\n";
+#     $width ||= 76;
+#     $str .= $crlf if ( $str !~ /$crlf$/ );
+#     return $str if ( length($str) <= $width );
+#     while ( length($str) > $width ) {
+#         my $w1 = rindex( $str, ' ',  $width );
+#         my $w2 = rindex( $str, "\t", $width );
+#         if ( $w1 > $w2 ) { $w = $w1; }
+#         else { $w = $w2; }
+#         if ( $w == -1 ) {
+#             $w = $width;
+#         }
+#         else { substr( $str, $w, 1 ) = ''; }
+#         $out .= substr( $str, 0, $w, '' );
+#         $out .= $crlf;
+#     }
+#     return $out . $str;
+# }
 
 #################################################################
 
@@ -6411,32 +6438,32 @@ common usernames in @in, setting $pre='/~' and $post='/'.
 
 =cut
 
-sub utils_bruteurl {
-    my ( $hin, $upre, $upost, $arin, $arout ) = @_;
-    my ( $U, %hout );
+# sub utils_bruteurl {
+#     my ( $hin, $upre, $upost, $arin, $arout ) = @_;
+#     my ( $U, %hout );
 
-    return if ( !( defined $hin   && ref($hin) ) );
-    return if ( !( defined $arin  && ref($arin) ) );
-    return if ( !( defined $arout && ref($arout) ) );
-    return if ( !defined $upre  || length($upre) == 0 );
-    return if ( !defined $upost || length($upost) == 0 );
+#     return if ( !( defined $hin   && ref($hin) ) );
+#     return if ( !( defined $arin  && ref($arin) ) );
+#     return if ( !( defined $arout && ref($arout) ) );
+#     return if ( !defined $upre  || length($upre) == 0 );
+#     return if ( !defined $upost || length($upost) == 0 );
 
-    http_fixup_request($hin);
+#     http_fixup_request($hin);
 
-    map {
-        ( $U = $_ ) =~ tr/\r\n//d;
-        next if ( $U eq '' );
-        if (
-            !http_do_request( $hin, \%hout, { 'uri' => $upre . $U . $upost } ) )
-        {
-            if (   $hout{'whisker'}->{'code'} == 200
-                || $hout{'whisker'}->{'code'} == 403 )
-            {
-                push( @{$arout}, $U );
-            }
-        }
-    } @$arin;
-}
+#     map {
+#         ( $U = $_ ) =~ tr/\r\n//d;
+#         next if ( $U eq '' );
+#         if (
+#             !http_do_request( $hin, \%hout, { 'uri' => $upre . $U . $upost } ) )
+#         {
+#             if (   $hout{'whisker'}->{'code'} == 200
+#                 || $hout{'whisker'}->{'code'} == 403 )
+#             {
+#                 push( @{$arout}, $U );
+#             }
+#         }
+#     } @$arin;
+# }
 
 #################################################################
 
@@ -6452,19 +6479,19 @@ constructed HTML tag string (<A href="http://foo">).
 
 =cut
 
-sub utils_join_tag {
-    my ( $name, $href ) = @_;
-    return undef if ( !defined $name || $name eq '' );
-    return undef if ( !defined $href || !ref($href) );
-    my ( $out, $k, $v ) = ( "<$name", '', '' );
-    while ( ( $k, $v ) = each %$href ) {
-        next if ( $k eq '' );
-        $out .= " $k";
-        $out .= "=\"$v\"" if ( defined $v );
-    }
-    $out .= '>';
-    return $out;
-}
+# sub utils_join_tag {
+#     my ( $name, $href ) = @_;
+#     return undef if ( !defined $name || $name eq '' );
+#     return undef if ( !defined $href || !ref($href) );
+#     my ( $out, $k, $v ) = ( "<$name", '', '' );
+#     while ( ( $k, $v ) = each %$href ) {
+#         next if ( $k eq '' );
+#         $out .= " $k";
+#         $out .= "=\"$v\"" if ( defined $v );
+#     }
+#     $out .= '>';
+#     return $out;
+# }
 
 #################################################################
 
@@ -6479,39 +6506,39 @@ given from_request hash, and copies them to the to_request hash.
 
 =cut
 
-sub utils_request_clone {
-    my ( $from, $to ) = @_;
-    return 0 if ( !defined $from || !ref($from) );
-    return 0 if ( !defined $to   || !ref($to) );
-    return 0 if ( !defined $from->{whisker}->{MAGIC} );
+# sub utils_request_clone {
+#     my ( $from, $to ) = @_;
+#     return 0 if ( !defined $from || !ref($from) );
+#     return 0 if ( !defined $to   || !ref($to) );
+#     return 0 if ( !defined $from->{whisker}->{MAGIC} );
 
-    %$to = ();
+#     %$to = ();
 
-    # copy headers
-    my ( $k, $v );
-    while ( ( $k, $v ) = each(%$from) ) {
-        next if ( $k eq 'whisker' );
-        if ( ref($v) ) {
-            @{ $to->{$k} } = @$v;
-        }
-        else {
-            $to->{$k} = $v;
-        }
-    }
+#     # copy headers
+#     my ( $k, $v );
+#     while ( ( $k, $v ) = each(%$from) ) {
+#         next if ( $k eq 'whisker' );
+#         if ( ref($v) ) {
+#             @{ $to->{$k} } = @$v;
+#         }
+#         else {
+#             $to->{$k} = $v;
+#         }
+#     }
 
-    # copy whisker control values
-    $to->{whisker} = {};
-    while ( ( $k, $v ) = each( %{ $from->{whisker} } ) ) {
-        if ( ref($v) ) {
-            @{ $to->{whisker}->{$k} } = @$v;
-        }
-        else {
-            $to->{whisker}->{$k} = $v;
-        }
-    }
+#     # copy whisker control values
+#     $to->{whisker} = {};
+#     while ( ( $k, $v ) = each( %{ $from->{whisker} } ) ) {
+#         if ( ref($v) ) {
+#             @{ $to->{whisker}->{$k} } = @$v;
+#         }
+#         else {
+#             $to->{whisker}->{$k} = $v;
+#         }
+#     }
 
-    return 1;
-}
+#     return 1;
+# }
 
 #################################################################
 
@@ -6529,30 +6556,30 @@ Note: $hash can be 'md5' (default) or 'md4'.
 
 =cut
 
-sub utils_request_fingerprint {
-    my ( $href, $hash ) = @_;
-    $hash ||= 'md5';
-    return undef if ( !defined $href || !ref($href) );
-    return undef if ( !defined $href->{whisker}->{MAGIC} );
+# sub utils_request_fingerprint {
+#     my ( $href, $hash ) = @_;
+#     $hash ||= 'md5';
+#     return undef if ( !defined $href || !ref($href) );
+#     return undef if ( !defined $href->{whisker}->{MAGIC} );
 
-    my $data = '';
-    if ( $href->{whisker}->{MAGIC} == 31339 ) {    # LW2 request
-        $data = http_req2line($href);
-        if ( $href->{whisker}->{version} ne '0.9' ) {
-            $data .= http_construct_headers($href);
-            $data .= $href->{whisker}->{raw_header_data}
-              if ( defined $href->{whisker}->{raw_header_data} );
-            $data .= $href->{whisker}->{http_eol};
-            $data .= $href->{whisker}->{data}
-              if ( defined $href->{whisker}->{data} );
-        }                                          # http 0.9 support
+#     my $data = '';
+#     if ( $href->{whisker}->{MAGIC} == 31339 ) {    # LW2 request
+#         $data = http_req2line($href);
+#         if ( $href->{whisker}->{version} ne '0.9' ) {
+#             $data .= http_construct_headers($href);
+#             $data .= $href->{whisker}->{raw_header_data}
+#               if ( defined $href->{whisker}->{raw_header_data} );
+#             $data .= $href->{whisker}->{http_eol};
+#             $data .= $href->{whisker}->{data}
+#               if ( defined $href->{whisker}->{data} );
+#         }                                          # http 0.9 support
 
-        return 'md5:' . md5($data) if ( $hash eq 'md5' );
-        return 'md4:' . md4($data) if ( $hash eq 'md4' );
-    }
+#         return 'md5:' . md5($data) if ( $hash eq 'md5' );
+#         return 'md4:' . md4($data) if ( $hash eq 'md4' );
+#     }
 
-    return undef;
-}
+#     return undef;
+# }
 
 #################################################################
 
@@ -6569,31 +6596,31 @@ into the libwhisker hash).
 
 =cut
 
-sub utils_flatten_lwhash {
-    my $hr = shift;
-    return undef if ( !defined $hr || !ref($hr) );
-    my $out;
+# sub utils_flatten_lwhash {
+#     my $hr = shift;
+#     return undef if ( !defined $hr || !ref($hr) );
+#     my $out;
 
-    if ( $hr->{whisker}->{MAGIC} == 31339 ) {
-        $out = http_req2line($hr);
-    }
-    elsif ( $hr->{whisker}->{MAGIC} == 31340 ) {
-        $out = http_resp2line($hr);
-    }
-    else {
-        return undef;
-    }
+#     if ( $hr->{whisker}->{MAGIC} == 31339 ) {
+#         $out = http_req2line($hr);
+#     }
+#     elsif ( $hr->{whisker}->{MAGIC} == 31340 ) {
+#         $out = http_resp2line($hr);
+#     }
+#     else {
+#         return undef;
+#     }
 
-    $out .= http_construct_headers($hr);
-    $out .= $hr->{whisker}->{http_eol} || "\x0d\x0a";
-    if ( defined $hr->{whisker}->{data}
-        && length( $hr->{whisker}->{data} ) > 0 )
-    {
-        $out .= $hr->{whisker}->{data};
-    }
+#     $out .= http_construct_headers($hr);
+#     $out .= $hr->{whisker}->{http_eol} || "\x0d\x0a";
+#     if ( defined $hr->{whisker}->{data}
+#         && length( $hr->{whisker}->{data} ) > 0 )
+#     {
+#         $out .= $hr->{whisker}->{data};
+#     }
 
-    return $out;
-}
+#     return $out;
+# }
 
 #################################################################
 

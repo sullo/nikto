@@ -1,0 +1,151 @@
+###############################################################################
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Scan for exposed Spring Boot Actuator endpoints and basic info leaks
+###############################################################################
+
+use JSON;
+
+sub nikto_springboot_init {
+    my $id = { name        => "springboot",
+               full_name   => "Spring Boot Actuator endpoint check",
+               author      => "Sullo",
+               description => "Detects exposed Spring Boot Actuator endpoints and basic info leaks",
+               hooks       => { scan => { method => \&nikto_springboot, } },
+               copyright   => "2025 Chris Sullo"
+               };
+    return $id;
+}
+
+sub nikto_springboot {
+    my ($mark) = @_;
+    my $root = $mark->{'root'} || '';
+    $root =~ s/\/$//;    # Remove trailing slash if present
+
+    my @endpoints = qw(
+      /actuator
+      /actuator/health
+      /actuator/info
+      /actuator/env
+      /actuator/mappings
+      /actuator/metrics
+      /actuator/beans
+      /actuator/configprops
+      /actuator/loggers
+      /actuator/threaddump
+      /actuator/auditevents
+      /actuator/httptrace
+      /actuator/scheduledtasks
+      /actuator/heapdump
+      /actuator/jolokia
+      /actuator/prometheus
+      );
+
+    my $host     = $mark->{'hostname'};
+    my $port     = $mark->{'port'};
+    my $proto    = $mark->{'ssl'} ? 'https' : 'http';
+    my $base_url = "$proto://$host:$port";
+
+    foreach my $ep (@endpoints) {
+        my $path = $root . $ep;
+        nprint("Checking $path", "v", "springboot");
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, $path, 'GET', '', '', undef, 'springboot');
+        my $ct = $response->{'content-type'} || '';
+
+        # Quick exits
+        if ($res == 404) {
+            next;
+        }
+        elsif ($res != 200 && $res != 404) {
+            nprint("$path: Non-200 ($res) - possibly restricted endpoint", "v", "springboot");
+            next;
+        }
+
+        # resposnes should be JSON
+        next unless ($ct =~ /application\/json/i || $content =~ /^\s*\{/);
+
+        my $json;
+        eval { $json = decode_json($content); };
+        if ($@ || !$json) {
+            nprint("$path: 200 but invalid JSON", "v", "springboot");
+            next;
+        }
+
+        # /actuator special handling
+        if ($ep eq '/actuator') {
+            if (exists $json->{'_links'} && ref($json->{'_links'}) eq 'HASH') {
+                my $links = $json->{'_links'};
+                my @found;
+                foreach my $k (keys %$links) {
+                    my $href = $links->{$k}{'href'};
+                    next unless $href;
+                    my $report_val;
+
+                    # If on same host, report only the path; otherwise, report full URL
+                    if ($href =~ m{^$proto://$host(?::$port)?(/.*)$}) {
+                        $report_val = $1;
+                    }
+                    else {
+                        $report_val = $href;
+                    }
+                    push @found, $report_val;
+                    add_vulnerability(
+                        $mark,
+                        "$report_val: Spring Boot Actuator endpoint discovered via /actuator _links.",
+                        750001,
+                        "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
+                        'GET',
+                        $report_val
+                        );
+                }
+            }
+            else {
+                nprint("/actuator: 200 but no _links", "v", "springboot");
+            }
+            next;
+        }
+
+        # /actuator/health
+        if ($ep eq '/actuator/health') {
+            if (exists $json->{'status'} && $json->{'status'} eq 'UP') {
+                add_vulnerability(
+                        $mark,
+                        "$path: Spring Boot Actuator health endpoint exposed",
+                        750002,
+                        "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#health",
+                        'GET',
+                        $path
+                        );
+            }
+            next;
+        }
+
+        # /actuator/info
+        if ($ep eq '/actuator/info') {
+            if (   exists $json->{'build'}
+                && ref($json->{'build'}) eq 'HASH'
+                && exists $json->{'build'}{'version'}) {
+                add_vulnerability(
+                    $mark,
+                    "$path: Spring Boot Actuator info endpoint exposed (build version: $json->{'build'}{'version'})",
+                    750003,
+                    "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#info",
+                    'GET',
+                    $path
+                    );
+            }
+            next;
+        }
+
+        # Other endpoints: report if valid, non-empty JSON
+        if (ref($json) eq 'HASH' && scalar(keys %$json) > 0) {
+            add_vulnerability(
+                       $mark,  "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
+                       750004, "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
+                       'GET',  $path
+                       );
+        }
+    }
+}
+
+1;

@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# CSV Reporting
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: CSV Reporting
 ###############################################################################
 sub nikto_report_csv_init {
     my $id = { name              => "report_csv",
@@ -26,6 +10,7 @@ sub nikto_report_csv_init {
                report_head       => \&csv_open,
                report_host_start => \&csv_host_start,
                report_item       => \&csv_item,
+               report_ssl_info   => \&csv_ssl_info,
                report_format     => 'csv',
                copyright         => "2008 Chris Sullo"
                };
@@ -38,12 +23,16 @@ sub csv_open {
     my ($file) = @_;
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
-    # Open file and produce header
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    # Open file with lexical handle and produce header
+    my $fh;
+    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Enable autoflush
+    $fh->autoflush(1);
 
     # Write header
-    print OUT "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";
-    return OUT;
+    print $fh "\"$VARIABLES{'name'} - v$VARIABLES{'version'}/$VARIABLES{'core_version'}\"\n";
+    return $fh;
 }
 
 ###############################################################################
@@ -58,6 +47,68 @@ sub csv_host_start {
       . csv_safecell($mark->{'port'}) . "\"," . "\"\"," . "\"\"," . "\"\"," . "\""
       . csv_safecell($mark->{'banner'}) . "\"\n";
     return;
+}
+
+###############################################################################
+# write SSL info
+sub csv_ssl_info {
+    my ($handle, $mark) = @_;
+    my $ssl_hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+
+    # SSL Subject
+    print $handle "\""
+      . csv_safecell($ssl_hostname) . "\"," . "\""
+      . csv_safecell($mark->{'ip'}) . "\"," . "\""
+      . csv_safecell($mark->{'port'}) . "\","
+      . "\"000137\","
+      . "\"GET\","
+      . "\"/\"," . "\""
+      . csv_safecell("SSL Certificate Subject: " . ($mark->{'ssl_cert_subject'} || '')) . "\"\n";
+
+    # SSL CN if present
+    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        my $cn = $1;
+        print $handle "\""
+          . csv_safecell($ssl_hostname) . "\"," . "\""
+          . csv_safecell($mark->{'ip'}) . "\"," . "\""
+          . csv_safecell($mark->{'port'}) . "\","
+          . "\"000137\","
+          . "\"GET\","
+          . "\"/\"," . "\""
+          . csv_safecell("SSL Certificate CN: $cn") . "\"\n";
+    }
+
+    # SSL SAN if present
+    if ($mark->{'ssl_cert_altnames'} ne '') {
+        print $handle "\""
+          . csv_safecell($ssl_hostname) . "\"," . "\""
+          . csv_safecell($mark->{'ip'}) . "\"," . "\""
+          . csv_safecell($mark->{'port'}) . "\","
+          . "\"000137\","
+          . "\"GET\","
+          . "\"/\"," . "\""
+          . csv_safecell("SSL Certificate SAN: " . $mark->{'ssl_cert_altnames'}) . "\"\n";
+    }
+
+    # SSL Ciphers
+    print $handle "\""
+      . csv_safecell($ssl_hostname) . "\"," . "\""
+      . csv_safecell($mark->{'ip'}) . "\"," . "\""
+      . csv_safecell($mark->{'port'}) . "\","
+      . "\"000137\","
+      . "\"GET\","
+      . "\"/\"," . "\""
+      . csv_safecell("SSL Ciphers: " . ($mark->{'ssl_cipher'} || '')) . "\"\n";
+
+    # SSL Issuer
+    print $handle "\""
+      . csv_safecell($ssl_hostname) . "\"," . "\""
+      . csv_safecell($mark->{'ip'}) . "\"," . "\""
+      . csv_safecell($mark->{'port'}) . "\","
+      . "\"000137\","
+      . "\"GET\","
+      . "\"/\"," . "\""
+      . csv_safecell("SSL Certificate Issuer: " . ($mark->{'ssl_cert_issuer'} || '')) . "\"\n";
 }
 
 ###############################################################################

@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2006 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Check for outdated items in banner
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Check for outdated items in banner
 ###############################################################################
 sub nikto_outdated_init {
     my $id = { name        => "outdated",
@@ -125,11 +109,14 @@ sub nikto_outdated {
                     $msg =~ s/\@RUNNING_VER/$BI/g;
                     $msg =~ s/\@CURRENT_VER/$v/g;
                     chomp($msg);
-                    add_vulnerability($mark, $msg, $OVERS{$V}{'tid'}, "", "HEAD", "/");
+                    add_vulnerability($mark,  $msg, $OVERS{$V}{'tid'}, "",
+                                      "HEAD", "/",  "",                "",
+                                      "Content match"
+                                      );
                 }
             }
         }
-        if (!$have_match) { $mark->{'components'}->{'$BI'} = 2; }
+        if (!$have_match) { $mark->{'components'}->{$BI} = 2; }
     }
     return;
 }

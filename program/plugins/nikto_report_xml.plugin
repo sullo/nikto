@@ -1,230 +1,289 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: XML Reporting - Multi-host support with proper XML handling
 ###############################################################################
-# PURPOSE:
-# XML Reporting
+our $XMLRPT_ALL  = [];       # Arrayref to hold all hosts' reports
+our $XMLRPT_CURR = undef;    # Scalarref to current host's report
+our $XML_WRITER  = undef;    # XML::Writer instance
+our $XML_HANDLE  = undef;    # File handle
+
+use XML::Writer;
+use Time::Piece;
+use Time::Seconds;
+
 ###############################################################################
 sub nikto_report_xml_init {
     my $id = { name              => "report_xml",
-               full_name         => "Report as XML",
-               author            => "Sullo/Jabra",
-               description       => "Produces an XML report.",
-               report_head       => \&xml_head,
+               full_name         => "XML reports (v2)",
+               author            => "Sullo",
+               description       => "Produces a proper XML report with validation.",
+               report_head       => \&xml_open,
                report_host_start => \&xml_host_start,
                report_host_end   => \&xml_host_end,
-               report_item       => \&xml_item,
-               report_summary    => \&xml_summary,
                report_close      => \&xml_close,
+               report_item       => \&xml_item,
+               report_ssl_info   => \&xml_ssl_info,
                report_format     => 'xml',
-               copyright         => "2008 Chris Sullo"
+               copyright         => "2025 Chris Sullo"
                };
-
-    # load up the templates now
-    xml_open_templates();
     return $id;
 }
+
 ###############################################################################
-sub xml_head {
+# open output file
+sub xml_open {
     my ($file) = @_;
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
-    # check for xml headers
-    $header_present = 0;
+    # Open file with lexical handle for writing
+    my $fh;
+    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
 
-    if (-e $file) {
-        open(IN, "<$file") || die print STDERR "+ ERROR: Unable to open '$file' for read: $@\n";
-        my $linectr = 0;
-        while (<IN>) {
-            $linectr++;
-            if ($_ =~ /DOCTYPE niktoscan/) { $header_present = 1; last; }
-            if ($linectr > 10)             { last; }
+    # Enable autoflush
+    $fh->autoflush(1);
+
+    # Store lexical handle reference in package variable
+    $XML_HANDLE = $fh;
+
+    # Initialize XML writer with proper settings
+    $XML_WRITER = XML::Writer->new(OUTPUT      => $fh,
+                                   DATA_MODE   => 1,
+                                   DATA_INDENT => 2,
+                                   ENCODING    => 'UTF-8',
+                                   UNSAFE      => 0          # Ensure proper escaping
+                                   );
+
+    # Write XML declaration
+    $XML_WRITER->xmlDecl('UTF-8');
+
+    # Write DOCTYPE if DTD is defined
+    if (defined $CONFIGFILE{'NIKTODTD'} && $CONFIGFILE{'NIKTODTD'} ne '') {
+
+        # Resolve DTD path relative to Nikto execution directory
+        my $dtd_path = $CONFIGFILE{'NIKTODTD'};
+        if ($dtd_path !~ /^\// && defined $CONFIGFILE{'EXECDIR'}) {
+            $dtd_path = "$CONFIGFILE{'EXECDIR'}/$dtd_path";
         }
-        close(IN);
+        $XML_WRITER->doctype('niktoscans', 'SYSTEM', $dtd_path);
     }
 
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    # Start root element
+    $XML_WRITER->startTag('niktoscans');
 
-    # If file doesn't contain a header, write it
-    if (!$header_present) {
-        my $xml = xml_change_vars($TEMPLATES{xml_start});
-        $xml =~ s/\#NIKTODTD#/$CONFIGFILE{NIKTODTD}/;
-        print OUT "$xml";
-    }
-
-    # Return file handle
-    return OUT;
+    nprint("- XML report initialized with proper encoding and structure", "v", "report_xml");
+    return $fh;
 }
-###############################################################################
-sub xml_summary {
-    my ($handle, $mark) = @_;
-    my $xml = xml_change_vars($TEMPLATES{'xml_summary'}, $mark);
-    print $handle "$xml\n";
 
-    return;
-}
 ###############################################################################
-sub xml_close {
-    my ($handle, $mark) = @_;
-    my $xml = xml_change_vars($TEMPLATES{xml_close}, $mark);
-    print $handle $xml;
-
-    close($handle);
-    return;
-}
-###############################################################################
+# start host entry
 sub xml_host_start {
     my ($handle, $mark) = @_;
-    my $xml = xml_change_vars($TEMPLATES{xml_host_head}, $mark);
-    print $handle "$xml\n";
 
-    return;
+    # Initialize current host report
+    $XMLRPT_CURR = { targetip       => $mark->{'ip'},
+                     targethostname => $mark->{'hostname'},
+                     targetport     => $mark->{'port'},
+                     targetbanner   => $mark->{'banner'} || '',
+                     starttime      => date_disp($mark->{'start_time'}),
+                     sitename       => '',
+                     siteip         => '',
+                     hostheader     => $mark->{'vhost'}          || $mark->{'hostname'},
+                     errors         => $mark->{'total_errors'}   || 0,
+                     checks         => $COUNTERS{'total_checks'} || 0,
+                     items          => [],
+                     ssl_info       => undef
+                     };
+
+    # Build site URLs
+    my $protocol = $mark->{'ssl'} ? 'https' : 'http';
+    my $hostname = $mark->{'vhost'} || $mark->{'hostname'};
+
+    $XMLRPT_CURR->{'siteip'} = "$protocol://$mark->{'ip'}:$mark->{'port'}$mark->{'root'}";
+    $XMLRPT_CURR->{'siteip'} .= '/' unless $XMLRPT_CURR->{'siteip'} =~ /\/$/;
+
+    if ($hostname ne '') {
+        $XMLRPT_CURR->{'sitename'} = "$protocol://$hostname:$mark->{'port'}$mark->{'root'}";
+        $XMLRPT_CURR->{'sitename'} .= '/' unless $XMLRPT_CURR->{'sitename'} =~ /\/$/;
+    }
+    else {
+        $XMLRPT_CURR->{'sitename'} = 'N/A';
+    }
+
+    push(@$XMLRPT_ALL, $XMLRPT_CURR);
+
+    # Write niktoscan start tag with all required attributes
+    $XML_WRITER->startTag('niktoscan',
+                          hoststest   => $COUNTERS{'hosts_completed'}       || 0,
+                          options     => $CLI{'all_options'}                || '',
+                          version     => $VARIABLES{'version'}              || 'unknown',
+                          scanstart   => localtime($COUNTERS{'scan_start'}) || '',
+                          scanend     => localtime($COUNTERS{'scan_end'})   || '',
+                          scanelapsed => ($COUNTERS{'scan_elapsed'} || 0),
+                          nxmlversion => "1.2"
+                          );
+
+    # Write scandetails start tag
+    $XML_WRITER->startTag('scandetails',
+                          targetip       => $mark->{'ip'},
+                          targethostname => $mark->{'hostname'},
+                          targetport     => $mark->{'port'},
+                          targetbanner   => $mark->{'banner'} || '',
+                          starttime      => date_disp($mark->{'start_time'}),
+                          sitename       => $XMLRPT_CURR->{'sitename'},
+                          siteip         => $XMLRPT_CURR->{'siteip'},
+                          hostheader     => $XMLRPT_CURR->{'hostheader'},
+                          errors         => $XMLRPT_CURR->{'errors'},
+                          checks         => $XMLRPT_CURR->{'checks'}
+                          );
+
+    nprint("- XML host entry started for $mark->{'hostname'}", "v", "report_xml");
 }
+
 ###############################################################################
+# write SSL info
+sub xml_ssl_info {
+    my ($handle, $mark) = @_;
+
+    # Extract CN from subject for separate reporting
+    my $cn = '';
+    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        $cn = $1;
+    }
+
+    # Store SSL info in current host report
+    $XMLRPT_CURR->{'ssl_info'} = { ciphers  => $mark->{'ssl_cipher'},
+                                   issuers  => $mark->{'ssl_cert_issuer'}  || '',
+                                   info     => $mark->{'ssl_cert_subject'} || '',
+                                   cn       => $cn,
+                                   altnames => $mark->{'ssl_cert_altnames'} || ''
+                                   };
+
+    # Write SSL info tag immediately
+    $XML_WRITER->emptyTag('ssl',
+                          ciphers  => $XMLRPT_CURR->{'ssl_info'}->{'ciphers'},
+                          issuers  => $XMLRPT_CURR->{'ssl_info'}->{'issuers'},
+                          info     => $XMLRPT_CURR->{'ssl_info'}->{'info'},
+                          cn       => $XMLRPT_CURR->{'ssl_info'}->{'cn'},
+                          altnames => $XMLRPT_CURR->{'ssl_info'}->{'altnames'}
+                          );
+}
+
+###############################################################################
+# end host entry
 sub xml_host_end {
     my ($handle, $mark) = @_;
-    my $xml = xml_change_vars($TEMPLATES{xml_end}, $mark);
-    print $handle "$xml\n";
 
-    return;
+    # Update host data with end time and elapsed time
+    $XMLRPT_CURR->{'endtime'}    = date_disp($mark->{'end_time'});
+    $XMLRPT_CURR->{'elapsed'}    = $mark->{'end_time'} - $mark->{'start_time'};
+    $XMLRPT_CURR->{'itemsfound'} = $mark->{'total_vulns'} || 0;
+
+    # Write statistics
+    $XML_WRITER->emptyTag('statistics',
+                          elapsed     => $XMLRPT_CURR->{'elapsed'},
+                          itemsfound  => $XMLRPT_CURR->{'itemsfound'},
+                          itemstested => $XMLRPT_CURR->{'checks'},
+                          endtime     => $XMLRPT_CURR->{'endtime'}
+                          );
+
+    # Close scandetails and niktoscan tags
+    $XML_WRITER->endTag('scandetails');
+    $XML_WRITER->endTag('niktoscan');
+
+    nprint("- XML host entry completed for $mark->{'hostname'}", "v", "report_xml");
 }
+
 ###############################################################################
+# add item to current host
 sub xml_item {
     my ($handle, $mark, $item) = @_;
-    my $xml = xml_change_vars($TEMPLATES{xml_host_item}, $mark, $item);
-    print $handle "$xml\n";
 
-    return;
+    # Add item to current host's items array
+    push(@{ $XMLRPT_CURR->{'items'} },
+         {  id          => $item->{'nikto_id'},
+            method      => $item->{'method'},
+            description => $item->{'message'},
+            uri         => $item->{'uri'},
+            namelink    => $item->{'namelink'} || '',
+            iplink      => $item->{'iplink'}   || '',
+            references  => $item->{'refs'}     || ''
+            }
+         );
+
+    # Write item tag with proper structure
+    $XML_WRITER->startTag('item',
+                          id     => $item->{'nikto_id'},
+                          method => $item->{'method'}
+                          );
+
+    # Write item content with CDATA for potentially problematic content
+    $XML_WRITER->startTag('description');
+    $XML_WRITER->cdata($item->{'message'});
+    $XML_WRITER->endTag('description');
+
+    $XML_WRITER->startTag('uri');
+    $XML_WRITER->cdata($item->{'uri'});
+    $XML_WRITER->endTag('uri');
+
+    $XML_WRITER->startTag('namelink');
+    $XML_WRITER->cdata($item->{'namelink'} || '');
+    $XML_WRITER->endTag('namelink');
+
+    $XML_WRITER->startTag('iplink');
+    $XML_WRITER->cdata($item->{'iplink'} || '');
+    $XML_WRITER->endTag('iplink');
+
+    $XML_WRITER->startTag('references');
+    $XML_WRITER->cdata($item->{'refs'} || '');
+    $XML_WRITER->endTag('references');
+
+    $XML_WRITER->endTag('item');
 }
-###############################################################################
-sub xml_open_templates {
-    foreach my $t (dirlist($CONFIGFILE{TEMPLATEDIR}, "xml.*")) {
-        open(T, "<$CONFIGFILE{TEMPLATEDIR}/$t");
-        my @TEMPLATE = <T>;
-        close(T);
-        my $T = join("", @TEMPLATE);
-        $t =~ s/\..*$//;
-        $TEMPLATES{$t} = $T;
-    }
 
-    return;
+###############################################################################
+# close output file
+sub xml_close {
+    my ($handle) = @_;
+
+    # Close root element
+    $XML_WRITER->endTag('niktoscans');
+
+    # End the XML writer
+    $XML_WRITER->end();
+
+    # Close file handle
+    close($XML_HANDLE) if $XML_HANDLE;
+
+    # Validate XML if possible
+    xml_validate_output($handle);
+
+    nprint("- XML report completed with proper structure", "v", "report_xml");
 }
+
 ###############################################################################
-sub xml_change_vars {
-    my ($template, $mark, $item) = @_;
-    my %variables;
-    my $protocol = "http";
-    if ($mark->{ssl}) { $protocol .= "s"; }
-    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+# Validate XML output
+sub xml_validate_output {
+    my ($filename) = @_;
 
-    $variables{"#TEMPL_HCTR#"}        = $VARIABLES{'TEMPL_HCTR'};
-    $variables{"#TEMPL_END#"}         = date_disp($mark->{'end_time'});
-    $variables{"#TEMPL_HOSTNAME#"}    = hex_enc($hostname);
-    $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($hostname);
-    if (defined $mark->{vhost}) {
-        $variables{"#TEMPL_HOST_HEADER#"} = hex_enc($mark->{'vhost'});
-    }
+    # Only validate if XML::LibXML is available
+    eval {
+        require XML::LibXML;
 
-    $variables{"#TEMPL_SSL_INFO#"} = "";
-    if (defined $mark->{'ssl_cipher'}) {
-        $variables{"#TEMPL_SSL_INFO#"} =
-            "<ssl ciphers=\""
-          . hex_enc($mark->{ssl_cipher})
-          . "\" issuers=\""
-          . hex_enc($mark->{ssl_cert_issuer})
-          . "\" info=\""
-          . hex_enc($mark->{ssl_cert_subject})
-          . "\" altnames=\""
-          . hex_enc($mark->{ssl_cert_altnames}) . "\" />";
-    }
+        my $parser = XML::LibXML->new();
+        my $doc    = $parser->parse_file($filename);
 
-    $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
-    $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{total_checks};
-    $variables{"#TEMPL_PORT#"}               = $mark->{'port'};
-    $variables{"#TEMPL_START#"}              = date_disp($mark->{'start_time'});
-    $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'});
-    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'};
-    $variables{"#TEMPL_BANNER#"}             = hex_enc($mark->{'banner'});
-    $variables{"#TEMPL_NIKTO_CLI#"}          = hex_enc($CLI{'all_options'});
-    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'};
-    $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'};
-    $variables{"#TEMPL_ELAPSED#"}            = $mark->{'end_time'} - $mark->{'start_time'};
-    $variables{"#TEMPL_LINK_IP#"} =
-      $protocol . "://" . $mark->{'ip'} . ":" . $mark->{'port'} . $mark->{'root'};
-    if ($variables{"#TEMPL_LINK_IP#"} !~ /\/$/) { $variables{"#TEMPL_LINK_IP#"} .= '/'; }
-    $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
-    $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
-    $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
-    $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
-    $variables{"#TEMPL_ERRORS#"}       = $mark->{'total_errors'};
-
-    $variables{"#TEMPL_LINK_NAME#"} = "N/A";
-    if ($hostname ne "") {
-        $variables{"#TEMPL_LINK_NAME#"} =
-          $protocol . "://" . $hostname . ":" . $mark->{'port'} . $mark->{'root'};
-    }
-    if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
-    $variables{"#ID#"} = $item->{'nikto_id'};
-
-    $variables{"#TEMPL_REFERENCES#"} = $item->{'refs'};
-
-    # Scanner Messages Handling
-    $variables{"#TEMPL_SMMSG#"} = $item->{'message'};
-
-    # Positives Handling
-    if ($template =~ /\#TEMPL_MSG#/) {
-        my $uri = $item->{'uri'};
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) { $uri = $mark->{'root'} . $uri; }
-        $variables{"#TEMPL_URI#"}         = simple_enc($uri);
-        $variables{"#TEMPL_MSG#"}         = $item->{'message'};
-        $variables{"#TEMPL_HTTP_METHOD#"} = $item->{'method'};
-
-        $variables{"#TEMPL_ITEM_IP_LINK#"} =
-          "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{port}$variables{\"#TEMPL_URI#\"}";
-        $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
-        if ($hostname ne "") {
-            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
-              "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
+        # Validate against DTD if available
+        if (defined $CONFIGFILE{'NIKTODTD'} && $CONFIGFILE{'NIKTODTD'} ne '') {
+            $doc->validate();
+            nprint("- XML output validated against DTD successfully", "v", "report_xml");
         }
-    }
-
-    foreach my $var (keys %variables) { $template =~ s/$var/$variables{$var}/g; }
-
-    return $template;
-}
-###############################################################################
-sub hex_enc {
-    my $invar = $_[0] || return;
-    my $outvar;
-    foreach my $c (split(//, $invar)) {
-        my $n = ord($c);
-        if (($n > 127) || ($n < 32) || ($n == 38) || ($n == 60) || ($n == 62) | ($n == 34)) {
-            $outvar .= sprintf '%#x', $n;
+        else {
+            nprint("- XML output is well-formed", "v", "report_xml");
         }
-        else { $outvar .= $c; }
+    };
+    if ($@) {
+        nprint("+ WARNING: XML validation failed: $@", "e");
     }
-    return $outvar;
-}
-###############################################################################
-sub simple_enc {
-    my $var = $_[0] || return;
-    $var =~ s/</&lt;/g;
-    $var =~ s/>/&gt;/g;
-    $var =~ s/"/&quot;/g;
-    return $var;
 }
 
 sub nikto_reports { }    # so core doesn't freak

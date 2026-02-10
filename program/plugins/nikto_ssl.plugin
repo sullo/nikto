@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2010 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Test certificate information
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Test certificate information
 ###############################################################################
 sub nikto_ssl_init {
     my $id = { name        => "ssl",
@@ -33,26 +17,42 @@ sub nikto_ssl {
     my ($mark) = @_;
 
     if ($mark->{ssl}) {
-        my @names;
+        my @cn_names;
+        my @san_names;
         my $match = 0;
-        $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/;
-        push(@names, $1);
+
+        # Extract CN from subject
+        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+            push(@cn_names, $1);
+        }
+
+        # Extract SAN names
         if ($mark->{'ssl_cert_altnames'} ne '') {
             foreach my $n (split(/, /, $mark->{'ssl_cert_altnames'})) {
-                push(@names, $n);
+                push(@san_names, $n);
             }
         }
-        @names = unique_vals(@names);
-        my $allnames = join(", ", @names);
 
-        foreach my $cert_name (@names) {
+        # Combine all names for validation
+        my @all_names = (@cn_names, @san_names);
+        @all_names = unique_vals(@all_names);
+
+        # Create detailed name lists for error messages
+        my $cn_list  = @cn_names  ? join(", ", @cn_names)  : "none";
+        my $san_list = @san_names ? join(", ", @san_names) : "none";
+        my $allnames = join(", ", @all_names);
+
+        foreach my $cert_name (@all_names) {
+            next unless $cert_name;    # Skip empty names
 
             # straight up match
-            if (lc($mark->{'hostname'}) eq lc($cert_name)) { $match = 1; }
+            if (lc($mark->{'hostname'}) eq lc($cert_name)) {
+                $match = 1;
+            }
 
             # wildcard cert
             elsif ($cert_name =~ /^\*/) {
-                add_vulnerability($mark,  "Server is using a wildcard certificate: $cert_name",
+                add_vulnerability($mark,  "/: Server is using a wildcard certificate: $cert_name",
                                   999992, "https://en.wikipedia.org/wiki/Wildcard_certificate");
                 $cert_name =~ s/^\*\.//;
                 $cert_name = rquote($cert_name);
@@ -69,9 +69,10 @@ sub nikto_ssl {
         }
 
         if (!$match) {
-            add_vulnerability($mark,
-                     "Hostname '$mark->{'hostname'}' does not match certificate's names: $allnames",
-                     999993, "https://cwe.mitre.org/data/definitions/297.html");
+            my $error_msg = "/: Hostname '$mark->{'hostname'}' does not match certificate names";
+            $error_msg .= " (CN: $cn_list, SAN: $san_list)";
+            add_vulnerability($mark, $error_msg, 999993,
+                              "https://cwe.mitre.org/data/definitions/297.html");
         }
     }
 }

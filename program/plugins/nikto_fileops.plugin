@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2012 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Various file operations
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Various file operations
 ###############################################################################
 sub nikto_fileops_init {
     my $id = { name        => "fileops",
@@ -58,15 +42,8 @@ sub save_item {
         print SAVEFILE "Not Applicable\n";
     }
     else {
-        print SAVEFILE $request->{'whisker'}{'method'} . " "
-          . $request->{'whisker'}{'uri'} . " "
-          . $request->{'whisker'}{'protocol'} . "/"
-          . $request->{'whisker'}{'version'} . "\n";
-
-        foreach my $header (keys %{$request}) {
-            next if $header eq 'whisker';
-            print SAVEFILE $header . ": " . $request->{$header} . "\n";
-        }
+        my $request_string = rebuild_request($request);
+        print SAVEFILE $request_string;
     }
     print SAVEFILE "\n";
     print SAVEFILE $VARIABLES{'DIV'} . "\n";
@@ -76,26 +53,9 @@ sub save_item {
         print SAVEFILE "Not Applicable\n";
     }
     else {
-        print SAVEFILE $response->{'whisker'}{'protocol'} . "/"
-          . $response->{'whisker'}{'version'} . " "
-          . $response->{'whisker'}{'code'} . " "
-          . $response->{'whisker'}{'message'} . "\n";
-        foreach my $header (@{ $response->{'whisker'}{'header_order'} }) {
-
-            # Handle multiple headers with same name, e.g. set-cookie
-            if (ref($response->{$header}) eq ARRAY) {
-                if    ($cookies_written && ($header eq 'set-cookie')) { next; }
-                elsif ($header eq 'set-cookie')                       { $cookies_written = 1; }
-                foreach my $v (@{ $response->{$header} }) {
-                    print SAVEFILE $header . ": " . $v . "\n";
-                }
-            }
-            else {
-                print SAVEFILE $header . ": " . $response->{$header} . "\n";
-            }
-        }
-        print SAVEFILE "\n" . $response->{'whisker'}{'data'} . "\n";
+        print SAVEFILE rebuild_response($response);
     }
+
     print SAVEFILE $VARIABLES{'DIV'} . "\n";
     print SAVEFILE "			  Data Objects\n";
     print SAVEFILE $VARIABLES{'DIV'} . "\n";
@@ -188,7 +148,7 @@ sub parse_hostfile {
             my @ports = parse_csv($fields[1]);
             foreach my $nmp (@ports) {
                 if (($nmp !~ /(?:80|443)?\/open\/tcp/) || ($nmp !~ /(?:http|ssl)/i)) {
-                    nprint("\tNon web port identified: $hostdesc:$nmp", "d");
+                    nprint("\tNon web port identified: $hostdesc:$nmp", "d", ($hostdesc));
                     next;
                 }
                 $nmp =~ /^(?:\s+)?(\d+)\//;
@@ -204,4 +164,5 @@ sub parse_hostfile {
     close(IN);
     return (@results);
 }
+
 1;

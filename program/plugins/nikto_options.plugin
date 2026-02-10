@@ -1,24 +1,8 @@
 ###############################################################################
-#  Copyright (C) 2006 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: HTTP options check
 ###############################################################################
-# PURPOSE:
-# HTTP options check
-###############################################################################
-sub nikto_httpoptions_init {
+sub nikto_options_init {
     my $id = { name        => "httpoptions",
                full_name   => "HTTP Options",
                author      => "Sullo",
@@ -41,15 +25,15 @@ sub nikto_httpoptions {
     my ($mark) = @_;
     my (%request, %response, $dbarray, $txt, $allow_methods, $public_methods);
     my $junkmethodresp;
-    $txt = "";
+    $txt     = "";
+    $dbarray = init_db("db_options");
 
     # test for both OPTIONS / and OPTIONS * as they may give different results
-    my ($res, $content, $errors, $request, $response) =
-      nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
+    # my ($res, $content, $errors, $request, $response) =
+    # nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
 
-    my $aoptions = "$response->{'allow'}, ";
-    my $poptions = "$response->{'public'}, ";
-    $dbarray = init_db("db_httpoptions");
+    # my $aoptions = "$response->{'allow'}, ";
+    # my $poptions = "$response->{'public'}, ";
 
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
@@ -162,21 +146,22 @@ sub nikto_httpoptions {
     foreach my $method (split(/ /, "TRACE TRACK")) {
 
         # Check for all flavours of HTTP
-        foreach my $version (split(/ /, "1.0 1.1")) {
+        foreach my $version (split(/ /, "0.9 1.0 1.1")) {
             return if $mark->{'terminate'};
             ($res, $content, $error, $request, $response) =
-              nfetch($mark, "/", $method, "", \%headers, "", "httpoptions: $method", $version);
+              nfetch($mark, "/", $method, "", \%headers, {}, "httpoptions: $method", $version);
             if ($res == 200) {
                 if ($content =~ /Trace-Test: Nikto/) {
                     add_vulnerability(
                         $mark,
-                        "/: HTTP $method method is active which suggests the host is vulnerable to XST",
+                        "/: HTTP $method method is active and replies which suggests the host is vulnerable to XST",
                         "000434",
                         "https://owasp.org/www-community/attacks/Cross_Site_Tracing",
                         $method,
                         "/",
                         $request,
-                        $response
+                        $response,
+                        "Content match"
                         );
 
                     # now we know its vulnerable stop testing

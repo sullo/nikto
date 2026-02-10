@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2004 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Apache user enumeration
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Apache user enumeration
 ###############################################################################
 
 sub nikto_apacheusers_init {
@@ -48,12 +32,12 @@ sub nikto_apacheusers {
                    && $parameters->{'enumerate'} == 1);
 
     # First ensure that the server is vulnerable
-    my ($result, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
+    my ($response, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
     $content = quotemeta($content);
     if ($content =~ /forbidden/i)    # good on "bin"
     {
-        my ($result, $content, $errors, $request, $response) =
+        my ($response, $content, $errors, $request, $response) =
           nfetch($mark, "/~" . LW2::utils_randstr(8),
                  "GET", "", "", "", "apacheusers: invalid user");
 
@@ -95,7 +79,7 @@ sub nikto_apacheusers {
         # Check for existence of cgiwrap
         foreach my $cgidir (@CFGCGI) {
             my $curl = "$cgidir" . "cgiwrap";
-            my ($result, $content) =
+            my ($response, $content) =
               nfetch($mark, $curl, "GET", "", "", "", "user_enum_apache: cgiwrap");
             if ($content =~ /check your URL/i) {
                 push(@cgiwraps, "$curl");
@@ -145,19 +129,21 @@ sub nikto_user_enum_apache_brute {
 
     my ($url, $mark, $size) = @_;
     $size = 5 if ($size eq "");
-    nprint("- Enumerating Apache users (1 to $size characters).", "v");
+    nprint("- Enumerating Apache users (1 to $size characters).", "v", "apacheusers");
 
     my $text    = "a";
     my $ctr     = 0;
     my $message = "Valid users found via Apache enumeration: ";
-    my ($result, $content);
+    my ($response, $content);
     my @foundusers = ();
     while (length($text) <= $size) {
         return if $mark->{'terminate'};
-        if (($ctr % 500) eq 0) { nprint("- User enumeration guess $ctr ($text)", "v"); }
-        ($result, $content, $errors, $request, $response) =
+        if (($ctr % 500) eq 0) {
+            nprint("- User enumeration guess $ctr ($text)", "v", "apacheusers");
+        }
+        ($response, $content, $errors, $request, $response) =
           nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
-        my $user = nikto_user_enum_apache_check($result, $text);
+        my $user = nikto_user_enum_apache_check($response, $text);
         if (defined $user && $user ne "") {
             push(@foundusers, $user);
         }
@@ -176,10 +162,10 @@ sub nikto_user_enum_apache_dictionary {
     my ($url, $mark, $filename) = @_;
     my $message    = "Valid users found via Apache enumeration: ";
     my @foundusers = ();
-    my ($result, $content);
+    my ($response, $content);
     my $ctr = 0;
 
-    nprint("- Enumerating Apache users (using dictionary $filename).", "v");
+    nprint("- Enumerating Apache users (using dictionary $filename).", "v", "apacheusers");
     unless (open(IN, "<$filename")) {
         nprint("+ ERROR: Unable to open dictionary file $filename: $!.");
     }
@@ -193,10 +179,10 @@ sub nikto_user_enum_apache_dictionary {
         # remove preceding ~ just in case
         s/^~//;
         if ($_ eq "")          { next }
-        if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v"); }
-        ($result, $content, $errors, $request, $response) =
+        if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v", "apacheusers"); }
+        ($response, $content, $errors, $request, $response) =
           nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
-        my $user = nikto_user_enum_apache_check($result, $_);
+        my $user = nikto_user_enum_apache_check($response, $_);
         if ($user) {
             push(@foundusers, $user);
         }
@@ -212,16 +198,16 @@ sub nikto_user_enum_apache_dictionary {
 
 sub nikto_user_enum_apache_check {
     (my $code, $user) = @_;
-    my $result = "";
+    my $response = "";
 
     foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
         if ($code eq $found) {
-            $result = $user;
+            $response = $user;
             last;
         }
     }
 
-    return $result;
+    return $response;
 }
 
 1;

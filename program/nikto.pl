@@ -1,34 +1,19 @@
 #!/usr/bin/env perl
 use strict;
 
-###############################################################################
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
+
 ###############################################################################
 #                               Nikto                                         #
 ###############################################################################
-#  Copyright (C) 2001 Chris Sullo
+# Copyright (C) 2001 Chris Sullo
+# SPDX-License-Identifier: GPL-3.0-only
 #
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
+# See the COPYING file for full information on the License Nikto is distributed under.
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# Contact Information:
-#     Sullo (sullo@cirt.net)
-#     http://cirt.net/
+# http://cirt.net/
 #######################################################################
-# See the COPYING file for more information on the License Nikto is distributed under.
-#
 # This program is intended for use in an authorized manner only, and the author
 # can not be held liable for anything done with this program, code, or items discovered
 # with this program's use.
@@ -36,17 +21,14 @@ load_modules();
 
 # global var/definitions
 use vars qw/$TEMPLATES %CLI %VARIABLES %TESTS/;
-use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions/;
+use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions %DSL_CACHE/;
 use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup
-Getopt::Long::Configure('no_ignore_case');
 $COUNTERS{'scan_start'} = time();
-$VARIABLES{'DIV'}       = "-" x 75;
 $VARIABLES{'name'}      = "Nikto";
-$VARIABLES{'version'}   = "2.5.0";
-$VARIABLES{'deferout'}  = 0;
-$VARIABLES{'defertxt'}  = [];
+$VARIABLES{'version'}   = "2.6.0";
+Getopt::Long::Configure('no_ignore_case');
 
 # signal trap so we can close down reports properly
 $SIG{'INT'} = \&safe_quit;
@@ -54,26 +36,24 @@ $SIG{'INT'} = \&safe_quit;
 config_init();
 setup_dirs();
 require "$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin";
-nprint("T:" . localtime($COUNTERS{'scan_start'}) . ": Starting", "d");
 require "$CONFIGFILE{'PLUGINDIR'}/LW2.pm";
-$VARIABLES{'GMTOFFSET'} = gmt_offset();
+nprint("T:" . localtime($COUNTERS{'scan_start'}) . ": Starting", "d");
 
-# use LW2;                   ### Change this line to use a different installed version
-
-#set SSL Engine
+# Set SSL engine and warn if Net::SSL is used
 LW2::init_ssl_engine($CONFIGFILE{'LW_SSL_ENGINE'});
-
-my ($a, $b) = split(/\./, $LW2::VERSION);
-die("- You must use LW2 2.4 or later\n") if ($a != 2 || $b < 4);
+if ($LW2::_SSL_LIBRARY eq 'Net::SSL') {
+    nprint("+ WARNING: Net::SSL does not support SAN extraction. Use Net::SSLeay instead.");
+}
 
 general_config();
-load_databases();
-load_databases('u');
 nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
 # No targets - quit before we do anything
 if ($CLI{'host'} eq '') {
+    if (!$CLI{'nocheck'}) {
+        check_updates();
+    }
     nprint("+ ERROR: No host (-host) specified");
     usage(1);
 }
@@ -84,20 +64,25 @@ load_plugins();
 # Parse the supplied list of targets
 my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
 
+# Load tests
+load_databases();
+load_databases('u');
+
 if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'key'}  = $CLI{'cert'} unless (defined($CLI{'key'}));
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));
 }
 
 # Open reporting
-report_head($CLI{'format'}, $CLI{'file'});
-$VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
+report_head();
+$VARIABLES{'deferout'} = 1 unless $CLI{'display'} ne "";
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
     $mark->{'messages'} = ();
     $mark->{'test'}     = 1;
     $mark->{'failures'} = 0;
+    $mark->{'nf_cache'} = {};
 
     # Try to resolve the host
     my $msgs;
@@ -111,7 +96,7 @@ foreach my $mark (@MARKS) {
     set_scan_items();
 
     # Start hook to allow plugins to load databases etc
-    run_hooks("", "start");
+    run_hooks($mark, "start");
 
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
@@ -130,7 +115,17 @@ foreach my $mark (@MARKS) {
         }
     }
 
-    if (defined $CLI{'vhost'}) { $mark->{'vhost'} = $CLI{'vhost'} }
+    if (defined $CLI{'vhost'}) {
+        $mark->{'vhost'} = $CLI{'vhost'};
+
+        # Update vhost flag immediately after assignment
+        $mark->{'has_vhost'} = ($mark->{'vhost'} ne '');
+    }
+    else {
+        # Update vhost flag for existing vhost value
+        $mark->{'has_vhost'} = (defined($mark->{'vhost'}) && $mark->{'vhost'} ne '');
+    }
+    $VARIABLES{'TEMPL_HCTR'}++;
 
 # Check that the port is open. Return value is overloaded, either 1 for open or an error message to convey
     my $open =
@@ -152,10 +147,14 @@ foreach my $mark (@MARKS) {
     }
 }
 
+# Check for updates now that proxy is set up
+if (!$CLI{'nocheck'}) {
+    check_updates();
+}
+
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
     $VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
-    my %FoF = ();
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'}   = time();
@@ -163,17 +162,22 @@ foreach my $mark (@MARKS) {
 
     if (!$mark->{'test'}) {
         if ($mark->{'errmsg'} ne "") {
-            add_vulnerability($mark, $mark->{'errmsg'}, 0, "", "GET", "/", "", "");
+            $VARIABLES{'deferout'} = 0;
+            add_vulnerability($mark, $mark->{'errmsg'}, "FAIL", "", "GET", "/", "", "",
+                              "Failed to scan");
         }
 
         report_host_end($mark);
+        $VARIABLES{'deferout'} = 1;
         next;
     }
 
     if (defined $CLI{'vhost'}) {
         $mark->{'vhost'} = $CLI{'vhost'};
     }
-    $VARIABLES{'TEMPL_HCTR'}++;
+
+    # Update vhost flag after potential vhost assignment
+    $mark->{'has_vhost'} = (defined($mark->{'vhost'}) && $mark->{'vhost'} ne '');
 
     # Saving responses
     if ($CLI{'saveresults'} ne '') {
@@ -181,37 +185,46 @@ foreach my $mark (@MARKS) {
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
 
-    nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch =>  }, "getinfo");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => }, "Init");
+    $mark->{'platform'} = platform_profiler($mark);
 
-    $VARIABLES{'deferout'}  = 0;
+    # SSL info is now available - report it to all formats
+    report_ssl_info($mark);
+
+    $VARIABLES{'deferout'} = 0;
     dump_target_info($mark);
 
     # Now print any deferred output
     if (@{ $VARIABLES{'defertxt'} }) {
         foreach my $element (@{ $VARIABLES{'defertxt'} }) {
-            if ($element =~ s/^([a-zA-Z])?:://) {
-                nprint($element, $1);
-            } else {
-                nprint($element);
-            }
+            my @parts  = split(/::/, $element, 3);
+            my $mode   = $parts[0] || '';
+            my $testid = defined($parts[1]) && $parts[1] ne '' ? $parts[1] : undef;
+            my $line   = $parts[2] || $parts[1] || $element;
+            nprint($line, $mode, $testid);
         }
     }
     undef $VARIABLES{'defertxt'};
 
-    unless ((defined $CLI{'nofof'}) || ($CLI{'plugins'} eq '@@NONE')) { map_codes($mark) }
     run_hooks($mark, "recon");
     run_hooks($mark, "scan");
 
     $mark->{'end_time'} = time();
     $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+
+    # Use singular/plural based on count
+    my $error_word = ($mark->{'total_errors'} == 1) ? "error" : "errors";
+    my $item_word  = ($mark->{'total_vulns'} == 1)  ? "item"  : "items";
+
     if (!$mark->{'terminate'}) {
         nprint(
-            "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+            "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} $error_word and $mark->{'total_vulns'} $item_word reported on the remote host"
             );
     }
     else {
         nprint(
-            "+ Scan terminated: $mark->{'total_errors'} error(s) and $mark->{'total_vulns'} item(s) reported on remote host"
+            "+ Scan terminated: $mark->{'total_errors'} $error_word and $mark->{'total_vulns'} $item_word reported on the remote host"
             );
     }
     nprint(  "+ End Time:           "
@@ -229,7 +242,8 @@ report_summary();
 report_close();
 
 nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
-nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds", "v");
+nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds",
+       "v", "END");
 
 send_updates(@MARKS);
 
@@ -252,28 +266,35 @@ sub config_init {
         if (defined $optcfg{'config'}) { $VARIABLES{'configfile'} = $optcfg{'config'}; }
     }
 
-    # Guess Nikto current directory
-    my $NIKTODIR = abs_path($0);
-    chomp($NIKTODIR);
-    $NIKTODIR =~ s#[\\/]nikto.pl$##;
+    # Determine Nikto directory using FindBin (reliable even from zip/git sources)
+    # Use RealBin to get absolute path even if script was invoked via symlink
+    my $NIKTODIR = $FindBin::RealBin || $FindBin::Bin;
+    $NIKTODIR = File::Spec->rel2abs($NIKTODIR) if defined $NIKTODIR;
 
     # Guess user's home directory -- to support Windows
     foreach my $var (split(/ /, "HOME USERPROFILE")) {
         $home = $ENV{$var} if ($ENV{$var});
     }
 
-    # Read the conf files in order (previous values are over-written with each, if multiple found)
-    push(@CF, "$NIKTODIR/nikto.conf.default");
-    push(@CF, "/etc/nikto.conf");
-    push(@CF, "$home/nikto.conf");
-    push(@CF, "$NIKTODIR/nikto.conf");
+    # Read the conf files in order (local configs take precedence over system configs)
+    # Priority: --config option > local configs > user home > system-wide
+    push(@CF, "$VARIABLES{'configfile'}")
+      if defined $VARIABLES{'configfile'} && $VARIABLES{'configfile'} ne "";
+    push(@CF, File::Spec->catfile($NIKTODIR, "nikto.conf"))         if defined $NIKTODIR;
+    push(@CF, File::Spec->catfile($NIKTODIR, "nikto.conf.default")) if defined $NIKTODIR;
     push(@CF, "nikto.conf");
-    push(@CF, "$VARIABLES{'configfile'}");
+    push(@CF, File::Spec->catfile($home, "nikto.conf")) if defined $home;
 
-    # load in order, over-writing values as we go
+    # Only check /etc/nikto.conf on non-Windows systems
+    push(@CF, "/etc/nikto.conf") unless $^O =~ /MSWin32/;
+
+    # load in order (stop at first successful load)
     for (my $i = 0 ; $i <= $#CF ; $i++) {
-        my $error = load_config($CF[$i]);
-        $config_exists = 1 if ($error eq "");    # any loaded is good
+        next if $CF[$i] eq "";
+        if (!load_config($CF[$i])) {
+            $config_exists = 1;
+            last;
+        }
     }
 
     # Couldn't find any
@@ -281,32 +302,42 @@ sub config_init {
         die "- Could not find a valid nikto config file. Tried: @CF\n";
     }
 
+    # add CONFIG{'CLIOPTS'} to ARGV if defined...
+    if (defined $CONFIGFILE{'CLIOPTS'}) {
+        my @t = split(/ /, $CONFIGFILE{'CLIOPTS'});
+        foreach my $c (@t) { push(@ARGV, $c); }
+    }
+
+    # Check for necessary config items
+    check_config_defined("CHECKMETHODS", "HEAD");
+    check_config_defined('@@DEFAULT',    '@@ALL');
+
     return;
 }
 
 ###############################################################################
 sub load_modules {
-    my $errors  = 0;
-    my @modules = qw/Getopt::Long Time::Local IO::Socket Net::hostent/;
-    push(@modules, "List::Util qw(sum)");
-    push(@modules, "Cwd 'abs_path'");
+    my $errors = 0;
+    my @modules = ("Cwd 'abs_path'",                                        "File::Spec",
+                   "FindBin",                                               "Getopt::Long",
+                   "IO::Socket",                                            "JSON",
+                   "List::Util qw(sum)",                                    "Net::hostent",
+                   "POSIX qw(:termios_h)",                                  "Socket",
+                   "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)", "Time::Local",
+                   "Time::Piece",                                           "Time::Seconds",
+                   "XML::Writer"
+                   );
+
     foreach my $mod (@modules) {
         eval "use $mod";
         if ($@) {
+
+            # Allow POSIX and Time::HiRes to fail on Windows
+            if (($mod =~ /^(POSIX|Time::HiRes)/) && $^O =~ /MSWin32/) {
+                next;
+            }
             print STDERR "ERROR: Required module not found: $mod\n";
             $errors = 1;
-        }
-    }
-
-    @modules = ();
-    push(@modules, "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)");
-    push(@modules, "POSIX qw(:termios_h)");
-    foreach my $mod (@modules) {
-        eval "use $mod";
-        if ($@ && $^O !~ /MSWin32/) {
-
-            # Allow this to work on Windows
-            if ($@) { print STDERR "ERROR: Required module not found: $mod\n"; $errors = 1; }
         }
     }
 
@@ -317,9 +348,9 @@ sub load_modules {
 # load config file
 # error=load_config(FILENAME)
 sub load_config {
-    my $configfile = $_[0];
+    my $configfile = $_[0] || return 1;
 
-    open(CONF, "<$configfile") || return "+ ERROR: Unable to open config file '$configfile'";
+    open(CONF, "<$configfile") || return 1;   # "+ ERROR: Unable to open config file '$configfile'";
     my @CONFILE = <CONF>;
     close(CONF);
 
@@ -333,17 +364,7 @@ sub load_config {
         if ($temp[0] ne "") { $CONFIGFILE{ $temp[0] } = $temp[1]; }
     }
 
-    # add CONFIG{'CLIOPTS'} to ARGV if defined...
-    if (defined $CONFIGFILE{'CLIOPTS'}) {
-        my @t = split(/ /, $CONFIGFILE{'CLIOPTS'});
-        foreach my $c (@t) { push(@ARGV, $c); }
-    }
-
-    # Check for necessary config items
-    check_config_defined("CHECKMETHODS", "HEAD");
-    check_config_defined('@@DEFAULT',    '@@ALL');
-
-    return "";
+    return 0;
 }
 #################################################################################
 # find plugins directory

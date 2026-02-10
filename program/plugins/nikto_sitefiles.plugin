@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2013 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Look for interesting files based on site name/ip
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Look for interesting files based on site name/ip
 ###############################################################################
 sub nikto_sitefiles_init {
     my $id = { name        => "sitefiles",
@@ -30,9 +14,261 @@ sub nikto_sitefiles_init {
     return $id;
 }
 
+###############################################################################
+# File type detection functions to reduce false positives
+###############################################################################
+
+sub detect_file_type {
+    my ($content, $uri) = @_;
+    my $first_bytes    = substr($content, 0, 64);    # Check first 64 bytes
+    my $content_length = length($content);
+
+    # Return early for empty content
+    return 'empty' if $content_length == 0;
+
+    # File signatures (Magic Numbers)
+    my %signatures = (
+
+        # Archive formats
+        'zip'  => qr/^PK\x03\x04|PK\x05\x06|PK\x07\x08/,
+        'tar'  => qr/^.{257}ustar|^.{257}ustar\x00|^.{257}ustar  |^.{257}ustar\x00\x00/,
+        'gz'   => qr/^\x1f\x8b/,
+        'bz2'  => qr/^BZh/,
+        'lzma' => qr/^\x5d\x00\x00/,
+
+        # Certificate/Key formats
+        'pem' =>
+          qr/^-----BEGIN (CERTIFICATE|RSA PRIVATE KEY|DSA PRIVATE KEY|EC PRIVATE KEY|PRIVATE KEY|PUBLIC KEY)-----/,
+        'jks' => qr/^\xfe\xed\xfe\xed/,    # Java KeyStore magic
+
+        # Database formats
+        'sql' => qr/^(CREATE|INSERT|UPDATE|DELETE|SELECT|DROP|ALTER|--|\/\*|select)/i,
+        );
+
+    # Check signatures
+    foreach my $type (keys %signatures) {
+        if ($first_bytes =~ $signatures{$type}) {
+            return $type;
+        }
+    }
+
+    # Special handling for ZIP-based formats (egg, war) - check BEFORE generic ZIP
+    if ($first_bytes =~ /^PK\x03\x04/) {
+        if ($uri =~ /\.egg$/i) {
+            return 'egg';
+        }
+        if ($uri =~ /\.war$/i) {
+            return 'war';
+        }
+    }
+
+    # tar detection - check for tar file structure
+    if ($uri =~ /\.tar$/i) {
+
+        # Tar files have 512-byte blocks, check if content length is multiple of 512
+        if ($content_length % 512 == 0) {
+
+            # Check for null bytes at the end (tar files end with null blocks)
+            my $last_block = substr($content, -512);
+            if ($last_block =~ /^\x00+$/) {
+                return 'tar';
+            }
+        }
+
+        # Check for tar header structure (first 512 bytes should have specific format)
+        if ($content_length >= 512) {
+            my $header = substr($content, 0, 512);
+
+# Tar header: filename (100 bytes) + mode (8) + uid (8) + gid (8) + size (12) + mtime (12) + checksum (8) + typeflag (1) + linkname (100) + magic (6) + version (2) + uname (32) + gname (32) + devmajor (8) + devminor (8) + prefix (155) + padding (12)
+# Check if it looks like a tar header (has printable filename, reasonable size)
+            my $filename = substr($header, 0, 100);
+            $filename =~ s/\x00.*$//;    # Remove null padding
+            if ($filename =~ /^[[:print:]]+$/ && length($filename) > 0) {
+                return 'tar';
+            }
+        }
+    }
+
+    # Special case: Check for compressed tar variants
+    if ($uri =~ /\.(tar\.gz|tgz)$/i && $first_bytes =~ /^\x1f\x8b/) {
+        return 'tar.gz';
+    }
+    if ($uri =~ /\.(tar\.bz2)$/i && $first_bytes =~ /^BZh/) {
+        return 'tar.bz2';
+    }
+    if ($uri =~ /\.(tar\.lzma)$/i && $first_bytes =~ /^\x5d\x00\x00/) {
+        return 'tar.lzma';
+    }
+
+    # Check for HTML/Text content (negative cases)
+    if ($first_bytes =~ /^<!DOCTYPE|<html|<head|<body|<title/i) {
+        return 'html';
+    }
+
+    # Check for plain text
+    if ($first_bytes =~ /^[[:print:]\s]+$/ && $content_length < 10000) {
+        return 'text';
+    }
+
+    # Binary detection - check LAST to avoid false positives
+    if ($first_bytes =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]{4,}/) {
+        return 'binary';
+    }
+
+    return 'unknown';
+}
+
+sub calculate_entropy {
+    my ($content) = @_;
+
+    my %freq;
+    my $len = length($content);
+    return 0 if $len == 0;
+
+    # Count character frequencies
+    for my $i (0 .. $len - 1) {
+        $freq{ substr($content, $i, 1) }++;
+    }
+
+    # Calculate entropy
+    my $entropy = 0;
+    foreach my $char (keys %freq) {
+        my $p = $freq{$char} / $len;
+        $entropy -= $p * log($p) / log(2);
+    }
+
+    return $entropy;
+}
+
+sub validate_file_content {
+    my ($content, $uri, $expected_type) = @_;
+
+    my $detected_type = detect_file_type($content, $uri);
+
+    # Define what each file type should be
+    my %expected_types = (
+                    'zip'      => [ 'zip',  'binary' ],
+                    'tar'      => [ 'tar',  'binary' ],
+                    'gz'       => [ 'gz',   'binary' ],
+                    'bz2'      => [ 'bz2',  'binary' ],
+                    'lzma'     => [ 'lzma', 'binary' ],
+                    'egg'      => [ 'egg',  'zip', 'binary' ],    # egg files can be detected as zip
+                    'war'      => [ 'war',  'zip', 'binary' ],    # war files can be detected as zip
+                    'pem'      => [ 'pem',  'text' ],
+                    'jks'      => [ 'jks',  'binary' ],
+                    'sql'      => [ 'sql',  'text' ],
+                    'tar.gz'   => [ 'gz',   'binary' ],           # gz signature for tar.gz
+                    'tar.bz2'  => [ 'bz2',  'binary' ],           # bz2 signature for tar.bz2
+                    'tar.lzma' => [ 'lzma', 'binary' ],           # lzma signature for tar.lzma
+                    );
+
+    # Check if detected type matches expected
+    if (exists $expected_types{$expected_type}) {
+        my @valid_types = @{ $expected_types{$expected_type} };
+        foreach my $valid_type (@valid_types) {
+            return 1 if $detected_type eq $valid_type;
+        }
+        return 0;                                     # Mismatch
+    }
+
+    # For unknown expected types, just check it's not HTML
+    return 0 if $detected_type eq 'html';
+    return 1;
+}
+
+sub is_likely_real_file {
+    my ($content, $uri) = @_;
+
+    # Quick size check
+    return 0 if length($content) < 20;
+
+    # Get expected file type from URI
+    my $expected_type = '';
+    if ($uri =~ /\.(zip|tar|gz|bz2|lzma|egg|war|pem|jks|sql)$/i) {
+        $expected_type = lc($1);
+    }
+    elsif ($uri =~ /\.(tar\.gz|tgz)$/i) {
+        $expected_type = 'tar.gz';
+    }
+    elsif ($uri =~ /\.(tar\.bz2)$/i) {
+        $expected_type = 'tar.bz2';
+    }
+    elsif ($uri =~ /\.(tar\.lzma)$/i) {
+        $expected_type = 'tar.lzma';
+    }
+
+    # If we can't determine expected type, do basic validation
+    if (!$expected_type) {
+        my $detected = detect_file_type($content, $uri);
+        return 0 if $detected eq 'html';    # HTML = likely false positive
+        return 1 if $detected =~ /^(binary|zip|tar|gz|bz2|lzma|egg|war|pem|jks|sql)$/;
+        return 0;
+    }
+
+    # Validate against expected type
+    return validate_file_content($content, $uri, $expected_type);
+}
+
+sub analyze_file_details {
+    my ($content, $uri) = @_;
+
+    my $detected_type  = detect_file_type($content, $uri);
+    my $content_length = length($content);
+    my $entropy        = calculate_entropy($content);
+
+    # Calculate confidence
+    my $confidence = 0;
+
+    # Base confidence on file type
+    $confidence += 90 if $detected_type =~ /^(zip|tar|gz|bz2|lzma|egg|war|jks)$/;
+    $confidence += 85 if $detected_type eq 'pem';
+    $confidence += 80 if $detected_type eq 'sql';
+    $confidence += 70 if $detected_type eq 'binary';
+    $confidence -= 50 if $detected_type eq 'html';                                # Penalty for HTML
+
+    # Size-based adjustments
+    $confidence += 10 if $content_length > 1000;    # Larger files more likely real
+    if ($content_length < 100) {
+
+        # Be more lenient with certain file types - small files are common
+        if ($detected_type eq 'sql') {
+            $confidence -= 10;    # Less penalty for small SQL files
+        }
+        elsif ($detected_type eq 'lzma') {
+            $confidence -= 5;     # Very small penalty for small LZMA files
+        }
+        else {
+            $confidence -= 20;    # Very small files suspicious
+        }
+    }
+
+    # Entropy-based adjustments
+    $confidence += 15 if $entropy > 7.0;    # High entropy = likely binary
+    if ($entropy < 3.0) {
+
+        # Be more lenient with LZMA files for low entropy
+        if ($detected_type eq 'lzma') {
+            $confidence -= 10;    # Less penalty for LZMA with low entropy
+        }
+        else {
+            $confidence -= 20;    # Low entropy = likely text/HTML
+        }
+    }
+
+    # Ensure confidence is between 0-100
+    $confidence = 0   if $confidence < 0;
+    $confidence = 100 if $confidence > 100;
+
+    # Return a simple array instead of hash to avoid construction issues
+    return [ $detected_type, $content_length, $entropy, $confidence ];
+}
+
 sub nikto_sitefiles {
     my ($mark) = @_;
     my (%flags, %files, %names);
+
+    # Minimum confidence required to report a file
+    my $confidence_threshold = 60;
 
     $names{ $mark->{'hostname'} } = 1;
     $names{ $mark->{'vhost'} }    = 1;
@@ -65,7 +301,8 @@ sub nikto_sitefiles {
 
     foreach my $item (keys %names) {
         next if $item eq '';
-        foreach my $ext (qw/jks cer pem zip tar tar.gz gz tgz tar.bz2 tar.lzma alz egg war sql/) {
+        foreach
+          my $ext (qw/jks cer pem zip tar tar.gz gz tgz tar.bz2 tar.lzma bz2 lzma egg war sql/) {
             $files{"$item\.$ext"} = 1;
         }
     }
@@ -85,24 +322,41 @@ sub nikto_sitefiles {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, "/$f", "GET", "", "", \%flags, "sitefiles");
 
-            if (($response->{'content-type'} =~ '/^application\//i')
-                || (   ($res == 200)
-                    && ($response->{'content-length'} > 0)
-                    && ($response->{'content-type'} !~ '/^text\//i')
-                    && (!is_404("/$f", $content, $res, $response->{'location'})))
-                    ) {
+            my $condition1 = defined($response->{'content-type'})
+              && $response->{'content-type'} =~ /^application\//i;
+            my $condition2 =
+                 ($res == 200)
+              && (length($content) > 0)
+              && (!defined($response->{'content-type'})
+                  || $response->{'content-type'} !~ /^text\//i)
+              && (!is_404($mark, "/$f", $response));
 
-                # alert
-                add_vulnerability(
-                              $mark,    "/$f: Potentially interesting backup/cert file found. $msg",
-                              740001,   "https://cwe.mitre.org/data/definitions/530.html",
-                              "HEAD",   "/$f",
-                              $request, $response
-                              );
+            if ($condition1 || $condition2) {
+
+                # Enhanced content analysis to reduce false positives
+                if (is_likely_real_file($content, "/$f")) {
+                    my $analysis = analyze_file_details($content, "/$f");
+                    my $conf     = $analysis->[3];
+
+                    # Only report if confidence is high enough
+                    if ($conf > $confidence_threshold) {
+                        my $type_info = "Confidence: $conf%";
+                        add_vulnerability(
+                            $mark,
+                            "/$f: Potentially interesting backup/cert file found. $msg [$type_info]",
+                            740001,
+                            "https://cwe.mitre.org/data/definitions/530.html",
+                            "HEAD",
+                            "/$f",
+                            $request,
+                            $response
+                            );
+                    }
+                }
+
                 last;
             }
         }
-
     }
 }
 

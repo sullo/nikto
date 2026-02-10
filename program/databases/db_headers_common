@@ -3,19 +3,18 @@
 # (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
-# Chris Sullo (csullo@gmail.com)
+# Chris Sullo (sullo@cirt.net)
 #
 # Note:
 # By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# Notes:
-# - Use lowercase only
-# - Keep list alphabetically (for readability)
+# - Lowercase only
 #######################################################################
 "header"
 "accept"
+"accept-ch"
 "accept-charset"
 "accept-encoding"
 "accept-language"
@@ -48,6 +47,7 @@
 "content-security-policy"
 "content-security-policy-report-only"
 "content-type"
+"critical-ch"
 "cross-origin-embedder-policy"
 "cross-origin-opener-policy"
 "cross-origin-resource-policy"
@@ -89,6 +89,7 @@
 "report-to"
 "retry-after"
 "server"
+"server-timing"
 "set-cookie"
 "status"
 "strict-transport-security"
@@ -106,6 +107,8 @@
 "www-authenticate"
 "x-aspnetmvc-version"
 "x-aspnet-version"
+"x-cache"
+"x-cache-group"
 "x-cache-hits"
 "x-clacks-overhead"
 "x-cloud-trace-context"
@@ -130,6 +133,7 @@
 "x-cache"
 "x-cache-info"
 "x-cdn"
+"x-correlation-id"
 "x-dns-prefetch-control"
 "x-fd-int-roxy-purgeid"
 "x-mod-pagespeed"

@@ -5,7 +5,7 @@
 <!ENTITY files SYSTEM "sections/files.xml">
 <!ENTITY bugs SYSTEM "sections/bugs.xml">
 <!ENTITY authors SYSTEM "sections/authors.xml">
-<!ENTITY product "nikto">
+<!ENTITY product "nikto.pl">
 ]>
 
 <refentry id="commands.nikto">
@@ -16,56 +16,465 @@
   <refmeta>
     <refentrytitle>&product;</refentrytitle>
     <manvolnum>1</manvolnum>
-    <refmiscinfo class="version">2.1.2</refmiscinfo>
+    <refmiscinfo class="version">2.5.0</refmiscinfo>
     <refmiscinfo class="source">http://www.cirt.net/</refmiscinfo>
     <refmiscinfo class="manual">Vulnerability Scanner</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>nikto</refname>
+    <refname>nikto.pl</refname>
     <refpurpose>Scan web server for known vulnerabilities</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>/usr/local/bin/nikto</command>
+      <command>nikto.pl</command>
       <arg choice="opt" rep="repeat">options</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>Description</title>
-    &description;
- </refsect1>
+    <para>
+      Nikto is an Open Source web server scanner which performs comprehensive tests against web servers for multiple items that are generally considered dangerous. It checks for:
+    </para>
+    <itemizedlist>
+      <listitem><para>Server and software misconfigurations</para></listitem>
+      <listitem><para>Default files and programs</para></listitem>
+      <listitem><para>Insecure files and programs</para></listitem>
+      <listitem><para>Outdated servers and programs</para></listitem>
+      <listitem><para>Dangerous files</para></listitem>
+      <listitem><para>Other problems</para></listitem>
+    </itemizedlist>
+    <para>
+      Nikto is built on LibWhisker2 (LW2) and can run on any platform which has a Perl environment. It supports SSL, proxies, host authentication, attack encoding and more. It can be updated automatically from the command-line, and supports the optional submission of updated version data back to the maintainers.
+    </para>
+  </refsect1>
 
   <refsect1>
     <title>Options</title>
-    &options;
+    <variablelist>
+      <varlistentry>
+        <term><option>-ask</option> <replaceable>yes|no|auto</replaceable></term>
+        <listitem>
+          <para>Whether to ask about submitting updates. Options: yes (ask about each), no (don't ask, don't send), auto (don't ask, just send).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Add-header</option> <replaceable>header:value</replaceable></term>
+        <listitem>
+          <para>Add HTTP headers (can be used multiple times, one per header pair).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-check6</option></term>
+        <listitem>
+          <para>Check if IPv6 is working (connects to ipv6.google.com or value set in nikto.conf).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Cgidirs</option> <replaceable>dirs</replaceable></term>
+        <listitem>
+          <para>Scan these CGI directories. Special words "none" or "all" may be used. A literal value for a CGI directory such as "/cgi-test/" may be specified (must include trailing slash).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-config</option> <replaceable>file</replaceable></term>
+        <listitem>
+          <para>Use this config file instead of the default nikto.conf.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-dbcheck</option></term>
+        <listitem>
+          <para>Check database and other key files for syntax errors.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Display</option> <replaceable>options</replaceable></term>
+        <listitem>
+          <para>Turn on/off display outputs: 1 (Show redirects), 2 (Show cookies received), 3 (Show all 200/OK responses), 4 (Show URLs which require authentication), D (Debug output), E (Display all HTTP errors), P (Print progress to STDOUT), S (Scrub output of IPs and hostnames), V (Verbose output).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-evasion</option> <replaceable>technique</replaceable></term>
+        <listitem>
+          <para>Encoding technique: 1 (Random URI encoding), 2 (Directory self-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-followredirects</option></term>
+        <listitem>
+          <para>Follow 3xx redirects to new location.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Format</option> <replaceable>format</replaceable></term>
+        <listitem>
+          <para>Save file format: csv (Comma-separated-value), json (JSON Format), htm (HTML Format), sql (Generic SQL, see docs for schema), sqld (SQL Direct, directly inserts into MySQL/PostgreSQL database), txt (Plain text), xml (XML Format). Multiple formats can be specified as a comma-separated list. If not specified, the format will be taken from the file extension passed to -output. Note: sqld format requires DB_TYPE, DB_HOST, DB_PORT, DB_NAME in nikto.conf and NIKTO_DB_USER, NIKTO_DB_PASS environment variables.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Help</option></term>
+        <listitem>
+          <para>Display extended help information.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-host</option> <replaceable>target</replaceable></term>
+        <listitem>
+          <para>Host(s) to target. Can be an IP address, hostname or text file of hosts. A single dash (-) maybe used for stdout. Can also parse nmap -oG style output.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-id</option> <replaceable>id:pass[:realm]</replaceable></term>
+        <listitem>
+          <para>ID and password to use for host Basic host authentication. Format is "id:password" or "id:password:realm".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-ipv4</option></term>
+        <listitem>
+          <para>IPv4 Only.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-ipv6</option></term>
+        <listitem>
+          <para>IPv6 Only.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-key</option> <replaceable>file</replaceable></term>
+        <listitem>
+          <para>Client certificate key file.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-list-plugins</option></term>
+        <listitem>
+          <para>List all available plugins, perform no testing.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-maxtime</option> <replaceable>time</replaceable></term>
+        <listitem>
+          <para>Maximum testing time per host (e.g., 1h, 60m, 3600s).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-mutate</option> <replaceable>options</replaceable></term>
+        <listitem>
+          <para>Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap), 6 (Attempt to guess directory names from dictionary file).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-mutate-options</option> <replaceable>options</replaceable></term>
+        <listitem>
+          <para>Provide information for mutates.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-no404</option></term>
+        <listitem>
+          <para>Disables nikto attempting to guess a 404 page.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-nocookies</option></term>
+        <listitem>
+          <para>Do not use cookies from responses in requests.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-nointeractive</option></term>
+        <listitem>
+          <para>Disable interactive features.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-nolookup</option></term>
+        <listitem>
+          <para>Do not perform name lookups on IP addresses.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-noslash</option></term>
+        <listitem>
+          <para>Strip trailing slash from URL (e.g., '/admin/' to '/admin').</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-nossl</option></term>
+        <listitem>
+          <para>Do not use SSL to connect to the server.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Option</option> <replaceable>name=value</replaceable></term>
+        <listitem>
+          <para>Over-ride an option in nikto.conf, can be issued multiple times.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-output</option> <replaceable>file</replaceable></term>
+        <listitem>
+          <para>Write output to the file specified ('.' for auto-name). The format used will be taken from the file extension. This can be over-ridden by using the -Format option.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Pause</option> <replaceable>seconds</replaceable></term>
+        <listitem>
+          <para>Seconds (integer or floating point) to delay between each test.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Platform</option> <replaceable>platform</replaceable></term>
+        <listitem>
+          <para>Platform of target: nix (Unix/Linux), win (Windows), or all (both).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Plugins</option> <replaceable>list</replaceable></term>
+        <listitem>
+          <para>List of plugins to run (default: ALL).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-port</option> <replaceable>ports</replaceable></term>
+        <listitem>
+          <para>TCP port(s) to target. To test more than one port on the same host, specify the list of ports. Ports can be specified as a range (i.e., 80-90), or as a comma-delimited list, (i.e., 80,88,90). If not specified, port 80 is used.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-RSAcert</option> <replaceable>file</replaceable></term>
+        <listitem>
+          <para>Client certificate file.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-root</option> <replaceable>path</replaceable></term>
+        <listitem>
+          <para>Prepend root value to all requests, format is /directory.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Save</option> <replaceable>directory</replaceable></term>
+        <listitem>
+          <para>Save positive responses to this directory ('.' for auto-name).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-ssl</option></term>
+        <listitem>
+          <para>Only test SSL on the ports specified. Using this option will dramatically speed up requests to HTTPS ports, since otherwise the HTTP request will have to timeout first.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-timeout</option> <replaceable>seconds</replaceable></term>
+        <listitem>
+          <para>Seconds to wait before timing out a request. Default timeout is 10 seconds.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Tuning</option> <replaceable>options</replaceable></term>
+        <listitem>
+          <para>Tuning options will control the test that Nikto will use against a target. By default, if any options are specified, only those tests will be performed. If the "x" option is used, it will reverse the logic and exclude only those tests. Use the reference number or letter to specify the type, multiple may be used:</para>
+          <itemizedlist>
+            <listitem><para>0 - File Upload</para></listitem>
+            <listitem><para>1 - Interesting File / Seen in logs</para></listitem>
+            <listitem><para>2 - Misconfiguration / Default File</para></listitem>
+            <listitem><para>3 - Information Disclosure</para></listitem>
+            <listitem><para>4 - Injection (XSS/Script/HTML)</para></listitem>
+            <listitem><para>5 - Remote File Retrieval - Inside Web Root</para></listitem>
+            <listitem><para>6 - Denial of Service</para></listitem>
+            <listitem><para>7 - Remote File Retrieval - Server Wide</para></listitem>
+            <listitem><para>8 - Command Execution / Remote Shell</para></listitem>
+            <listitem><para>9 - SQL Injection</para></listitem>
+            <listitem><para>a - Authentication Bypass</para></listitem>
+            <listitem><para>b - Software Identification</para></listitem>
+            <listitem><para>c - Remote Source Inclusion</para></listitem>
+            <listitem><para>d - WebService</para></listitem>
+            <listitem><para>e - Administrative Console</para></listitem>
+            <listitem><para>x - Reverse Tuning Options (i.e., include all except specified)</para></listitem>
+          </itemizedlist>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-url</option> <replaceable>target</replaceable></term>
+        <listitem>
+          <para>Target host/URL (alias of -host).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Userdbs</option> <replaceable>type</replaceable></term>
+        <listitem>
+          <para>Load only user databases, not the standard databases. Options: all (Disable standard dbs and load only user dbs), tests (Disable only db_tests and load udb_tests).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-useragent</option> <replaceable>string</replaceable></term>
+        <listitem>
+          <para>Over-rides the default useragent.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-useproxy</option> <replaceable>proxy</replaceable></term>
+        <listitem>
+          <para>Use the HTTP proxy defined in the configuration file, or given as argument in the format http://server:port.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-Version</option></term>
+        <listitem>
+          <para>Display the Nikto software, plugin and database versions.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-vhost</option> <replaceable>hostname</replaceable></term>
+        <listitem>
+          <para>Specify the Host header to be sent to the target.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-404code</option> <replaceable>codes</replaceable></term>
+        <listitem>
+          <para>Ignore these HTTP codes as negative responses (always). Format is "302,301".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-404string</option> <replaceable>string</replaceable></term>
+        <listitem>
+          <para>Ignore this string in response body content as negative response (always). Can be a regular expression.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>DSL Matchers</title>
+    <para>
+      Nikto's test database supports a mini-DSL for matching responses. The following matchers are supported:
+      <itemizedlist>
+        <listitem><para><literal>BODY:</literal> and <literal>!BODY:</literal> — Match or exclude content in the response body.</para></listitem>
+        <listitem><para><literal>HEADER:</literal> and <literal>!HEADER:</literal> — Match or exclude content in HTTP headers.</para></listitem>
+        <listitem><para><literal>COOKIE:</literal> and <literal>!COOKIE:</literal> — Match or exclude content in HTTP cookies. (NEW)</para></listitem>
+        <listitem><para><literal>CODE:</literal> and <literal>!CODE:</literal> — Match or exclude HTTP status codes.</para></listitem>
+      </itemizedlist>
+      <para>You can combine multiple matchers with <literal>&amp;&amp;</literal> (AND). Example:</para>
+      <programlisting>
+        BODY:login&amp;&amp;!BODY:logout&amp;&amp;HEADER:X-Powered-By&amp;&amp;COOKIE:sessionid
+      </programlisting>
+      <para>This will match if the response body contains "login", does not contain "logout", the headers include "X-Powered-By", and a cookie named "sessionid" is present.</para>
+    </para>
   </refsect1>
 
   <refsect1>
     <title>Files</title>
-    &files;
+    <variablelist>
+      <varlistentry>
+        <term><filename>nikto.conf</filename></term>
+        <listitem>
+          <para>The Nikto configuration file. This sets Nikto's global options. Several nikto.conf files may exist and are parsed in the below order. As each configuration file is loaded is supersedes any previously set configuration:</para>
+          <itemizedlist>
+            <listitem><para>System wide (e.g. /etc/nikto.conf)</para></listitem>
+            <listitem><para>Home directory (e.g. $HOME/nikto.conf)</para></listitem>
+            <listitem><para>Current directory (e.g. ./nikto.conf)</para></listitem>
+          </itemizedlist>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><filename>${NIKTO_DIR}/databases/db*</filename></term>
+        <listitem>
+          <para>Database files that nikto uses to check for vulnerabilities and issues within the web server.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><filename>${NIKTO_DIR}/plugins/*.plugin</filename></term>
+        <listitem>
+          <para>All nikto's plugins exist here. Nikto itself is just a wrapper script to manage CLI and pass through to the plugins.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><filename>${NIKTO_DIR}/templates</filename></term>
+        <listitem>
+          <para>Contains the templates for nikto's output formats.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
 
   <refsect1>
     <title>Bugs</title>
-    &bugs;
+    <para>
+      The current features are not supported:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>SOCKS Proxies</para>
+      </listitem>
+    </itemizedlist>
   </refsect1>
 
   <refsect1>
     <title>Authors</title>
-    &authors;
+    <para>
+      Nikto is written and maintained by Chris Sullo and David Lodge. See the main documentation for other contributors.
+    </para>
+    <para>
+      All code is Copyright CIRT, Inc., except LibWhisker which is Copyright (c) 2009, Jeff Forristal (wiretrip.net). Other portions of code may be (C) as specified.
+    </para>
   </refsect1>
 
   <refsect1>
     <title>See also</title>
     <para>
-      <simplelist type="inline">
-        <member>
-          <ulink url="http://www.cirt.net/">Nikto Homepage</ulink>
-        </member>
-      </simplelist>
+      <ulink url="http://www.cirt.net/">Nikto Homepage</ulink>
     </para>
   </refsect1>
 </refentry>

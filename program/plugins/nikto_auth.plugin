@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2004 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Search content for known bad strings
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Attempt to guess authentication realms
 ###############################################################################
 
 sub nikto_auth_init {
@@ -30,7 +14,7 @@ sub nikto_auth_init {
                                      },
                           postfetch => { method => \&nikto_auth,
                                          weight => 19,
-                                         cond   => '$result->{whisker}->{code} eq 401',
+                                         cond   => '$response->{whisker}->{code} eq 401',
                                          },
                           prefetch => { method => \&nikto_auth_pre,
                                         weight => 1,
@@ -154,7 +138,7 @@ sub nikto_auth {
         nprint("- Tested credentials: "
                  . $entry->{'id'} . "/"
                  . $entry->{'password'}
-                 . "- result: "
+                 . "- response: "
                  . $response->{'whisker'}->{'code'},
                "v",
                ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
@@ -205,7 +189,7 @@ sub nikto_auth {
     }
     LW2::auth_unset(\%request);
     if (!$success) {
-        nprint("+ $request->{'whisker'}->{'uri'}: No creds found for realm '$realm'",
+        nprint("+ " . $request{'whisker'}->{'uri'} . ": No creds found for realm '$realm'",
                "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 

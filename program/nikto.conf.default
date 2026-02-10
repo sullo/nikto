@@ -1,32 +1,21 @@
 #########################################################################################################
 # CONFIG STUFF
-# $Id: config.txt 94 2009-01-21 22:47:25Z deity $
 #########################################################################################################
 # This is the default config file. If you want to change it, we strongly suggest you copy it to nikto.conf
-# This will top it being over-ridden when you git pull
+# This will top it being over-ridden when you update.
 
 # default command line options, can't be an option that requires a value.  used for ALL runs.
 # CLIOPTS=-g -a
 
-# ports never to scan
-SKIPPORTS=21 111
-
-# User-Agent variables:
- # @VERSION 	- Nikto version
- # @TESTID 	- Test identifier
- # @EVASIONS 	- List of active evasions
- # Example: USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Evasions:@EVASIONS) (Test:@TESTID)
-USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
-
 # RFI URL. This remote file should return a phpinfo call, for example: <?php phpinfo(); ?>
 # You may use the one below, if you like.
-RFIURL=http://cirt.net/public/rfiinc.txt
+RFIURL=https://cirt.net/public/rfiinc.txt
 
 # IDs never to alert on (Note: this only works for IDs loaded from db_tests)
 #SKIPIDS=
 
 # The DTD
-NIKTODTD=docs/nikto.dtd
+NIKTODTD=templates/nikto.dtd
 
 # the default HTTP version to try... can/will be changed as necessary
 DEFAULTHTTPVER=1.1
@@ -42,8 +31,9 @@ UPDATES=yes
 # Prompt... if set to 'no' you'll never be asked for anything. Good for automation.
 #PROMPTS=no
 
-# cirt.net : set the IP so that updates can work without name resolution -- just in case
-CIRT=141.193.213.10
+# Update server names
+CIRT=cirt.net
+VERSION_API=https://nikto.cirt.net/products.json
 
 # Proxy settings -- still must be enabled by -useproxy
 #PROXYHOST=127.0.0.1
@@ -69,14 +59,13 @@ CHECKMETHODS=GET
 
 # Default plugin macros
 # Remove plugins designed to be run standalone
-@@EXTRAS=dictionary;siebel;embedded
+@@EXTRAS=dictionary;siebel
 @@DEFAULT=@@ALL;-@@EXTRAS;tests(report:500)
 
 # Choose SSL libs: 
 # SSLeay        - use Net::SSLeay 
-# SSL           - use Net::SSL 
-# auto          - automatically choose what's available 
-#                 (SSLeay wins if both are available) 
+# SSL           - use Net::SSL  -- NOT recommended as it does not support SAN extraction
+# auto          - automatically choose best available 
 LW_SSL_ENGINE=auto
 
 # Number of failures before giving up
@@ -87,3 +76,11 @@ FAILURES=20
 CHECK6HOST=ipv6.google.com
 CHECK6PORT=443
 
+# SQL Direct Database Reporting
+# Database type: mysql or postgresql
+#DB_TYPE=mysql
+#DB_HOST=localhost
+#DB_PORT=3306
+#DB_NAME=nikto
+#DB_TABLE=nikto_table
+# NOTE: -> Set credentials in environment vars: NIKTO_DB_USER and NIKTO_DB_PASS

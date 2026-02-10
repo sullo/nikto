@@ -1,0 +1,43 @@
+###############################################################################
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Scan for OPTIONSBLEED (CVE-2017-9798)
+###############################################################################
+
+sub nikto_optionsbleed_init {
+    my $id = { name        => "optionsbleed",
+               full_name   => "OPTIONSBLEED (CVE-2017-9798) check",
+               author      => "Sullo",
+               description => "Detects OPTIONSBLEED vulnerability (CVE-2017-9798)",
+               hooks       => { scan => { method => \&nikto_optionsbleed, } },
+               copyright   => "2025 Chris Sullo"
+               };
+    return $id;
+}
+
+sub nikto_optionsbleed {
+    my ($mark)       = @_;
+    my $num_requests = 50;                       # Number of OPTIONS requests to send
+    my $path         = $mark->{'root'} || '/';
+
+    for (my $i = 0 ; $i < $num_requests ; $i++) {
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, $path, 'OPTIONS', '', '', undef, 'optionsbleed');
+        my $allow = $response->{'allow'};
+        if (!defined $allow) {
+
+            # No Allow header exit early
+            last;
+        }
+
+        # Should only be uppercase letters and commas, no spaces
+        if ($allow =~ /[^A-Z, ]/ || $allow =~ /,,+/) {
+            add_vulnerability($mark,
+                       "$path: Potential OPTIONSBLEED vulnerability detected. Allow header: $allow",
+                       740002, "CVE-2017-9798", 'OPTIONS', $path, $request, $response,
+                       "Allow header value contains [^A-Z, ] or ,,");
+            return;
+        }
+    }
+}
+
+1;

@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2004 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Look for multiple unique index files
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Look for multiple unique index files
 ###############################################################################
 sub nikto_multiple_index_init {
     my $id = { name        => "multiple_index",
@@ -37,7 +21,7 @@ sub nikto_multiple_index {
     foreach my $item (@$dbarray) {
         return if $mark->{'terminate'};
 
-        # First we need to mangle the host.
+        # Get file
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
@@ -48,39 +32,28 @@ sub nikto_multiple_index {
             $hashes{$hash}++;
         }
 
-    }    # End foreach
+    }
 
-    if (keys(%found) > 1) {
+    my $count = keys(%found);
+    if ($count > 1) {
 
         # make sure we have unique pages
-        $total_unique = 0;
-        foreach my $hash (keys %hashes) {
-            if ($hashes{$hash} eq 1) {
-                $total_unique++;
-            }
-        }
+        my $total_unique = grep { $hashes{$_} == 1 } keys %hashes;
 
         # one unique hash... bogus responses
         if ($total_unique <= 1) {
             return;
         }
+        my $file_list = join(', ', keys %found);
 
-        my $tempstring;
-        foreach my $f (keys %found) { $tempstring .= "$f, "; }
-        $tempstring =~ s/, ?$//;
-
-        # some unique... report slightly differently
-        if ($total_unique < keys(%found)) {
-            add_vulnerability($mark,
-                      "Multiple index files found (note: these may not all be unique): $tempstring",
-                      740000, "", "GET", "/", $request, $response);
+        my $msg = "Multiple index files found";
+        if ($total_unique < $count) {
+            $msg .= " (may not all be unique)";
         }
-
-        # all unique... report
-        if ($total_unique eq keys(%found)) {
-            add_vulnerability($mark, "Multiple index files found: $tempstring",
-                              "000473", "", "GET", "/", $request, $response);
+        else {
+            $msg .= " (all unique)";
         }
+        add_vulnerability($mark, "$msg: $file_list", "740000", "", "GET", "/", $request, $response);
     }
 }
 

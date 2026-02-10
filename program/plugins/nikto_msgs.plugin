@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2006 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Various messages relating to the server banner
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Various messages relating to the server banner
 ###############################################################################
 # NOTES:
 # versions are loaded from the "db_server_msgs" file, which should be in the
@@ -32,7 +16,7 @@ sub nikto_msgs_init {
                description => "Checks the server version against known issues.",
                hooks       => {
                           scan => { method => \&nikto_msgs,
-                                    weight => 20,
+                                    weight => 5,
                                     },
                             },
                copyright => "2008 Chris Sullo"
@@ -49,7 +33,7 @@ sub nikto_msgs {
     foreach my $item (@$dbarray) {
         $item->{'server'} = validate_and_fix_regex($item->{'server'});
         if ($mark->{'banner'} =~ /($item->{'server'})\b/i) {
-            add_vulnerability($mark, "$1 - $item->{'message'}",
+            add_vulnerability($mark, "/: $1 - $item->{'message'}",
                               $item->{'nikto_id'}, $item->{'refs'});
         }
     }

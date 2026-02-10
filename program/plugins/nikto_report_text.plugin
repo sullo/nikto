@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Text Reporting
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Text Reporting
 ###############################################################################
 sub nikto_report_text_init {
     my $id = { name              => "report_text",
@@ -26,6 +10,7 @@ sub nikto_report_text_init {
                report_head       => \&text_open,
                report_host_start => \&text_host,
                report_item       => \&text_item,
+               report_ssl_info   => \&text_ssl_info,
                report_format     => 'txt',
                copyright         => "2008 Chris Sullo"
                };
@@ -36,13 +21,17 @@ sub text_open {
     my ($file) = @_;
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
-    # Open file and produce header
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    # Open file with lexical handle and produce header
+    my $fh;
+    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+
+    # Enable autoflush
+    $fh->autoflush(1);
 
     # Write header
-    print OUT "- $VARIABLES{'name'} v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
+    print $fh "- $VARIABLES{'name'} v$VARIABLES{'version'}/$VARIABLES{'core_version'}\n";
 
-    return OUT;
+    return $fh;
 }
 
 sub text_host {
@@ -51,6 +40,26 @@ sub text_host {
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     print $handle "+ Target Host: $hostname\n";
     print $handle "+ Target Port: $mark->{port}\n";
+}
+
+sub text_ssl_info {
+    my ($handle, $mark) = @_;
+    print $handle "+ SSL Info:           Subject:  $mark->{'ssl_cert_subject'}\n";
+
+    # Extract and display CN separately
+    my $cn = '';
+    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        $cn = $1;
+        print $handle "                      CN:       $cn\n";
+    }
+
+    # Display SAN if present
+    if ($mark->{'ssl_cert_altnames'} ne '') {
+        print $handle "                      SAN:      $mark->{'ssl_cert_altnames'}\n";
+    }
+
+    print $handle "                      Ciphers:  $mark->{'ssl_cipher'}\n";
+    print $handle "                      Issuer:   $mark->{'ssl_cert_issuer'}\n";
 }
 
 sub text_item {

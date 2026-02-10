@@ -1,107 +1,464 @@
 ###############################################################################
-#  Copyright (C) 2006 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Nikto core functionality
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Nikto core functionality
 ###############################################################################
 
 sub change_variables {
+    my ($line, $mark, $checkid, $skip_lfi) = @_;
 
-    my $line = $_[0];    # $line is the unfiltered variable
-    my @subtests;        # @subtests is the returned array of expanded variables
-    my $cooked;
+    # If no mark provided, use global mark
+    $mark = $mark || $::mark;
 
+    # If no variables to expand, check for LFI before returning
+    my $at_index = index($line, '@');
+    if ($at_index == -1) {
+        return ($line);
+    }
+
+    # Use cached $shname for efficiency
     my $shname = $mark->{'hostname'} || $mark->{'ip'};
+    my @subtests;
+
+    # Replace JUNK(n) with random string
+    $line =~ s/\@JUNK\((\d+)\)/LW2::utils_randstr($1)/e;
+
+    # Replace static variables
     $line =~ s/\@IP/$mark->{'ip'}/g;
     $line =~ s/\@HOSTNAME/$shname/g;
-    $line =~ s/JUNK\(([0-9]+)\)/LW2::utils_randstr($1)/e;
 
-    if ($line !~ "\@") {
-        push(@subtests, $line);
+    # Phase 1: Expand all non-LFI variables recursively
+    # Keep expanding until no more non-LFI variables remain
+    if (index($line, '@') == -1) {
+        push @subtests, $line;
     }
     else {
+        # Check for non-LFI variables and expand them
+        my $found_variable = 0;
         foreach my $varname (keys %VARIABLES) {
-            if ($line =~ /$varname/) {
+            next if $varname =~ /^\@LFI/;
+            next unless index($line, $varname) != -1;
+            if ($line =~ /\Q$varname\E/) {
 
-                # We've found the variable; expand it
-                foreach my $value (split(/ /, $VARIABLES{$varname})) {
-                    $cooked = $line;
-                    $cooked =~ s/$varname/$value/g;
-                    push(@subtests, change_variables($cooked));
+                # Expand this variable: split by whitespace and recursively process each value
+                foreach my $value (split(/\s+/, $VARIABLES{$varname})) {
+                    my $cooked = $line;
+                    $cooked =~ s/\Q$varname\E/$value/g;
+
+          # Recursively expand variables in the cooked line (skip LFI processing in recursive calls)
+                    my @expanded = change_variables($cooked, $mark, $checkid, 1);
+                    push @subtests, @expanded;
                 }
+                $found_variable = 1;
+                last;    # Break out of foreach loop after handling first variable found
             }
+        }
+        if (!$found_variable) {
+            push(@subtests, $line);
         }
     }
 
-    return @subtests;
+    # Phase 2: Handle LFI (only if not skipping)
+    if ($skip_lfi) {
+
+        # In recursive call, just return the subtests without processing LFI
+        return @subtests;
+    }
+
+    # Now that other expansions are done, handle LFI
+    my @tests;
+    foreach my $subtest (@subtests) {
+        if ($subtest =~ /\@LFI\(([^)]*)\)/) {
+            my $args       = $1 || '';
+            my @temp_tests = lfi_function($subtest, $args, $checkid, $mark);
+            push @tests, @temp_tests;
+        }
+        else {
+            push @tests, $subtest;
+        }
+    }
+    return @tests;
+}
+
+sub lfi_function {
+    my ($test, $args, $checkid, $mark) = @_;
+    my @options = split(/,/, $args);
+    my @lfitests;
+
+    # Get detected/forced platform (default to 'all' if not set)
+    my $detected_platform = ($mark && $mark->{'platform'}) ? $mark->{'platform'} : 'all';
+
+    # Determine platform and path settings from test options
+    my $is_nix  = grep(/nix/i, @options);
+    my $is_win  = grep(/win/i, @options);
+    my $use_url = grep(/url/i, @options);
+    my $use_abs = grep(/abs/i, @options);
+
+    # Determine which platforms to generate tests for
+    my @platforms;
+    my $test_specifies_platform = ($is_nix || $is_win);
+
+    if ($test_specifies_platform) {
+
+        # Test explicitly specifies platform(s)
+        # Only run if platform matches or platform is 'all'
+        if ($detected_platform eq 'all') {
+
+            # Platform is 'all' - respect test's specification
+            if ($is_nix && !$is_win) {
+                push @platforms, 'nix';
+            }
+            elsif ($is_win && !$is_nix) {
+                push @platforms, 'win';
+            }
+            else {
+                # Both specified in test - generate both
+                push @platforms, 'nix', 'win';
+            }
+        }
+        elsif (   ($is_nix && $detected_platform eq 'nix')
+               || ($is_win && $detected_platform eq 'win')) {
+
+            # Platform matches test specification - use test's choice
+            if ($is_nix && !$is_win) {
+                push @platforms, 'nix';
+            }
+            elsif ($is_win && !$is_nix) {
+                push @platforms, 'win';
+            }
+            else {
+                # Both specified in test - but only one matches platform
+                push @platforms, $detected_platform;
+            }
+        }
+        else {
+            # Platform doesn't match test specification - return empty (no tests)
+            return @lfitests;    # Return empty array
+        }
+    }
+    else {
+        # Test doesn't specify platform - use detected platform
+        if ($detected_platform eq 'all') {
+            push @platforms, 'nix', 'win';
+        }
+        elsif ($detected_platform eq 'nix') {
+            push @platforms, 'nix';
+        }
+        elsif ($detected_platform eq 'win') {
+            push @platforms, 'win';
+        }
+        else {
+            # Unknown platform, default to both
+            push @platforms, 'nix', 'win';
+        }
+    }
+
+    # Get depth (same for both platforms)
+    my $depth = $VARIABLES{'@LFIDEPTH'} || 5;
+    $depth =~ s/^\s+|\s+$//g;
+    $depth = int($depth) if $depth =~ /^\s*\d+\s*$/;
+    $depth = 5           if $depth < 1 || $depth > 20;    # Sanity check
+
+    # Generate tests for each platform
+    foreach my $platform (@platforms) {
+        my $is_nix_platform = ($platform eq 'nix');
+
+        # Get LFI variables (trim whitespace)
+        my $target =
+          $is_nix_platform
+          ? ($VARIABLES{'@LFITGTNIX'} || '/etc/hosts')
+          : ($VARIABLES{'@LFITGTWIN'} || '\\Windows\\win.ini');
+        $target =~ s/^\s+|\s+$//g;
+
+        # Build the full path
+        my $full_path;
+        if ($use_abs) {
+
+            # 'abs' means skip traversal, use absolute path directly
+            $full_path = $target;
+
+            # Ensure it starts with / for nix or \ for win
+            if ($is_nix_platform) {
+                $full_path = '/' . $full_path unless $full_path =~ /^\//;
+            }
+            else {
+                # For Windows, ensure it starts with \ (unless it has a drive letter)
+                $full_path = '\\' . $full_path unless $full_path =~ /^[A-Za-z]:|^\\/;
+            }
+        }
+        else {
+            # Build traversal sequence
+            my $path =
+              $is_nix_platform
+              ? ($VARIABLES{'@LFIPATHNIX'} || '../')
+              : ($VARIABLES{'@LFIPATHWIN'} || '..\\');
+            $path =~ s/^\s+|\s+$//g;
+            my $traversal = $path x $depth;
+
+            # Fix double slash if test is exactly @LFI(...)
+            if ($test =~ /^\@LFI\([^)]*\)$/) {
+
+                # Remove trailing / from traversal or leading / from target to avoid //
+                if ($is_nix_platform && $traversal =~ /\/$/ && $target =~ /^\//) {
+                    $traversal =~ s/\/$//;
+                }
+                elsif (!$is_nix_platform && $traversal =~ /\\$/ && $target =~ /^\\/) {
+                    $traversal =~ s/\\$//;
+                }
+            }
+            $full_path = $traversal . $target;
+        }
+
+        # Apply URL encoding if requested (do this after absolute path handling)
+        if ($use_url) {
+            $full_path =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
+        }
+
+        # Replace @LFI(...) in the test string with the generated path
+        my $expanded_test = $test;
+        $expanded_test =~ s/\@LFI\([^)]*\)/$full_path/g;
+
+        push @lfitests, $expanded_test;
+    }
+
+    return @lfitests;
 }
 
 ###############################################################################
 sub unslash {
-    my $line = $_[0] || return;        # $line is the slash-escaped variable
-    my @line = split(/\\\\/, $line);
-    foreach (@line) {
-        $_ =~ s/\\a/\a/g;
-        $_ =~ s/\\b/\b/g;
-        $_ =~ s/\\e/\e/g;
-        $_ =~ s/\\f/\f/g;
-        $_ =~ s/\\n/\n/g;
-        $_ =~ s/\\r/\r/g;
-        $_ =~ s/\\t/\t/g;
-        $_ =~ s/\\x([[:xdigit:]]2)/chr(hex($1))/ge;
-    }
-    return join("\\", @line);
-}
+    my $line = $_[0] || return;    # $line is the slash-escaped variable
 
+    # Early return for empty strings
+    return $line if $line eq '';
+
+    # Use a single regex with eval to handle all escape sequences at once
+    $line =~ s/\\([abefnrt])|\\x([[:xdigit:]]{2})/defined($1) ? eval("qq{\\$1}") : chr(hex($2))/ge;
+
+    return $line;
+}
 ###############################################################################
 sub is_404 {
-    my ($uri, $content, $rescode, $loc_header) = @_;
-    $ext = get_ext($uri);
-    #$rescode=404;
-    #print "mode: " . $FoF{$ext}{'mode'} . "\n";
-    #print "code: " . $rescode . "\n";
+    my ($mark, $uri, $response) = @_;
+    return 0 unless defined $uri;
+    return 0 unless defined $mark;
+    return 0 unless defined $response;
+    my $debug_404 = 0;
 
-    if (   (($FoF{$ext}{'mode'} eq "STD") || ($FoF{$ext}{'mode'} eq ''))
-        && ($rescode =~ /4[0-9][0-9]/)) {
+    my $code = $response->{'whisker'}{'code'};
+    if ($debug_404) {
+        print "--------------------------------\n";
+        print "404: URI is: $uri\n";
+        print "404: URI code is: $code\n";
+    }
+
+    # Check user-specified error codes first (highest priority)
+    if (defined $VARIABLES{'ERRCODES'} && ref($VARIABLES{'ERRCODES'}) eq 'HASH') {
+        if (exists $VARIABLES{'ERRCODES'}->{$code}) {
+            print "404: 1\n" if $debug_404;
+            return 1;
+        }
+    }
+
+    # Check user-specified error strings (second priority, before expensive checks)
+    if (defined $VARIABLES{'ERRSTRINGS'} && ref($VARIABLES{'ERRSTRINGS'}) eq 'HASH') {
+        foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS'} }) {
+            if ($response->{'content'} =~ /$pattern/) {
+                print "404: 2\n" if $debug_404;
+                return 1;
+            }
+        }
+    }
+
+    # Trust 404, 406, and 410 codes
+    if ($code =~ /^40[46]$/ || $code eq '410') {
+        print "404: 3\n" if $debug_404;
         return 1;
     }
-    elsif ($FoF{$ext}{'mode'} eq "REDIR") {
-        if (get_base_host($loc_header) eq $FoF{$ext}{'location'}) {
-            return 1;
-        }
+
+    # remove and capture the query string
+    my $query_string = "";
+    if ($uri =~ /\?(.*)$/) {
+        $query_string = $1;
+        $uri =~ s/\?(.*)$//;
     }
-    elsif (($FoF{$ext}{'type'} eq "BLANK") && ($content eq "")) {
-        return 1;
-    }
-    elsif ($FoF{$ext}{'type'} eq "HASH") {
-        my $content = rm_active_content($content, $uri);
-        if (LW2::md4($content) eq $FoF{$ext}{'match'}) {
-            return 1;
-        }
+    my @uri_parts = split("/", $uri);
+
+    # If we don't have a real path (probably /) just return 0
+    # Filter out empty URI, just "/", or all empty parts
+    if ($uri eq "" || $uri eq "/" || (scalar(@uri_parts) > 0 && !grep { $_ ne "" } @uri_parts)) {
+        return 0;
     }
 
-    # Note: ERRCODES are checked in nikto_tests.plugin as they
-    # take precedent over ALL other tests
-    foreach my $string (keys %{ $VARIABLES->{'ERRSTRINGS'} }) {
-        if ($content =~ /$string/i) {
-            return 1;
-        }
+    my $ext = get_ext($uri);
+
+    # Build base path (all parts except the last one)
+    my @base_parts = @uri_parts;
+    pop @base_parts if scalar(@base_parts) > 0;
+    my $base_path = join("/", @base_parts);
+
+    # Ensure base_path ends with / if it's not empty (for proper path construction)
+    if ($base_path ne "" && $base_path ne "/") {
+        $base_path .= "/";
+    }
+    elsif ($base_path eq "") {
+        $base_path = "/";
     }
 
+    # Determine the suffix pattern based on extension type
+    my $suffix_pattern = "";
+    if ($ext eq "DIRECTORY") {
+        $suffix_pattern = "/";
+    }
+    elsif ($ext eq "DOTFILE") {
+        $base_path .= ".";
+    }
+    elsif ($ext eq "NONE") {
+    }
+    else {
+        $suffix_pattern = "." . $ext;
+    }
+
+    # Build cache key using "RAND" placeholder
+    my $cache_key = $base_path . "RAND" . $suffix_pattern;
+
+    # Check cache before making request
+    my $cached_entry = $mark->{'nf_cache'}{$cache_key};
+    my ($err_res, $err_content, $err_error, $err_request, $err_response);
+
+    if (defined $cached_entry) {
+        print "404: Cached Entry\n" if $debug_404;
+
+        # Use cached response data
+        $err_res     = $cached_entry->{'code'};
+        $err_content = "";                        # Content not cached
+        $err_error   = "";
+        $err_request = {};
+        $err_response = {
+                 'code'     => $cached_entry->{'code'},
+                 'location' => exists $cached_entry->{'location'} ? $cached_entry->{'location'} : ''
+                 };
+    }
+    else {
+        print "404: No Cached Entry\n" if $debug_404;
+
+        # Build nf_path by replacing "RAND" with actual random string
+        my $rand_str = LW2::utils_randstr(8);
+        my $nf_path  = $base_path . $rand_str . $suffix_pattern;
+        $nf_path .= "?" . $query_string if $query_string ne "";
+
+        ($err_res, $err_content, $err_error, $err_request, $err_response) =
+          nfetch($mark, $nf_path, "GET", "", "", "", "is_404");
+
+        # Determine mode, type, match, and location
+        my %response_map = (200 => "OK",
+                            300 => "REDIR",
+                            301 => "REDIR",
+                            302 => "REDIR",
+                            303 => "REDIR",
+                            307 => "REDIR",
+                            401 => "STD",
+                            403 => "STD",
+                            404 => "STD",
+                            406 => "STD",
+                            410 => "STD"
+                            );
+
+        my $mode = $response_map{$err_res} || "OTHER";
+        my $cache_entry = { 'code' => $err_res,
+                            'mode' => $mode
+                            };
+        print "404: $nf_path returned code: $err_res\n" if $debug_404;
+        print "404: mode is: $mode\n"                   if $debug_404;
+
+        # Handle redirects - store location if present
+        if ($err_response && $err_response->{'location'} ne '') {
+            $cache_entry->{'location'} = get_base_host($err_response->{'location'});
+        }
+
+        # Only determine type for OK/OTHER modes (STD and REDIR don't need type)
+        if ($mode eq "OK" || $mode eq "OTHER") {
+            if (length($err_content) == 0) {
+                print "404: Type is BLANK\n" if $debug_404;
+                $cache_entry->{'type'}  = "BLANK";
+                $cache_entry->{'match'} = "";
+            }
+            else {
+                print "404: Type is HASH\n" if $debug_404;
+                $cache_entry->{'type'}  = "HASH";
+                $cache_entry->{'match'} = LW2::md5(rm_active_content($err_content, $nf_path));
+                print "404: Match is: $cache_entry->{'match'}\n" if $debug_404;
+            }
+        }
+
+        # Store in cache
+        $mark->{'nf_cache'}{$cache_key} = $cache_entry;
+    }
+
+    # Now determine if the actual response matches the "not found" pattern
+    # Get the cached entry (should always be defined at this point)
+    my $nf_entry = $mark->{'nf_cache'}{$cache_key};
+    return 0 unless defined $nf_entry;
+
+    my $nf_mode         = $nf_entry->{'mode'};
+    my $actual_code     = $response->{'whisker'}{'code'};   # From the actual response being checked
+    my $actual_content  = $response->{'whisker'}{'data'} || "";
+    my $actual_location = $response->{'location'}        || "";
+
+    # Check STD mode first (most common case - fastest check)
+    if ($nf_mode eq "STD") {
+        if ($actual_code =~ /^4\d\d$/) {
+            print "404: 4\n" if $debug_404;
+            return 1;
+        }
+        return 0;
+    }
+
+    # Check REDIR mode
+    if ($nf_mode eq "REDIR") {
+        if ($actual_location ne '' && exists $nf_entry->{'location'}) {
+            my $actual_base = get_base_host($actual_location);
+            if ($actual_base eq $nf_entry->{'location'}) {
+                print "404: 5\n" if $debug_404;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    # Check BLANK type (for OK/OTHER modes)
+    if (exists $nf_entry->{'type'} && $nf_entry->{'type'} eq "BLANK") {
+        if (length($actual_content) == 0) {
+            print "404: 6\n" if $debug_404;
+            return 1;
+        }
+        return 0;
+    }
+
+    # Check HASH type (most expensive, check last)
+    if (exists $nf_entry->{'type'} && $nf_entry->{'type'} eq "HASH") {
+        print "404: Checking HASH type\n"                     if $debug_404;
+        print "404: nf_entry hash is: $nf_entry->{'match'}\n" if $debug_404;
+        if (exists $nf_entry->{'match'} && $nf_entry->{'match'} ne '') {
+            print "404: in exists\n" if $debug_404;
+
+            if (length($actual_content) > 0) {
+                print "404: length is > 0\n" if $debug_404;
+                my $clean_content = rm_active_content($actual_content, $uri);
+                print "404: Hash comparison is: \n"            if $debug_404;
+                print "    " . LW2::md5($clean_content) . "\n" if $debug_404;
+                print "    " . $nf_entry->{'match'} . "\n"     if $debug_404;
+                if (LW2::md5($clean_content) eq $nf_entry->{'match'}) {
+                    print "404: 7\n" if $debug_404;
+                    return 1;
+                }
+            }
+            else { print "length is 0\n" if $debug_404; }
+        }
+        print "404: 8\n" if $debug_404;
+        return 0;
+    }
+
+    # If we get here, the cached entry doesn't match any known pattern
+    print "404: 9\n" if $debug_404;
     return 0;
 }
 
@@ -114,21 +471,24 @@ sub scrub {
     for my $val (@_) {
         next if $val eq "";
 
-        # remove IPv6 brackets if present
-        $val =~ s/^\[([^\]]+)\]$/$1/;
-        $val = validate_and_fix_regex($val);
+        # Create a copy to avoid modifying read-only values
+        my $val_copy = $val;
 
-        my ($validip, $internal, $loopback) = is_ip($val);
+        # remove IPv6 brackets if present
+        $val_copy =~ s/^\[([^\]]+)\]$/$1/;
+        $val_copy = validate_and_fix_regex($val_copy);
+
+        my ($validip, $internal, $loopback) = is_ip($val_copy);
         if ($validip) {
-            if ($val =~ /^$LW2::IPv6_re$/) {
-                $line =~ s/$val/\:\:/g;
+            if ($val_copy =~ /^$LW2::IPv6_re$/) {
+                $line =~ s/$val_copy/\:\:/g;
             }
             else {
-                $line =~ s/$val/0.0.0.0/g;
+                $line =~ s/$val_copy/0.0.0.0/g;
             }
         }
         else {
-            $line =~ s/$val/example.com/ig;
+            $line =~ s/$val_copy/example.com/ig;
         }
     }
 
@@ -137,31 +497,30 @@ sub scrub {
 
 ###############################################################################
 sub nprint {
-    my $line = shift;
-    my $mode = shift;
+    my ($line, $mode, $testid) = @_;
     chomp($line);
 
     # Deferred output?
     if ($VARIABLES{'deferout'}) {
-        push @{ $VARIABLES{'defertxt'} }, $mode . "::" . $line;
+        push @{ $VARIABLES{'defertxt'} }, $mode . "::" . ($testid // '') . "::" . $line;
         return;
     }
 
-    # scrub values
+    # scrub values - only pass scrub values (everything after $line and $mode)
     if ($OUTPUT{'scrub'}) {
-        $line = scrub($line, @_);
+        my @scrub_values = @_[ 3 .. $#_ ];
+        $line = scrub($line, @scrub_values);
     }
 
     # don't print debug & verbose to output file...
     if ($mode ne '') {
-        if ($mode eq "d" && $OUTPUT{'debug'}) {
-            print STDERR "D:" . localtime() . " $line\n";
-        }
-        if ($mode eq "v" && $OUTPUT{'verbose'}) {
-            print "V:" . localtime() . " $line\n";
-        }
-        if ($mode eq "e" && $OUTPUT{'errors'}) {
-            print "E:" . localtime() . " $line\n";
+        my %output_flags = ('d' => 'debug', 'v' => 'verbose', 'e' => 'errors');
+
+        if (exists $output_flags{$mode} && $OUTPUT{ $output_flags{$mode} }) {
+            my $prefix     = $mode eq 'd'    ? "D:"        : $mode eq 'v' ? "V:" : "E:";
+            my $output     = $mode eq 'd'    ? \*STDERR    : \*STDOUT;
+            my $testid_str = defined $testid ? "[$testid]" : "[000000]";
+            print $output $prefix . localtime() . " $testid_str - $line\n";
         }
         return;
     }
@@ -170,12 +529,11 @@ sub nprint {
     if ($line =~ /^\t?\+ ERROR:/) { print STDERR "$line\n"; return; }
 
     # don't print to STDOUT if output file is "-"
-    if ((defined $CLI{'file'}) && ($CLI{'file'} eq "-")) { return; }
+    return if defined $CLI{'file'} && $CLI{'file'} eq "-";
 
     $line =~
-      s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/http:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
-    $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/http:\/\/www.cert.org\/advisories\/$1.html/g;
-    $line =~ s/BID\-([0-9]{4})/http:\/\/www.securityfocus.com\/bid\/$1/g;
+      s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/https:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
+    $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/https:\/\/www.cert.org\/advisories\/$1.html/g;
     $line =~
       s/(MS([0-9]{2})\-[0-9]{3})/https\:\/\/docs\.microsoft\.com\/en-us\/security-updates\/securitybulletins\/20$2\/$1/gi;
 
@@ -187,13 +545,13 @@ sub nprint {
 ###############################################################################
 sub get_ext {
     my $uri = $_[0] || return;
-    if ($uri =~ /\/$/) { return "DIRECTORY"; }
-    $uri =~ s/^.*\///;
-    if ($uri =~ /^\.[^.%]/) { return "DOTFILE"; }
-    $uri =~ s/[?&%].*$//;
-    if ($uri !~ /\./) { return "NONE"; }
-    $uri =~ s/\@[A-Z]+//;    # remove tokens
-    $uri =~ s/\".*$//;
+    return "DIRECTORY" if $uri =~ /\/$/;
+    $uri                       =~ s/^.*\///;
+    return "DOTFILE" if $uri   =~ /^\.[^.%]/;
+    $uri                       =~ s/[?&%;\|].*$//;
+    return "NONE" if index($uri, '.') == -1;
+    $uri =~ s/\@[A-Z]+(\([^\)]*\))?//;    # remove variables and functions
+    $uri =~ s/".*$//;
     $uri =~ s/^.*\.//;
     return $uri;
 }
@@ -234,7 +592,7 @@ sub status_report {
     }
 
     if (($perc_compl < 100) && ($secleft > 0)) {
-        $line .= sprintf(" (~%.0f%% complete, $timeleft left)", $perc_compl);
+        $line .= sprintf(" (~%.0f%% complete, ~$timeleft left)", $perc_compl);
     }
 
     if ($NIKTO{'current_plugin'} ne '') {
@@ -248,7 +606,7 @@ sub status_report {
 }
 ###############################################################################
 sub date_disp {
-    my $t = $_[0] || return;
+    my $t      = $_[0] || return;
     my @time   = localtime($t);
     my $result = sprintf("%d-%02d-%02d %02d:%02d:%02d",
                          $time[5] + 1900,
@@ -270,163 +628,26 @@ sub get_base_host {
 }
 
 ###############################################################################
-sub map_codes {
-    my ($mark) = @_;
-    my %REQS;
-    my $rs = LW2::utils_randstr(8);
-
-    # / for OK response
-    my ($res, $content, $error, $request, $response) =
-      nfetch($mark, "/", "GET", "", "", "", "map_codes");
-
-    if ($response->{'location'} ne '') {
-        my $root = "/";
-        if ($mark->{'root'} ne '') { $root = $mark->{'root'}; }
-        nprint("+ Root page $root redirects to: $response->{'location'}",
-               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-
-        if ($response->{'location'} ne '/') {
-            if (($response->{'location'} =~ /^\//)
-                || ($response->{'location'} =~
-                    /^https?\:\/\/(?:$mark->{'hostname'}|$mark->{'ip'}|$mark->{'displayname'})/i)
-                    ) {
-                my @uriparts  = LW2::uri_split($response->{'location'});
-                my @pathparts = split('/', $uriparts[0]);
-                for (my $i = scalar(@pathparts) - 1 ; $i >= 1 ; $i--) {
-                    $uriparts[0] =~ s/$pathparts[$i]//;
-                    $uriparts[0] =~ s/\/\//\//;
-                    next if ($uriparts[0] eq '/');
-                    my ($res, $content, $error, $request, $response) =
-                      nfetch($mark, $uriparts[0], "GET", "", "", "", "Redirect Follow");
-                }
-            }
-        }
-
-        if ($response->{'location'} =~ /^$mark->{'hostname'}/i)    # same host
-        {
-            ($res, $content, $error, $request, $response) =
-              nfetch($mark, $response->{'location'}, "GET", "", "", "", "map_codes");
-        }
-        else                                                       # different host... just guess?
-        {
-            $FoF{'okay'}{'response'} = 200;
-            $FoF{'okay'}{'type'}     = "STD";
-        }
-    }
-    else {
-        $FoF{'okay'}{'response'} = $res;
-        my $cooked = rm_active_content($content);
-        $FoF{'okay'}{'type'}  = "HASH";
-        $FoF{'okay'}{'match'} = LW2::md4($cooked);
-    }
-
-    # these are some used that may not be in the db_tests
-    if (defined $CLI{'mutate'}) {
-        $db_extensions{'bak'}  = 1;
-        $db_extensions{'data'} = 1;
-        $db_extensions{'dbc'}  = 1;
-        $db_extensions{'dbf'}  = 1;
-        $db_extensions{'lst'}  = 1;
-        $db_extensions{'htx'}  = 1;
-        $db_extensions{'htm'}  = 1;
-        $db_extensions{'html'} = 1;
-        $db_extensions{'ini'}  = 1;
-        $db_extensions{'lst'}  = 1;
-        $db_extensions{'txt'}  = 1;
-        $db_extensions{'xml'}  = 1;
-        $db_extensions{'php'}  = 1;
-        $db_extensions{'php3'} = 1;
-    }
-
-    foreach my $ext (keys %db_extensions) {
-        if (   $ext ne "DIRECTORY"
-            && $ext ne "NONE"
-            && $ext ne "DOTFILE") {
-            $REQS{"/$rs.$ext"} = $ext;
-        }
-    }
-    undef $db_extensions;
-
-    # add those generic type holders back as real files
-    $REQS{"/$rs/"} = "DIRECTORY";
-    $REQS{"/$rs"}  = "NONE";
-    $REQS{"/.$rs"} = "DOTFILE";
-
-    foreach my $file (keys %REQS) {
-        return if $mark->{'terminate'};
-        nprint("- Testing error for file: " . $mark->{'root'} . $file . "\n",
-               "v", $mark->{'hostname'}, ($mark->{'ip'}, $mark->{'displayname'}));
-        ($res, $content, $error, $request, $response) =
-          nfetch($mark, $file, "GET", "", "", "", "map_codes");
-
-        $ext = $REQS{$file};
-        $FoF{$ext}{'response'} = $res;
-
-        # handle .com to .org redirs or whatnot
-        if ($response->{'location'} ne '') {
-            $FoF{$ext}{'location'} = get_base_host($response->{'location'});
-        }
-
-        # if it is not specific type, figure out Content or HASH method...
-        if    ($FoF{$ext}{'response'} eq 404) { $FoF{$ext}{'mode'} = "STD"; next; }
-        elsif ($FoF{$ext}{'response'} eq 200) { $FoF{$ext}{'mode'} = "OK"; }
-        elsif ($FoF{$ext}{'response'} eq 410) { $FoF{$ext}{'mode'} = "STD";   next; }
-        elsif ($FoF{$ext}{'response'} eq 401) { $FoF{$ext}{'mode'} = "STD";   next; }
-        elsif ($FoF{$ext}{'response'} eq 403) { $FoF{$ext}{'mode'} = "STD";   next; }
-        elsif ($FoF{$ext}{'response'} eq 300) { $FoF{$ext}{'mode'} = "REDIR"; next; }
-        elsif ($FoF{$ext}{'response'} eq 301) { $FoF{$ext}{'mode'} = "REDIR"; next; }
-        elsif ($FoF{$ext}{'response'} eq 302) { $FoF{$ext}{'mode'} = "REDIR"; next; }
-        elsif ($FoF{$ext}{'response'} eq 303) { $FoF{$ext}{'mode'} = "REDIR"; next; }
-        elsif ($FoF{$ext}{'response'} eq 307) { $FoF{$ext}{'mode'} = "REDIR"; next; }
-        else                                  { $FoF{$ext}{'mode'} = "OTHER"; }
-
-        # if we've got an OK/OTHER response, look at content first
-        # blank content, or hash...
-        if (length($content) == 0) {
-            nprint("- OK/OTHER type settled on: BLANK\n", "v");
-            $FoF{$ext}{'type'}  = "BLANK";
-            $FoF{$ext}{'match'} = "";
-        }
-        else {
-            nprint("- OK/OTHER type settled on: HASH\n", "v");
-            my $cooked = rm_active_content($content, $file);
-            $FoF{$ext}{'type'}  = "HASH";
-            $FoF{$ext}{'match'} = LW2::md4($cooked);
-        }
-    }
-
-    # lastly, get a hash of index.php so we can cut down on some false positives...
-    ($res, $content, $error, $request, $response) =
-      nfetch($mark, "/index.php?", "GET", "", "", "", "map_codes");
-
-    my $cooked = rm_active_content($content, "/index.php");
-    $FoF{'index.php'}{'match'} = LW2::md4($cooked);
-    $FoF{'index.php'}{'type'}  = "HASH";
-
-    return;
-}
-
-###############################################################################
 sub rm_active_content {
 
     # Try to remove active content which could mess up the file's signature
     my ($cont, $file) = @_;
+    return "" if (length($cont) == 0);
 
     # Dates/Times
-    $cont =~ s/[12][0-9]{3}[-.\/][1-3]?[0-9][-.\/][1-3]?[0-9]//g;    # 2001-12-12
-    $cont =~ s/[1-3]?[0-9][-.\/][1-3]?[0-9][-.\/][12][0-9]{3}//g;    # 12-12-2002
-    $cont =~ s/[0-9]{8,14}//g;                                       # timestamp
-    $cont =~ s/[0-9]{6}//g;                                          # timestamp
-    $cont =~ s/[0-9]{2}:[0-9]{2}(?::[0-9]{2})?//g;                   # 12:11:33
+    $cont =~ s/[12]\d{3}[-.\/][1-3]?\d[-.\/][1-3]?\d//g;      # 2001-12-12
+    $cont =~ s/[1-3]?\d[-.\/][1-3]?\d\d[-.\/][12]\d{3}//g;    # 12-12-2002
+    $cont =~ s/\d{8,14}//g;                                   # timestamp
+    $cont =~ s/\d{6}//g;                                      # timestamp
+    $cont =~ s/\d{2}:\d{2}(?::\d{2})?//g;                     # 12:11:33
     $cont =~
-      s/(?:mon|tue|wed|thu|fri|sat|sun),? [1-3]?[0-9] (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)//ig;
+      s/(?:mon|tue|wed|thu|fri|sat|sun)(?:day)?,? [1-3]?[0-9] (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)//ig;
     $cont =~ s/[12][0-9]{3}\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s?[1-3]?[0-9]//gi
-      ;                                                              # 2009 jan 29
+      ;                                                       # 2009 jan 29
     $cont =~
       s/[1-3]?[0-9]\s?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[, ]?(?:[12][0-9]{3})?//gi
-      ;                                                              # 29 Jan 2009
-    $cont =~ s/[0-9\.]+ second//gi;                                  # page load time
-    $cont =~ s/[0-9]+ queries//gi;                                   # wordpress
+      ;                                                       # 29 Jan 2009
+    $cont =~ s/[\d.]+ (?:second|queries)//gi;                 # page load time
 
     # URI, if provided, plus encoded versions of it
     # $_[1] has unescaped file name, and $file has escaped. use appropriate one!
@@ -477,8 +698,19 @@ sub dump_target_info {
 
         $sslprint = "$VARIABLES{'DIV'}\n";
         $sslprint .= "+ SSL Info:           Subject:  $mark->{'ssl_cert_subject'}\n";
-        $sslprint .= "                      Altnames: $mark->{'ssl_cert_altnames'}\n"
-          if $mark->{'ssl_cert_altnames'} ne '';
+
+        # Extract and display CN separately
+        my $cn = '';
+        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+            $cn = $1;
+            $sslprint .= "                      CN:       $cn\n";
+        }
+
+        # Display SAN if present
+        if ($mark->{'ssl_cert_altnames'} ne '') {
+            $sslprint .= "                      SAN:      $mark->{'ssl_cert_altnames'}\n";
+        }
+
         $sslprint .= "                      Ciphers:  $mark->{'ssl_cipher'}\n";
         $sslprint .= "                      Issuer:   $mark->{'ssl_cert_issuer'}";
     }
@@ -539,6 +771,15 @@ sub dump_target_info {
             }
         }
 
+        if (defined $mark->{'platform'}) {
+            my %platform_names = ('nix' => 'Linux/Unix',
+                                  'win' => 'Windows',
+                                  'all' => 'Unknown'
+                                  );
+            my $platform_display = $platform_names{ $mark->{'platform'} } || $mark->{'platform'};
+            nprint("+ Platform:           $platform_display");
+        }
+
         my $time = date_disp($mark->{start_time});
         nprint("+ Start Time:         $time (GMT$VARIABLES{'GMTOFFSET'})");
         nprint($VARIABLES{'DIV'});
@@ -581,8 +822,6 @@ sub general_config {
     $NIKTO{'mutate_opts'}{'3'} = "Enumerate user names via Apache (/~user type requests)";
     $NIKTO{'mutate_opts'}{'4'} =
       "Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)";
-    $NIKTO{'mutate_opts'}{'5'} =
-      "Attempt to brute force sub-domain names, assume that the host name is the parent domain";
     $NIKTO{'mutate_opts'}{'6'} =
       "Attempt to guess directory names from the supplied dictionary file";
 
@@ -593,6 +832,7 @@ sub general_config {
     $CLI{'all_options'} =~ s/(\-id?\s[^\s:]+:)[^\s]+/$1****/i;
 
     GetOptions("ask=s"            => \$CLI{'ask'},
+               "Add-header=s"     => \@{ $CLI{'headers'} },
                "check6"           => \$CLI{'check6'},
                "Cgidirs=s"        => \$CLI{'forcecgi'},
                "config=s"         => \$CLI{'config'},
@@ -609,7 +849,6 @@ sub general_config {
                "maxtime=s"        => \$CLI{'maxtime'},
                "mutate-options=s" => \$CLI{'mutate-options'},
                "mutate=s"         => \$CLI{'mutate'},
-               "no404"            => \$CLI{'nofof'},
                "nointeractive"    => \$CLI{'nointeractive'},
                "nolookup"         => \$CLI{'skiplookup'},
                "nossl"            => \$CLI{'nossl'},
@@ -617,6 +856,7 @@ sub general_config {
                "output=s"         => \$CLI{'file'},
                "Pause=f"          => \$CLI{'pause'},
                "Plugins=s"        => \$CLI{'plugins'},
+               "Platform=s"       => \$CLI{'platform'},
                "RSAcert=s"        => \$CLI{'cert'},
                "port=s"           => \$CLI{'ports'},
                "root=s"           => \$CLI{'root'},
@@ -625,9 +865,9 @@ sub general_config {
                "Save=s"           => \$CLI{'saveresults'},
                "timeout=i"        => \$CLI{'timeout'},
                "Tuning=s"         => \$CLI{'tuning'},
-               "until:s"          => \$CLI{'until'},
                "Userdbs:s"        => \$CLI{'userdbs'},
-               "usecookies"       => \$CLI{'usecookies'},
+               "nocheck"          => \$CLI{'nocheck'},
+               "nocookies"        => \$CLI{'nocookies'},
                "useproxy:s"       => \$CLI{'useproxy'},
                "useragent=s"      => \$CLI{'useragent'},
                "url=s"            => \$CLI{'host'},
@@ -639,6 +879,16 @@ sub general_config {
                "ipv4"             => \$CLI{'ipv4'},
                )
       or usage();
+
+    # Validate that -followredirects doesn't have an argument, a common confusion with -Format
+    if ($CLI{'followredirects'}) {
+        if ($CLI{'all_options'} =~ /\-f(ollowredirects)?\s+[^-]/) {
+            nprint(
+                "+ ERROR: -f (-followredirects) does not accept arguments. Use -F for output format (e.g., -F html)"
+                );
+            exit 1;
+        }
+    }
 
     # Run a test for IPv6 connectivity
     if ($CLI{'check6'}) {
@@ -666,17 +916,18 @@ sub general_config {
     # 404string
     if ($CLI{'404string'} ne '') {
         my $s = validate_and_fix_regex($CLI{'404string'});
-        $VARIABLES->{'ERRSTRINGS'}->{$s} = 1;
+        $VARIABLES{'ERRSTRINGS'}->{$s} = 1;
     }
 
     # 404code
     if ($CLI{'404code'} ne '') {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
+            $code =~ s/^\s+|\s+$//g;    # Trim whitespace
             if ($code =~ /[^\d]/) {
                 nprint("+ ERROR: Invalid 404code, must be an integer");
                 exit 1;
             }
-            $VARIABLES->{'ERRCODES'}->{$code} = 1;
+            $VARIABLES{'ERRCODES'}->{$code} = 1;
         }
     }
 
@@ -687,57 +938,6 @@ sub general_config {
             nprint("+ ERROR: Invalid maxtime value, must be a valid time (e.g., 3600s, 60m, 1h)");
             exit 1;
         }
-    }
-
-    # Until
-    if ($CLI{'until'} ne '') {
-
-        # if a number of hours/mins/secs, convert to a time to pause
-        my $pausetime;
-        my $now = time();
-        if ($CLI{'until'} =~ /[hms]$/i) {
-            my $gotime = time_to_seconds($CLI{'until'});
-            if ($gotime eq '') {
-                nprint(
-                    "+ ERROR: Invalid until value, must be a valid time (e.g., 3600s, 60m, 1h) or a time (e.g., 03:00)"
-                    );
-                exit 1;
-            }
-
-            # convert to a pausetime
-            $pausetime = $now + $gotime;
-        }
-        elsif ($CLI{'until'} =~ /\d\d:\d\d:?(?:\d\d)?$/) {
-
-            # convert until time to epoch time
-            # format: (mm dd)? hh:mm:ss
-            $CLI{'until'} =~ /^(?:(\d\d)(?:\s|\/)(\d\d))?(?:\s|\/)?(\d?\d):(\d\d):?(\d\d)?$/;
-            my ($month, $day, $hh, $mm, $ss) = ($1, $2, $3, $4, $5);
-            $ss = '00' if $ss eq '';
-
-            # get year and complete month/day info
-            (undef, undef, undef, $cday, $cmon, $year) = localtime(time);
-            $year += 1900;
-            $day = $cday if $day eq '';
-            if ($month eq '') {
-                $month = $cmon;
-            }
-            else {
-                $month--;
-            }
-
-            $pausetime = timelocal($ss, $mm, $hh, $day, $month, $year);
-        }
-
-        if ($now > $pausetime) {
-            nprint("+ ERROR: Pause time is in the past.");
-            exit 1;
-        }
-        $CLI{'until'} = $pausetime;
-    }
-
-    if ($CLI{'useragent'}) {
-        push(@options, "USERAGENT=" . $CLI{'useragent'});
     }
 
     # options allows overriding of nikto.conf entries on command line
@@ -782,6 +982,49 @@ sub general_config {
         }
     }
 
+    # Parse comma-separated formats early (before validation)
+    my @formats_raw = ();
+    if (defined $CLI{'format'} && $CLI{'format'} ne '') {
+        @formats_raw = split(/,/, $CLI{'format'});
+    }
+
+    # If no format specified, try to infer from file extension later
+    my @formats      = ();
+    my %formats_hash = ();
+
+    foreach my $fmt (@formats_raw) {
+        $fmt =~ s/^\s+|\s+$//g;    # Trim whitespace
+        $fmt = lc($fmt);
+        $fmt = 'txt' if $fmt eq 'text';
+        $fmt = 'htm' if $fmt eq 'html';
+
+        if ($fmt !~ /^(?:txt|htm|csv|json|sql|sqld|xml|none)$/) {
+            nprint("+ ERROR: Invalid output format: $fmt");
+            exit 1;
+        }
+
+        # Avoid duplicates
+        if (!exists $formats_hash{$fmt}) {
+            push(@formats, $fmt);
+            $formats_hash{$fmt} = 1;
+        }
+    }
+
+    # Store formats array for later use
+    $CLI{'formats'} = \@formats;
+
+    # Keep first format for backward compatibility with single-format code paths
+    $CLI{'format'} = $formats[0] if @formats > 0;
+
+    # Check XML dependencies (check if xml is in formats)
+    if (grep { $_ eq 'xml' } @formats) {
+        eval "require XML::Writer";
+        if ($@) {
+            nprint("+ ERROR: Module XML::Writer missing. Install with: cpan XML::Writer");
+            exit 1;
+        }
+    }
+
     # port(s)
     if (defined $CLI{'ports'}) {
         $CLI{'ports'} =~ s/^\s+//;
@@ -792,13 +1035,53 @@ sub general_config {
         }
     }
 
-    # auto-generate file name
-    if (($CLI{'file'} eq '.') && ($CLI{'format'} eq '')) {
-        nprint("+ ERROR: Output format must be used with auto file naming");
-        exit 1;
+    # output file - infer format from extension if not specified
+    if (@formats == 0) {
+
+        # No format specified, try to infer from file
+        if (defined $CLI{'file'} && $CLI{'file'} ne '' && $CLI{'file'} ne '.') {
+            my $ext = lc($CLI{'file'});
+            $ext =~ s/(^.*\.)([^.]*$)/$2/g;
+            $ext = 'txt' if $ext eq 'text';
+            $ext = 'htm' if $ext eq 'html';
+            if ($ext =~ /^(?:txt|htm|csv|json|sql|sqld|xml)$/) {
+                push(@formats, $ext);
+                $CLI{'formats'} = \@formats;
+                $CLI{'format'}  = $ext;
+            }
+            else {
+                $CLI{'format'} = 'none';
+                push(@formats, 'none');
+                $CLI{'formats'} = \@formats;
+            }
+        }
+        else {
+            $CLI{'format'} = 'none';
+            push(@formats, 'none');
+            $CLI{'formats'} = \@formats;
+        }
     }
 
+    # Check if we need files for any format
+    my $needs_file = 0;
+    foreach my $fmt (@formats) {
+        if (($fmt ne "none") && ($fmt ne "sqld")) {
+            $needs_file = 1;
+            last;
+        }
+    }
+
+    # Initialize files hash
+    $CLI{'files'} = {};
+
+    # File naming logic
     if ($CLI{'file'} eq '.') {
+
+        # Auto-generate file names for each format
+        if (@formats == 0 || ($formats[0] eq '')) {
+            nprint("+ ERROR: Output format must be used with auto file naming");
+            exit 1;
+        }
 
         my $hn = $CLI{'host'};
         $hn =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
@@ -808,62 +1091,135 @@ sub general_config {
         $port =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
         my $now = date_disp(time());
         $now =~ s/[^0-9-]/-/g;
-        $CLI{'file'} = "nikto_" . $hn . "_" . $port . "_" . $now . "." . $CLI{'format'};
-        $CLI{'file'} =~ s/_+/_/g;
+        my $base_name = "nikto_" . $hn . "_" . $port . "_" . $now;
+        $base_name =~ s/_+/_/g;
 
-        # exists?
-        if (-e $CLI{'file'}) {
-            $CLI{'file'} =~ /^(.*)(\.[a-z]{3})/;
-            my $fn     = $1;
-            my $ext    = $2;
-            my $ctr    = 0;
-            my $exists = 1;
-            while ($exists) {
-                $ctr++;
-                if (!-e $fn . "_" . $ctr . $ext) {
-                    $CLI{'file'} = $fn . "_" . $ctr . $ext;
-                    $exists = 0;
+        # Generate file names for each format
+        foreach my $fmt (@formats) {
+            next if ($fmt eq "none" || $fmt eq "sqld");    # These don't need files
+
+            my $file_name = $base_name . "." . $fmt;
+
+            # Check if file exists and add counter if needed
+            if (-e $file_name) {
+                $file_name =~ /^(.*)(\.[a-z]{3,4})/;
+                my $fn     = $1;
+                my $ext    = $2;
+                my $ctr    = 0;
+                my $exists = 1;
+                while ($exists) {
+                    $ctr++;
+                    my $new_name = $fn . "_" . $ctr . $ext;
+                    if (!-e $new_name) {
+                        $file_name = $new_name;
+                        $exists    = 0;
+                    }
                 }
             }
-        }
-        nprint("- Auto-generated save file: $CLI{'file'}",
-               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-    }
 
-    # output file
-    if (!defined $CLI{'format'}) {
-
-        # Check what output has
-        $CLI{'format'} = "none";
-        if (defined $CLI{'file'}) {
-            $CLI{'format'} = lc($CLI{'file'});
-            $CLI{'format'} =~ s/(^.*\.)([^.]*$)/$2/g;
+            $CLI{'files'}{$fmt} = $file_name;
+            nprint("- Auto-generated save file: $file_name",
+                   "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
+    elsif (defined $CLI{'file'} && $CLI{'file'} ne '' && $CLI{'file'} ne '.') {
 
-    $CLI{'format'} = lc($CLI{'format'});
-    $CLI{'format'} = 'txt' if $CLI{'format'} eq 'text';
-    $CLI{'format'} = 'htm' if $CLI{'format'} eq 'html';
+        # Use filename as prefix, append format extensions
+        my $prefix = $CLI{'file'};
 
-    if ($CLI{'format'} !~ /^(?:txt|htm|csv|json|sql|nbe|xml|none)$/) {
-        nprint("+ ERROR: Invalid output format");
-        exit 1;
+        # Generate file names for each format
+        foreach my $fmt (@formats) {
+            if ($fmt eq "none" || $fmt eq "sqld") {
+                $CLI{'files'}{$fmt} = "";    # No file for these formats
+                next;
+            }
+
+            # Append format extension to prefix
+            my $file_name = $prefix . "." . $fmt;
+            $CLI{'files'}{$fmt} = $file_name;
+        }
+    }
+    else {
+        # No file specified - only sqld/none formats allowed
+        foreach my $fmt (@formats) {
+            if ($fmt eq "none" || $fmt eq "sqld") {
+                $CLI{'files'}{$fmt} = "";
+            }
+        }
     }
 
-    if ((defined $CLI{'file'}) && ($CLI{'format'} eq "")) {
+    # Validation: If file-based formats are specified but no output file, default to auto-generation
+    if ((!defined $CLI{'file'} || $CLI{'file'} eq '') && $needs_file) {
+        $CLI{'file'} = '.';
+
+        # Re-run the auto-generation logic above (simplified, since formats are already parsed)
+        my $hn = $CLI{'host'};
+        $hn =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+        $hn =~ s/_+/_/g;
+        my $port = $CLI{'ports'};
+        $port =~ s/,/\-/g;
+        $port =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
+        my $now = date_disp(time());
+        $now =~ s/[^0-9-]+/-/g;
+        my $base_name = "nikto_" . $hn . "_" . $port . "_" . $now;
+        $base_name =~ s/_+/_/g;
+
+        foreach my $fmt (@formats) {
+            next if ($fmt eq "none" || $fmt eq "sqld");
+
+            my $file_name = $base_name . "." . $fmt;
+
+            if (-e $file_name) {
+                $file_name =~ /^(.*)(\.[a-z]{3,4})/;
+                my $fn     = $1;
+                my $ext    = $2;
+                my $ctr    = 0;
+                my $exists = 1;
+                while ($exists) {
+                    $ctr++;
+                    my $new_name = $fn . "_" . $ctr . $ext;
+                    if (!-e $new_name) {
+                        $file_name = $new_name;
+                        $exists    = 0;
+                    }
+                }
+            }
+
+            $CLI{'files'}{$fmt} = $file_name;
+            nprint("- Auto-generated save file: $file_name",
+                   "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        }
+    }
+
+    # Validation checks
+    if ((defined $CLI{'file'}) && (@formats == 0 || ($formats[0] eq ""))) {
         nprint("+ ERROR: Output file specified without a format");
         exit 1;
     }
 
-    if ((!defined $CLI{'file'}) && ($CLI{'format'} ne "none")) {
+    if ((!defined $CLI{'file'} || $CLI{'file'} eq '') && $needs_file && @formats > 0) {
         nprint("+ ERROR: Output file format specified without a name");
         exit 1;
     }
 
-    # verify readable dtd
-    if ($CLI{'format'} eq 'xml' && $CONFIGFILE{'NIKTODTD'} != "") {
-        nprint("+ ERROR: DTD not defined");
-        exit 1;
+    # verify readable dtd (check all formats for xml)
+    if (grep { $_ eq 'xml' } @formats) {
+        if (!defined $CONFIGFILE{'NIKTODTD'} || $CONFIGFILE{'NIKTODTD'} eq '') {
+            nprint("+ ERROR: DTD not defined in configuration");
+            exit 1;
+        }
+
+        # Check if DTD file exists
+        my $dtd_path = $CONFIGFILE{'NIKTODTD'};
+        if ($dtd_path !~ /^\// && defined $CONFIGFILE{'EXECDIR'}) {
+            $dtd_path = "$CONFIGFILE{'EXECDIR'}/$dtd_path";
+        }
+
+        if (!-f $dtd_path) {
+            nprint("+ ERROR: DTD file not found: $dtd_path");
+            nprint("+ Please check your nikto.conf configuration");
+            exit 1;
+        }
     }
 
     # screen output
@@ -910,18 +1266,12 @@ sub general_config {
               if (defined $CLI{'mutate-options'});
             $CLI{'plugins'} .= ';apacheusers(' . $parameters . ')';
         }
-        if ($CLI{'mutate'} =~ /5/) {
-            $CLI{'plugins'} .= ";subdomain";
-        }
         if ($CLI{'mutate'} =~ /6/) {
             $CLI{'plugins'} .= ';dictionary(dictionary:' . $CLI{'mutate-options'} . ')';
         }
         nprint(
             "- Mutate is deprecated, use -Plugins instead. The following option can be used in future: -Plugin $CLI{'plugins'}"
             );
-    }
-    else {
-        undef $NIKTO{'mutate_opts'};    # we don't need this any more
     }
 
     # Asking questions?
@@ -931,12 +1281,6 @@ sub general_config {
     }
 
     $CLI{'timeout'} = $CLI{'timeout'} || 10;
-
-    # Set up User-Agent
-    $VARIABLES{'useragent'} = $CONFIGFILE{'USERAGENT'};
-    $VARIABLES{'useragent'} =~ s/\@VERSION/$VARIABLES{'version'}/g;
-    my $ev = $CLI{'evasion'} || "None";
-    $VARIABLES{'useragent'} =~ s/\@EVASIONS/$ev/g;
 
     # RFI URL -- push it to VARIABLES
     if (defined $CONFIGFILE{'RFIURL'}) {
@@ -983,6 +1327,17 @@ sub general_config {
     $COUNTERS{'total_checks'}  = 0;
     $COUNTERS{'total_targets'} = 0;
 
+    $VARIABLES{'GMTOFFSET'} = gmt_offset();
+    $VARIABLES{'DIV'}       = "-" x 75;
+    $VARIABLES{'deferout'}  = 0;
+    $VARIABLES{'defertxt'}  = [];
+
+    # Some Win versions can't use Time::HiRes correctly
+    $VARIABLES{'MSWIN32'} = 0;
+    if ($^O =~ /MSWin32/) {
+        $VARIABLES{'MSWIN32'} = 1;
+    }
+
     return;
 }
 
@@ -1005,15 +1360,16 @@ sub time_to_seconds {
 
 ###############################################################################
 sub sleeper {
-    sleep($CLI{'pause'}) if (defined $CLI{'pause'});
+    sleep($CLI{'pause'}) if defined $CLI{'pause'};
 }
 
 ###############################################################################
 sub safe_quit {
     my ($mark) = @_;
 
-    $mark->{'end_time'} = time();
-    $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+    $mark->{'end_time'}       = time();
+    $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+    $COUNTERS{'scan_elapsed'} = (time() - $COUNTERS{'scan_start'});
     report_host_end($mark);
     report_summary($mark);
     report_close($mark);
@@ -1024,46 +1380,27 @@ sub safe_quit {
 ###############################################################################
 sub check_input {
     my ($mark) = @_;
-
     my $key = readkey();
-    if ($key eq '') { return; }
+    return if $key eq '';
+
+    # Key to OUTPUT field mapping for toggles
+    my %toggles = (v => 'verbose',
+                   d => 'debug',
+                   e => 'errors',
+                   p => 'progress',
+                   r => 'show_redirects',
+                   c => 'show_cookies',
+                   o => 'show_ok',
+                   a => 'show_auth',
+                   );
 
     if ($key eq ' ') {
         status_report($mark);
     }
-    elsif ($key eq 'v') {
-        if   ($OUTPUT{'verbose'}) { $OUTPUT{'verbose'} = 0; }
-        else                      { $OUTPUT{'verbose'} = 1; }
+    elsif (exists $toggles{$key}) {
+        $OUTPUT{ $toggles{$key} } = !$OUTPUT{ $toggles{$key} };
     }
-    elsif ($key eq 'd') {
-        if   ($OUTPUT{'debug'}) { $OUTPUT{'debug'} = 0; }
-        else                    { $OUTPUT{'debug'} = 1; }
-    }
-    elsif ($key eq 'e') {
-        if   ($OUTPUT{'errors'}) { $OUTPUT{'errors'} = 0; }
-        else                     { $OUTPUT{'errors'} = 1; }
-    }
-    elsif ($key eq 'p') {
-        if   ($OUTPUT{'progress'}) { $OUTPUT{'progress'} = 0; }
-        else                       { $OUTPUT{'progress'} = 1; }
-    }
-    elsif ($key eq 'r') {
-        if   ($OUTPUT{'show_redirects'}) { $OUTPUT{'show_redirects'} = 0; }
-        else                             { $OUTPUT{'show_redirects'} = 1; }
-    }
-    elsif ($key eq 'c') {
-        if   ($OUTPUT{'show_cookies'}) { $OUTPUT{'show_cookies'} = 0; }
-        else                           { $OUTPUT{'show_cookies'} = 1; }
-    }
-    elsif ($key eq 'o') {
-        if   ($OUTPUT{'show_ok'}) { $OUTPUT{'show_ok'} = 0; }
-        else                      { $OUTPUT{'show_ok'} = 1; }
-    }
-    elsif ($key eq 'a') {
-        if   ($OUTPUT{'show_auth'}) { $OUTPUT{'show_auth'} = 0; }
-        else                        { $OUTPUT{'show_auth'} = 1; }
-    }
-    elsif (($key eq 'q') || (ord($key) eq 3)) {
+    elsif ($key eq 'q' || ord($key) == 3) {
         safe_quit($mark);
     }
     elsif ($key eq 'P') {
@@ -1079,29 +1416,26 @@ sub check_input {
 ###############################################################################
 sub pause {
     return if ($^O =~ /MSWin32/);
-    if ($_[0] eq 'u') {
-        nprint("- Pausing due to 'until' flag--press P to resume.");
-    }
-    else {
-        nprint("- Pausing--press P to resume.");
-    }
+    nprint("- Pausing--press P to resume.");
 
-    while (readkey() ne 'P') { $CLI{'until'} = ''; sleep 1; }
+    while (readkey() ne 'P') { sleep 1; }
     nprint("- Resuming.");
 }
 ###############################################################################
 sub readkey {
-    my $key;
-    return if ($^O =~ /MSWin32/);
+    return if $^O =~ /MSWin32/;    # Early return for Windows
 
+    my $key;
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'noecho'});
     $NIKTO{'POSIX'}{'term'}->setattr($NIKTO{'POSIX'}{'fd_stdin'}, TCSANOW);
+
     eval {
         local $SIG{ALRM} = sub { die; };
         ualarm(1_000);
         sysread(STDIN, $key, 1);
         ualarm(0);
     };
+
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'});
     $NIKTO{'POSIX'}{'term'}->setattr($NIKTO{'POSIX'}{'fd_stdin'}, TCSANOW);
 
@@ -1110,7 +1444,8 @@ sub readkey {
 
 ###############################################################################
 sub resolve {
-    my $ident = $_[0] or return;
+    my $ident  = $_[0] or return;
+    my $report = defined $_[1] ? $_[1] : 1;
     my ($ip, $name, $ipcache) = "";
     my (@addresses, @scrub);
     my $is6 = 0;
@@ -1191,7 +1526,7 @@ sub resolve {
             exit 1;
         }
 
-        if ($ipcache != "") {
+        if ($ipcache != "" && $report) {
             nprint("+ Multiple IPs found: $ip, $ipcache", "", @scrub);
         }
 
@@ -1218,7 +1553,7 @@ sub set_targets {
     my (@ports, @checkhosts, @results, @marks);
     my $defaultport = ($ssl) ? 443 : 80;
 
-    nprint("- Getting targets", "v");
+    nprint("- Getting targets", "v", "Init");
 
     # Check for portlist and expand
     foreach my $port (@tempports) {
@@ -1243,9 +1578,9 @@ sub set_targets {
     }
 
     # no ports explicitly set, so use default port
-     if (scalar(@ports) == 0) {
-         push(@ports, $defaultport);
-     }
+    if (scalar(@ports) == 0) {
+        push(@ports, $defaultport);
+    }
 
     # check whether -h is a file or an entry
     foreach my $host (@hosts) {
@@ -1257,12 +1592,14 @@ sub set_targets {
             push(@checkhosts, $host);
         }
     }
+
     # Now parse the list of checkhosts
     foreach my $host (@checkhosts) {
         $host =~ s/\s+//g;
         if ($host eq '') { next; }
         my $markhash = {};
-        $markhash->{'root'} = $root;
+        $markhash->{'root'}      = $root;
+        $markhash->{'cookiejar'} = LW2::cookie_new_jar();
 
         # is it a URL?
         if ($host =~ /^https?:\/\//) {
@@ -1272,11 +1609,11 @@ sub set_targets {
                 exit 1;
             }
             my @hostdata = LW2::uri_split($host);
-            $markhash->{'ident'}               = $hostdata[2];
-            $markhash->{'port'}                = $hostdata[3];
+            $markhash->{'ident'} = $hostdata[2];
+            $markhash->{'port'}  = $hostdata[3];
             if ($markhash->{'port'} eq '') {
-                if ($host =~ /^https:/) { $markhash->{'port'}=443; }
-                else { $markhash->{'port'}=$defaultport;}
+                if   ($host =~ /^https:/) { $markhash->{'port'} = 443; }
+                else                      { $markhash->{'port'} = $defaultport; }
             }
 
             # If URL included a path, add that as the root unless -root was specified
@@ -1292,7 +1629,7 @@ sub set_targets {
             if ((index $host, '[') == 0) {    # looks like accepted IPv6 format
                 if ($host =~ /^(\[?$LW2::IPv6_re_inc_zoneid\]?)(?:[:](\d+))?$/) {
                     $markhash->{'ident'} = $1;
-                    $markhash->{'port'} = $2;
+                    $markhash->{'port'}  = $2;
                     push(@marks, $markhash);
                 }
                 else {
@@ -1302,9 +1639,10 @@ sub set_targets {
             }
             else {
                 my @h = split(/\:|\,/, $host);
-                if (scalar @h > 2 || $h[0] eq '') {    # Possible invalid IPv6 format has been supplied
+                if (scalar @h > 2 || $h[0] eq '') { # Possible invalid IPv6 format has been supplied
                     nprint(
-                        "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",                        "",
+                        "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
+                        "",
                         ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                         );
                 }
@@ -1318,11 +1656,11 @@ sub set_targets {
                         # push unique array ref for each port
                         my $ti = $markhash->{'ident'};
                         my $tr = $markhash->{'root'};
-                        foreach my $p (@ports) { 
-                                my $markhash = {
-                                    'port' => $p,
-                                    'root' => $tr,
-                                    'ident' => $ti };
+                        foreach my $p (@ports) {
+                            my $markhash = { 'port'  => $p,
+                                             'root'  => $tr,
+                                             'ident' => $ti
+                                             };
 
                             $markhash->{'port'} = $p;
                             push(@marks, $markhash);
@@ -1336,8 +1674,82 @@ sub set_targets {
 }
 
 ###############################################################################
+sub platform_profiler {
+    if (defined $CLI{'platform'}) {
+        if ($CLI{'platform'} =~ /(nix|win|all)/i) {
+            return $CLI{'platform'};
+        }
+        else {
+            $VARIABLES{'deferout'} = 0;
+            nprint("+ ERROR: Invalid platform: $CLI{'platform'}");
+            exit 1;
+        }
+    }
+
+    my ($mark) = @_;
+    my @profile_pages = ("/",               "/server-status",
+                         "/icons/",         "/trace.axd",
+                         "/nosuchfile.asp", "/nosuchfile.aspx",
+                         "/localstart.asp", "/docs/",
+                         "/server"
+                         );
+
+    foreach my $file (@profile_pages) {
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, $file, "GET", "", "", "", "platform_profiler");
+
+        # Look for indicators of the platform in the Server header
+        if (   $mark->{'banner'}
+            && $VARIABLES{'@PLATFORMNIX'}
+            && $mark->{'banner'} =~ /$VARIABLES{'@PLATFORMNIX'}/i) {
+            return 'nix';
+        }
+        elsif (   $mark->{'banner'}
+               && $VARIABLES{'@PLATFORMWIN'}
+               && $mark->{'banner'} =~ /$VARIABLES{'@PLATFORMWIN'}/i) {
+            return 'win';
+        }
+
+        # check the response body
+        if ($content && $content =~ /$VARIABLES{'@PLATFORMNIX'}/i) {
+            return 'nix';
+        }
+        elsif ($content && $content =~ /$VARIABLES{'@PLATFORMWIN'}/i) {
+            return 'win';
+        }
+
+        # check the response headers
+        if ($response && ref($response) eq 'HASH') {
+            foreach my $header (keys %$response) {
+                my $value = $response->{$header};
+                next unless defined $value;
+
+                # Check header name
+                if ($header =~ /$VARIABLES{'@PLATFORMNIX'}/i) {
+                    return 'nix';
+                }
+                elsif ($header =~ /$VARIABLES{'@PLATFORMWIN'}/i) {
+                    return 'win';
+                }
+
+                # Check header value (handle arrays)
+                my $header_value = ref($value) eq 'ARRAY' ? join(', ', @$value) : $value;
+                if ($header_value =~ /$VARIABLES{'@PLATFORMNIX'}/i) {
+                    return 'nix';
+                }
+                elsif ($header_value =~ /$VARIABLES{'@PLATFORMWIN'}/i) {
+                    return 'win';
+                }
+            }
+        }
+    }
+
+    return 'all';
+}
+
+###############################################################################
 sub load_databases {
-    my @dbs    = qw/db_parked_strings db_404_strings  db_outdated  db_variables db_headers_suggested/;
+    my @dbs    = qw/db_useragents db_404_strings  db_outdated  db_variables db_headers_suggested/;
     my $prefix = $_[0] || '';
 
     # Only load the right databases if -Userdbs is set
@@ -1382,17 +1794,16 @@ sub load_databases {
                 foreach my $l (@file) {
                     if ($l =~ /^@/) {
                         next if $l eq '';
-                        my @temp = split(/=/, $l);
-                        $VARIABLES{ $temp[0] } .= "$temp[1]";
+                        my @temp = split(/=/, $l, 2);    # Limit to 2 parts to handle = in values
+                        if (   @temp >= 2
+                            && defined($temp[0])
+                            && defined($temp[1])
+                            && $temp[0] ne ''
+                            && $temp[1] ne '') {
+                            $temp[0] =~ s/^\s+|\s+$//g;
+                            $VARIABLES{ $temp[0] } = $temp[1];
+                        }
                     }
-                }
-            }
-
-            # db_parked_strings
-            elsif ($file =~ /u?db_parked_strings/) {
-                foreach my $l (@file) {
-                    $l = validate_and_fix_regex($l);
-                    $VARIABLES->{'PARKEDSTRINGS'}->{$l} = 1;
                 }
             }
 
@@ -1401,7 +1812,7 @@ sub load_databases {
                 foreach my $l (@file) {
                     my @T = parse_csv($l);
                     next if $T[0] eq '';
-                    $VARIABLES->{'SUGGESTED_HEADERS'}->{$T[0]} = $T[1];
+                    $VARIABLES->{'SUGGESTED_HEADERS'}->{ $T[0] } = $T[1];
                 }
             }
 
@@ -1411,11 +1822,11 @@ sub load_databases {
                     if ($l =~ /^\@CODE=/) {
                         $l =~ s/^\@CODE=//;
                         $l = validate_and_fix_regex($l);
-                        $VARIABLES->{'ERRCODES'}->{$l} = 1;
+                        $VARIABLES{'ERRCODES'}->{$l} = 1;
                     }
                     else {
                         $l = validate_and_fix_regex($l);
-                        $VARIABLES->{'ERRSTRINGS'}->{$l} = 1;
+                        $VARIABLES{'ERRSTRINGS'}->{$l} = 1;
                     }
                 }
             }
@@ -1431,6 +1842,17 @@ sub load_databases {
                 }
             }
 
+            # db_useragents
+            elsif ($file =~ /u?db_useragents/) {
+                $VARIABLES{'@USERAGENTS'} = [];
+                foreach my $l (@file) {
+                    next if $l =~ /^\#/;
+                    next if $l eq '';
+                    $l =~ s/^\s+//;
+                    $l =~ s/\s+$//;
+                    push @{ $VARIABLES{'@USERAGENTS'} }, $l;
+                }
+            }
             close(IN);
         }
     }
@@ -1438,6 +1860,25 @@ sub load_databases {
     return;
 }
 
+###############################################################################
+# Get directory listing
+sub dirlist {
+    my $DIR       = $_[0] || return;
+    my $PATTERN   = $_[1] || "";
+    my @FILES_TMP = ();
+
+    opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
+    foreach my $file (readdir(DIRECTORY)) {
+        if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
+        if ($PATTERN ne "") {
+            if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
+        }
+        else { push(@FILES_TMP, $file); }
+    }
+    closedir(DIRECTORY);
+
+    return @FILES_TMP;
+}
 ###############################################################################
 sub check_dbs {
     @dbs = dirlist($CONFIGFILE{'DBDIR'}, "^u?db_*");
@@ -1499,28 +1940,6 @@ sub check_dbs {
             }
             nprint("\t$counter entries");
         }
-        elsif ($file =~ /u?db_drupal/) {
-            my $counter = 0;
-            my %ENTRY;
-            foreach $line (<IN>) {
-                $line =~ s/^\s+//;
-                if ($line =~ /^\#/) { next; }
-                chomp($line);
-                if ($line eq "" || $line =~ /"nikto_id"/) { next; }
-                $counter++;
-                my @L = parse_csv($line);
-                if ($#L ne 1) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
-                if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
-                    nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
-                }
-                else { $ALL_IDS{ $L[0] } = 1; }
-                if (exists($ENTRY{ $L[1] })) {
-                    nprint("\t+ ERROR: Duplicate entry: $line");
-                }
-                else { $ENTRY{ $L[1] } = 1; }
-            }
-            nprint("\t$counter entries");
-        }
 
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
@@ -1529,51 +1948,81 @@ sub check_dbs {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
                 my @L = parse_csv($line);
+
+                # Validate field count (should be 9 fields)
+                if ((count_fields($line, 1) ne 8) && (count_fields($line) ne '')) {
+                    nprint(  "\t+ ERROR: Invalid syntax - expected 9 fields, got "
+                           . (scalar(@L))
+                           . ": $line");
+                    next;
+                }
+
+                # Validate method
                 if (   ($L[4] !~ /(GET|POST|TRACE|TRACK|OPTIONS|SEARCH|INDEX)/i)
                     && ($L[0] ne '006433')) {
                     nprint("\t+ ERROR: Possibly invalid method: $L[4] on ($line)");
                 }
-                if ($L[5] eq "") { nprint("\t+ ERROR: blank conditional: $line"); next; }
-                if ($line !~ /^\".*\",\".*\",\".*\",\".*\",\".*\"/) {
-                    nprint("\t+ ERROR: Invalid syntax ($#L): $line");
+
+                # Validate DSL field is not empty
+                if ($L[5] eq "") {
+                    nprint("\t+ ERROR: blank DSL field: $line");
                     next;
                 }
-                if ($line !~ /^(\".*\",){11}\".*\"/) {
-                    nprint("\t+ ERROR: Invalid syntax ($#L): $line");
-                    next;
+
+                # Validate DSL syntax
+                my $dsl_to_validate = $L[5];
+                if (defined $dsl_to_validate && length $dsl_to_validate) {
+
+        # Expand @LFI() placeholder before validation, since it needs to be expanded to be valid DSL
+                    $dsl_to_validate = expand_lfi_dsl($dsl_to_validate);
+
+                    if (defined $dsl_to_validate && length $dsl_to_validate) {
+                        eval { parse_dsl($dsl_to_validate); };
+                        if ($@) {
+                            nprint(
+                                "\t+ ERROR: Invalid DSL syntax in test $L[0] field 5: \"$L[5]\", error: $@"
+                                );
+                        }
+                    }
+                    else {
+                        nprint("\t+ ERROR: Empty DSL field test $L[0]");
+                    }
                 }
+
+                # Validate URI format
                 if (($L[3] =~ /^\@CG/) && ($L[3] !~ /^\@CGIDIRS/)) {
                     nprint("\t+ ERROR: Possible \@CGIDIRS misspelling: $line");
                 }
                 if ($L[3] =~ /[\s]/) {
                     nprint("\t+ ERROR: space in file portion test #$L[0]: '$L[3]'");
                 }
+
+                # Validate CSV format
                 if ($line =~ /[^\\]"\s/) {
                     nprint("\t+ ERROR: space after quote #$L[0]: $line");
                 }
                 if ($line =~ /\s"/) {
                     nprint("\t+ ERROR: space before quote #$L[0]: $line");
                 }
-                $ENTRIES{"$L[3],$L[4],$L[5],$L[6],$L[7],$L[8],$L[9],$L[11],$L[12]"}++;
-                if ((count_fields($line, 1) ne 12) && (count_fields($line) ne '')) {
-                    nprint("\t+ ERROR: Invalid syntax: $line");
-                }
-                for (my $i = 5 ; $i <= 9 ; $i++) {
-                    my ($result, $bad) = validate_and_fix_regex($L[$i], 1);
-                    if ($bad) {
-                        nprint("\t+ ERROR: Invalid regex in field $i: \"$L[$i]\", line: $line");
-                    }
-                }
+
+                # Check for duplicate entries
+                $ENTRIES{"$L[3],$L[4],$L[5],$L[6],$L[7],$L[8]"}++;
+
+                # Validate Test ID
                 if (($L[0] ne 0) && exists($ALL_IDS{ $L[0] })) {
                     nprint("\t+ ERROR: Duplicate Test ID: $L[0]");
                 }
                 else {
                     $ALL_IDS{ $L[0] } = 1;
                 }
+
+                # Validate Tuning Type
                 if ($L[2] eq "" || $L[2] =~ /[^a-f0-9]/) {
                     nprint("\t+ ERROR: Invalid Tuning Type: $line");
                 }
-                if (   $L[3] =~ '^(/@|//)'
+
+                # Validate URI patterns
+                if (   $L[3] =~ '^(/@(?!JUNK)|//)'
                     && $L[0] !~
                     /(000396|000447|000543|000544|000545|000928|000929|001208|001373|001497|002761|002762|003029|007152)/i
                     ) {
@@ -1583,14 +2032,16 @@ sub check_dbs {
                           . (__LINE__- 2)
                           . " in the nikto_core.plugin.");
                 }
-                if ($L[3] =~ '^@[A-Z]+/' && $L[0] !~ /(003348|003349)/i) {
+                if ($L[3] =~ '^@(?!JUNK)[A-Z]+/' && $L[0] !~ /(003348|003349)/i) {
                     nprint("\t+ ERROR: Possible incorrect slash after \@VARIABLE: $line");
                     nprint(
                         "\t+ If this slash is needed for this test: Please add the ID $L[0] at line "
                           . (__LINE__- 2)
                           . " in the nikto_core.plugin.");
                 }
-                if ((($L[4] ne 'POST') && ($L[4] ne 'SEARCH')) && ($L[11] ne '')) {
+
+                # Validate POST data usage
+                if ((($L[4] ne 'POST') && ($L[4] ne 'SEARCH')) && ($L[7] ne '')) {
 
                     # Some test IDs need this
                     if ($L[0] !~ /(006992|000126|000291|001153)/i) {
@@ -1638,20 +2089,32 @@ sub check_dbs {
             $ctr--;
             nprint("\t$ctr entries");
         }
-        elsif ($file =~ /u?db_parked_strings/) {
-            my $ctr = 1;
+
+        elsif ($file =~ /u?db_headers_suggested/) {
+            my $ctr = 0;
+            my %HEADERS;
             foreach $line (<IN>) {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
-                my ($result, $bad) = validate_and_fix_regex($line, 1);
-                if ($bad) { nprint("\t+ ERROR: Invalid regex on line $ctr: \"$line\""); }
+                my @fields = parse_csv($line);
+
+                # Skip header line if present
+                if ($fields[0] =~ /^header$/i) { next; }
+                if (scalar(@fields) != 2) {
+                    nprint("\t+ ERROR: Invalid syntax (expected 2 fields): $line");
+                }
+                if (exists($HEADERS{ $fields[0] })) {
+                    nprint("\t+ ERROR: Duplicate Header: $fields[0]");
+                }
+                else {
+                    $HEADERS{ $fields[0] } = 1;
+                }
                 $ctr++;
             }
-            $ctr--;
             nprint("\t$ctr entries");
         }
-        elsif ($file =~ /u?db_headers_(common|suggested)/) {
+        elsif ($file =~ /u?db_headers_common/) {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<IN>) {
@@ -1673,6 +2136,19 @@ sub check_dbs {
             my $ctr = 0;
             foreach $line (<IN>) {
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
+                    nprint("\t+ ERROR: Invalid syntax: $line");
+                }
+                $ctr++;
+            }
+            nprint("\t$ctr entries");
+        }
+        elsif ($file =~ /u?db_useragents/) {
+            my $ctr = 0;
+            foreach $line (<IN>) {
+                chomp($line);
+                next if $line =~ /^\#/;
+                next if $line eq '';
+                if ($line !~ /^\"[^"]+\"/) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
                 $ctr++;
@@ -1735,6 +2211,7 @@ sub check_dbs {
 
     # Try to grab the test IDs from plugins to check for duplicates. Not foolproof.
     nprint("Checking plugins for duplicate test IDs");
+    my $found      = 0;
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
         open(PF, "<$CONFIGFILE{'PLUGINDIR'}/$pf")
@@ -1749,15 +2226,17 @@ sub check_dbs {
             $bits[2] =~ s/\"//g;
             if ($bits[2] =~ /^[\d]+$/) {
                 if (($bits[2] ne 0) && exists($ALL_IDS{ $bits[2] })) {
+                    $found++;
                     nprint("\t+ ERROR: Duplicate Test ID: $bits[2]");
                 }
                 else { $ALL_IDS{ $bits[2] } = 1; }
             }
         }
     }
+    nprint("\t$found entries");
 
     # Bad practice here but this one won't parse right above ¯\_(ツ)_/¯
-    $ALL_IDS{'000029'} = 1;
+    $ALL_IDS{'000137'} = 1;    # TLS issues
 
     # Look for bad/invalid IDs
     foreach my $id (keys %ALL_IDS) {
@@ -1798,12 +2277,6 @@ sub port_check {
     my ($start_time, $hostname, $ip, $port, $key, $cert, $vhost) = @_;
     my $m = {};
 
-    # Check SKIPPORTS
-    if ($CONFIGFILE{'SKIPPORTS'} =~ /\b$port\b/) {
-        nprint("+ ERROR: SKIPPORTS (nikto.conf) contains $port -- not checking");
-        return 0;
-    }
-
     $m->{'start_time'} = $start_time;
     $m->{'hostname'}   = $vhost || $hostname;
     $m->{'ip'}         = $ip;
@@ -1822,6 +2295,7 @@ sub port_check {
                      . ($m->{'hostname'} || $m->{'ip'})
                      . ":$port, using $method",
                    "v",
+                   "CheckSSL",
                    ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                    );
             $m->{ssl} = ($checkssl eq "HTTP") ? 0 : 1;
@@ -1832,11 +2306,11 @@ sub port_check {
             proxy_check($m);
             my ($res, $content, $error, $request, $response) =
               nfetch($m, "/", $method, "", "", { noerror => 1, noprefetch => 1, nopostfetch => 1 },
-                     "Port Check");
+                     "PortCheck");
 
             if ($res) {
 
-   # this will fix for some Apaches that are annoying enough to answer non TLS reqs on an TLS server
+                # Some Apache servers are annoying and answer non-TLS requests on a TLS server.
                 if (defined $content
                     && ($content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
                     dump_var("Result Hash", \%result,
@@ -1865,26 +2339,6 @@ sub port_check {
 }
 
 ###############################################################################
-# Directory listing
-sub dirlist {
-    my $DIR       = $_[0] || return;
-    my $PATTERN   = $_[1] || "";
-    my @FILES_TMP = ();
-
-    opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $@";
-    foreach my $file (readdir(DIRECTORY)) {
-        if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
-        if ($PATTERN ne "") {
-            if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
-        }
-        else { push(@FILES_TMP, $file); }
-    }
-    closedir(DIRECTORY);
-
-    return @FILES_TMP;
-}
-
-###############################################################################
 sub load_plugins {
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     my @all_names;
@@ -1892,7 +2346,7 @@ sub load_plugins {
     # populate plugin macros
     $CONFIGFILE{'@@NONE'} = "";
 
-    # Check if running plugins is NONE - if so, don't bother initialising plugins
+    # Check if running plugins is NONE - if so, don't bother initializing plugins
     if ($CLI{'plugins'} eq '@@NONE') {
         return;
     }
@@ -1908,7 +2362,7 @@ sub load_plugins {
             nprint("- The plugin could not be run.");
         }
         else {
-            nprint("- Initialising plugin $plugin_name", "v");
+            nprint("- Initializing plugin $plugin_name", "v", "Init");
 
             # Call initialisation method
             if (defined &$plugin_init) {
@@ -1923,7 +2377,7 @@ sub load_plugins {
                 push(@all_names, $pluginhash->{name});
 
                 push(@PLUGINS, $pluginhash);
-                nprint("- Loaded \"$pluginhash->{full_name}\" plugin.", "v");
+                nprint("- Loaded \"$pluginhash->{full_name}\" plugin.", "v", "Init");
             }
             else {
                 nprint("WARNING: No init found for $plugin_name\n", "d");
@@ -1934,14 +2388,22 @@ sub load_plugins {
     my @torun = split(/;/, expand_pluginlist($CLI{'plugins'}, 0));
 
     # Force-enable report plugins if needed
-    if (($CLI{'file'} ne '') && ($CLI{'plugins'} =~ /\@NONE/)) {
-        push(@torun, 'report_csv')  if $CLI{'file'} =~ /csv/i;
-        push(@torun, 'report_json') if $CLI{'file'} =~ /json/i;
-        push(@torun, 'report_html') if $CLI{'file'} =~ /html?/i;
-        push(@torun, 'report_nbe')  if $CLI{'file'} =~ /nbe/i;
-        push(@torun, 'report_sqlg') if $CLI{'file'} =~ /sqlg/i;
-        push(@torun, 'report_text') if $CLI{'file'} =~ /txt/i;
-        push(@torun, 'report_xml')  if $CLI{'file'} =~ /xml/i;
+    if ($CLI{'plugins'} =~ /\@NONE/ && defined $CLI{'formats'} && ref($CLI{'formats'}) eq 'ARRAY') {
+        my %format_map = ('csv'  => 'report_csv',
+                          'json' => 'report_json',
+                          'htm'  => 'report_html',
+                          'html' => 'report_html',
+                          'sql'  => 'report_sqlg',
+                          'sqld' => 'report_sqld',
+                          'txt'  => 'report_text',
+                          'xml'  => 'report_xml'
+                          );
+
+        foreach my $fmt (@{ $CLI{'formats'} }) {
+            if (exists $format_map{$fmt}) {
+                push(@torun, $format_map{$fmt}) unless grep { $_ eq $format_map{$fmt} } @torun;
+            }
+        }
     }
 
     # Second pass to ensure that @@ALL is configured
@@ -2016,82 +2478,134 @@ sub load_plugins {
 
 ###############################################################################
 sub run_hooks {
-    my ($mark, $type, $request, $result) = @_;
+    my ($mark, $type, $request, $response) = @_;
 
-    foreach my $plugin (@{ $PLUGINORDER{$type} }) {
-        return if $mark->{'terminate'};
+    # Cache plugin array reference to avoid repeated hash access
+    my $plugins = $PLUGINORDER{$type};
+    return ($request, $response) unless $plugins;
+
+    foreach my $plugin (@$plugins) {
+        return ($request, $response) if $mark->{'terminate'};
+
+        # Cache hook reference to avoid repeated hash access
+        my $hook = $plugin->{'hooks'}->{$type};
+        next unless $hook;
+
+        # Check conditionals more efficiently
         my $run = 1;
-
-        # first check for conditionals
-        my $condition = $plugin->{'hooks'}->{$type}->{'cond'};
-        if (defined $plugin->{'hooks'}->{$type}->{'cond'}) {
-
-            # Evaluate condition
+        if (my $condition = $hook->{'cond'}) {
             $run = eval($condition);
+            next unless $run;
         }
 
-        if (!$run) { next; }
+        # Cache plugin parameters and full_name
+        my $parameters = $plugin->{'parameters'};
+        my $full_name  = $plugin->{'full_name'};
 
+        # Save current output states
         my $oldverbose = $OUTPUT{'verbose'};
         my $olddebug   = $OUTPUT{'debug'};
         my $olderrors  = $OUTPUT{'errors'};
-        nprint("- Running $type for \"$plugin->{'full_name'}\" plugin", "v")
-          unless ($type eq "prefetch" || $type eq "postfetch");
-        if (defined $plugin->{'parameters'}->{'verbose'}
-            && $plugin->{'parameters'}->{'verbose'} == 1) {
-            $OUTPUT{'verbose'} = 1;
-        }
-        if (defined $plugin->{'parameters'}->{'debug'}
-            && $plugin->{'parameters'}->{'debug'} == 1) {
-            $OUTPUT{'debug'} = 1;
-        }
+
+        # Set output flags based on parameters
+        $OUTPUT{'verbose'} = 1 if $parameters && $parameters->{'verbose'} == 1;
+        $OUTPUT{'debug'}   = 1 if $parameters && $parameters->{'debug'} == 1;
+
+        # Print status unless it's a prefetch/postfetch hook
         unless ($type eq "prefetch" || $type eq "postfetch") {
-            $NIKTO{'current_plugin'} = $plugin->{'full_name'};
+            nprint("- Running $type for \"$full_name\" plugin", "v", "Plugins");
+            $NIKTO{'current_plugin'} = $full_name;
         }
-        &{ $plugin->{'hooks'}->{$type}->{'method'} }
-          ($mark, $plugin->{'parameters'}, $request, $result);
+
+        # Execute the hook method
+        &{ $hook->{'method'} }($mark, $parameters, $request, $response);
+
+        # Restore output states
         $OUTPUT{'verbose'} = $oldverbose;
         $OUTPUT{'debug'}   = $olddebug;
         $OUTPUT{'errors'}  = $olderrors;
     }
 
-    return $request, $result;
+    return ($request, $response);
 }
 
 ###############################################################################
 sub report_head {
-    my ($format, $file) = @_;
-    nprint("- Opening reports ($format, $file)", "v");
 
-    foreach my $i (1 .. 100) {
-        foreach my $plugin (@PLUGINS) {
-            if ($plugin->{run} && defined $plugin->{report_item} && $plugin->{report_weight} == $i)
-            {
-                my $run = 1;
+    # Support multiple formats: use formats array
+    my @formats_to_process = ();
+    my %files_to_process   = ();
 
-                # first check for conditionals
-                if (defined $plugin->{report_format}) {
+    if (defined $CLI{'formats'} && ref($CLI{'formats'}) eq 'ARRAY' && @{ $CLI{'formats'} } > 0) {
 
-                    # Evaluate condition
-                    $run = ($format eq $plugin->{report_format});
-                }
-                if ($run) {
-                    nprint("- Opening report for \"$plugin->{full_name}\" plugin", "v");
-                    my $handle;
-                    if (defined $plugin->{report_head}) {
-                        $handle = &{ $plugin->{report_head} }($file);
+        # Multiple formats from comma-separated list
+        @formats_to_process = @{ $CLI{'formats'} };
+        if (defined $CLI{'files'} && ref($CLI{'files'}) eq 'HASH') {
+            %files_to_process = %{ $CLI{'files'} };
+        }
+    }
+    else {
+        # Fallback: no formats specified (should not happen, but handle gracefully)
+        nprint("+ WARNING: No formats specified for reporting", "v", "Reports");
+        return;
+    }
+
+    nprint("- Opening reports (" . join(',', @formats_to_process) . ")", "v", "Reports");
+
+    # Process each format separately to ensure unique handles
+    foreach my $format_to_use (@formats_to_process) {
+        my $file_to_use = $files_to_process{$format_to_use} || '';
+
+        # Skip file-based formats that don't have a file (unless sqld/none)
+        if ($file_to_use eq '' && $format_to_use ne 'none' && $format_to_use ne 'sqld') {
+            nprint("+ ERROR: No file specified for format: $format_to_use", "v", "Reports");
+            next;
+        }
+
+        foreach my $i (1 .. 100) {
+            foreach my $plugin (@PLUGINS) {
+                if (   $plugin->{run}
+                    && defined $plugin->{report_item}
+                    && $plugin->{report_weight} == $i) {
+                    my $run = 1;
+
+                    # Check if this plugin handles this format
+                    if (defined $plugin->{report_format}) {
+                        $run = ($format_to_use eq $plugin->{report_format});
                     }
 
-                    # Now store this
-                    my $report_entry = { host_start => $plugin->{report_host_start},
-                                         host_end   => $plugin->{report_host_end},
-                                         item       => $plugin->{report_item},
-                                         close      => $plugin->{report_close},
-                                         summary    => $plugin->{report_summary},
-                                         handle     => $handle,
-                                         };
+                    if ($run) {
+                        nprint(
+                            "- Opening report for \"$plugin->{full_name}\" plugin ($format_to_use) -> $file_to_use",
+                            "v", "Reports"
+                            );
+                        my $handle;
+                        if (defined $plugin->{report_head}) {
 
-                    push(@REPORTS, $report_entry);
+                            # Each plugin gets its own unique lexical handle
+                            $handle = &{ $plugin->{report_head} }($file_to_use);
+
+                            # Ensure autoflush is enabled (already done in plugin, but double-check)
+                            if (defined $handle && ref($handle) eq 'GLOB') {
+                                $handle->autoflush(1);
+                            }
+                        }
+
+                        # Store this report entry with its unique handle
+                        my $report_entry = {
+                                 host_start => $plugin->{report_host_start},
+                                 host_end   => $plugin->{report_host_end},
+                                 item       => $plugin->{report_item},
+                                 close      => $plugin->{report_close},
+                                 summary    => $plugin->{report_summary},
+                                 ssl_info   => $plugin->{report_ssl_info},     # SSL info hook
+                                 handle     => $handle,
+                                 format     => $format_to_use,                 # Store for debugging
+                                 file       => $file_to_use,                   # Store for debugging
+                                 };
+
+                        push(@REPORTS, $report_entry);
+                    }
                 }
             }
         }
@@ -2100,8 +2614,44 @@ sub report_head {
 }
 
 ###############################################################################
+# Generate scanid for SQL reporting
+# Format: MD5 hash of "protocol://hostname:port/timestamp"
+# Example: LW2::md5("https://example.com:443/2025:12:16:03:30:44GMT")
+sub generate_scanid {
+    my ($mark) = @_;
+
+    # Determine protocol
+    my $protocol = $mark->{'ssl'} ? 'https' : 'http';
+
+    # Get hostname (prefer vhost if present)
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+
+    # Get port
+    my $port = $mark->{'port'} || ($mark->{'ssl'} ? 443 : 80);
+
+    # Get GMT timestamp in format YYYY:MM:DD:HH:MM:SSGMT
+    my @gmt = gmtime(time);
+    my $timestamp = sprintf("%04d:%02d:%02d:%02d:%02d:%02dGMT",
+                            $gmt[5] + 1900,    # year
+                            $gmt[4] + 1,       # month
+                            $gmt[3],           # day
+                            $gmt[2],           # hour
+                            $gmt[1],           # minute
+                            $gmt[0]
+                            );    # second
+
+    # Generate MD5 hash
+    my $scanid = LW2::md5("$protocol://$hostname:$port/$timestamp");
+
+    return $scanid;
+}
+
+###############################################################################
 sub report_host_start {
     my ($mark) = @_;
+
+    # Generate scanid for SQL reporting plugins
+    $mark->{'scanid'} = generate_scanid($mark);
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
@@ -2151,12 +2701,56 @@ sub report_item {
 }
 
 ###############################################################################
+sub report_ssl_info {
+    my ($mark) = @_;
+
+    # Only report SSL info if SSL is enabled and info is available
+    return unless ($mark->{'ssl'} && defined $mark->{'ssl_cipher'});
+
+    # Go through all reporting modules
+    foreach my $reporter (@REPORTS) {
+        if (defined $reporter->{ssl_info}) {
+            &{ $reporter->{ssl_info} }($reporter->{handle}, $mark);
+        }
+    }
+}
+
+###############################################################################
 sub report_close {
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
+
+        # Explicitly flush the handle before closing to ensure all data is written
+        if (defined $reporter->{handle}) {
+            my $fh = $reporter->{handle};
+
+            # Only flush file handles (GLOB refs), not database handles or other types
+            if (ref($fh) eq 'GLOB') {
+
+                # Ensure autoflush is enabled
+                $fh->autoflush(1);
+
+                # Try to flush explicitly if method exists
+                if ($fh->can('flush')) {
+                    eval { $fh->flush(); };
+                }
+            }
+        }
+
+        # Call plugin's close function (it may close the handle itself)
         if (defined $reporter->{close}) {
             &{ $reporter->{close} }($reporter->{handle});
+        }
+
+        # Explicitly close file handles after plugin's close (in case plugin didn't close it)
+        # Only close GLOB file handles, not database handles (DBI) or STDOUT
+        if (defined $reporter->{handle} && ref($reporter->{handle}) eq 'GLOB') {
+
+            # Don't close STDOUT/STDERR
+            if ($reporter->{handle} ne \*STDOUT && $reporter->{handle} ne \*STDERR) {
+                eval { close($reporter->{handle}); };
+            }
         }
     }
 }
@@ -2243,23 +2837,23 @@ sub proxy_check {
         LW2::http_fixup_request(\%request);
 
         sleeper();
-        LW2::http_do_request_timeout(\%request, \%result);
+        LW2::http_do_request_timeout(\%request, \%response);
         $COUNTERS{'totalrequests'}++;
         dump_var("Request Hash", \%request,
                  ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        dump_var("Result Hash", \%result,
-                 ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        dump_var("Response Hash",
+                 \%response, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         # First check that we can connect to the proxy
-        if (exists $result{'whisker'}{'error'}) {
-            if ($result{'whisker'}{'error'} =~ /Transport endpoint is not connected/) {
+        if (exists $response{'whisker'}{'error'}) {
+            if ($response{'whisker'}{'error'} =~ /Transport endpoint is not connected/) {
                 nprint("+ ERROR: Could not connect to the defined proxy $CONFIGFILE{PROXYHOST}");
             }
-            nprint("+ ERROR: Proxy error: $result{'whisker'}{'error'}");
+            nprint("+ ERROR: Proxy error: $response{'whisker'}{'error'}");
             exit 1;
         }
 
-        if ($result{'whisker'}{'code'} eq "407")    # proxy requires auth
+        if ($response{'whisker'}{'code'} eq "407")    # proxy requires auth
         {
 
             # have id/pw?
@@ -2267,8 +2861,8 @@ sub proxy_check {
                 $CONFIGFILE{PROXYUSER} = read_data("Proxy ID: ",   "");
                 $CONFIGFILE{PROXYPASS} = read_data("Proxy Pass: ", "noecho");
             }
-            if ($result{'proxy-authenticate'} !~ /Basic/i) {
-                my @x = split(/ /, $result{'proxy-authenticate'});
+            if ($response{'proxy-authenticate'} !~ /Basic/i) {
+                my @x = split(/ /, $response{'proxy-authenticate'});
                 nprint(
                     "+ Proxy server uses '$x[0]' rather than 'Basic' authentication. $VARIABLES{'name'} $VARIABLES{'version'} can't do that."
                     );
@@ -2281,16 +2875,16 @@ sub proxy_check {
               ;                            # set auth
             LW2::http_fixup_request(\%request);
             sleeper();
-            LW2::http_do_request_timeout(\%request, \%result);
+            LW2::http_do_request_timeout(\%request, \%response);
             $COUNTERS{'totalrequests'}++;
             dump_var("Request Hash", \%request,
                      ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            dump_var("Result Hash", \%result,
-                     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            dump_var("Response Hash",
+                     \%response, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-            if ($result{'proxy-authenticate'} ne "") {
-                my @pauthinfo  = split(/ /, $result{'proxy-authenticate'});
-                my @pauthinfo2 = split(/=/, $result{'proxy-authenticate'});
+            if ($response{'proxy-authenticate'} ne "") {
+                my @pauthinfo  = split(/ /, $response{'proxy-authenticate'});
+                my @pauthinfo2 = split(/=/, $response{'proxy-authenticate'});
                 $pauthinfo2[1] =~ s/^\"//;
                 $pauthinfo2[1] =~ s/\"$//;
                 nprint(
@@ -2298,7 +2892,7 @@ sub proxy_check {
                     );
                 exit 1;
             }
-            else { nprint("- Successfully authenticated to proxy.", "v"); }
+            else { nprint("- Successfully authenticated to proxy.", "v", undef); }
         }
     }
 
@@ -2329,60 +2923,96 @@ sub dump_var {
     return;
 }
 
-######################################################################
-sub content_present {
-    my $result = FALSE;
-    my $res    = $_[0];
+#######################################################################
+sub get_ua {
 
-    # perform an extra check just in case the web server lies about finds
-    # basically assume that the value for a non-extension is the true
-    # code for "File not Found".
-    if ($res ne $FoF{'NONE'}{'response'}) {
-        foreach $found (split(' ', $VARIABLES{"\@HTTPFOUND"})) {
-            if ($res eq $found) {
-                $result = TRUE;
-            }
-        }
+    # Always honor command line
+    if ($CLI{'useragent'}) {
+        return $CLI{'useragent'};
     }
 
-    return $result;
+    # Return a random User-Agent from @USERAGENTS array
+    if (   defined($VARIABLES{'@USERAGENTS'})
+        && ref($VARIABLES{'@USERAGENTS'}) eq 'ARRAY'
+        && @{ $VARIABLES{'@USERAGENTS'} }) {
+        my $ua = $VARIABLES{'@USERAGENTS'}->[ rand(@{ $VARIABLES{'@USERAGENTS'} }) ];
+        $ua =~ s/^"//;
+        $ua =~ s/"$//;
+        return $ua;
+    }
+    return undef;
 }
 
 #######################################################################
 sub setup_hash {
     my ($reqhash, $mark, $testid) = @_;
 
-    # Do the standard set up for the hash
-    LW2::http_init_request($reqhash);
-    $reqhash->{'whisker'}->{'ignore_duplicate_headers'}   = 0;
-    $reqhash->{'whisker'}->{'ssl_save_info'}              = 1;
-    $reqhash->{'whisker'}->{'keep-alive'}                 = 1;
-    $reqhash->{'whisker'}->{'max_size'}                   = 750000;
-    $reqhash->{'whisker'}->{'lowercase_incoming_headers'} = 1;
-    $reqhash->{'whisker'}->{'timeout'}                    = $CLI{'timeout'};
-    $reqhash->{'whisker'}->{'version'}                    = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
+    # Clear the hash first (like LW2::http_init_request does)
+    %$reqhash = ();
 
-    if ($CLI{'evasion'} ne '') {
-        $reqhash->{'whisker'}->{'anti_ids'} = $CLI{'evasion'};
+    # Initialize the whisker hash
+    $reqhash->{'whisker'} = {};
+
+    # Cache whisker hash reference to avoid repeated dereferencing
+    my $whisker = $reqhash->{'whisker'};
+
+    # Set all required whisker properties (matching LW2::http_init_request defaults)
+    $whisker->{'http_space1'}                   = ' ';
+    $whisker->{'http_space2'}                   = ' ';
+    $whisker->{'version'}                       = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
+    $whisker->{'method'}                        = 'GET';
+    $whisker->{'protocol'}                      = 'HTTP';
+    $whisker->{'port'}                          = $mark->{'port'} || 80;
+    $whisker->{'uri'}                           = '/';
+    $whisker->{'uri_prefix'}                    = '';
+    $whisker->{'uri_postfix'}                   = '';
+    $whisker->{'uri_param_sep'}                 = '?';
+    $whisker->{'host'}                          = $mark->{'hostname'} || $mark->{'ip'};
+    $whisker->{'timeout'}                       = $CLI{'timeout'}     || 10;
+    $whisker->{'include_host_in_uri'}           = 0;
+    $whisker->{'ignore_duplicate_headers'}      = 0;
+    $whisker->{'normalize_incoming_headers'}    = 1;
+    $whisker->{'lowercase_incoming_headers'}    = 1;
+    $whisker->{'require_newline_after_headers'} = 0;
+    $whisker->{'invalid_protocol_return_value'} = 1;
+    $whisker->{'ssl'}                           = $mark->{'ssl'} || 0;
+    $whisker->{'ssl_save_info'}                 = 1;
+    $whisker->{'http_eol'}                      = "\x0d\x0a";
+    $whisker->{'force_close'}                   = 0;
+    $whisker->{'force_open'}                    = 0;
+    $whisker->{'retry'}                         = 0;
+    $whisker->{'trailing_slurp'}                = 0;
+    $whisker->{'force_bodysnatch'}              = 0;
+    $whisker->{'max_size'}                      = 750000;
+    $whisker->{'MAGIC'}                         = 31339;
+
+    # Set SSL-specific fields if needed
+    if ($mark->{'ssl'}) {
+        $whisker->{'ssl_rsacertfile'} = $mark->{'key'};
+        $whisker->{'ssl_certfile'}    = $mark->{'cert'};
     }
-    $reqhash->{'User-Agent'} = $VARIABLES{'useragent'};
-    $reqhash->{'User-Agent'} =~ s/\@TESTID/$testid/;
-    $reqhash->{'whisker'}->{'retry'} = 0;
-    $reqhash->{'whisker'}->{'host'}  = $mark->{'hostname'} || $mark->{'ip'};
 
-    if ($mark->{'vhost'} ne '') {
+    # Set evasion only if needed
+    $whisker->{'anti_ids'} = $CLI{'evasion'} if (length($CLI{'evasion'}));
+
+    # Set default headers (like LW2::http_init_request does)
+    $reqhash->{'Connection'} = 'Keep-Alive';
+
+    # Random User-Agent
+    $reqhash->{'User-Agent'} = get_ua();
+
+    # Set Host header only if vhost is configured
+    if ($mark->{'has_vhost'}) {
         $reqhash->{'Host'} = $mark->{'vhost'};
     }
-    $reqhash->{'whisker'}->{'port'}            = $mark->{'port'};
-    $reqhash->{'whisker'}->{'ssl'}             = $mark->{'ssl'};
-    $reqhash->{'whisker'}->{'ssl_rsacertfile'} = $mark->{'key'};
-    $reqhash->{'whisker'}->{'ssl_certfile'}    = $mark->{'cert'};
 
-    # Proxy stuff
-    if (($CONFIGFILE{PROXYHOST} ne '') && ($CLI{'useproxy'})) {
-        $reqhash->{'whisker'}->{'proxy_host'} = $CONFIGFILE{'PROXYHOST'};
-        $reqhash->{'whisker'}->{'proxy_port'} = $CONFIGFILE{'PROXYPORT'};
-        if ($CONFIGFILE{'PROXYUSER'} ne '') {
+    # Proxy configuration
+    if (length($CONFIGFILE{PROXYHOST}) && $CLI{'useproxy'}) {
+        $whisker->{'proxy_host'} = $CONFIGFILE{'PROXYHOST'};
+        $whisker->{'proxy_port'} = $CONFIGFILE{'PROXYPORT'};
+
+        # Set proxy auth only if credentials are provided
+        if (length($CONFIGFILE{'PROXYUSER'})) {
             LW2::auth_set("proxy-basic", $reqhash,
                           $CONFIGFILE{'PROXYUSER'},
                           $CONFIGFILE{'PROXYPASS'});
@@ -2396,58 +3026,65 @@ sub setup_hash {
 sub running_average {
     my $last = shift;
     my ($mark) = @_;
-    unshift(@{ $mark->{'running_avg'} }, $last);
-    splice(@{ $mark->{'running_avg'} }, 100);
+
+    # Use push instead of unshift for better performance
+    push(@{ $mark->{'running_avg'} }, $last);
+
+    # Only splice if we exceed the limit (more efficient than always splicing)
+    if (@{ $mark->{'running_avg'} } > 100) {
+        splice(@{ $mark->{'running_avg'} }, 0, @{ $mark->{'running_avg'} } - 100);
+    }
 }
 
 #######################################################################
 sub running_average_print {
     use List::Util qw(sum);
-    my $message;
     my ($mark)   = @_;
     my @data     = @{ $mark->{'running_avg'} };
-    my $elements = $#data;
-    $elements++;
-    if ($elements eq 100) {
-        my $s   = sum(@data);
-        my $avg = $s / $elements;
-        $avg     = sprintf("%.5f", $avg);
-        $message = "100 requests: $avg sec, ";
-    }
-    if ($elements > 10) {
-        @data = splice(@data, 9);
-        my $s = sum(@data);
-        $elements = $#data;
-        $elements++;
-        my $avg = $s / $elements;
-        $avg = sprintf("%.4f", $avg);
-        $message .= "10 requests: $avg sec";
+    my $elements = @data;                         # More efficient than $#data + 1
+
+    return "Running average: Not enough data." if $elements == 0;
+
+    my $message = '';
+
+    if ($elements == 100) {
+        my $avg = sum(@data) / $elements;
+        $message = sprintf("100 requests: %.5f sec, ", $avg);
     }
 
-    if ($message eq '') { $message = "Not enough data"; }
+    if ($elements > 10) {
+        my @recent_data  = @data[ 9 .. $#data ];                # More efficient than splice
+        my $recent_count = @recent_data;
+        my $avg          = sum(@recent_data) / $recent_count;
+        $message .= sprintf("10 requests: %.4f sec", $avg);
+    }
+
     return "Running average: $message.";
 }
 
 #######################################################################
 sub nfetch {
     my ($mark, $uri, $method, $data, $headers_send, $flags, $testid, $httpver) = @_;
-    my (%request, %result);
+    my (%request, %response);
     setup_hash(\%request, $mark, $testid);
 
+    # Ensure $flags is a hash reference (handle cases where empty string is passed)
+    if (!ref($flags) || ref($flags) ne 'HASH') {
+        $flags = {};
+    }
+
     # Check for keyboard input  & terminate flag
-    if (!$CLI{'nointeractive'} && (($COUNTERS{'totalrequests'} % 10) == 0)) {
-        if (check_input($mark) eq 'term') { $mark->{'terminate'} = 1; }
-        if ($CLI{'until'} ne '') {
-            if ($CLI{'until'} <= time()) {
-                pause('u');
-            }
-        }
+    if (!$CLI{'nointeractive'} && !(($COUNTERS{'totalrequests'} % 10))) {
+        $mark->{'terminate'} = 1 if (check_input($mark) eq 'term');
     }
 
     # Check execution time
-    if ($CLI{'maxtime'} ne '') {
-        if ((time() - $mark->{'start_time'}) > $CLI{'maxtime'}) {
-            nprint("+ ERROR: Host maximum execution time of $CLI{'maxtime'} seconds reached");
+    if (my $maxtime = $CLI{'maxtime'}) {
+
+        # Cache start_time to avoid repeated hash access
+        my $start_time = $mark->{'start_time'};
+        if ((time() - $start_time) > $maxtime) {
+            nprint("+ ERROR: Host maximum execution time of $maxtime seconds reached");
             $mark->{'terminate'} = 1;
         }
     }
@@ -2456,103 +3093,146 @@ sub nfetch {
     $request{'whisker'}->{'uri'} = $mark->{'root'} . $uri;
 
     # Remove trailing slash if requested
-    if ($CLI{'noslash'}) { $request{'whisker'}->{'uri'} =~ s/\/$//; }
+    $request{'whisker'}->{'uri'} =~ s/\/$// if ($CLI{'noslash'});
 
     $request{'whisker'}->{'method'} = $method;
 
     # POST data?
-    if ($data ne "") {
+    if (length($data)) {
         $data =~ s/\\\"/\"/g;
         $request{'whisker'}->{'data'} = $data;
     }
 
+    # Default an unobtrusive headers to help WAF evasion
+    $request{'whisker'}->{'Accept'} =
+      'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    $request{'whisker'}->{'Accept-Language'}           = 'en-US,en;q=0.5';
+    $request{'whisker'}->{'Cache-Control'}             = 'max-age=0';
+    $request{'whisker'}->{'Connection'}                = 'keep-alive';
+    $request{'whisker'}->{'Upgrade-Insecure-Requests'} = '1';
+    $request{'whisker'}->{'Sec-Fetch-Dest'}            = 'document';
+    $request{'whisker'}->{'Sec-Fetch-Mode'}            = 'navigate';
+    $request{'whisker'}->{'Sec-Fetch-Site'}            = 'none';
+    $request{'whisker'}->{'Sec-Fetch-User'}            = '?1';
+
     # Check for extra HTTP headers
     if (ref($headers_send) eq "HASH") {
 
-        # loop through the hash ref passed and add each header to request
-        while (my ($key, $value) = each(%$headers_send)) {
-            $request{$key} = $value;
+        # Use explicit hash assignment instead of slice assignment
+        foreach my $key (keys %$headers_send) {
+            $request{$key} = $headers_send->{$key};
+        }
+    }
+
+    # Add custom headers from CLI if any
+    if (defined $CLI{'headers'} && @{ $CLI{'headers'} }) {
+        foreach my $header (@{ $CLI{'headers'} }) {
+            if ($header =~ /^([^:]+):\s*(.+)$/) {
+                my ($headername, $value) = ($1, $2);
+                $request{$headername} = $value;
+            }
         }
     }
 
     # Set auth
-    if ($mark->{'realms'}{'default'}{'authtype'} ne '') {
-        LW2::auth_set($mark->{'realms'}{'default'}{'authtype'},
-                      $request,
-                      $mark->{'realms'}{'default'}{'id'},
-                      $mark->{'realms'}{'default'}{'password'});
+    if (my $realm = $mark->{'realms'}{'default'}) {
+        if (length($realm->{'authtype'})) {
+            LW2::auth_set($realm->{'authtype'}, $request, $realm->{'id'}, $realm->{'password'});
+        }
     }
 
     # Set cookies
-    if (defined($mark->{'cookiejar'})) {
-        LW2::cookie_write($mark->{'cookiejar'}, \%request, 1);
-    }
+    LW2::cookie_write($mark->{'cookiejar'}, \%request, 1) if defined($mark->{'cookiejar'});
 
     # Override HTTP version
-    if ($httpver ne '') {
-        $request{'whisker'}->{'version'} = $httpver;
-    }
+    $request{'whisker'}->{'version'} = $httpver if ($httpver ne '');
 
-    if ($flags->{'nohost'}) {
-        $request{'whisker'}->{'host'} = $mark->{'ip'};
-    }
+    $request{'whisker'}->{'host'} = $mark->{'ip'} if ($flags->{'nohost'});
 
     LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
 
     # Run pre hooks
     unless ($flags->{'noprefetch'}) {
-        (%$request, %$result) = run_hooks($mark, "prefetch", \%request, \%result);
+        (%$request, %$response) = run_hooks($mark, "prefetch", \%request, \%response);
     }
 
     # Do the request
     sleeper();
     my $time = [gettimeofday];
-    LW2::http_do_request_timeout(\%request, \%result);
+    LW2::http_do_request_timeout(\%request, \%response);
     $COUNTERS{'totalrequests'}++;
-    if ($^O !~ /MSWin32/) {
+    if (!$VARIABLES{'MSWIN32'}) {
         running_average(tv_interval($time, [gettimeofday]), $mark);
     }
 
-    # If we got an error, do 1 retry. This should be configurable
-    if (defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '') {
-        $mark->{'failures'}++;
-        sleeper();
-        LW2::http_do_request_timeout(\%request, \%result);
-        $COUNTERS{'totalrequests'}++;
+    # If we got an error, do 1 retry - optimized
+    if (my $whisker = $response{'whisker'}) {
+        if (defined $whisker->{'error'} || $whisker->{'code'} eq '') {
+            $mark->{'failures'}++;
+            sleeper();
+            LW2::http_do_request_timeout(\%request, \%response);
+            $COUNTERS{'totalrequests'}++;
+        }
     }
 
     # Get cookies from response & add to jar
-    if ($CLI{'usecookies'}) {
+    if (!$CLI{'nocookies'}) {
         my $tmpjar = LW2::cookie_new_jar();
-        LW2::cookie_read(\%tmpjar, \%result, \%request);
+        LW2::cookie_read(\%tmpjar, \%response, \%request);
+
+        # Cache cookiejar reference to avoid repeated hash access
+        my $cookiejar = $mark->{'cookiejar'};
+
+        # Use more efficient array construction
         foreach my $c (keys %tmpjar) {
-            my @construct = ($tmpjar{$c}[0], $tmpjar{$c}[1], $tmpjar{$c}[2], undef, $tmpjar{$c}[4]);
-            $mark->{'cookiejar'}{$c} = \@construct;
+            my $cookie_data = $tmpjar{$c};
+            $cookiejar->{$c} =
+              [ $cookie_data->[0], $cookie_data->[1], $cookie_data->[2], undef, $cookie_data->[4] ];
         }
     }
 
     # follow redirects
-    if ($CLI{'followredirects'} && ($result{'whisker'}->{'code'} =~ /^30[1278]/)) {
-        my $newlocation = $result{'location'};
+    if ($CLI{'followredirects'} && ($response{'whisker'}->{'code'} =~ /^30[1278]/)) {
+        my $newlocation = $response{'location'};
+        my $port        = $mark->{'port'};
 
         # Is a full URL redirect the same host?
-        if ($result{'location'} =~
-            /^https?:\/\/($mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//i) {
-            $newlocation =~
-              s/^https?:\/\/(?:$mark->{'ip'}|$mark->{'hostname'}|$mark{'display_name'})\//\//i;
+        # Pre-compute host alternatives for better performance
+        my $host_re = join '|',
+          map { quotemeta $_ } ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'display_name'});
+
+        # Only build port regex if port is specified
+        if ($port && $port != 80 && $port != 443) {
+            my $port_re = '(?:\:' . quotemeta($port) . ')?';
+            if ($response{'location'} =~ /^https?:\/\/($host_re)$port_re\//i) {
+                $newlocation =~ s{^https?:\/\/(?:$host_re)$port_re/}{/}i;
+            }
         }
-        $request{'whisker'}->{'uri'} = $newlocation;
+        else {
+            # No port needed in regex for standard ports
+            if ($response{'location'} =~ /^https?:\/\/($host_re)\//i) {
+                $newlocation =~ s{^https?:\/\/(?:$host_re)/}{/}i;
+            }
+        }
+
+        # Cache whisker reference to avoid repeated hash access
+        my $whisker = $request{'whisker'};
+        $whisker->{'uri'} = $newlocation;
 
         # Make redirect request
         LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
-        LW2::http_do_request_timeout(\%request, \%result);
+        sleeper();
+        LW2::http_do_request_timeout(\%request, \%response);
         $COUNTERS{'totalrequests'}++;
     }
 
-    if (($CONFIGFILE{'FAILURES'} > 0) && ($mark->{'failures'} >= $CONFIGFILE{'FAILURES'})) {
+    # Check failures
+    my $fail_limit = $CONFIGFILE{'FAILURES'};
+    if ($fail_limit > 0 && $mark->{'failures'} >= $fail_limit) {
         nprint(
-            "+ ERROR: Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: "
-              . $result{'whisker'}->{'error'},
+            "+ ERROR: *** Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: "
+              . $response{'whisker'}->{'error'}
+              . ". ***\n+ ERROR: *** Consider using mitmproxy to avoid TLS fingerprinting. ***",
             "",
             ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
             );
@@ -2562,95 +3242,129 @@ sub nfetch {
 
     if ($OUTPUT{'debug'}) {
         dump_var("Request Hash", \%request,
-                 ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
-        dump_var("Result Hash", \%result,
-                 ($mark->{'ip'}, $mark->{'hostname'}, $mark{'display_name'}));
+                 ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
+        dump_var("Response Hash",
+                 \%response, ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
     }
 
     # Snarf what we can from the whisker hash and put in mark
-    if (!exists $result{'whisker'}->{'error'}) {
-        if ((!exists $mark->{'banner'}) || ($mark->{'banner'} eq "")) {
-            $mark->{'banner'} = $result{'server'};
-        }
-        else {
+    my $banner  = \$mark->{'banner'};
+    my $whisker = $response{'whisker'};
 
-            # Check banner hasn't changed
-            if (   exists $result{'server'}
-                && !exists $mark->{'bannerchanged'}
-                && ($mark->{'banner'} ne $result{'server'})
-                && ($result{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
-                add_vulnerability(
-                          $mark,
-                          $request->{'whisker'}->{'uri'}
-                            . ": Server banner changed from '$mark->{banner}' to '$result{server}'",
-                          999962,
-                          "",
-                          $method,
-                          $uri,
-                          $request,
-                          $response
-                          );
-                $mark->{'bannerchanged'} = 1;
+    if (!exists $whisker->{'error'}) {
+
+        # Banner processing
+        if ($$banner eq "") {
+            $$banner = $response{'server'};
+        }
+        elsif (   exists $response{'server'}
+               && !exists $mark->{'bannerchanged'}
+               && ($$banner ne $response{'server'})
+               && ($response{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
+            $request->{'whisker'}->{'uri'} = "/"
+              if (   !defined $request->{'whisker'}->{'uri'}
+                  || $request->{'whisker'}->{'uri'} eq ""
+                  || $request->{'whisker'}->{'uri'} eq ".");
+            add_vulnerability($mark,
+                              $request->{'whisker'}->{'uri'}
+                                . ": Server banner changed from '$$banner' to '$response{server}'",
+                              999962,
+                              "",
+                              $method,
+                              $uri,
+                              $request,
+                              $response
+                              );
+            $mark->{'bannerchanged'} = 1;
+        }
+
+        # Also check X-Powered-By header for outdated version checking
+        # Only add to components if it contains version-like information (digits, slashes, or dots)
+        if (exists $response{'x-powered-by'}
+            && $response{'x-powered-by'} =~ /(?:\d|\/|\.)/) {
+            my $xpb_value = $response{'x-powered-by'};
+            $xpb_value =~ s/\s+.*$//;    # Strip any trailing whitespace/content
+            if (!exists $mark->{'components'}->{$xpb_value}) {
+                $mark->{'components'}->{$xpb_value} = 1;
             }
         }
 
+        # TLS
         if (!exists $mark->{'ssl_cipher'} && $mark->{'ssl'}) {
 
-            # Grab ssl details
-            $mark->{'ssl_cipher'}       = $result{'whisker'}->{'ssl_cipher'};
-            $mark->{'ssl_cert_issuer'}  = $result{'whisker'}->{'ssl_cert_issuer'};
-            $mark->{'ssl_cert_subject'} = $result{'whisker'}->{'ssl_cert_subject'};
+            # Cache SSL certificate array reference
+            my $altnames = $whisker->{'ssl_cert_altnames'};
 
-            # ssl_cert_altnaems comes back as an array
-            foreach my $n (@{ $result{'whisker'}->{'ssl_cert_altnames'} }) {
-                next if $n =~ /^[\d]+$/;    # type
-                $mark->{'ssl_cert_altnames'} .= "$n, ";
+            # Grab ssl details
+            $mark->{'ssl_cipher'}       = $whisker->{'ssl_cipher'};
+            $mark->{'ssl_cert_issuer'}  = $whisker->{'ssl_cert_issuer'};
+            $mark->{'ssl_cert_subject'} = $whisker->{'ssl_cert_subject'};
+
+            # Process altnames correctly - Net::SSLeay::X509_get_subjectAltNames returns
+            # an array where even indices are type codes and odd indices are the actual names
+            if ($altnames && @$altnames) {
+                my @valid_names;
+                for (my $i = 1 ; $i < @$altnames ; $i += 2) {
+                    my $name = $altnames->[$i];
+
+                    # Only include DNS names (type 2) and skip numeric-only names
+                    if ($altnames->[ $i - 1 ] == 2 && $name !~ /^[\d]+$/ && $name ne '') {
+                        push(@valid_names, $name);
+                    }
+                }
+                $mark->{'ssl_cert_altnames'} = join(', ', @valid_names);
             }
-            $mark->{'ssl_cert_altnames'} =~ s/, $//;
         }
     }
 
-    nprint("- $result{'whisker'}{'code'} for $method:\t$result{'whisker'}->{'uri_requested'}",
-           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    nprint("- $response{'whisker'}{'code'} for $method:\t$response{'whisker'}->{'uri_requested'}",
+           "v", $testid, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Check for errors to reduce false positives
-    if ((defined $result{'whisker'}->{'error'} || $result{'whisker'}{'code'} eq '')
-        && !exists $flags->{'noerror'}) {
-        $mark->{'total_errors'}++;
-        nprint(
-            "+ ERROR: $result{'whisker'}->{'uri_requested'} returned an error: $result{'whisker'}{'error'}\n",
-            "e",
-            ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
-            );
-        if (($result{'whisker'}->{'code'} eq 502) && ($CLI{'useproxy'})) {
-            nprint("+ ERROR: Revieved 502 'Bad Gateway' from proxy\n");
+    if (my $whisker = $response{'whisker'}) {
+        if ((defined $whisker->{'error'} || $whisker->{'code'} eq '')
+            && !exists $flags->{'noerror'}) {
+            $mark->{'total_errors'}++;
+            nprint("+ ERROR: $whisker->{'uri_requested'} returned an error: $whisker->{'error'}\n",
+                   "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            if ($whisker->{'code'} eq '502' && $CLI{'useproxy'}) {
+                nprint("+ ERROR: Received 502 'Bad Gateway' from proxy\n");
+            }
         }
     }
 
-    if ($OUTPUT{'show_cookies'} && (defined($result{'whisker'}->{'cookies'}))) {
-        foreach my $c (@{ $result{'whisker'}->{'cookies'} }) {
-            nprint("+ $result{'whisker'}->{'uri_requested'} sent cookie: $c",
-                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    # Show cookies
+    if ($OUTPUT{'show_cookies'} && (my $cookies = $response{'whisker'}->{'cookies'})) {
+
+        # Cache frequently accessed values
+        my $uri_requested = $response{'whisker'}->{'uri_requested'};
+        my $hostname      = $mark->{'hostname'};
+        my $ip            = $mark->{'ip'};
+        my $displayname   = $mark->{'displayname'};
+
+        foreach my $c (@$cookies) {
+            nprint("+ $uri_requested sent cookie: $c", "", ($hostname, $ip, $displayname));
         }
     }
 
     # Run post hooks
     unless ($flags->{'nopostfetch'}) {
-        ($request, %$result) = run_hooks($mark, "postfetch", \%request, \%result);
+        ($request, %$response) = run_hooks($mark, "postfetch", \%request, \%response);
     }
 
-    return $result{'whisker'}->{'code'}, $result{'whisker'}->{'data'},
-      $result{'whisker'}->{'error'}, \%request, \%result;
+    return $response{'whisker'}->{'code'}, $response{'whisker'}->{'data'},
+      $response{'whisker'}->{'error'}, \%request, \%response;
 }
 
 #######################################################################
 sub set_scan_items {
-
     %TESTS = ();
     $COUNTERS{total_checks} = 0;
-    my @SKIPLIST = ();
+    my %SKIPLIST = ();
     if (defined $CONFIGFILE{SKIPIDS}) {
-        @SKIPLIST = split(/ /, $CONFIGFILE{SKIPIDS});
+        foreach my $id (split(/ /, $CONFIGFILE{SKIPIDS})) {
+            $SKIPLIST{$id} = 1;
+        }
     }
     my ($includes, $excludes) = "";
 
@@ -2705,17 +3419,8 @@ sub set_scan_items {
             }
 
             # Skip list
-            if ($add) {
-                foreach my $id (@SKIPLIST) {
-                    if ($id eq $item[0]) { $add = 0; }
-                }
-            }
-
-            # RFI URL Defined?
-            if ($add) {
-                if (($item[2] =~ /c/) && ($VARIABLES{'@RFIURL'} eq '')) {
-                    $add = 0;
-                }
+            if ($add && exists $SKIPLIST{ $item[0] }) {
+                $add = 0;
             }
 
             # If $add is still true, then add it
@@ -2723,41 +3428,518 @@ sub set_scan_items {
                 my $ext = get_ext($item[3]);
                 $db_extensions{$ext} = 1;
 
-                # validate...
-                for (my $y = 5 ; $y <= 9 ; $y++) {
-                    next if $item[$y] eq '';
-                    $item[$y] =~ s/\\"/"/g;    # quotes are only escaped for csv parsing
-                    $item[$y] = validate_and_fix_regex($item[$y]);
-                }
-
                 $COUNTERS{total_checks}++;
-                $TESTS{ $item[0] }{'uri'}         = $item[3];
-                $TESTS{ $item[0] }{'references'}  = $item[1];
-                $TESTS{ $item[0] }{'method'}      = $item[4];
-                $TESTS{ $item[0] }{'match_1'}     = $item[5];
-                $TESTS{ $item[0] }{'match_1_or'}  = $item[6];
-                $TESTS{ $item[0] }{'match_1_and'} = $item[7];
-                $TESTS{ $item[0] }{'fail_1'}      = $item[8];
-                $TESTS{ $item[0] }{'fail_2'}      = $item[9];
-                $TESTS{ $item[0] }{'message'}     = $item[10];
-                $TESTS{ $item[0] }{'data'}        = $item[11];
-                $TESTS{ $item[0] }{'headers'}     = $item[12];
+                $TESTS{ $item[0] }{'uri'}        = $item[3];
+                $TESTS{ $item[0] }{'references'} = $item[1];
+                $TESTS{ $item[0] }{'method'}     = $item[4];
+                $TESTS{ $item[0] }{'dsl'}        = $item[5];
+                $TESTS{ $item[0] }{'matcher'}    = build_matcher($item[5], $item[0]);
+                $TESTS{ $item[0] }{'message'}    = $item[6];
+                $TESTS{ $item[0] }{'data'}       = $item[7];
+                $TESTS{ $item[0] }{'headers'}    = $item[8];
             }
         }
     }
 
-    nprint("- $COUNTERS{'total_checks'} server checks loaded", "v");
+    nprint("- $COUNTERS{'total_checks'} server checks loaded", "v", "Init");
     if ($COUNTERS{'total_checks'} eq 0 && !defined $CLI{'tuning'}) {
         nprint("+ Unable to load valid checks!");
         $mark->{'terminate'} = 1;
     }
     return;
 }
+#######################################################################
+# Check for updates to the program
+# Expects response like:
+# { "products": { "nikto": { "version": "2.6.0", "epoch": 1737935000 } } }
+sub check_updates {
+
+    # Get epoch from program/.timestamp || 0
+    my $epoch = 0;
+    my $timestamp_file =
+      defined $CONFIGFILE{'EXECDIR'} ? "$CONFIGFILE{'EXECDIR'}/.timestamp" : 'program/.timestamp';
+    if (-f $timestamp_file) {
+        if (open(my $fh, '<', $timestamp_file)) {
+            $epoch = <$fh>;
+            chomp($epoch);
+            close($fh);
+        }
+    }
+
+    # Request API to get manifest JSON using LibWhisker and configured proxy
+    return unless defined $CONFIGFILE{'VERSION_API'} && $CONFIGFILE{'VERSION_API'} ne '';
+
+    eval "require JSON::PP";
+    return if $@;
+
+    my %request;
+    my %response;
+
+    # Parse URL from config
+    my @uridata = LW2::uri_split($CONFIGFILE{'VERSION_API'});
+    my $host    = $uridata[2] || '';
+    my $port    = $uridata[3] || '';
+    my $path    = $uridata[0] || '/';
+
+    # Determine SSL and default port
+    my $ssl = ($CONFIGFILE{'VERSION_API'} =~ /^https:/i) ? 1 : 0;
+    if ($port eq '') {
+        $port = $ssl ? 443 : 80;
+    }
+
+    # Build URI with query parameters
+    my $uri = $path;
+    $uri .= ($path =~ /\?/) ? '&' : '?';
+    $uri .= "p=nikto&v=$VARIABLES{'version'}&e=$epoch";
+
+    LW2::http_init_request(\%request);
+    $request{'whisker'}->{'host'}    = $host;
+    $request{'whisker'}->{'port'}    = $port;
+    $request{'whisker'}->{'ssl'}     = $ssl;
+    $request{'whisker'}->{'uri'}     = $uri;
+    $request{'whisker'}->{'timeout'} = 5;
+
+    # Configure proxy if enabled
+    if (length($CONFIGFILE{PROXYHOST}) && $CLI{'useproxy'}) {
+        $request{'whisker'}->{'proxy_host'} = $CONFIGFILE{'PROXYHOST'};
+        $request{'whisker'}->{'proxy_port'} = $CONFIGFILE{'PROXYPORT'};
+        if (length($CONFIGFILE{'PROXYUSER'})) {
+            LW2::auth_set("proxy-basic", \%request,
+                          $CONFIGFILE{'PROXYUSER'},
+                          $CONFIGFILE{'PROXYPASS'});
+        }
+    }
+
+    LW2::http_fixup_request(\%request);
+    LW2::http_do_request_timeout(\%request, \%response);
+
+    # Check if request succeeded
+    if (($response{'whisker'}->{'code'} ne '200') || ($response{'whisker'}->{'data'} eq '')) {
+        nprint("+ ERROR: Failed to check for updates: $response{'whisker'}->{'code'}");
+        return;
+    }
+
+    # Parse JSON response
+    my $json_data;
+    eval { $json_data = JSON::PP->new->utf8(1)->decode($response{'whisker'}->{'data'}); };
+    return if $@ || !$json_data;
+
+    # Extract remote version and epoch
+    my $remote_version = $json_data->{'products'}->{'nikto'}->{'version'} || '';
+    my $remote_epoch   = $json_data->{'products'}->{'nikto'}->{'epoch'}   || 0;
+
+    # Compare epoch to manifest epoch
+    # If remote epoch is greater OR remote version is greater:
+    if ($remote_epoch > $epoch
+        || ($remote_version ne '' && $remote_version ne $VARIABLES{'version'})) {
+        my $defer = $VARIABLES{'deferout'};
+        $VARIABLES{'deferout'} = 0;
+
+        # Check if git install
+        my $is_git = (-d '.git' || -d '../.git' || -d '../../.git');
+        if ($is_git) {
+            nprint(
+                "+ Your Nikto installation is out of date. Please run 'git pull' to update to the latest version of Nikto."
+                );
+        }
+        else {
+            nprint("+ Your Nikto installation is out of date.");
+        }
+        $VARIABLES{'deferout'} = $defer;
+    }
+}
+#######################################################################
+# Expand @LFI() in DSL with platform-specific matchers
+sub expand_lfi_dsl {
+    my ($dsl) = @_;
+
+    if ($dsl =~ /@?LFI\(\)/) {
+
+        # Local variables for LFI matching
+        my $lfi_match_win = $VARIABLES{'@LFIMATCHWIN'} || '';
+        my $lfi_match_nix = $VARIABLES{'@LFIMATCHNIX'} || '';
+
+        # If both are empty, return original DSL
+        if (!$lfi_match_win && !$lfi_match_nix) {
+            return $dsl;
+        }
+
+        # Build the OR pattern: (@LFIMATCHWIN|@LFIMATCHNIX)
+        # Use string concatenation to preserve backslashes and avoid interpolation issues
+        my $replacement;
+        if ($lfi_match_win && $lfi_match_nix) {
+            $replacement = '(' . $lfi_match_win . '|' . $lfi_match_nix . ')';
+        }
+        elsif ($lfi_match_win) {
+            $replacement = $lfi_match_win;
+        }
+        else {
+            $replacement = $lfi_match_nix;
+        }
+
+        # Replace @LFI() with the expanded pattern
+        # Use \Q...\E to quote the replacement and prevent any regex interpretation
+        # But we need the | and && to work, so we can't quote everything
+        # Instead, just do the substitution - the replacement side doesn't interpret regex
+        $dsl =~ s/@?LFI\(\)/$replacement/g;
+    }
+
+    return $dsl;
+}
+
+sub build_matcher {
+    my ($dsl, $checkid) = @_;
+
+    # Return early if DSL is undefined or empty
+    return sub { return (0, []); }
+      unless defined $dsl && length $dsl;
+
+    # Expand @LFI() if present
+    my $expanded_dsl = expand_lfi_dsl($dsl);
+
+    # Use cached parser for speed
+    my $parsed = $DSL_CACHE{$expanded_dsl};
+    if (!$parsed) {
+        $parsed = parse_dsl($expanded_dsl);
+        $DSL_CACHE{$expanded_dsl} = $parsed;
+    }
+
+    return sub {
+        my ($code, $body, $headers, $cookies) = @_;
+        my @captured_groups = ();    # Store captured groups for extraction
+
+        # --- CODE NEGATIVES ---
+        for my $re (@{ $parsed->{code_neg} }) {
+            return (0, []) if $code =~ $re;
+        }
+
+        # --- CODE POSITIVES ---
+        for my $re (@{ $parsed->{code_pos} }) {
+            if ($code =~ $re) {
+
+                # Capture groups if they exist
+                push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+            }
+            else {
+                return (0, []);
+            }
+        }
+
+        # --- HEADER NEGATIVES ---
+        for my $h (@{ $parsed->{header_neg} }) {
+            if (exists $headers->{ $h->{name} }) {
+
+                # If regex defined, header must NOT match
+                return (0, []) if $h->{regex} && $headers->{ $h->{name} } =~ $h->{regex};
+
+                # If no regex, header must not exist
+                return (0, []) unless $h->{regex};
+            }
+        }
+
+        # --- HEADER POSITIVES ---
+        for my $h (@{ $parsed->{header_pos} }) {
+
+            # Must exist
+            return (0, []) unless exists $headers->{ $h->{name} };
+
+            # Must match regex if defined
+            if ($h->{regex}) {
+                if ($headers->{ $h->{name} } =~ $h->{regex}) {
+
+                    # Capture groups if they exist
+                    push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+                }
+                else {
+                    return (0, []);
+                }
+            }
+        }
+
+        # --- COOKIE NEGATIVES ---
+        for my $c (@{ $parsed->{cookie_neg} }) {
+            if (exists $cookies->{ $c->{name} }) {
+
+                # If regex defined, cookie must NOT match
+                return (0, []) if $c->{regex} && $cookies->{ $c->{name} } =~ $c->{regex};
+
+                # If no regex, cookie must not exist
+                return (0, []) unless $c->{regex};
+            }
+        }
+
+        # --- COOKIE POSITIVES ---
+        for my $c (@{ $parsed->{cookie_pos} }) {
+
+            # Must exist
+            return (0, []) unless exists $cookies->{ $c->{name} };
+
+            # Must match regex if defined
+            if ($c->{regex}) {
+                if ($cookies->{ $c->{name} } =~ $c->{regex}) {
+
+                    # Capture groups if they exist
+                    push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+                }
+                else {
+                    return (0, []);
+                }
+            }
+        }
+
+        # --- BODY NEGATIVES ---
+        for my $re (@{ $parsed->{body_neg} }) {
+            return (0, []) if $body =~ $re;
+        }
+
+        # --- BODY POSITIVES ---
+        for my $re (@{ $parsed->{body_pos} }) {
+            if ($body =~ $re) {
+
+                # Capture groups if they exist
+                push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+            }
+            else {
+                return (0, []);
+            }
+        }
+
+        # --- OR GROUPS ---
+        # Each OR group must have at least one alternative that matches
+        if (exists $parsed->{or_groups} && @{ $parsed->{or_groups} }) {
+            for my $or_group (@{ $parsed->{or_groups} }) {
+                my $or_matched = 0;
+                foreach my $alt_parsed (@$or_group) {
+
+                    # Build a temporary matcher for this alternative
+                    my $alt_matcher = sub {
+                        my ($alt_code, $alt_body, $alt_headers, $alt_cookies) = @_;
+                        my @alt_captures = ();
+
+                        # Check all conditions in this alternative
+                        for my $re (@{ $alt_parsed->{code_neg} }) {
+                            return (0, []) if $alt_code =~ $re;
+                        }
+                        for my $re (@{ $alt_parsed->{code_pos} }) {
+                            return (0, []) unless $alt_code =~ $re;
+                        }
+                        for my $h (@{ $alt_parsed->{header_neg} }) {
+                            if (exists $alt_headers->{ $h->{name} }) {
+                                return (0, [])
+                                  if $h->{regex} && $alt_headers->{ $h->{name} } =~ $h->{regex};
+                                return (0, []) unless $h->{regex};
+                            }
+                        }
+                        for my $h (@{ $alt_parsed->{header_pos} }) {
+                            return (0, []) unless exists $alt_headers->{ $h->{name} };
+                            if ($h->{regex}) {
+                                return (0, []) unless $alt_headers->{ $h->{name} } =~ $h->{regex};
+                            }
+                        }
+                        for my $c (@{ $alt_parsed->{cookie_neg} }) {
+                            if (exists $alt_cookies->{ $c->{name} }) {
+                                return (0, [])
+                                  if $c->{regex} && $alt_cookies->{ $c->{name} } =~ $c->{regex};
+                                return (0, []) unless $c->{regex};
+                            }
+                        }
+                        for my $c (@{ $alt_parsed->{cookie_pos} }) {
+                            return (0, []) unless exists $alt_cookies->{ $c->{name} };
+                            if ($c->{regex}) {
+                                return (0, []) unless $alt_cookies->{ $c->{name} } =~ $c->{regex};
+                            }
+                        }
+                        for my $re (@{ $alt_parsed->{body_neg} }) {
+                            return (0, []) if $alt_body =~ $re;
+                        }
+                        for my $re (@{ $alt_parsed->{body_pos} }) {
+                            return (0, []) unless $alt_body =~ $re;
+                        }
+
+                        # Check nested OR groups in this alternative
+                        if (exists $alt_parsed->{or_groups} && @{ $alt_parsed->{or_groups} }) {
+                            for my $nested_or_group (@{ $alt_parsed->{or_groups} }) {
+                                my $nested_or_matched = 0;
+                                foreach my $nested_alt (@$nested_or_group) {
+                                    my $nested_alt_matcher = sub {
+                                        my ($n_code, $n_body, $n_headers, $n_cookies) = @_;
+                                        for my $re (@{ $nested_alt->{code_neg} }) {
+                                            return (0, []) if $n_code =~ $re;
+                                        }
+                                        for my $re (@{ $nested_alt->{code_pos} }) {
+                                            return (0, []) unless $n_code =~ $re;
+                                        }
+                                        for my $h (@{ $nested_alt->{header_neg} }) {
+                                            if (exists $n_headers->{ $h->{name} }) {
+                                                return (0, [])
+                                                  if $h->{regex}
+                                                  && $n_headers->{ $h->{name} } =~ $h->{regex};
+                                                return (0, []) unless $h->{regex};
+                                            }
+                                        }
+                                        for my $h (@{ $nested_alt->{header_pos} }) {
+                                            return (0, []) unless exists $n_headers->{ $h->{name} };
+                                            if ($h->{regex}) {
+                                                return (0, [])
+                                                  unless $n_headers->{ $h->{name} } =~ $h->{regex};
+                                            }
+                                        }
+                                        for my $c (@{ $nested_alt->{cookie_neg} }) {
+                                            if (exists $n_cookies->{ $c->{name} }) {
+                                                return (0, [])
+                                                  if $c->{regex}
+                                                  && $n_cookies->{ $c->{name} } =~ $c->{regex};
+                                                return (0, []) unless $c->{regex};
+                                            }
+                                        }
+                                        for my $c (@{ $nested_alt->{cookie_pos} }) {
+                                            return (0, []) unless exists $n_cookies->{ $c->{name} };
+                                            if ($c->{regex}) {
+                                                return (0, [])
+                                                  unless $n_cookies->{ $c->{name} } =~ $c->{regex};
+                                            }
+                                        }
+                                        for my $re (@{ $nested_alt->{body_neg} }) {
+                                            return (0, []) if $n_body =~ $re;
+                                        }
+                                        for my $re (@{ $nested_alt->{body_pos} }) {
+                                            return (0, []) unless $n_body =~ $re;
+                                        }
+                                        return (1, []);
+                                    };
+                                    my ($n_match, $n_caps) =
+                                      $nested_alt_matcher->(
+                                                    $alt_code, $alt_body, $alt_headers, $alt_cookies
+                                                    );
+                                    if ($n_match) {
+                                        $nested_or_matched = 1;
+                                        push @alt_captures, @$n_caps if $n_caps;
+                                        last;
+                                    }
+                                }
+                                return (0, []) unless $nested_or_matched;
+                            }
+                        }
+                        return (1, \@alt_captures);
+                    };
+
+                    # Test this alternative
+                    my ($alt_match, $alt_caps) = $alt_matcher->($code, $body, $headers, $cookies);
+                    if ($alt_match) {
+                        $or_matched = 1;
+                        push @captured_groups, @$alt_caps if $alt_caps;
+                        last;    # One match is enough for OR
+                    }
+                }
+
+                # If no alternative matched, the OR group fails
+                return (0, []) unless $or_matched;
+            }
+        }
+
+        # Filter out undefined captured groups and build final array
+        my @final_captures = ();
+        for my $capture (@captured_groups) {
+            push @final_captures, $capture if defined $capture;
+        }
+
+        return (1, \@final_captures);    # All conditions passed, return captures
+    };
+}
+#######################################################################
+sub path_matcher {
+    my ($files_ref, $dirs_ref, $links_ref) = @_;
+
+    # Map file patterns to variable names
+    # var can be a string or array ref for multiple variables
+    my @file_patterns = ({ pattern => qr/pass/i, var => '@PASSWORDFILES' },);
+
+    # Process files
+    if ($files_ref) {
+        foreach my $file (keys %{$files_ref}) {
+            my $raw = $file;
+            $file = validate_and_fix_regex($file);
+
+            foreach my $check (@file_patterns) {
+                if ($file =~ $check->{pattern}) {
+                    my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
+                    foreach my $var (@vars) {
+                        if ($VARIABLES{$var} !~ /$file/i) {
+                            $VARIABLES{$var} .= " $raw";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Map directory patterns to variable names
+    # var can be a string or array ref for multiple variables
+    my @dir_patterns = ({ pattern => qr/cgi/i,              var => '@CGIDIRS' },
+                        { pattern => qr/forum/i,            var => [ '@NUKE', '@VBULLETIN' ] },
+                        { pattern => qr/pass/i,             var => '@PASSWORDDIRS' },
+                        { pattern => qr/nuke/i,             var => '@NUKE' },
+                        { pattern => qr/admin/i,            var => '@ADMIN' },
+                        { pattern => qr/phpmy/i,            var => '@PHPMYADMIN' },
+                        { pattern => qr/fck/i,              var => '@FCKEDITOR' },
+                        { pattern => qr/crystal/i,          var => '@CRYSTALREPORTS' },
+                        { pattern => qr/struts/i,           var => '@STRUTSACTIONS' },
+                        { pattern => qr/(wordpress|wp)/i,   var => '@WORDPRESS' },
+                        { pattern => qr/php/i,              var => '@PHPINFODIRS' },
+                        { pattern => qr/phpinfo/i,          var => '@PHPINFOFILES' },
+                        { pattern => qr/mantis/i,           var => '@MANTIS' },
+                        { pattern => qr/dokuwiki/i,         var => '@DOKUWIKI' },
+                        { pattern => qr/rockmongo/i,        var => '@ROCKMONGO' },
+                        { pattern => qr/magento/i,          var => '@MAGENTO' },
+                        { pattern => qr/(vb|vbulletin)/i,   var => '@VBULLETIN' },
+                        { pattern => qr/jenkins/i,          var => '@JENKINS' },
+                        { pattern => qr/symphony|contrib/i, var => '@SYMPHONY' },
+                        );
+
+    # Process directories
+    if ($dirs_ref) {
+        foreach my $dir (keys %{$dirs_ref}) {
+
+            # Directory is already validated before being stored, just use it directly
+            foreach my $check (@dir_patterns) {
+                if ($dir =~ $check->{pattern}) {
+                    my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
+                    foreach my $var (@vars) {
+                        if ($VARIABLES{$var} !~ /$dir/i) {
+                            $VARIABLES{$var} .= " $dir";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Map link patterns to variable names
+    # var can be a string or array ref for multiple variables
+    my @link_patterns = ({ pattern => qr/\.action(\?|$)/i, var => '@STRUTSACTIONS' },);
+
+    # Process full links
+    if ($links_ref) {
+        foreach my $link (keys %{$links_ref}) {
+            $link = validate_and_fix_regex($link);
+            foreach my $check (@link_patterns) {
+                if ($link =~ $check->{pattern}) {
+                    my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
+                    foreach my $var (@vars) {
+                        if ($VARIABLES{$var} !~ /$link/i) {
+                            $VARIABLES{$var} .= " $link";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 #######################################################################
 # extract IP like strings and return an array
 sub get_ips {
-    my $string =shift || return;
+    my $string   = shift || return;
     my $ip_regex = qr/(?:\b|[^0-9v])($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)(?:\b|[^0-9])/;
     return $string =~ /$ip_regex/g;
 }
@@ -2768,6 +3950,11 @@ sub is_ip {
     my $ip       = $_[0] || return 0, 0, 0;
     my $internal = 0;
     my $loopback = 0;
+
+    # This is a little hacky but prevents Cloudflare cookies and headers from reporting
+    if ($ip eq '1.0.1.1') {
+        return 0, 0, 0;
+    }
 
     if ($ip =~ /^$LW2::IPv4_re$/) {
 
@@ -2803,6 +3990,344 @@ sub is_ip {
 }
 
 #######################################################################
+sub parse_dsl {
+    my ($dsl) = @_;
+
+    die "Empty DSL string" unless defined $dsl && length $dsl;
+
+    # Split top-level conditions on && and ||, but not inside parentheses
+    # This preserves OR patterns like (PATTERN1|PATTERN2&&PATTERN3)
+    # First, check if there's a top-level || (OR operator)
+    my $has_top_level_or = 0;
+    my $depth            = 0;
+    for (my $i = 0 ; $i < length($dsl) ; $i++) {
+        my $char       = substr($dsl, $i, 1);
+        my $next_char  = ($i < length($dsl) - 1) ? substr($dsl, $i + 1, 1) : '';
+        my $prev_char  = ($i > 0)                ? substr($dsl, $i - 1, 1) : '';
+        my $is_escaped = ($prev_char eq '\\');
+
+        if (!$is_escaped) {
+            if ($char eq '(') {
+                $depth++;
+            }
+            elsif ($char eq ')') {
+                $depth--;
+            }
+            elsif ($char eq '|' && $next_char eq '|' && $depth == 0) {
+                $has_top_level_or = 1;
+                last;
+            }
+        }
+    }
+
+    # If we have a top-level ||, split on it and wrap in OR group
+    if ($has_top_level_or) {
+        my @or_alternatives = ();
+        $depth = 0;
+        my $current_alt = '';
+        for (my $i = 0 ; $i < length($dsl) ; $i++) {
+            my $char       = substr($dsl, $i, 1);
+            my $next_char  = ($i < length($dsl) - 1) ? substr($dsl, $i + 1, 1) : '';
+            my $prev_char  = ($i > 0)                ? substr($dsl, $i - 1, 1) : '';
+            my $is_escaped = ($prev_char eq '\\');
+
+            if (!$is_escaped) {
+                if ($char eq '|' && $next_char eq '|' && $depth == 0) {
+                    push @or_alternatives, $current_alt if $current_alt ne '';
+                    $current_alt = '';
+                    $depth       = 0;    # Reset depth for new alternative
+                    $i += 1; # Skip first |, loop will auto-increment to skip second |
+                    next;    # Continue to next iteration (will auto-increment i, skipping second |)
+                }
+                elsif ($char eq '(') {
+                    $depth++;
+                    $current_alt .= $char;
+                }
+                elsif ($char eq ')') {
+                    $depth--;
+                    $current_alt .= $char;
+                }
+                else {
+                    $current_alt .= $char;
+                }
+            }
+            else {
+                $current_alt .= $char;
+            }
+        }
+        push @or_alternatives, $current_alt if $current_alt ne '';
+
+        # Parse each alternative and create an OR group
+        my @or_parsed = ();
+        foreach my $alt (@or_alternatives) {
+            $alt =~ s/^\s+|\s+$//g;
+            next unless $alt;
+
+     # If alternative doesn't start with a known type prefix or OR group, assume it's a BODY pattern
+            if ($alt !~ /^(CODE|BODY|HEADER|COOKIE|!CODE|!BODY|!HEADER|!COOKIE):/i && $alt !~ /^\(/)
+            {
+                $alt = "BODY:$alt";
+            }
+            my $alt_parsed = parse_dsl($alt);
+            push @or_parsed, $alt_parsed;
+        }
+
+        # Return a compiled structure with just the OR group
+        my %compiled = (code_pos   => [],
+                        code_neg   => [],
+                        body_pos   => [],
+                        body_neg   => [],
+                        header_pos => [],
+                        header_neg => [],
+                        cookie_pos => [],
+                        cookie_neg => [],
+                        or_groups  => [ \@or_parsed ],
+                        );
+        return \%compiled;
+    }
+
+    # No top-level ||, proceed with normal && splitting
+    my @tokens = ();
+    $depth = 0;
+    my $current_token = '';
+    my $i             = 0;
+    my $len           = length($dsl);
+
+    while ($i < $len) {
+        my $char      = substr($dsl, $i, 1);
+        my $next_char = ($i < $len - 1) ? substr($dsl, $i + 1, 1) : '';
+        my $prev_char = ($i > 0)        ? substr($dsl, $i - 1, 1) : '';
+
+        # Check if && is escaped (previous char is backslash, similar to original regex)
+        my $is_escaped = ($prev_char eq '\\');
+
+        if (!$is_escaped) {
+            if ($char eq '(') {
+                $depth++;
+                $current_token .= $char;
+            }
+            elsif ($char eq ')') {
+                $depth--;
+                $current_token .= $char;
+            }
+            elsif ($char eq '&' && $next_char eq '&' && $depth == 0) {
+
+                # Found top-level && delimiter
+                push @tokens, $current_token if $current_token ne '';
+                $current_token = '';
+                $i += 2;    # Skip both & characters
+                next;
+            }
+            else {
+                $current_token .= $char;
+            }
+        }
+        else {
+            # Escaped character, just add it
+            $current_token .= $char;
+        }
+        $i++;
+    }
+    push @tokens, $current_token if $current_token ne '';
+
+    my %compiled = (code_pos   => [],
+                    code_neg   => [],
+                    body_pos   => [],
+                    body_neg   => [],
+                    header_pos => [],
+                    header_neg => [],
+                    cookie_pos => [],
+                    cookie_neg => [],
+                    or_groups  => [],    # Store OR patterns for special handling
+                    );
+
+    foreach my $token (@tokens) {
+        $token =~ s/^\s+|\s+$//g;                     # trim whitespace
+        $token =~ s/,\s*$// if length($token) > 1;    # trim trailing comma
+        next unless $token;
+
+        # Check if this is an OR pattern (starts with ( and ends with ))
+        # Use regex to check if it's a properly formed OR pattern
+        if ($token =~ /^\((.*)\)$/) {
+
+            # Verify balanced parentheses in the content (the outer parens are already matched)
+            my $or_content = $1;
+            my $depth      = 0;
+            my $valid_or   = 1;
+            for my $i (0 .. length($or_content) - 1) {
+                my $char       = substr($or_content, $i, 1);
+                my $prev_char  = ($i > 0) ? substr($or_content, $i - 1, 1) : '';
+                my $is_escaped = ($prev_char eq '\\');
+
+                if (!$is_escaped) {
+                    if ($char eq '(') {
+                        $depth++;
+                    }
+                    elsif ($char eq ')') {
+                        $depth--;
+                        if ($depth < 0) {
+                            $valid_or = 0;
+                            last;
+                        }
+                    }
+                }
+            }
+
+            # Content must have balanced parentheses
+            if ($valid_or && $depth == 0) {
+
+                # Split on | but not escaped |
+                my @alternatives = split /(?<!\\)\|/, $or_content;
+
+                # Parse each alternative as a separate DSL expression
+                my @or_parsed = ();
+                foreach my $alt (@alternatives) {
+                    $alt =~ s/^\s+|\s+$//g;
+                    next unless $alt;
+
+                    # Recursively parse this alternative
+                    my $alt_parsed = parse_dsl($alt);
+                    push @or_parsed, $alt_parsed;
+                }
+
+                # Store the OR group
+                push @{ $compiled{or_groups} }, \@or_parsed;
+                next;
+            }
+            else {
+                # Token looks like an OR pattern but has unbalanced parentheses
+                die "Invalid DSL token: OR pattern has unbalanced parentheses: $token";
+            }
+        }
+        elsif ($token =~ /^\(/) {
+
+            # Token starts with ( but doesn't match OR pattern format
+            # Show token details for debugging
+            my $token_len  = length($token);
+            my $first_char = substr($token, 0, 1);
+            my $last_char  = substr($token, -1);
+            die
+              "Invalid DSL token: token starts with '(' but is not a properly formed OR pattern (must start with '(' and end with ')'): length=$token_len, first='$first_char', last='$last_char', token='$token'";
+        }
+
+        # Check negation
+        my $neg = 0;
+        if ($token =~ /^!/) {
+            $neg   = 1;
+            $token = substr($token, 1);
+        }
+
+        # Skip @LFI() tokens - they are placeholders that will be expanded at runtime
+        # This can happen if variables aren't loaded yet during validation
+        if ($token =~ /^@?LFI\(\)$/) {
+            next;
+        }
+
+        # TYPE:VALUE split (only first colon)
+        my ($type, $pattern) = split /:/, $token, 2;
+        die "Invalid DSL token: $token" unless defined $type && defined $pattern;
+        $type = uc($type);
+
+        if ($type eq 'CODE') {
+            push @{ $neg ? $compiled{code_neg} : $compiled{code_pos} }, compile_regex($pattern);
+
+        }
+        elsif ($type eq 'BODY') {
+            die "Empty BODY pattern in DSL" if $pattern eq '';
+            my $compiled = compile_regex($pattern);
+            push @{ $neg ? $compiled{body_neg} : $compiled{body_pos} }, $compiled;
+
+        }
+        elsif ($type eq 'HEADER') {
+            my ($hname, $hval) = split /:/, $pattern, 2;
+            die "Missing HEADER name: $token" unless defined $hname && length $hname;
+            $hname =~ s/^\s+|\s+$//g;
+            $hval = '' unless defined $hval;
+            $hval =~ s/^\s+//;
+            my $re = length($hval) ? compile_regex($hval) : undef;
+            push @{ $neg ? $compiled{header_neg} : $compiled{header_pos} },
+              { name  => lc($hname),
+                regex => $re,
+                };
+
+        }
+        elsif ($type eq 'COOKIE') {
+            my ($cname, $cval) = split /:/, $pattern, 2;
+            die "Missing COOKIE name: $token" unless defined $cname && length $cname;
+            $cname =~ s/^\s+|\s+$//g;
+            $cval = '' unless defined $cval;
+            $cval =~ s/^\s+//;
+            my $re = length($cval) ? compile_regex($cval) : undef;
+            push @{ $neg ? $compiled{cookie_neg} : $compiled{cookie_pos} },
+              { name  => lc($cname),
+                regex => $re,
+                };
+
+        }
+        else {
+            die "Unknown DSL type: $type";
+        }
+    }
+
+    return \%compiled;
+}
+
+#######################################################################
+sub compile_regex {
+    my ($pattern) = @_;
+
+    # Remove escapes for our delimiters (but preserve other escapes like \. \d etc)
+    # However, don't unescape pipes inside escaped parentheses \( \) as those are literal
+    # Protect pipes inside \( \) blocks by temporarily replacing them
+    my @protected_blocks = ();
+    my $block_idx        = 0;
+    while ($pattern =~ /(\\\([^)]*\\\))/g) {
+        my $block       = $1;
+        my $placeholder = "___PROTECTED_BLOCK_${block_idx}___";
+        $protected_blocks[$block_idx] = $block;
+        $pattern =~ s/\Q$block\E/$placeholder/;
+        $block_idx++;
+    }
+
+    # Now unescape delimiters outside protected blocks
+    $pattern =~ s/\\([|!&:])/$1/g;
+
+    # Restore protected blocks (with their escaped pipes intact)
+    for (my $i = 0 ; $i < @protected_blocks ; $i++) {
+        my $placeholder = "___PROTECTED_BLOCK_${i}___";
+        $pattern =~ s/\Q$placeholder\E/$protected_blocks[$i]/;
+    }
+
+    # Fix escaped quotes - convert \" to " (escaped quotes in CSV become literal quotes in regex)
+    # This prevents "Trailing \ in regex" errors when patterns end with \"
+    $pattern =~ s/\\"/"/g;
+
+    # Fix trailing backslashes - if pattern ends with \ (not part of an escape sequence), double it
+    # This prevents "Trailing \ in regex" errors (e.g., "c:\" becomes "c:\\")
+    # Only do this if the backslash is not already escaped (not "\\")
+    if ($pattern =~ /[^\\]\\$/) {
+        $pattern =~ s/([^\\])\\$/$1\\\\/;    # Double the trailing backslash
+    }
+    elsif ($pattern =~ /^\\$/) {
+
+        # Pattern is just a single backslash
+        $pattern = '\\\\';
+    }
+
+    # Handle case-insensitive flag
+    my $mod = '';
+    if ($pattern =~ s/^\(\?i\)//) {
+        $mod = '(?i)';
+    }
+
+    # Compile the regex pattern
+    my $re = eval { qr/$mod$pattern/ };
+    die "Invalid regex '$pattern': $@" if $@;
+
+    return $re;
+}
+
+#######################################################################
 sub parse_csv {
     my $text = $_[0] || return;
     my @new  = ();
@@ -2815,32 +4340,17 @@ sub parse_csv {
     return @new;
 }
 #######################################################################
-sub check_modules {
-
-    # Check dependencies
-    eval "require JSON::PP";
-    if ($@) {
-        nprint(
-             "+ WARNING: Module JSON::PP missing. -Savedir and replay functionality cannot be used."
-             );
-    }
+sub check_ssl_support {
     LW2::init_ssl_engine();
     my ($avail, $lib, $ver) = LW2::ssl_is_available();
     if (!$avail) {
         nprint("+ WARNING: SSL: support not available.");
     }
-
 }
 
 #######################################################################
 sub version {
-    my %NIKTOFILES;
-
     nprint("$VARIABLES{'name'} $VARIABLES{'version'} (LW $LW2::VERSION)");
-
-    # Check dependencies
-    check_modules();
-
     exit 0;
 }
 
@@ -2887,44 +4397,60 @@ sub send_updates {
     if ($answer !~ /y/i) { return; }
 
     # set up our mark
-    my %mark = ('ident' => 'cirt.net',
+    my %mark = ('ident' => $CONFIGFILE{CIRT},
                 'ssl'   => 1,
                 'port'  => 443
                 );
 
-    for (my $i = 0 ; $i <= $#ARGV ; $i++) {
-        if (($ARGV[$i] eq "-u") || ($ARGV[$i] eq "-useproxy")) {
-            $CLI{'useproxy'} = 1;
-            last;
-        }
-    }
-
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve('cirt.net');
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve($CONFIGFILE{CIRT}, 0);
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
-    ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
+
+    # Use libwhisker directly instead of nfetch to avoid reporting on update target
+    my (%request, %response);
+    setup_hash(\%request, \%mark, "");
+    $request{'whisker'}->{'uri'}    = "/nikto-updates.php?version=$upd_enc";
+    $request{'whisker'}->{'method'} = "GET";
+    $request{'whisker'}->{'host'}   = $mark{'hostname'};
+    $request{'Accept'}              = '*/*';
+    $request{'User-Agent'}          = get_ua();
+
+    LW2::http_fixup_request(\%request);
+
+    LW2::http_do_request_timeout(\%request, \%response);
+    $code    = $response{'whisker'}->{'code'};
+    $content = $response{'whisker'}->{'data'};
 
     if ($code eq 407) {
         if ($CONFIGFILE{PROXYUSER} eq "") {
             $CONFIGFILE{PROXYUSER} = read_data("Proxy ID: ",   "");
             $CONFIGFILE{PROXYPASS} = read_data("Proxy Pass: ", "noecho");
         }
-        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
+        LW2::http_do_request_timeout(\%request, \%response);
+        $code    = $response{'whisker'}->{'code'};
+        $content = $response{'whisker'}->{'data'};
     }
 
     if ($code eq "") {
-        LW2::http_close(\%request);    # force-close any old connections
-        $mark{'ip'} = $CONFIGFILE{CIRT};
-        ($code, $content) = nfetch(\%mark, "/nikto-updates.php?version=$upd_enc", "GET");
+        LW2::http_close(\%request);
+
+        # Use CIRT config hostname for fallback
+        my ($fallback_hostname, $fallback_ip, $fallback_display) = resolve($CONFIGFILE{CIRT}, 0);
+        $mark{'ip'} = $fallback_ip;
+        $request{'whisker'}->{'host'} = $fallback_hostname;
+        LW2::http_fixup_request(\%request);
+        LW2::http_do_request_timeout(\%request, \%response);
+        $code    = $response{'whisker'}->{'code'};
+        $content = $response{'whisker'}->{'data'};
     }
 
     if (($code != 200) || ($content !~ /SUCCESS/)) {
         nprint("+ ERROR: $code -> "
-                 . $response->{'location'}
+                 . $response{'location'}
                  . "\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.",
                "",
-               ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+               ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'})
                );
     }
     else {
@@ -2938,6 +4464,7 @@ sub send_updates {
 sub usage {
     print "
    Options:
+       -Add-header         Add HTTP headers (can be used multiple times, one per header pair)
        -ask+               Whether to ask about submitting updates
                                yes   Ask about each (default)
                                no    Don't ask, don't send
@@ -2967,7 +4494,6 @@ sub usage {
                                csv   Comma-separated-value
                                json  JSON Format
                                htm   HTML Format
-                               nbe   Nessus NBE format
                                sql   Generic SQL (see docs for schema)
                                txt   Plain text
                                xml   XML Format
@@ -2987,6 +4513,8 @@ sub usage {
     }
 
     print "       -mutate-options    Provide information for mutates
+       -nocheck           Don't check for updates on startup
+       -nocookies         Do not use cookies from responses in requests
        -nointeractive     Disables interactive features
        -nolookup          Disables DNS lookups
        -nossl             Disables the use of SSL
@@ -2995,6 +4523,7 @@ sub usage {
        -Option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
        -Pause+            Pause between tests (seconds)
+       -Platform+         Platform of target (nix, win, all)
        -Plugins+          List of plugins to run (default: ALL)
        -port+             Port to use (default 80)
        -RSAcert+          Client certificate file
@@ -3022,10 +4551,8 @@ sub usage {
        -Userdbs           Load only user databases, not the standard databases
                                all   Disable standard dbs and load only user dbs
                                tests Disable only db_tests and load udb_tests
-       -useragent         Over-rides the default useragent
-       -until             Run until the specified time or duration
+       -useragent         Force User-Agent instead of pulling from database
        -url+              Target host/URL (alias of -host)
-       -usecookies        Use cookies from responses in future requests
        -useproxy          Use the proxy defined in nikto.conf, or argument http://server:port
        -Version           Print plugin and database versions
        -vhost+            Virtual host (for Host header)
@@ -3033,14 +4560,12 @@ sub usage {
        -404string         Ignore this string in response body content as negative response (always). Can be a regular expression.
    		+ requires a value\n\n";
 
-    check_modules();
-
     exit 0;
 }
 
 #######################################################################
 sub init_db {
-    my $dbname   = shift;
+    my $dbname = shift;
     return if $dbname eq "";
     my $filename = "$CONFIGFILE{'DBDIR'}/" . $dbname;
     my (@dbarray, @headers);
@@ -3101,8 +4626,18 @@ sub init_db {
 #######################################################################
 sub add_vulnerability {
     my ($mark, $message, $nikto_id, $refs, $method, $uri, $request, $response, $reason) = @_;
-    $uri    = "/"   unless (defined $uri);
+
+    # Also normalize the response URI so it's consistent when used later
+    if (defined $response && defined $response->{whisker}) {
+        if (   !defined $response->{whisker}->{uri_requested}
+            || $response->{whisker}->{uri_requested} eq ""
+            || $response->{whisker}->{uri_requested} eq ".") {
+            $response->{whisker}->{uri_requested} = "/";
+        }
+    }
     $method = "GET" unless (defined $method);
+
+    # Grammar matters
     if ($message !~ /\.$/) {
         $message .= ".";
     }
@@ -3143,7 +4678,8 @@ sub add_vulnerability {
         $message .= " See: $refs";
     }
 
-    nprint("+ $message", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+    nprint("+ [$nikto_id] $message",
+           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Save it
     if ($CLI{'saveresults'} ne '') {
@@ -3152,6 +4688,176 @@ sub add_vulnerability {
 
     # Now report it
     report_item($mark, $resulthash);
+}
+
+###############################################################################
+sub rebuild_request {
+    my ($req, $include_body, $truncate_length) = @_;
+    return '' unless ref($req) eq 'HASH';
+
+    # Default to including body for backward compatibility
+    $include_body = 1 unless defined $include_body;
+
+    my $w = (ref($req->{whisker}) eq 'HASH') ? $req->{whisker} : {};
+
+    my $method = $w->{method} || 'GET';
+    my $uri    = defined $w->{uri} ? $w->{uri} : '/';
+    my $proto  = $w->{protocol} || 'HTTP';
+    my $ver    = $w->{version}  || '1.1';
+
+    my $eol = (defined $w->{http_eol} && $w->{http_eol} ne '') ? $w->{http_eol} : "\r\n";
+
+    # Things that are NOT HTTP headers in LW2 request structure
+    my %NOT_HEADERS = map { $_ => 1 } qw(
+      whisker data MAGIC host port ssl max_size
+      method uri protocol version timeout
+      http_eol http_space1 http_space2 retry
+      uri_param_sep uri_prefix uri_postfix include_host_in_uri
+      force_bodysnatch force_open force_close trailing_slurp
+      ignore_duplicate_headers lowercase_incoming_headers normalize_incoming_headers
+      require_newline_after_headers invalid_protocol_return_value
+      ssl_certfile ssl_rsacertfile ssl_save_info
+      );
+
+    # Allowlist pattern for header names
+    my $is_header_name = sub {
+        my ($k) = @_;
+        return 0 if !defined $k;
+        return 0 if $NOT_HEADERS{$k};    # hard stop
+        return ($k =~ /^[A-Za-z][A-Za-z0-9-]*$/) ? 1 : 0;
+    };
+
+    # Merge headers: whisker first, then top-level overrides
+    my %h;
+
+    for my $k (keys %$w) {
+        next unless $is_header_name->($k);
+        next unless defined $w->{$k};
+        next if ref($w->{$k});
+        $h{$k} = $w->{$k};
+    }
+
+    for my $k (keys %$req) {
+        next unless $is_header_name->($k);
+        next unless defined $req->{$k};
+        next if ref($req->{$k});
+        $h{$k} = $req->{$k};
+    }
+
+    # Determine Host header value (prefer explicit Host; else whisker 'host')
+    my $host_val = '';
+    if (exists $h{Host} && defined $h{Host}) {
+        $host_val = $h{Host};
+    }
+    elsif (defined $w->{host} && $w->{host} ne '') {
+        $host_val = $w->{host};
+    }
+
+    # Build request line
+    my $out = "$method $uri $proto/$ver$eol";
+
+    # Host header must be immediately after request line
+    if ($host_val ne '') {
+        $host_val =~ s/\r|\n/ /g;
+        $out .= "Host: $host_val$eol";
+        delete $h{Host};    # avoid duplicate
+    }
+
+    # Other headers: stable order (case-insensitive)
+    my @keys = sort { lc($a) cmp lc($b) } keys %h;
+
+    for my $k (@keys) {
+        my $v = $h{$k};
+        next unless defined $v;
+        $v =~ s/\r|\n/ /g;
+        $out .= "$k: $v$eol";
+    }
+
+    $out .= $eol;
+
+    # Include body if flag is set
+    if ($include_body && defined $w->{data} && length($w->{data})) {
+        $out .= $w->{data};
+    }
+
+    # Truncate if length specified
+    if (defined $truncate_length && $truncate_length > 0 && length($out) > $truncate_length) {
+        my $original_length = length($out);
+        $out = substr($out, 0, $truncate_length);
+        $out .= "\n[Request truncated - original size: $original_length bytes]";
+    }
+
+    return $out;
+}
+
+###############################################################################
+sub rebuild_response {
+    my ($resp, $include_body, $truncate_length) = @_;
+    return '' unless ref($resp) eq 'HASH';
+
+    # Default to including body for backward compatibility
+    $include_body = 1 unless defined $include_body;
+
+    my $w = (ref($resp->{whisker}) eq 'HASH') ? $resp->{whisker} : {};
+
+    my $proto = $w->{protocol} || 'HTTP';
+    my $ver   = $w->{version}  || '1.1';
+    my $code  = defined $w->{code}    ? $w->{code}    : '200';
+    my $msg   = defined $w->{message} ? $w->{message} : 'OK';
+
+    my $eol = (defined $w->{http_eol} && $w->{http_eol} ne '') ? $w->{http_eol} : "\r\n";
+
+    # Build status line
+    my $out = "$proto/$ver $code $msg$eol";
+
+    # Use header_order from whisker hash to maintain original header order
+    if (defined $w->{header_order} && ref($w->{header_order}) eq 'ARRAY') {
+        my %header_output;    # Track which header values we've already output
+        foreach my $header_name (@{ $w->{header_order} }) {
+            next if ($header_name eq '' || $header_name eq 'whisker');
+            next unless defined $resp->{$header_name};
+
+            # Handle multiple values for the same header (array reference)
+            if (ref($resp->{$header_name}) eq 'ARRAY') {
+                my $value_idx = $header_output{$header_name} || 0;
+
+                # Output one value per header_order entry to maintain order
+                if ($value_idx < @{ $resp->{$header_name} }) {
+                    my $value = $resp->{$header_name}->[$value_idx];
+                    if (defined $value) {
+                        $value =~ s/\r|\n/ /g;
+                        $out .= "$header_name: $value$eol";
+                        $header_output{$header_name} = $value_idx + 1;
+                    }
+                }
+            }
+            else {
+                # Single value header - only output once even if in header_order multiple times
+                unless ($header_output{$header_name}) {
+                    my $value = $resp->{$header_name};
+                    $value =~ s/\r|\n/ /g;
+                    $out .= "$header_name: $value$eol";
+                    $header_output{$header_name} = 1;
+                }
+            }
+        }
+    }
+
+    $out .= $eol;
+
+    # Include body if flag is set
+    if ($include_body && defined $w->{data} && length($w->{data})) {
+        $out .= $w->{data};
+    }
+
+    # Truncate if length specified
+    if (defined $truncate_length && $truncate_length > 0 && length($out) > $truncate_length) {
+        my $original_length = length($out);
+        $out = substr($out, 0, $truncate_length);
+        $out .= "\n[Response truncated - original size: $original_length bytes]";
+    }
+
+    return $out;
 }
 
 ###############################################################################
@@ -3313,16 +5019,14 @@ sub expand_pluginlist {
 # Check a regex for validation & fix. If mode=1, return a flag which indicates
 # whether the regex was changed
 sub validate_and_fix_regex {
-    my $regex = $_[0];
-    my $mode  = $_[1] || 0;
+    my ($regex, $mode) = @_;
     my $fixed = 0;
     eval { qr/$regex/ };
     if ($@) {
         $fixed = 1;
         $regex = rquote($regex);
     }
-    if ($mode) { return $regex, $fixed; }
-    return $regex;
+    return $mode ? ($regex, $fixed) : $regex;
 }
 ###############################################################################
 sub rquote {

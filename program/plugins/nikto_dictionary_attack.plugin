@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2004 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Run dictionary tests
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Run dictionary tests
 ###############################################################################
 sub nikto_dictionary_attack_init {
     my $id = { name        => "dictionary",
@@ -52,7 +36,7 @@ sub nikto_dictionary_attack {
         $dictfile = $CLI{'mutate-options'};
     }
     else {
-        nprint("- No dictionary file given in plugin options, skipping check", "v");
+        nprint("- No dictionary file given in plugin options, skipping check", "v", "dictionary");
         return;
     }
 
@@ -70,7 +54,7 @@ sub nikto_dictionary_attack {
     # Record the host for future use
     my $host = $mark->{'hostname'};
 
-    nprint("- Guessing directories/files (using dictionary $dictfile).", "v");
+    nprint("- Guessing directories/files (using dictionary $dictfile).", "v", "dictionary");
     unless (open(IN, "<$dictfile")) {
         nprint("+ ERROR: Unable to open dictionary file $dictfile: $!.");
     }
@@ -82,13 +66,15 @@ sub nikto_dictionary_attack {
         s/\#.*$//;
         next if ($_ eq "");
         my $dir = $_;
-        if (($ctr % 100) == 0) { nprint("- File enumeration guess $ctr ($dir): /$dir/", "v"); }
+        if (($ctr % 100) == 0) {
+            nprint("- File enumeration guess $ctr ($dir): /$dir/", "v", "dictionary");
+        }
         my ($code, $content, $error, $request, $response) =
           nfetch($mark, "/$dir", "${method}", "", "", "", "dictionary_attack");
         foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {
 
             if ($code eq $found) {
-                add_vulnerability($mark, "Found file: /$dir",
+                add_vulnerability($mark, "/$dir: Found a file",
                                   999969, "", "HEAD", "/$dir", $request, $response);
             }
         }

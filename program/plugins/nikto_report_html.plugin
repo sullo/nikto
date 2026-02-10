@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# HTML Reporting
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: HTML Reporting
 ###############################################################################
 sub nikto_report_html_init {
     my $id = { name              => "report_html",
@@ -29,6 +13,7 @@ sub nikto_report_html_init {
                report_host_end   => \&html_host_end,
                report_item       => \&html_item,
                report_close      => \&html_close,
+               report_ssl_info   => \&html_ssl_info,
                report_format     => 'htm',
                copyright         => "2008 Chris Sullo"
                };
@@ -43,18 +28,22 @@ sub html_head {
     print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
 
     # Write header for html file, return file handle
-    open(OUT, ">>$file") || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    my $fh;
+    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
 
-    my $html = html_change_vars($TEMPLATES{'htm_start'});
+    # Enable autoflush
+    $fh->autoflush(1);
+
+    my $html = process_template($TEMPLATES{'htm_start'}, $mark);
     $html =~ s/\#NIKTODTD#/$CONFIGFILE{'NIKTODTD'}/;
-    print OUT "$html";
+    print $fh "$html";
 
-    return OUT;
+    return $fh;
 }
 ###############################################################################
 sub html_close {
     my ($handle, $mark) = @_;
-    my $html = html_change_vars($TEMPLATES{'htm_close'}, $mark);
+    my $html = process_template($TEMPLATES{'htm_close'}, $mark);
     print $handle "$html\n";
 
     close($handle);
@@ -63,23 +52,65 @@ sub html_close {
 ###############################################################################
 sub html_summary {
     my ($handle, $mark) = @_;
-    my $html = html_change_vars($TEMPLATES{'htm_summary'}, $mark);
+    my $html = process_template($TEMPLATES{'htm_summary'}, $mark);
     print $handle $html;
 
     return;
 }
 ###############################################################################
+# Store host header HTML until SSL info is available
+our $HTML_HOST_HEADER = undef;
+our $HTML_HOST_HANDLE = undef;
+our $HTML_HOST_MARK   = undef;
+
 sub html_host_start {
     my ($handle, $mark) = @_;
-    my $html = html_change_vars($TEMPLATES{'htm_host_head'}, $mark);
-    print $handle "$html\n";
+
+    # Store handle and mark for later use when SSL info is available
+    $HTML_HOST_HANDLE = $handle;
+    $HTML_HOST_MARK   = $mark;
+
+    # Don't write yet - wait for SSL info to be available
+    # The template will be written by html_ssl_info() or html_host_end()
+
+    return;
+}
+###############################################################################
+sub html_ssl_info {
+    my ($handle, $mark) = @_;
+
+    # If host header hasn't been written yet, write it now with SSL info
+    if (defined $HTML_HOST_HANDLE) {
+        my $html = process_template($TEMPLATES{'htm_host_head'}, $mark);
+        print $handle "$html\n";
+
+        # Clear stored values
+        $HTML_HOST_HEADER = undef;
+        $HTML_HOST_HANDLE = undef;
+        $HTML_HOST_MARK   = undef;
+    }
+
+    # If header was already written by html_item, we can't update it
+    # This is acceptable - SSL info will be missing but header is in correct position
 
     return;
 }
 ###############################################################################
 sub html_host_end {
     my ($handle, $mark) = @_;
-    my $html = html_change_vars($TEMPLATES{'htm_end'}, $mark);
+
+    # If host header wasn't written yet (no SSL), write it now without SSL info
+    if (defined $HTML_HOST_HANDLE) {
+        my $html = process_template($TEMPLATES{'htm_host_head'}, $HTML_HOST_MARK);
+        print $HTML_HOST_HANDLE "$html\n";
+
+        # Clear stored values
+        $HTML_HOST_HEADER = undef;
+        $HTML_HOST_HANDLE = undef;
+        $HTML_HOST_MARK   = undef;
+    }
+
+    my $html = process_template($TEMPLATES{'htm_end'}, $mark);
     print $handle "$html\n";
 
     return;
@@ -87,7 +118,22 @@ sub html_host_end {
 ###############################################################################
 sub html_item {
     my ($handle, $mark, $item) = @_;
-    my $html = html_change_vars($TEMPLATES{'htm_host_item'}, $mark, $item);
+
+    # If host header hasn't been written yet, write it now (without SSL info)
+    # This ensures the header appears before any items
+    if (defined $HTML_HOST_HANDLE) {
+
+        # Use the stored mark which has the initial host info
+        my $html = process_template($TEMPLATES{'htm_host_head'}, $HTML_HOST_MARK);
+        print $handle "$html\n";
+
+        # Clear stored values
+        $HTML_HOST_HEADER = undef;
+        $HTML_HOST_HANDLE = undef;
+        $HTML_HOST_MARK   = undef;
+    }
+
+    my $html = process_template($TEMPLATES{'htm_host_item'}, $mark, $item);
     print $handle "$html\n";
 
     return;
@@ -106,7 +152,7 @@ sub html_open_templates {
     return;
 }
 ###############################################################################
-sub html_change_vars {
+sub process_template {
     my ($template, $mark, $item) = @_;
     my %variables;
     my $protocol = "http";
@@ -121,33 +167,176 @@ sub html_change_vars {
     $variables{"#TEMPL_PORT#"}               = $mark->{'port'};
     $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'};
     $variables{"#TEMPL_BANNER#"}             = simple_enc($mark->{'banner'});
-    $variables{"#TEMPL_NIKTO_CLI#"}          = $CLI{'all_options'};
+    $variables{"#TEMPL_NIKTO_CLI#"}          = simple_enc($CLI{'all_options'});
     $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'};
     $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'};
-    $variables{"#TEMPL_LINK_IP#"} =
-      $protocol . "://" . $mark->{'ip'} . ":" . $mark->{'port'} . $mark->{'root'};
-    if ($variables{"#TEMPL_LINK_IP#"} !~ /\/$/) { $variables{"#TEMPL_LINK_IP#"} .= '/'; }
+
+    # Create base URL once - prefer hostname (vhost if set), fall back to IP if hostname empty
+    # Consistent with nikto's display_name logic: prefer name, fall back to IP
+    my $base_host = ($hostname ne "") ? $hostname : $mark->{'ip'};
+    my $base_url =
+        $protocol . "://"
+      . simple_enc($base_host) . ":"
+      . $mark->{'port'}
+      . simple_enc($mark->{'root'});
+
+    # IP-specific link (for host header template)
+    my $link_ip =
+        $protocol . "://"
+      . simple_enc($mark->{'ip'}) . ":"
+      . $mark->{'port'}
+      . simple_enc($mark->{'root'});
+    if ($link_ip !~ /\/$/) { $link_ip .= '/'; }
+    $variables{"#TEMPL_LINK_IP#"} = $link_ip;
+
+# Base link (hostname preferred, IP fallback) - reuse for both TEMPL_LINK_NAME and TEMPL_ITEM_NAME_LINK
+    $variables{"#TEMPL_LINK_NAME#"}    = $base_url;
     $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
     $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
     $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
     $variables{"#TEMPL_STATISTICS#"} =
       "$COUNTERS{'totalrequests'} requests, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
-    $variables{"#TEMPL_START#"}      = date_disp($mark->{'start_time'});
-    $variables{"#TEMPL_ELAPSED#"}    = $mark->{'end_time'} - $mark->{'start_time'};
-    $variables{"#TEMPL_REFERENCES#"} = linkify_refs($item->{'refs'});
+    $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_ELAPSED#"} = $mark->{'end_time'} - $mark->{'start_time'};
+    my $references = linkify_refs($item->{'refs'}) || '';
+    $variables{"#TEMPL_REFERENCES#"} = $references;
 
-    $variables{"#TEMPL_LINK_NAME#"} = "N/A";
-    if ($hostname ne "") {
-        $variables{"#TEMPL_LINK_NAME#"} =
-          $protocol . "://" . $hostname . ":" . $mark->{'port'} . $mark->{'root'};
+    # Process References row - extract row HTML from template and conditionally show/hide
+    # HTML structure is in template file; we process it like SSL rows
+    # Only process if this is an item template (has TEMPL_REFERENCES)
+    if ($template =~ /#TEMPL_REFERENCES#/) {
+        my $host_item_template = $TEMPLATES{'htm_host_item'} || '';
+        my ($references_row_tmpl) =
+          $host_item_template =~ /#TEMPL_REFERENCES_ROW#\s*(<tr>.*?<\/tr>)/s;
+
+        if ($references_row_tmpl && $references ne '') {
+
+            # Process row template with variable substitution
+            my $row = $references_row_tmpl;
+            $row =~ s/#TEMPL_REFERENCES#/$references/g;
+            $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = $row;
+        }
+        else {
+            # Hide References row if no references
+            $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = "";
+        }
+
+        # Set marker variable to empty - it will be replaced along with row HTML
+        $variables{"#TEMPL_REFERENCES_ROW#"} = "";
     }
-    if ($variables{"#TEMPL_LINK_NAME#"} !~ /\/$/) { $variables{"#TEMPL_LINK_NAME#"} .= '/'; }
+    else {
+        # Not an item template, ensure variables are set to avoid warnings
+        $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = "";
+        $variables{"#TEMPL_REFERENCES_ROW#"}         = "";
+    }
+
+    # SSL Info template variables - populate if SSL info is available
+    # HTML structure is in the template; we process rows like other template variables
+    if ($mark->{'ssl'} && defined $mark->{'ssl_cipher'}) {
+        my $ssl_subject  = simple_enc($mark->{'ssl_cert_subject'}  || '');
+        my $ssl_issuer   = simple_enc($mark->{'ssl_cert_issuer'}   || '');
+        my $ssl_ciphers  = simple_enc($mark->{'ssl_cipher'}        || '');
+        my $ssl_altnames = simple_enc($mark->{'ssl_cert_altnames'} || '');
+        my $ssl_cn       = '';
+
+        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+            $ssl_cn = simple_enc($1);
+        }
+
+        # Populate values - HTML structure is in template
+        $variables{"#TEMPL_SSL_SUBJECT#"} = $ssl_subject;
+        $variables{"#TEMPL_SSL_CN#"}      = $ssl_cn;
+        $variables{"#TEMPL_SSL_SAN#"}     = $ssl_altnames;
+        $variables{"#TEMPL_SSL_CIPHERS#"} = $ssl_ciphers;
+        $variables{"#TEMPL_SSL_ISSUER#"}  = $ssl_issuer;
+
+       # Extract row HTML from template - HTML structure is in template file, extract and process it
+       # Row templates match the structure in htm_host_head.tmpl
+        my $host_head_template = $TEMPLATES{'htm_host_head'} || '';
+        my ($ssl_subject_row_tmpl) =
+          $host_head_template =~ /#TEMPL_SSL_SUBJECT_ROW#\s*(<tr>.*?<\/tr>)/s;
+        my ($ssl_cn_row_tmpl)  = $host_head_template =~ /#TEMPL_SSL_CN_ROW#\s*(<tr>.*?<\/tr>)/s;
+        my ($ssl_san_row_tmpl) = $host_head_template =~ /#TEMPL_SSL_SAN_ROW#\s*(<tr>.*?<\/tr>)/s;
+        my ($ssl_ciphers_row_tmpl) =
+          $host_head_template =~ /#TEMPL_SSL_CIPHERS_ROW#\s*(<tr>.*?<\/tr>)/s;
+        my ($ssl_issuer_row_tmpl) =
+          $host_head_template =~ /#TEMPL_SSL_ISSUER_ROW#\s*(<tr>.*?<\/tr>)/s;
+
+        # Process row templates with variable substitution - HTML structure comes from template file
+        # Store processed row HTML to replace marker + row HTML in template
+        if ($ssl_subject_row_tmpl) {
+            my $row = $ssl_subject_row_tmpl;
+            $row =~ s/#TEMPL_SSL_SUBJECT#/$ssl_subject/g;
+            $variables{"#TEMPL_SSL_SUBJECT_ROW_REPLACE#"} = $row;
+        }
+        else {
+            $variables{"#TEMPL_SSL_SUBJECT_ROW_REPLACE#"} = "";
+        }
+
+        if ($ssl_cn_row_tmpl && $ssl_cn ne '') {
+            my $row = $ssl_cn_row_tmpl;
+            $row =~ s/#TEMPL_SSL_CN#/$ssl_cn/g;
+            $variables{"#TEMPL_SSL_CN_ROW_REPLACE#"} = $row;
+        }
+        else {
+            $variables{"#TEMPL_SSL_CN_ROW_REPLACE#"} = "";
+        }
+
+        if ($ssl_san_row_tmpl && $ssl_altnames ne '') {
+            my $row = $ssl_san_row_tmpl;
+            $row =~ s/#TEMPL_SSL_SAN#/$ssl_altnames/g;
+            $variables{"#TEMPL_SSL_SAN_ROW_REPLACE#"} = $row;
+        }
+        else {
+            $variables{"#TEMPL_SSL_SAN_ROW_REPLACE#"} = "";
+        }
+
+        if ($ssl_ciphers_row_tmpl) {
+            my $row = $ssl_ciphers_row_tmpl;
+            $row =~ s/#TEMPL_SSL_CIPHERS#/$ssl_ciphers/g;
+            $variables{"#TEMPL_SSL_CIPHERS_ROW_REPLACE#"} = $row;
+        }
+        else {
+            $variables{"#TEMPL_SSL_CIPHERS_ROW_REPLACE#"} = "";
+        }
+
+        if ($ssl_issuer_row_tmpl) {
+            my $row = $ssl_issuer_row_tmpl;
+            $row =~ s/#TEMPL_SSL_ISSUER#/$ssl_issuer/g;
+            $variables{"#TEMPL_SSL_ISSUER_ROW_REPLACE#"} = $row;
+        }
+        else {
+            $variables{"#TEMPL_SSL_ISSUER_ROW_REPLACE#"} = "";
+        }
+
+        # Set marker variables to empty - they'll be replaced along with row HTML
+        $variables{"#TEMPL_SSL_SUBJECT_ROW#"} = "";
+        $variables{"#TEMPL_SSL_CN_ROW#"}      = "";
+        $variables{"#TEMPL_SSL_SAN_ROW#"}     = "";
+        $variables{"#TEMPL_SSL_CIPHERS_ROW#"} = "";
+        $variables{"#TEMPL_SSL_ISSUER_ROW#"}  = "";
+    }
+    else {
+        # Hide SSL rows - replace marker + row HTML with empty string
+        $variables{"#TEMPL_SSL_SUBJECT_ROW_REPLACE#"} = "";
+        $variables{"#TEMPL_SSL_CN_ROW_REPLACE#"}      = "";
+        $variables{"#TEMPL_SSL_SAN_ROW_REPLACE#"}     = "";
+        $variables{"#TEMPL_SSL_CIPHERS_ROW_REPLACE#"} = "";
+        $variables{"#TEMPL_SSL_ISSUER_ROW_REPLACE#"}  = "";
+
+        # Set marker variables to empty
+        $variables{"#TEMPL_SSL_SUBJECT_ROW#"} = "";
+        $variables{"#TEMPL_SSL_CN_ROW#"}      = "";
+        $variables{"#TEMPL_SSL_SAN_ROW#"}     = "";
+        $variables{"#TEMPL_SSL_CIPHERS_ROW#"} = "";
+        $variables{"#TEMPL_SSL_ISSUER_ROW#"}  = "";
+    }
 
     $variables{"#ID#"} = $item->{'nikto_id'};
 
     # Scanner Messages Handling
-    $variables{"#TEMPL_SMMSG#"} = $item->{'message'};
+    $variables{"#TEMPL_SMMSG#"} = simple_enc($item->{'message'});
 
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
@@ -157,13 +346,16 @@ sub html_change_vars {
         # 740000 = multiple index files -- linkify file names
         if ($item->{'nikto_id'} == 740000) {
             $item->{'message'} =~ /^(.*: )(.*)$/;
-            $msg = $1;
+            $msg = simple_enc($1);
             my @links;
             foreach my $f (parse_csv($2)) {    #@files) {
                 $f =~ s/\s//g;
                 next if $f eq '';
+                my $escaped_f       = simple_enc($f);
+                my $escaped_display = simple_enc($mark->{'display_name'});
                 push(@links,
-                     "<a href=\"$protocol://$mark->{'display_name'}:$mark->{'port'}/$f\">$f</a>");
+                     "<a href=\"$protocol://$escaped_display:$mark->{'port'}/$escaped_f\">$escaped_f</a>"
+                     );
             }
             $msg .= join(", ", @links);
         }
@@ -173,18 +365,46 @@ sub html_change_vars {
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $msg;
         $variables{"#TEMPL_HTTP_METHOD#"} = simple_enc($item->{'method'});
-        $variables{"#TEMPL_ITEM_IP_LINK#"} =
-          "$protocol://$variables{\"#TEMPL_IP#\"}:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
-        $variables{"#TEMPL_ITEM_NAME_LINK#"} = "";
 
-        if ($hostname ne "") {
-            $variables{"#TEMPL_ITEM_NAME_LINK#"} =
-              "$protocol://$hostname:$mark->{'port'}$variables{\"#TEMPL_URI#\"}";
-        }
+        # Reuse base_url for item links - prefer hostname, fall back to IP
+        $variables{"#TEMPL_ITEM_NAME_LINK#"} =
+            $protocol . "://"
+          . simple_enc($base_host) . ":"
+          . $mark->{'port'}
+          . $variables{"#TEMPL_URI#"};
     }
 
+    # Replace marker + row HTML in template with processed row HTML (or empty string)
+    # Template has: #TEMPL_SSL_SUBJECT_ROW#\n<tr>...</tr>
+    # Replace with: processed row HTML (or empty to hide)
+    # Do this BEFORE main variable substitution so we can match the template variable patterns
+    # Use /s flag to match newlines with .
+    $template =~
+      s/#TEMPL_SSL_SUBJECT_ROW#\s*<tr><td class="column-head">SSL Certificate Subject<\/td><td>#TEMPL_SSL_SUBJECT#<\/td><\/tr>/#TEMPL_SSL_SUBJECT_ROW_REPLACE#/s;
+    $template =~
+      s/#TEMPL_SSL_CN_ROW#\s*<tr><td class="column-head">SSL Certificate CN<\/td><td>#TEMPL_SSL_CN#<\/td><\/tr>/#TEMPL_SSL_CN_ROW_REPLACE#/s;
+    $template =~
+      s/#TEMPL_SSL_SAN_ROW#\s*<tr><td class="column-head">SSL Certificate SAN<\/td><td>#TEMPL_SSL_SAN#<\/td><\/tr>/#TEMPL_SSL_SAN_ROW_REPLACE#/s;
+    $template =~
+      s/#TEMPL_SSL_CIPHERS_ROW#\s*<tr><td class="column-head">SSL Ciphers<\/td><td>#TEMPL_SSL_CIPHERS#<\/td><\/tr>/#TEMPL_SSL_CIPHERS_ROW_REPLACE#/s;
+    $template =~
+      s/#TEMPL_SSL_ISSUER_ROW#\s*<tr><td class="column-head">SSL Certificate Issuer<\/td><td>#TEMPL_SSL_ISSUER#<\/td><\/tr>/#TEMPL_SSL_ISSUER_ROW_REPLACE#/s;
+
+    # Replace References row marker + HTML with processed row HTML (or empty string)
+    # Template has: #TEMPL_REFERENCES_ROW#\n  <tr>...</tr> (multi-line with indentation)
+    # Match the exact format with spaces and newlines - use .*? to match across lines
+    if ($template =~ /#TEMPL_REFERENCES_ROW#/) {
+        $template =~
+          s/#TEMPL_REFERENCES_ROW#\s*<tr>.*?<td class="column-head">References<\/td>.*?<td>#TEMPL_REFERENCES#<\/td>.*?<\/tr>/#TEMPL_REFERENCES_ROW_REPLACE#/s;
+    }
+
+    # Now process main template with all variables (including processed SSL row replacements)
     foreach my $var (keys %variables) {
-        $template =~ s/$var/$variables{$var}/g;
+        my $replacement = $variables{$var};
+
+        # Escape $ in replacement to prevent backreference interpretation ($1, $&, etc.)
+        $replacement =~ s/\$/\$\$/g;
+        $template    =~ s/\Q$var\E/$replacement/g;
     }
 
     return $template;
@@ -195,27 +415,34 @@ sub linkify_refs {
     my @rs   = split(/ /, $refs);
     for (my $i = 0 ; $i <= $#rs ; $i++) {
         $r = $rs[$i];
+        my $escaped_r = simple_enc($r);
         if ($r =~ /^OSVDB-(\d+)$/) {
             my $id = $1;
-            $r = "<a href='https://vulners.com/osvdb/OSVDB:$id'>$r</a>";
+            $r = "<a href='https://vulners.com/osvdb/OSVDB:$id'>$escaped_r</a>";
         }
         elsif ($r =~ /^CVE-\d{4}-\d{3,4}/) {
-            $r = "<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$r'>$r</a>";
+            my $escaped_url_r = simple_enc($r);
+            $r =
+              "<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$escaped_url_r'>$escaped_r</a>";
         }
         elsif ($r =~ /^MS-\d+-\d+/i) {
-            $r = "<a href='https://technet.microsoft.com/en-us/library/security/$r.aspx'>$r</a>";
-        }
-        elsif ($r =~ /^BID-(\d+)/) {
-            $r = "<a href='https://vulners.com/search?query=$1'>$r</a>";
+            my $escaped_url_r = simple_enc($r);
+            $r =
+              "<a href='https://technet.microsoft.com/en-us/library/security/$escaped_url_r.aspx'>$escaped_r</a>";
         }
         elsif ($r =~ /^(CA-\d{4}-\d{2})/) {
-            $r = "<a href='https://www.cert.org/historical/advisories/$1.cfm'>$r</a>";
+            my $escaped_ca = simple_enc($1);
+            $r =
+              "<a href='https://www.cert.org/historical/advisories/$escaped_ca.cfm'>$escaped_r</a>";
         }
         elsif ($r =~ /^CWE-\d+/) {
-            $r = "<a href='https://cwe.mitre.org/data/definitions/$r.html'>$r</a>";
+            my $escaped_url_r = simple_enc($r);
+            $r =
+              "<a href='https://cwe.mitre.org/data/definitions/$escaped_url_r.html'>$escaped_r</a>";
         }
         elsif ($r =~ /^http/) {
-            $r = "<a href='$r'>$r</a>";
+            my $escaped_url_r = simple_enc($r);
+            $r = "<a href='$escaped_url_r'>$escaped_r</a>";
         }
         $rs[$i] = $r;
     }
@@ -227,9 +454,11 @@ sub linkify_refs {
 ###############################################################################
 sub simple_enc {
     my $var = $_[0] || return;
+    $var =~ s/&/&amp;/g;
     $var =~ s/</&lt;/g;
     $var =~ s/>/&gt;/g;
     $var =~ s/"/&quot;/g;
+    $var =~ s/'/&#x27;/g;
     return $var;
 }
 

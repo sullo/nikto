@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2007 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Get a favicon file & MD5 fingerprint
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Get a favicon file & MD5 fingerprint
 ###############################################################################
 use vars qw/$FAVICONDB %LINKICONS/;
 
@@ -51,8 +35,8 @@ sub nikto_favicon {
             if (($res eq "200") && ($content ne "")) {
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
-                nprint("Got /favicon.$ext hash:$hash", "d");
-                favicon_matchhash($mark, $hash, $mark->{'root'} . "/favicon.$ext",
+                nprint("Got $path/favicon.$ext hash:$hash", "d");
+                favicon_matchhash($mark, $hash, $mark->{'root'} . "$path/favicon.$ext",
                                   $request, $response);
             }
         }
@@ -61,7 +45,7 @@ sub nikto_favicon {
     # Check for a <link> favicon
     ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", "", "favicon");
-    if (($res eq "200") && ($content =~ /link\s[^<]+icon+[^>]+\.(ico|png|gif)/i)) {
+    if ($content =~ /link\s[^<]+icon+[^>]+\.(ico|png|gif)/i) {
         my %tags;
         $tags{'link'} = 1;
         LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);

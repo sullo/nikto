@@ -3,15 +3,13 @@
 # (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
-# Chris Sullo (csullo@gmail.com)
+# Chris Sullo (sullo@cirt.net)
 #
 # Note:
 # By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# Notes:
-# NiktoDB 1.0
 # Example to get the md5hash: $ md5sum favicon.ico
 #######################################################################
 "nikto_id","md5hash","description"
@@ -26,7 +24,6 @@
 "500115","6d2adf39ca320265830403dfc030033a","Liferay Portal"
 "500117","297d726681297cbf839f43a125e5c9b4","ZNC IRC Bouncer (Web Interface)"
 "500118","d577e9569381685b30feae22484c8344","ZNC IRC Bouncer (Web Interface)"
-# Sync from: https://github.com/pvdl/favicon-database/blob/master/favicondb.csv
 "500151","28c34462a074c5311492759435549468","AContent"
 "500153","705d63d8f6f485bd40528394722b5c22","Atmail"
 "500154","9f500a24ccbdda88cf8ae3ec7b61fc40","Atomic CMS"
@@ -99,7 +96,6 @@
 "500246","28a122aa74f6929b0994fc544555c0b1","WordPress 3.2-3.x : Twenty Eleven"
 "500248","e9dd9992d222d67c8f6a4704d2c88bdd","Zarafa WebAccess"
 "500249","c126f7e761813946fea2e90ff7ddb838","Zenoss Core"
-# End sync from: https://github.com/pvdl/favicon-database/blob/master/favicondb.csv
 "500501","6399cc480d494bf1fcd7d16c42b1c11b","penguin"
 "500502","09b565a51e14b721a323f0ba44b2982a","Google web server"
 "500503","506190fc55ceaa132f1bc305ed8472ca","SocialText"

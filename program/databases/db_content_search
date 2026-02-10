@@ -3,14 +3,13 @@
 # (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
-# Chris Sullo (csullo@gmail.com)
+# Chris Sullo (sullo@cirt.net)
 #
 # Note:
 # By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# Notes:
 # These can be regular expressions, but will be eval'd case insensitive.
 # Since these are run after every page retrieved, we should try to keep these as fast 
 # regular expressions as possible, and limited to only critical findings.
@@ -28,11 +27,21 @@
 "750509","","However, we found documents with names similar to the one you requested","The mod_speling module can reveal otherwise 'hidden' files in directories."
 "750510","","makes use of the Zend Scripting Language","Output from the phpinfo() function was found."
 "750511","","SQLSTATE\[","A database error may reveal internal details about the running database."
-"750512","","jetty-dir.css\" REL=\"stylesheet\" TYPE=\"text/css\"\/><TITLE>Directory: \/","Directory indexing found (Jetty)."
-"750513","","404-server!!","This string is associated with the 'meuhy.php' backdoor file uploader/downloader."
-"750514","","Brazilians Defacers","This string is associated with pages tagged by HackerBrasilll group."
-"750515","","HackerBrasilll","This string is associated with pages tagged by HackerBrasilll group."
-"750516","","plain HTTP to an SSL","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect.."
-"750517","","plain HTTP request was sent to HTTPS","You appear to be scanning an HTTPS site with HTTP. This won't work as you expect."
-"750518","","password e-?mailed","Possible cleartext emailing of stored password."
+"750512","CWE-548","jetty-dir.css\" REL=\"stylesheet\" TYPE=\"text/css\"\/><TITLE>Directory: \/","Directory indexing found (Jetty)."
+"750516","","plain HTTP to an SSL","You appear to be scanning an HTTPS site with HTTP. This probably isn't what you want."
+"750517","","plain HTTP request was sent to HTTPS","You appear to be scanning an HTTPS site with HTTP. This probably isn't what you want."
 "750519","","[Tt]omcat\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}","The detailed Tomcat version is disclosed in error pages."
+"750520","","\<html\>\<head\>\<title\>Remote Access Controller<\/title>","Host seems to be a Dell Remote Access Controller."
+"750521","https://makeawebsitehub.com/parked-domains/","parked FREE","Domain is parked at GoDaddy."
+"750522","https://makeawebsitehub.com/parked-domains/","courtesy of GoDaddy\.com","Domain is parked at GoDaddy."
+"750523","https://makeawebsitehub.com/parked-domains/","buy domain names","Domain is parked at GoDaddy."
+"750524","https://makeawebsitehub.com/parked-domains/","\?epl\=","Domain is parked at domainsponsor.com."
+"750525","https://makeawebsitehub.com/parked-domains/","Below are sponsored listings","Domain is parked at Google."
+"750526","https://makeawebsitehub.com/parked-domains/","doubleclick\.net\/apps\/domainpark","Domain is parked at Google."
+"750527","https://makeawebsitehub.com/parked-domains/","Asia Registry","Domain is parked at AsiaRegistry.com."
+"750528","https://makeawebsitehub.com/parked-domains/","Get a domain name","Domain is parked at Network Solutions."
+"750529","https://makeawebsitehub.com/parked-domains/","netsolhost","Domain is parked at Network Solutions."
+"750530","https://makeawebsitehub.com/parked-domains/","Page Is Under Construction","Domain is parked at Network Solutions."
+"750531","https://makeawebsitehub.com/parked-domains/","Sponsored Listings","Domain is parked at Voodoo.com."
+"750532","https://makeawebsitehub.com/parked-domains/","FUTURE HOME OF A DOTSTER","Domain is parked at Dotster."
+"750533","https://makeawebsitehub.com/parked-domains/","Share this \.tel","Domain is parked at Knipp."

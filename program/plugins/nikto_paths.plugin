@@ -1,22 +1,6 @@
 ###############################################################################
-#  Copyright (C) 2012 Chris Sullo
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; version 2
-#  of the License only.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to
-#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-###############################################################################
-# PURPOSE:
-# Look at paths to help populate variables
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: Look at paths to help populate variables
 ###############################################################################
 sub nikto_paths_init {
     my $id = { name        => "paths",
@@ -37,12 +21,21 @@ sub nikto_paths {
     return if $mark->{'terminate'};
     my ($mark) = @_;
     my (%DIRS, %FILES);
-    my ($res,  $content) = nfetch($mark, "/", "GET", "", "", "", "paths");
 
-    if ($res eq 200) {
+    # Follow redirects by temporarily by setting $CLI{'followredirects'} to 1
+    # Request the root path to follow redirects if needed
+    my $followredirects = $CLI{'followredirects'};
+    $CLI{'followredirects'} = 1;
+    my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "Paths");
+    $CLI{'followredirects'} = $followredirects;
+
+    if (length($content)) {
 
         # get links
         my @links = LW2::html_link_extractor($content);
+        my %FULL_LINKS;
+        my %valid_hosts =
+          map { $_ => 1 } ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'});
         foreach my $link (@links) {
 
             # if not relative
@@ -50,10 +43,7 @@ sub nikto_paths {
 
                 # check host
                 my @uri = LW2::uri_split($link);
-                if (   ($uri[2] eq $mark->{'hostname'})
-                    || ($uri[2] eq $mark->{'ip'})
-                    || ($uri[2] eq $mark->{'vhost'})
-                    || ($uri[2] eq $mark->{'ident'})) {
+                if (exists $valid_hosts{ $uri[2] }) {
                     $link = $uri[0];
                 }
                 else {
@@ -63,6 +53,7 @@ sub nikto_paths {
 
             # normalize
             $link = LW2::uri_normalize($link);
+            $FULL_LINKS{$link} = 1;
 
             # split dirs / files
             my $dir = LW2::uri_get_dir($link);
@@ -81,50 +72,8 @@ sub nikto_paths {
             }
         }
 
-        # Process whole link
-        if ($link =~ /\.action(\?|$)/i) {
-            $VARIABLES{"\@STRUTSACTIONS"} .= " $link";
-        }
-
-        # Now actually check the unique dirs/files
-        foreach my $file (keys %FILES) {
-            my $raw = $file;
-            $file = validate_and_fix_regex($file);
-
-            if ($file =~ /pass/i && $VARIABLES{"\@PASSWORDFILES"} !~ /$file/i) {
-                $VARIABLES{"\@PASSWORDFILES"} .= " $raw";
-            }
-        }
-
-        foreach my $dir (keys %DIRS) {
-            $dir = validate_and_fix_regex($dir);
-
-            # Other vars
-            if ($dir =~ /cgi/ && $VARIABLES{"\@CGIDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@CGIDIRS"} .= " $dir";
-            }
-            if ($dir =~ /forum/ && $VARIABLES{"\@NUKE"} !~ /$dir/) {
-                $VARIABLES{"\@NUKE"} .= " $dir";
-            }
-            if ($dir =~ /pass/ && $VARIABLES{"\@PASSWORDDIRS"} !~ /$dir/) {
-                $VARIABLES{"\@PASSWORDDIRS"} .= " $dir";
-            }
-            if ($dir =~ /nuke/i && $VARIABLES{"\@NUKE"} !~ /$dir/i) {
-                $VARIABLES{"\@NUKE"} .= " $dir";
-            }
-            if ($dir =~ /admin/i && $VARIABLES{"\@ADMIN"} !~ /$dir/i) {
-                $VARIABLES{"\@ADMIN"} .= " $dir";
-            }
-            if ($dir =~ /phpmy/i && $VARIABLES{"\@PHPMYADMIN"} !~ /$dir/i) {
-                $VARIABLES{"\@PHPMYADMIN"} .= " $dir";
-            }
-            if ($dir =~ /fck/i && $VARIABLES{"\@FCKEDITOR"} !~ /$dir/i) {
-                $VARIABLES{"\@FCKEDITOR"} .= " $dir";
-            }
-            if ($dir =~ /crystal/i && $VARIABLES{"\@CRYSTALREPORTS"} !~ /$dir/i) {
-                $VARIABLES{"\@CRYSTALREPORTS"} .= " $dir";
-            }
-        }
+        # Use shared path matching logic
+        path_matcher(\%FILES, \%DIRS, \%FULL_LINKS);
 
     }
 }

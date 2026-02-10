@@ -3,17 +3,12 @@
 # (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
-# Chris Sullo (csullo@gmail.com)
+# Chris Sullo (sullo@cirt.net)
 #
 # Note:
 # By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
-#######################################################################
-# Notes:
-# NiktoDB 1.0
-# Example to get the server-message:
-#   ~$ curl --head --silent www.example.com | grep --ignore-case server
 #######################################################################
 "nikto_id","server","reference","message"
 "800000","4D_WebSTAR_S\/5\.([0-2]|3\.[0-2])","CVE-2004-0696","May be vulnerable to multiple flaws."
@@ -95,7 +90,6 @@
 "800077","frontpage","http://www.insecure.org/sploits/Microsoft.frontpage.insecurities.html","Microsoft Frontpage contained many vulnerabilities."
 "800078","^ghttpd\/1\.[0-4]","","The Ghttpd server may contain a remote buffer overflow. Upgrade to the latest version."
 "800079","glaci","","Netware web server"
-"800080","GoAhead-Webs","","This may be a Cyclade, http://www.cyclades.com/"
 "800081","GoAhead-Webs\/2\.(0.*|1)","CVE-2002-1951","GoAhead-Webs 2.1 and below is vulnerable to command execution through a buffer overflow."
 "800082","Gordian Embedded","","Lantronix device, may give system/networking information freely. Could be an access badge reader/card swipe."
 "800083","goserve","","http://www2.hursley.ibm.com/goserve"
@@ -153,7 +147,7 @@
 "800135","Monkey\/0\.([0-5].*|6\.[0-2]{1})","CVE-2003-0218","Monkey server is vulnerable to a remote buffer overflow."
 "800136","MS-MFC-HttpSvr/1.0","CVE-2002-0705, CVE-2002-0706, CVE-2002-0707, CVE-2002-0708, CVE-2002-0709","Server and Surfcontrol software has multiple remote vulnerabilities."
 "800137","myCIO","","The McAfee myCIO server provides antivirus updates to clients. This server has had multiple vulnerabilities in the past."
-"800138","Mylo/0\.([0-1]|2\.[0-1])","","mod_mylo may be vulnerable to a remote buffer overflow. Upgrade to the latest version. BID-8287."
+"800138","Mylo/0\.([0-1]|2\.[0-1])","","mod_mylo may be vulnerable to a remote buffer overflow. Upgrade to the latest version. CVE‑2003‑0651."
 "800139","MyServer 0\.([0-3]\..*|4\.[0-2])","","MyServer versions lower than 0.5 contain multiple remote vulnerabilities."
 "800140","MyWebServer\/(0\.*|1\.0[0-2])","","MyWebServer versions 1.02 and below are vulnerable to a DoS by requesting a url of approximately 1000 characters."
 "800141","ncsa","","lower than v1.3 have multiple issues"
@@ -171,7 +165,7 @@
 "800154","Oracle_Web_Listener","","The Oracle Web Listener allows remote users to administer the database. It should not be used unless absolutely required."
 "800155","os2httpd","","http://ftp.netcom.com/pub/kf/kfan/overview.html"
 "800156","osu","","http://kcgl1.eng.ohio-state.edu/www/doc/serverinfo.html"
-"800157","PHP\/([0-3].*|4\.[0-2].*|4\.3\.[0-2])","","PHP below 4.3.3 may allow local attackers to safe mode and gain access to unauthorized files. BID-8201."
+"800157","PHP\/([0-3].*|4\.[0-2].*|4\.3\.[0-2])","","PHP below 4.3.3 may allow local attackers to safe mode and gain access to unauthorized files. CVE‑2003‑0863."
 "800158","PHP\/[0-3]\.","","Old versions of PHP contain multiple buffer overflows and remote exploit problems. Server should be upgraded to the latest version."
 "800159","PHP\/4\.0\.([2-5])","","PHP 4.1.1 is vulnerable to remote exploits and must be upgraded."
 "800160","PHP\/4\.0\.(1|3pl1)","https://web.archive.org/web/20020522152105/http://archives.neohapsis.com/archives/vulnwatch/2002-q1/0054.html","PHP 4.0.1 or 4.0.3pl is vulnerable to remote exploits and should be upgraded."
@@ -275,3 +269,5 @@
 "800261","PAW Server","","PAW Server default admin id/password is admin/paw. It's worth a try."
 "800262","PHP\/([345]\.\d|7\.0)","","PHP 3/4/5 and 7.0 are End of Life products without support."
 "800263","PHP\/7\.1","","PHP 7.1 is End of Life and only receives security updates. It will be unsupported after 2019-12-01."
+"800264","Cloudflare","https://github.com/sullo/nikto/wiki/Using-a-Proxy","Cloudflare detected via banner. Recommend proxying via Burp or mitmproxy to avoid TLS fingerprint blocks if not already proxying."
+"800265","railway-edge","https://railway.com/","Application server running on Railway.com cloud platform."

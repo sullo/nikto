@@ -1,123 +1,158 @@
-.\"     Title: nikto
-.\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
-.\"      Date: 02/03/2010
+'\" t
+.\"     Title: nikto.pl
+.\"    Author: [see the "Authors" section]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 12/24/2025
 .\"    Manual: Vulnerability Scanner
-.\"    Source: http://cirt.net/ 2.1.1
+.\"    Source: http://www.cirt.net/ 2.5.0
+.\"  Language: English
 .\"
-.TH "NIKTO" "1" "02/03/2010" "http://cirt\&.net/ 2\&.1" "Vulnerability Scanner"
+.TH "NIKTO\&.PL" "1" "12/24/2025" "http://www\&.cirt\&.net/ 2\&.5" "Vulnerability Scanner"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
 .ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
 .SH "NAME"
-nikto \- Scan web server for known vulnerabilities
+nikto.pl \- Scan web server for known vulnerabilities
 .SH "SYNOPSIS"
-.HP 21
-\fBnikto\fR [options...]
+.HP \w'\fBnikto\&.pl\fR\ 'u
+\fBnikto\&.pl\fR [options...]
 .SH "DESCRIPTION"
 .PP
-Examine a web server to find potential problems and security vulnerabilities, including:
+Nikto is an Open Source web server scanner which performs comprehensive tests against web servers for multiple items that are generally considered dangerous\&. It checks for:
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Server and software misconfigurations
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Server and software misconfigurations
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Default files and programs
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Default files and programs
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Insecure files and programs
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Insecure files and programs
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Outdated servers and programs
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Outdated servers and programs
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Dangerous files
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Other problems
 .RE
 .PP
-Nikto is built on LibWhisker (by RFP) and can run on any platform which has a Perl environment\&. It supports SSL, proxies, host authentication, attack encoding and more\&. It can be updated automatically from the command\-line, and supports the optional submission of updated version data back to the maintainers\&.
+Nikto is built on LibWhisker2 (LW2) and can run on any platform which has a Perl environment\&. It supports SSL, proxies, host authentication, attack encoding and more\&. It can be updated automatically from the command\-line, and supports the optional submission of updated version data back to the maintainers\&.
 .SH "OPTIONS"
 .PP
-Below are all of the Nikto command line options and explanations\&. A brief version of this text is available by running Nikto with the \-H (\-Help) option\&.
-.PP
-\fB\-Cgidirs\fR
+\fB\-ask\fR \fIyes|no|auto\fR
 .RS 4
-Scan these CGI directories\&. Special words "none" or "all" may be used to scan all CGI directories or none, (respectively)\&. A literal value for a CGI directory such as "/cgi\-test/" may be specified (must include trailing slash)\&. If this is option is not specified, all CGI directories listed in nikto\&.conf will be tested\&.
+Whether to ask about submitting updates\&. Options: yes (ask about each), no (don\*(Aqt ask, don\*(Aqt send), auto (don\*(Aqt ask, just send)\&.
 .RE
 .PP
-\fB\-config\fR
+\fB\-Add\-header\fR \fIheader:value\fR
 .RS 4
-Specify an alternative config file to use instead of the nikto\&.conf located in the install directory\&.
+Add HTTP headers (can be used multiple times, one per header pair)\&.
+.RE
+.PP
+\fB\-check6\fR
+.RS 4
+Check if IPv6 is working (connects to ipv6\&.google\&.com or value set in nikto\&.conf)\&.
+.RE
+.PP
+\fB\-Cgidirs\fR \fIdirs\fR
+.RS 4
+Scan these CGI directories\&. Special words "none" or "all" may be used\&. A literal value for a CGI directory such as "/cgi\-test/" may be specified (must include trailing slash)\&.
+.RE
+.PP
+\fB\-config\fR \fIfile\fR
+.RS 4
+Use this config file instead of the default nikto\&.conf\&.
 .RE
 .PP
 \fB\-dbcheck\fR
 .RS 4
-Check the scan databases for syntax errors\&.
+Check database and other key files for syntax errors\&.
 .RE
 .PP
-\fB\-Display\fR
+\fB\-Display\fR \fIoptions\fR
 .RS 4
-Control the output that Nikto shows\&. See Chapter 5 for detailed information on these options\&. Use the reference number or letter to specify the type, multiple may be used:
-.sp
-1 \- Show redirects
-.sp
-2 \- Show cookies received
-.sp
-3 \- Show all 200/OK responses
-.sp
-4 \- Show URLs which require authentication
-.sp
-D \- Debug Output
-.sp
-V \- Verbose Output
+Turn on/off display outputs: 1 (Show redirects), 2 (Show cookies received), 3 (Show all 200/OK responses), 4 (Show URLs which require authentication), D (Debug output), E (Display all HTTP errors), P (Print progress to STDOUT), S (Scrub output of IPs and hostnames), V (Verbose output)\&.
 .RE
 .PP
-\fB\-evasion\fR
+\fB\-evasion\fR \fItechnique\fR
 .RS 4
-Specify the LibWhisker encoding technique to use (see the LibWhisker docs for detailed information on these)\&. Use the reference number to specify the type, multiple may be used:
-.sp
-1 \- Random URI encoding (non\-UTF8)
-.sp
-2 \- Directory self\-reference (/\&./)
-.sp
-3 \- Premature URL ending
-.sp
-4 \- Prepend long random string
-.sp
-5 \- Fake parameter
-.sp
-6 \- TAB as request spacer
-.sp
-7 \- Change the case of the URL
-.sp
-8 \- Use Windows directory separator (\e)
-.sp
-A \- Use a carriage return (0x0d) as a request spacer
-.sp
-B \- Use binary value 0x0b as a request spacer
+Encoding technique: 1 (Random URI encoding), 2 (Directory self\-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer)\&.
 .RE
 .PP
-\fB\-findonly\fR
+\fB\-followredirects\fR
 .RS 4
-Only discover the HTTP(S) ports, do not perform a security scan\&. This will attempt to connect with HTTP or HTTPS, and report the Server header\&.
+Follow 3xx redirects to new location\&.
 .RE
 .PP
-\fB\-Format\fR
+\fB\-Format\fR \fIformat\fR
 .RS 4
-Save the output file specified with \-o (\-output) option in this format\&. If not specified, the default will be taken from the file extension specified in the \-output option\&. Valid formats are:
-.sp
-csv \- a comma\-seperated list
-.sp
-htm \- an HTML report
-.sp
-txt \- a text report
-.sp
-xml \- an XML report
-.RE
-.PP
-\fB\-host\fR
-.RS 4
-Host(s) to target\&. Can be an IP address, hostname or text file of hosts\&. A single dash (\-) maybe used for stdout\&. Can also parse nmap \-oG style output
+Save file format: csv (Comma\-separated\-value), json (JSON Format), htm (HTML Format), sql (Generic SQL, see docs for schema), sqld (SQL Direct, directly inserts into MySQL/PostgreSQL database), txt (Plain text), xml (XML Format)\&. Multiple formats can be specified as a comma\-separated list\&. If not specified, the format will be taken from the file extension passed to \-output\&. Note: sqld format requires DB_TYPE, DB_HOST, DB_PORT, DB_NAME in nikto\&.conf and NIKTO_DB_USER, NIKTO_DB_PASS environment variables\&.
 .RE
 .PP
 \fB\-Help\fR
@@ -125,49 +160,59 @@ Host(s) to target\&. Can be an IP address, hostname or text file of hosts\&. A s
 Display extended help information\&.
 .RE
 .PP
-\fB\-id\fR
+\fB\-host\fR \fItarget\fR
 .RS 4
-ID and password to use for host Basic host authentication\&. Format is "id:password"\&.
+Host(s) to target\&. Can be an IP address, hostname or text file of hosts\&. A single dash (\-) maybe used for stdout\&. Can also parse nmap \-oG style output\&.
+.RE
+.PP
+\fB\-id\fR \fIid:pass[:realm]\fR
+.RS 4
+ID and password to use for host Basic host authentication\&. Format is "id:password" or "id:password:realm"\&.
+.RE
+.PP
+\fB\-ipv4\fR
+.RS 4
+IPv4 Only\&.
+.RE
+.PP
+\fB\-ipv6\fR
+.RS 4
+IPv6 Only\&.
+.RE
+.PP
+\fB\-key\fR \fIfile\fR
+.RS 4
+Client certificate key file\&.
 .RE
 .PP
 \fB\-list\-plugins\fR
 .RS 4
-Will list all plugins that Nikto can run against targets and then will exit without performing a scan\&. These can be tuned for a session using the \-plugins option\&.
-.sp
-The output format is:
-.sp
-Plugin
-\fIname\fR
-.sp
-\ \&\fIfull name\fR
-\-
-\fIdescription\fR
-.sp
-\ \&Written by
-\fIauthor\fR, Copyright (C)
-\fIcopyright\fR
+List all available plugins, perform no testing\&.
 .RE
 .PP
-\fB\-mutate\fR
+\fB\-maxtime\fR \fItime\fR
 .RS 4
-Specify mutation technique\&. A mutation will cause Nikto to combine tests or attempt to guess values\&. These techniques may cause a tremendous amount of tests to be launched against the target\&. Use the reference number to specify the type, multiple may be used:
-.sp
-1 \- Test all files with all root directories
-.sp
-2 \- Guess for password file names
-.sp
-3 \- Enumerate user names via Apache (/~user type requests)
-.sp
-4 \- Enumerate user names via cgiwrap (/cgi\-bin/cgiwrap/~user type requests)
-.sp
-5 \- Attempt to brute force sub\-domain names, assume that the host name is the parent domain
-.sp
-6 \- Attempt to guess directory names from the supplied dictionary file
+Maximum testing time per host (e\&.g\&., 1h, 60m, 3600s)\&.
 .RE
 .PP
-\fB\-mutate\-options\fR
+\fB\-mutate\fR \fIoptions\fR
 .RS 4
-Provide extra information for mutates, e\&.g\&. a dictionary file
+Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap), 6 (Attempt to guess directory names from dictionary file)\&.
+.RE
+.PP
+\fB\-mutate\-options\fR \fIoptions\fR
+.RS 4
+Provide information for mutates\&.
+.RE
+.PP
+\fB\-no404\fR
+.RS 4
+Disables nikto attempting to guess a 404 page\&.
+.RE
+.PP
+\fB\-nocookies\fR
+.RS 4
+Do not use cookies from responses in requests\&.
 .RE
 .PP
 \fB\-nointeractive\fR
@@ -180,41 +225,59 @@ Disable interactive features\&.
 Do not perform name lookups on IP addresses\&.
 .RE
 .PP
+\fB\-noslash\fR
+.RS 4
+Strip trailing slash from URL (e\&.g\&., \*(Aq/admin/\*(Aq to \*(Aq/admin\*(Aq)\&.
+.RE
+.PP
 \fB\-nossl\fR
 .RS 4
 Do not use SSL to connect to the server\&.
 .RE
 .PP
-\fB\-no404\fR
+\fB\-Option\fR \fIname=value\fR
 .RS 4
-Disable 404 (file not found) checking\&. This will reduce the total number of requests made to the webserver and may be preferable when checking a server over a slow link, or an embedded device\&. This will generally lead to more false positives being discovered\&.
+Over\-ride an option in nikto\&.conf, can be issued multiple times\&.
 .RE
 .PP
-\fB\-output\fR
+\fB\-output\fR \fIfile\fR
 .RS 4
-Write output to the file specified\&. The format used will be taken from the file extension\&. This can be over\-riden by using the \-Format option (e\&.g\&. to write text files with a different extension\&. Existing files will have new information appended\&.
+Write output to the file specified (\*(Aq\&.\*(Aq for auto\-name)\&. The format used will be taken from the file extension\&. This can be over\-ridden by using the \-Format option\&.
 .RE
 .PP
-\fB\-plugins\fR
-.RS 4
-Select which plugins will be run on the specified targets\&. A comma separated list should be provided which lists the names of the plugins\&. The names can be found by using \-list\-plugins\&.
-.sp
-There are two special entries: ALL, which specifies all plugins shall be run and NONE, which specifies no plugins shall be run\&. The default is ALL
-.RE
-.PP
-\fB\-port\fR
-.RS 4
-TCP port(s) to target\&. To test more than one port on the same host, specify the list of ports in the \-p (\-port) option\&. Ports can be specified as a range (i\&.e\&., 80\-90), or as a comma\-delimited list, (i\&.e\&., 80,88,90)\&. If not specified, port 80 is used\&.
-.RE
-.PP
-\fB\-Pause\fR
+\fB\-Pause\fR \fIseconds\fR
 .RS 4
 Seconds (integer or floating point) to delay between each test\&.
 .RE
 .PP
-\fB\-root\fR
+\fB\-Platform\fR \fIplatform\fR
 .RS 4
-Prepend the value specified to the beginning of every request\&. This is useful to test applications or web servers which have all of their files under a certain directory\&.
+Platform of target: nix (Unix/Linux), win (Windows), or all (both)\&.
+.RE
+.PP
+\fB\-Plugins\fR \fIlist\fR
+.RS 4
+List of plugins to run (default: ALL)\&.
+.RE
+.PP
+\fB\-port\fR \fIports\fR
+.RS 4
+TCP port(s) to target\&. To test more than one port on the same host, specify the list of ports\&. Ports can be specified as a range (i\&.e\&., 80\-90), or as a comma\-delimited list, (i\&.e\&., 80,88,90)\&. If not specified, port 80 is used\&.
+.RE
+.PP
+\fB\-RSAcert\fR \fIfile\fR
+.RS 4
+Client certificate file\&.
+.RE
+.PP
+\fB\-root\fR \fIpath\fR
+.RS 4
+Prepend root value to all requests, format is /directory\&.
+.RE
+.PP
+\fB\-Save\fR \fIdirectory\fR
+.RS 4
+Save positive responses to this directory (\*(Aq\&.\*(Aq for auto\-name)\&.
 .RE
 .PP
 \fB\-ssl\fR
@@ -222,59 +285,210 @@ Prepend the value specified to the beginning of every request\&. This is useful 
 Only test SSL on the ports specified\&. Using this option will dramatically speed up requests to HTTPS ports, since otherwise the HTTP request will have to timeout first\&.
 .RE
 .PP
-\fB\-Single\fR
-.RS 4
-Perform a single request to a target server\&. Nikto will prompt for all options which can be specified, and then report the detailed output\&. See Chapter 5 for detailed information\&.
-.RE
-.PP
-\fB\-timeout\fR
+\fB\-timeout\fR \fIseconds\fR
 .RS 4
 Seconds to wait before timing out a request\&. Default timeout is 10 seconds\&.
 .RE
 .PP
-\fB\-Tuning\fR
+\fB\-Tuning\fR \fIoptions\fR
 .RS 4
 Tuning options will control the test that Nikto will use against a target\&. By default, if any options are specified, only those tests will be performed\&. If the "x" option is used, it will reverse the logic and exclude only those tests\&. Use the reference number or letter to specify the type, multiple may be used:
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 0 \- File Upload
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 1 \- Interesting File / Seen in logs
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 2 \- Misconfiguration / Default File
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 3 \- Information Disclosure
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 4 \- Injection (XSS/Script/HTML)
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 5 \- Remote File Retrieval \- Inside Web Root
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 6 \- Denial of Service
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 7 \- Remote File Retrieval \- Server Wide
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 8 \- Command Execution / Remote Shell
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 9 \- SQL Injection
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 a \- Authentication Bypass
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 b \- Software Identification
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 c \- Remote Source Inclusion
+.RE
 .sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+d \- WebService
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+e \- Administrative Console
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 x \- Reverse Tuning Options (i\&.e\&., include all except specified)
-.sp
-The given string will be parsed from left to right, any x characters will apply to all characters to the right of the character\&.
+.RE
 .RE
 .PP
-\fB\-useproxy\fR
+\fB\-url\fR \fItarget\fR
+.RS 4
+Target host/URL (alias of \-host)\&.
+.RE
+.PP
+\fB\-Userdbs\fR \fItype\fR
+.RS 4
+Load only user databases, not the standard databases\&. Options: all (Disable standard dbs and load only user dbs), tests (Disable only db_tests and load udb_tests)\&.
+.RE
+.PP
+\fB\-useragent\fR \fIstring\fR
+.RS 4
+Over\-rides the default useragent\&.
+.RE
+.PP
+\fB\-useproxy\fR \fIproxy\fR
 .RS 4
 Use the HTTP proxy defined in the configuration file, or given as argument in the format http://server:port\&.
-.RE
-.PP
-\fB\-update\fR
-.RS 4
-Update the plugins and databases directly from cirt\&.net\&.
 .RE
 .PP
 \fB\-Version\fR
@@ -282,62 +496,171 @@ Update the plugins and databases directly from cirt\&.net\&.
 Display the Nikto software, plugin and database versions\&.
 .RE
 .PP
-\fB\-vhost\fR
+\fB\-vhost\fR \fIhostname\fR
 .RS 4
 Specify the Host header to be sent to the target\&.
 .RE
+.PP
+\fB\-404code\fR \fIcodes\fR
+.RS 4
+Ignore these HTTP codes as negative responses (always)\&. Format is "302,301"\&.
+.RE
+.PP
+\fB\-404string\fR \fIstring\fR
+.RS 4
+Ignore this string in response body content as negative response (always)\&. Can be a regular expression\&.
+.RE
+.SH "DSL MATCHERS"
+.PP
+Nikto\*(Aqs test database supports a mini\-DSL for matching responses\&. The following matchers are supported:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+BODY:
+and
+!BODY:
+\(em Match or exclude content in the response body\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+HEADER:
+and
+!HEADER:
+\(em Match or exclude content in HTTP headers\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+COOKIE:
+and
+!COOKIE:
+\(em Match or exclude content in HTTP cookies\&. (NEW)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+CODE:
+and
+!CODE:
+\(em Match or exclude HTTP status codes\&.
+.RE
+.PP You can combine multiple matchers with && (AND)\&. Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        BODY:login&&!BODY:logout&&HEADER:X\-Powered\-By&&COOKIE:sessionid
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP This will match if the response body contains "login", does not contain "logout", the headers include "X\-Powered\-By", and a cookie named "sessionid" is present\&.
 .SH "FILES"
 .PP
-\fInikto\&.conf\fR
+nikto\&.conf
 .RS 4
-The Nikto configuration file\&. This sets Nikto\'s global options\&. Several nikto\&.conf files may exist and are parsed in the below order\&. As each configuration file is loaded is supersedes any previously set configuration:
+The Nikto configuration file\&. This sets Nikto\*(Aqs global options\&. Several nikto\&.conf files may exist and are parsed in the below order\&. As each configuration file is loaded is supersedes any previously set configuration:
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'System wide (e\&.g\&. /etc/nikto\&.conf)
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+System wide (e\&.g\&. /etc/nikto\&.conf)
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Home directory (e\&.g\&. $HOME/nikto\&.conf)
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Home directory (e\&.g\&. $HOME/nikto\&.conf)
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Current directory (e\&.g\&. \&./nikto\&.conf)
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Current directory (e\&.g\&. \&./nikto\&.conf)
 .RE
 .RE
 .PP
-\fI${NIKTO_DIR}/plugins/db*\fR
+${NIKTO_DIR}/databases/db*
 .RS 4
-db files are the databases that nikto uses to check for vulnerabilities and issues within the web server\&.
+Database files that nikto uses to check for vulnerabilities and issues within the web server\&.
 .RE
 .PP
-\fI${NIKTO_DIR}/plugins/*\&.plugin\fR
+${NIKTO_DIR}/plugins/*\&.plugin
 .RS 4
-All nikto\'s plugins exist here\&. Nikto itself is just a wrapper script to manage CLI and pass through to the plugins\&.
+All nikto\*(Aqs plugins exist here\&. Nikto itself is just a wrapper script to manage CLI and pass through to the plugins\&.
 .RE
 .PP
-\fI${NIKTO_DIR}/templates\fR
+${NIKTO_DIR}/templates
 .RS 4
-Contains the templates for nikto\'s output formats\&.
+Contains the templates for nikto\*(Aqs output formats\&.
 .RE
 .SH "BUGS"
 .PP
 The current features are not supported:
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'SOCKS Proxies
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+SOCKS Proxies
 .RE
 .SH "AUTHORS"
 .PP
 Nikto is written and maintained by Chris Sullo and David Lodge\&. See the main documentation for other contributors\&.
 .PP
-All code is Copyright CIRT, Inc., except LibWhisker which is Copyright (c) 2009, Jeff Forristal (wiretrip.net)\&.  Other portions of code may be (C) as specified\&.
+All code is Copyright CIRT, Inc\&., except LibWhisker which is Copyright (c) 2009, Jeff Forristal (wiretrip\&.net)\&. Other portions of code may be (C) as specified\&.
 .SH "SEE ALSO"
 .PP
-
-\fINikto Homepage\fR\&[1]
+\m[blue]\fBNikto Homepage\fR\m[]\&\s-2\u[1]\d\s+2
 .SH "NOTES"
 .IP " 1." 4
 Nikto Homepage
 .RS 4
-\%http://cirt.net/
+\%http://www.cirt.net/
 .RE

@@ -3,14 +3,13 @@
 # (c) 2001 Chris Sullo, All Rights Reserved.
 # This file may only be distributed and used with the full Nikto package.
 # This file may not be used with any software product without written permission from
-# Chris Sullo (csullo@gmail.com)
+# Chris Sullo (sullo@cirt.net)
 #
 # Note:
 # By submitting updates to this file you are transferring any and all copyright
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# Notes:
 # format: realm,id,password,message
 # @ANY = match any realm name (generic)
 # If ID and PW fields are blank, realm match is used for message only

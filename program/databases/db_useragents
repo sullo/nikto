@@ -1,0 +1,71 @@
+#######################################################################
+# File Source: https://cirt.net
+# (c) 2001 Chris Sullo, All Rights Reserved.
+# This file may only be distributed and used with the full Nikto package.
+# This file may not be used with any software product without written permission from
+# Chris Sullo (sullo@cirt.net)
+#
+# Note:
+# By submitting updates to this file you are transferring any and all copyright
+# interest in the data to Chris Sullo so it can modified, incorporated into this product
+# relicensed or reused.
+#######################################################################
+# Chrome – Windows 11
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6280.45 Safari/537.36"
+
+# Chrome – macOS 14
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.6252.12 Safari/537.36"
+
+# Chrome – Linux
+"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6285.78 Safari/537.36"
+
+# Chrome – Android 14
+"Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.6252.82 Mobile Safari/537.36"
+
+# Chrome – Android 15 Beta
+"Mozilla/5.0 (Linux; Android 15; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6286.11 Mobile Safari/537.36"
+
+# Edge – Windows 11
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6281.32 Safari/537.36 Edg/142.0.6281.32"
+
+# Edge – macOS 14
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.6248.19 Safari/537.36 Edg/141.0.6248.19"
+
+# Firefox – Windows 11
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0"
+
+# Firefox – macOS 14
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 14.2; rv:133.0) Gecko/20100101 Firefox/133.0"
+
+# Firefox – Linux
+"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0"
+
+# Safari – macOS 14.4
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+
+# Safari – macOS 15 preview (2025 dev seeds)
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
+
+# Safari – iOS 17.5 (iPhone)
+"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+
+# Safari – iOS 18 (2025)
+"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+
+# Chrome – iOS 18
+"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/141.0.6252.91 Mobile/15E148 Safari/604.1"
+
+# Edge – iOS 18
+"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/142.0.6281.42 Mobile/15E148 Safari/605.1.15"
+
+# Firefox – Android 14
+"Mozilla/5.0 (Android 14; Mobile; rv:133.0) Gecko/133.0 Firefox/133.0"
+
+# Opera – Windows 11
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6282.50 Safari/537.36 OPR/104.0.0.0"
+
+# Vivaldi – macOS
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6283.10 Safari/537.36 Vivaldi/6.7.3312.4"
+
+# Brave – Windows 11
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6284.18 Safari/537.36 Brave/1.67.120"
