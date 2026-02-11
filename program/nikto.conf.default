@@ -33,7 +33,7 @@ UPDATES=yes
 
 # Update server names
 CIRT=cirt.net
-VERSION_API=https://nikto.cirt.net/products.json
+VERSION_API=https://nikto-telemetry.csullo.workers.dev/products.json
 
 # Proxy settings -- still must be enabled by -useproxy
 #PROXYHOST=127.0.0.1
