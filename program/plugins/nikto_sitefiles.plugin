@@ -184,10 +184,7 @@ sub is_likely_real_file {
 
     # Get expected file type from URI
     my $expected_type = '';
-    if ($uri =~ /\.(zip|tar|gz|bz2|lzma|egg|war|pem|jks|sql)$/i) {
-        $expected_type = lc($1);
-    }
-    elsif ($uri =~ /\.(tar\.gz|tgz)$/i) {
+    if ($uri =~ /\.(tar\.gz|tgz)$/i) {
         $expected_type = 'tar.gz';
     }
     elsif ($uri =~ /\.(tar\.bz2)$/i) {
@@ -195,6 +192,9 @@ sub is_likely_real_file {
     }
     elsif ($uri =~ /\.(tar\.lzma)$/i) {
         $expected_type = 'tar.lzma';
+    }
+    elsif ($uri =~ /\.(zip|tar|gz|bz2|lzma|egg|war|pem|jks|sql)$/i) {
+        $expected_type = lc($1);
     }
 
     # If we can't determine expected type, do basic validation

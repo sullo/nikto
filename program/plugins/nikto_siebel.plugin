@@ -21,14 +21,14 @@ sub nikto_siebel_init {
 }
 
 sub nikto_siebel {
-    return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+    return if $mark->{'terminate'};
     my $application;
 
     # Check whether we have an application
     if (defined $parameters->{'enumerate'}) {
         my @apps        = nikto_siebel_enumerate($mark, $parameters);
-        my $application = $apps[0];
+        $application = $apps[0];
     }
 
     if ($application eq "" && defined $parameters->{'application'}) {

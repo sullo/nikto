@@ -143,9 +143,9 @@ sub vereval {
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING:",
            "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-    my @T = split(/$sepr/, $CURRENT);
+    my @T = split(/\Q$sepr\E/, $CURRENT);
     $CURRENT = $T[$#T];                    # should be version...
-    @T       = split(/$sepr/, $RUNNING);
+    @T       = split(/\Q$sepr\E/, $RUNNING);
     $RUNNING = $T[$#T];                    # should be version...
 
     # convert alphas to numerics so we can do a real comparison

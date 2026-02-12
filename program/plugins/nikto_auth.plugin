@@ -94,17 +94,18 @@ sub split_auth_header {
 # If present, user-supplied credentials will be tried first
 sub nikto_auth {
     my ($mark, $parameters, $request, $response) = @_;
+
+    unless (defined $response->{'www-authenticate'}) {
+        nprint("+ ERROR: No authentication header defined: $response->{'whisker'}->{'uri'}",
+               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        return $request, $response;
+    }
+
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
     $authtype = 'basic' if $authtype eq '';
 
     # did we already test this realm?
     if (exists $mark->{'realms'}{$realm}{'status'}) {
-        return $request, $response;
-    }
-
-    unless (defined $response->{'www-authenticate'}) {
-        nprint("+ ERROR: No authentication header defined: $response->{'whisker'}->{'uri'}",
-               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
@@ -161,7 +162,7 @@ sub nikto_auth {
                 }
                 elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
                     $message =
-                      "Blank credentials found at $request{whisker}->{uri}, $entry->{'realm'}: $entry->{'msg'}.";
+                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'msg'}.";
                     $ref = "CWE-16";
                 }
                 else {
@@ -171,7 +172,7 @@ sub nikto_auth {
                 }
 
                 add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
-                                  $request{'whisker'}->{'uri'},
+                                  $request->{'whisker'}->{'uri'},
                                   $request, $response);
 
                 # Mark it successful
@@ -187,9 +188,9 @@ sub nikto_auth {
             $response->{'www-authenticate'} = $save_auth;
         }
     }
-    LW2::auth_unset(\%request);
+    LW2::auth_unset($request);
     if (!$success) {
-        nprint("+ " . $request{'whisker'}->{'uri'} . ": No creds found for realm '$realm'",
+        nprint("+ " . $request->{'whisker'}->{'uri'} . ": No creds found for realm '$realm'",
                "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 

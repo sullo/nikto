@@ -15,8 +15,8 @@ sub nikto_negotiate_init {
 }
 
 sub nikto_negotiate {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
     my %headers = ('Accept', 'application/whatever; q=1.0');
 
     my ($res, $content, $error, $request, $response) =

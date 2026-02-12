@@ -21,7 +21,7 @@ sub nikto_cgi {
     my ($res, $content, $possiblecgidir, $found) = ('', '', '', '');
 
     if (defined $CLI{'forcecgi'}) {
-        if ($forcecgi eq "all") {
+        if ($CLI{'forcecgi'} eq "all") {
             nprint("Using all known CGI directories\n", "d");
             $VARIABLES{'@CGIDIRS'} = @CFGCGI ? join(" ", @CFGCGI) : "";
         }

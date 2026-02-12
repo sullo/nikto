@@ -79,7 +79,7 @@ $VARIABLES{'deferout'} = 1 unless $CLI{'display'} ne "";
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
-    $mark->{'messages'} = ();
+    $mark->{'messages'} = [];
     $mark->{'test'}     = 1;
     $mark->{'failures'} = 0;
     $mark->{'nf_cache'} = {};
@@ -154,6 +154,7 @@ if (!$CLI{'nocheck'}) {
 
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
+    $NIKTO{'current_mark'}  = $mark;
     $VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
@@ -186,7 +187,7 @@ foreach my $mark (@MARKS) {
     }
 
     my ($res, $content, $error, $request, $response) =
-      nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => }, "Init");
+      nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "Init");
     $mark->{'platform'} = platform_profiler($mark);
 
     # SSL info is now available - report it to all formats

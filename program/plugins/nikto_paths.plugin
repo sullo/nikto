@@ -18,8 +18,8 @@ sub nikto_paths_init {
 }
 
 sub nikto_paths {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
     my (%DIRS, %FILES);
 
     # Follow redirects by temporarily by setting $CLI{'followredirects'} to 1

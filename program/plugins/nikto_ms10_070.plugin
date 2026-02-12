@@ -21,8 +21,8 @@ sub nikto_ms10_070_init {
 }
 
 sub nikto_ms10_070 {
-    return if $mark->{'terminate'};
     my ($mark, $parameters, $request, $response) = @_;
+    return if $mark->{'terminate'};
     return if $mark->{'ms100707'};
     my $method = $response->{'whisker'}->{'method'} || "GET";
 

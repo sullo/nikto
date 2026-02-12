@@ -22,8 +22,8 @@ sub nikto_dictionary_attack_init {
 }
 
 sub nikto_dictionary_attack {
-    return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+    return if $mark->{'terminate'};
 
     my $method = "HEAD";
 

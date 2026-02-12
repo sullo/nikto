@@ -1312,10 +1312,10 @@ sub general_config {
     if ($^O !~ /MSWin32/) {
         $NIKTO{'POSIX'}{'fd_stdin'} = fileno(STDIN);
         $NIKTO{'POSIX'}{'term'}     = POSIX::Termios->new();
-        $NIKTO{'POSIX'}{'term'}->getattr($fd_stdin);
+        $NIKTO{'POSIX'}{'term'}->getattr($NIKTO{'POSIX'}{'fd_stdin'});
         $NIKTO{'POSIX'}{'oterm'}  = $NIKTO{'POSIX'}{'term'}->getlflag();
         $NIKTO{'POSIX'}{'echo'}   = ECHOE | ECHO | ECHOK | ICANON;
-        $NIKTO{'POSIX'}{'noecho'} = $oterm & ~$echo;
+        $NIKTO{'POSIX'}{'noecho'} = $NIKTO{'POSIX'}{'oterm'} & ~$NIKTO{'POSIX'}{'echo'};
     }
 
     if ($CLI{'pause'} > 0) {
@@ -1367,12 +1367,19 @@ sub sleeper {
 sub safe_quit {
     my ($mark) = @_;
 
-    $mark->{'end_time'}       = time();
-    $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
-    $COUNTERS{'scan_elapsed'} = (time() - $COUNTERS{'scan_start'});
-    report_host_end($mark);
-    report_summary($mark);
-    report_close($mark);
+    # When called as a signal handler, $mark is the signal name (e.g. "INT"), not a hashref
+    if (!ref($mark)) {
+        $mark = $NIKTO{'current_mark'};
+    }
+
+    if (ref($mark)) {
+        $mark->{'end_time'}       = time();
+        $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+        $COUNTERS{'scan_elapsed'} = (time() - $COUNTERS{'scan_start'});
+        report_host_end($mark);
+        report_summary($mark);
+        report_close($mark);
+    }
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);
     exit 1;
 }
@@ -1480,7 +1487,7 @@ sub resolve {
                     $msg .=
                       " Ensure you have IPv6 connectivity. Trying running Nikto with the '-check6' flag.";
                 }
-                return $mark->{'hostname'}, '', $mark->{'display_name'}, $msg;
+                return $ident, '', $ident, $msg;
             }
 
             foreach my $res (@res) {
@@ -1526,14 +1533,14 @@ sub resolve {
             exit 1;
         }
 
-        if ($ipcache != "" && $report) {
+        if ($ipcache ne "" && $report) {
             nprint("+ Multiple IPs found: $ip, $ipcache", "", @scrub);
         }
 
         if (   $ip !~ /^$LW2::IPv4_re$/
             && $ip !~ /^$LW2::IPv6_re$/) {
             nprint("+ ERROR: Invalid IP: $ip\n\n",
-                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "", ($ident, $ip, $ident));
             exit 1;
         }
 
@@ -2247,7 +2254,7 @@ sub check_dbs {
     }
 
     # Suggest some open IDs
-    my $open = ();
+    my @open;
     my $id   = '000001';
     while ($#open < 6) {
         if (!exists($ALL_IDS{$id})) { push(@open, $id); }
@@ -2959,7 +2966,7 @@ sub setup_hash {
     # Set all required whisker properties (matching LW2::http_init_request defaults)
     $whisker->{'http_space1'}                   = ' ';
     $whisker->{'http_space2'}                   = ' ';
-    $whisker->{'version'}                       = $NIKTOCONFIG{'DEFAULTHTTPVER'} || '1.1';
+    $whisker->{'version'}                       = $CONFIGFILE{'DEFAULTHTTPVER'} || '1.1';
     $whisker->{'method'}                        = 'GET';
     $whisker->{'protocol'}                      = 'HTTP';
     $whisker->{'port'}                          = $mark->{'port'} || 80;
@@ -3053,7 +3060,7 @@ sub running_average_print {
     }
 
     if ($elements > 10) {
-        my @recent_data  = @data[ 9 .. $#data ];                # More efficient than splice
+        my @recent_data  = @data[ ($#data - 9) .. $#data ];
         my $recent_count = @recent_data;
         my $avg          = sum(@recent_data) / $recent_count;
         $message .= sprintf("10 requests: %.4f sec", $avg);
@@ -5069,7 +5076,7 @@ sub check_ipv6 {
     $CLI{'ipv6'} = 1;
     $CLI{'ipv4'} = 0;
 
-    if ($CONFIGFILE{'CHECK6HOST'} == "") {
+    if ($CONFIGFILE{'CHECK6HOST'} eq "") {
         $CONFIGFILE{'CHECK6HOST'} = 'ipv6.google.com';
         $CONFIGFILE{'CHECK6PORT'} = '443';
     }

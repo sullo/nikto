@@ -23,8 +23,8 @@ sub nikto_apacheusers_init {
 }
 
 sub nikto_apacheusers {
-    return if $mark->{'terminate'};
     my ($mark, $parameters) = @_;
+    return if $mark->{'terminate'};
     my $apacheusers = 0;
 
     # If we haven't been asked to enumerate users then return

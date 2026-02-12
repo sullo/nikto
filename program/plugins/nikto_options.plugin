@@ -21,8 +21,8 @@ sub nikto_options_init {
 # See RFC 2626 for more info...
 
 sub nikto_httpoptions {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
     my (%request, %response, $dbarray, $txt, $allow_methods, $public_methods);
     my $junkmethodresp;
     $txt     = "";

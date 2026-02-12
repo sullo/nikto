@@ -29,8 +29,8 @@ sub nikto_headers_load {
 }
 
 sub nikto_headers_postfetch {
-    return if $mark->{'terminate'};
     my ($mark, $parameters, $request, $response) = @_;
+    return if $mark->{'terminate'};
 
     # Skip OPTIONS
     return if $request->{'whisker'}{'method'} eq "OPTIONS";
@@ -327,8 +327,8 @@ sub report_multiheaders {
 }
 
 sub nikto_headers_check {
-    return if $mark->{'terminate'};
     my ($mark, $response, $header, $tid, $request) = @_;
+    return if $mark->{'terminate'};
     my @interesting_headers = split(" ", $VARIABLES{'@INTERESTING_HEADERS'});
 
     foreach my $header (@interesting_headers) {
@@ -359,8 +359,8 @@ sub nikto_headers_check {
 }
 
 sub nikto_headers {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
 
     #######################################################################
     # look for to see whether its vulnerable to the Translate: f
@@ -395,7 +395,7 @@ sub nikto_headers {
 
     #######################################################################
     # Content-Location header in IIS
-    my (%locheaders, %locflags, $cl, $l, $wa);
+    my (%locheaders, %locflags, $cl, $l, $wa, $rt);
     $locheaders{'User-Agent'} = get_ua();
     $locflags{'noclean'}      = 1;
     $locflags{'nohost'}       = 1;

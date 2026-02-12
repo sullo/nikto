@@ -98,8 +98,8 @@ sub nikto_robots {
             return if $mark->{'terminate'};
             if (!defined($parameters->{'nocheck'})) {
                 my ($res, $content, $error, $request, $response) =
-                  nfetch($mark, $line, "GET", "", "", "Robots: Check for URI");
-                if (   is_404($mark, $line, $response)
+                  nfetch($mark, $line, "GET", "", "", "", "Robots: Check for URI");
+                if (!is_404($mark, $line, $response)
                     && ($res !~ /^40[346]$/)
                     && ($res !~ /^30[21]$/)) {
                     add_vulnerability(

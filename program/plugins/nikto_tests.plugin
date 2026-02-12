@@ -278,8 +278,8 @@ sub allchecks {
 }
 
 sub testfile {
-    return if $mark->{'terminate'};
     my ($mark, $uri, $name, $tid) = @_;
+    return if $mark->{'terminate'};
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
     nprint("- $res for $uri (error: $error)",
@@ -314,7 +314,7 @@ sub process_captured_groups {
 
         # Replace with captured value or empty string if undefined
         $value = '' unless defined $value;
-        $message =~ s/\$$i/$value/g;
+        $message =~ s/\$$i(?!\d)/$value/g;
     }
 
     return $message;

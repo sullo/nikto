@@ -25,8 +25,8 @@ sub nikto_msgs_init {
 }
 
 sub nikto_msgs {
-    return if $mark->{'terminate'};
     my ($mark) = @_;
+    return if $mark->{'terminate'};
     my $dbarray;
     $dbarray = init_db("db_server_msgs");
 
@@ -43,7 +43,7 @@ sub nikto_msgs {
     if ($mark->{'banner'} =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/_LOGFILENAME_", "GET", "", "", "", "msgs: Agent-ListenServer-HttpSvr");
-        next unless ($res == 200);
+        return unless ($res == 200);
 
         # Computer name
         return if $mark->{'terminate'};
@@ -81,7 +81,7 @@ sub nikto_msgs {
     if ($mark->{'banner'} =~ /CompaqHTTPServer/i) {
         ($res, $content, $error, $request, $response) =
           nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
-        next unless ($res == 200);
+        return unless ($res == 200);
         return if $mark->{'terminate'};
         my $ipaddrs = "";
         my $name;

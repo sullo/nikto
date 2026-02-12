@@ -69,7 +69,7 @@ sub text_item {
         my $line = "+ ";
         if ($item->{method}) { $line .= $item->{method} . " " }
         if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) {
-            $line .= $mark->{'root'} . ${'uri'} . ": ";
+            $line .= $mark->{'root'} . $uri . ": ";
         }
         $line .= $item->{message};
         if ($item->{refs} ne "") { $line .= " See: " . $item->{refs} . ": " }
