@@ -46,7 +46,7 @@ sub nikto_shellshock {
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
         if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
-            || ($checkcontent && ($content =~ /93e4r0-cve-2014-6271: true/))) {
+            || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))) {
             add_vulnerability(
                 $mark,
                 "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).",
@@ -59,7 +59,7 @@ sub nikto_shellshock {
                 );
         }
         if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
-            || ($checkcontent && ($content =~ /93e4r0-cve-2014-6278: true/))) {
+            || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/))) {
             add_vulnerability(
                  $mark,
                  "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -81,7 +81,7 @@ sub nikto_shellshock {
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
                 if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
-                    || ($checkcontent && ($content =~ /93e4r0-cve-2014-6271: true/))) {
+                    || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -94,7 +94,7 @@ sub nikto_shellshock {
                          );
                 }
                 if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
-                    || ($checkcontent && ($content =~ /93e4r0-cve-2014-6278: true/))) {
+                    || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/))) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
