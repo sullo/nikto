@@ -7279,3 +7279,4 @@
 "007665","https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc197955(v=vs.95)?redirectedfrom=MSDN","13","/clientaccesspolicy.xml","GET","CODE:200&&BODY:access\-policy","A Microsoft Silverlight client access policy file was found.","",""
 "007666","http://jeremiahgrossman.blogspot.com/2008/05/crossdomainxml-invites-cross-site.html","13","/crossdomain.xml","GET","CODE:200&&BODY:access\-from","A Flash cross-domain policy file was found.","",""
 "007667","https://www.ibm.com/support/pages/ibm-domino-ibm-i","be","/download/filesets/l_LOTUS_SCRIPT.inf","GET","CODE:200&&BODY:Version\=([0-9.]+)|Domino\sRelease\s([0-9A-Z.]+)","Lotus Domino version $1 found.","",""
+"007668","https://blog.cloudflare.com/markdown-for-agents/","1","/","GET","CODE:200&&HEADER:x-markdown-tokens","Cloudflare Markdown For Agents enabled. This returns page content in Markdown instead of HTML.","","Accept: text/markdown"
