@@ -1,4 +1,4 @@
-FROM alpine:3.21.3
+FROM alpine:3.23.3
 
 LABEL version="2.5.0" \
       author="Author Paul Sec (https://github.com/PaulSec), Nikto User https://github.com/drwetter" \
