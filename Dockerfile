@@ -11,14 +11,10 @@ RUN echo 'Installing packages for Nikto.' && \
       perl \
       perl-net-ssleay \
       perl-json \
-      perl-json-pp \
       perl-io-socket-ssl \
       perl-xml-writer \
-      perl-time-piece \
-      perl-time-seconds \
       perl-mime-base64 \
-      perl-libxml \
-      perl-md5
+      perl-xml-libxml
 
 RUN echo 'Creating the nikto group.' && \
   addgroup -S nikto && \
