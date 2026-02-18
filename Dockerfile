@@ -1,10 +1,10 @@
 FROM alpine:3.23.3
 
-LABEL version="2.5.0" \
+LABEL version="2.6.0" \
       author="Author Paul Sec (https://github.com/PaulSec), Nikto User https://github.com/drwetter" \
-      docker_build="docker build -t sullo/nikto:2.5.0 ." \
-      docker_run_basic="docker run --rm sullo/nikto:2.5.0 -h http://www.example.com" \
-      docker_run_advanced="docker run --rm -v $(pwd):/tmp sullo/nikto:2.5.0 -h http://www.example.com -o /tmp/out.json"
+      docker_build="docker build -t sullo/nikto:2.6.0 ." \
+      docker_run_basic="docker run --rm sullo/nikto:2.6.0 -h http://www.example.com" \
+      docker_run_advanced="docker run --rm -v $(pwd):/tmp sullo/nikto:2.6.0 -h http://www.example.com -o /tmp/out.json"
 
 RUN echo 'Installing packages for Nikto.' && \
     apk add --no-cache \
