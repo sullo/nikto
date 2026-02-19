@@ -1134,8 +1134,14 @@ sub general_config {
                 next;
             }
 
-            # Append format extension to prefix
-            my $file_name = $prefix . "." . $fmt;
+            # Append format extension to prefix only if not already present
+            my $file_name;
+            if ($prefix =~ /\.\Q$fmt\E$/i) {
+                $file_name = $prefix;
+            }
+            else {
+                $file_name = $prefix . "." . $fmt;
+            }
             $CLI{'files'}{$fmt} = $file_name;
         }
     }
