@@ -3442,14 +3442,15 @@ sub set_scan_items {
                 $db_extensions{$ext} = 1;
 
                 $COUNTERS{total_checks}++;
-                $TESTS{ $item[0] }{'uri'}        = $item[3];
                 $TESTS{ $item[0] }{'references'} = $item[1];
+                $TESTS{ $item[0] }{'tuning'}     = $item[2];
+                $TESTS{ $item[0] }{'uri'}        = $item[3];
                 $TESTS{ $item[0] }{'method'}     = $item[4];
                 $TESTS{ $item[0] }{'dsl'}        = $item[5];
-                $TESTS{ $item[0] }{'matcher'}    = build_matcher($item[5], $item[0]);
                 $TESTS{ $item[0] }{'message'}    = $item[6];
                 $TESTS{ $item[0] }{'data'}       = $item[7];
                 $TESTS{ $item[0] }{'headers'}    = $item[8];
+                $TESTS{ $item[0] }{'matcher'}    = build_matcher($item[5], $item[0]);
             }
         }
     }
