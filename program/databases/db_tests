@@ -505,7 +505,7 @@
 "000487","CVE-2002-0128","6","@CGIDIRSPbcgi.exe?bcgiu4","GET","CODE:200","Sambar may be vulnerable to a DOS when a long string is passed to Pbcgi.exe (not attempted). Default CGI should be removed from web servers.","",""
 "000488","CVE-2002-0128","6","@CGIDIRStestcgi.exe","GET","CODE:200","Sambar may be vulnerable to a DOS when a long string is passed to testcgi.exe (not attempted). Default CGI should be removed from web servers.","",""
 "000489","CVE-2002-0128","6","/cgi-win/cgitest.exe","GET","CODE:200","This CGI may allow the server to be crashed remotely.","",""
-"000490","https://seclists.org/bugtraq/2002/Jan/176","7","/@LFI(nix,url)","GET","@LFI()","The Web_Server_4D is vulnerable to a directory traversal problem.","",""
+"000490","https://seclists.org/bugtraq/2002/Jan/176","7","@LFI(nix,url)","GET","@LFI()","The Web_Server_4D is vulnerable to a directory traversal problem.","",""
 "000491","","8","/c/winnt/system32/cmd.exe?/c+dir+/OG","GET","BODY:Directory of c","This machine is infected with Code Red, or has Code Red leftovers.","",""
 "000492","","8","@CGIDIRSsnorkerz.bat","GET","CODE:200","Arguments passed to DOS CGI without checking","",""
 "000493","","8","@CGIDIRSsnorkerz.cmd","GET","CODE:200","Arguments passed to DOS CGI without checking","",""

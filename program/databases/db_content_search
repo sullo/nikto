@@ -10,27 +10,26 @@
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
-# These can be regular expressions, but will be eval'd case insensitive.
-# Since these are run after every page retrieved, we should try to keep these as fast 
-# regular expressions as possible, and limited to only critical findings.
+# Matchers can be regex and support etractors. 
+# WARNING: these match every response--be efficient and minimal.
 #######################################################################
 "nikto_id","references","matchstring","message"
-"750500","CWE-548","[iI]ndex [oO]f \/","Directory indexing found."
-"750501","","Warning(?:<\/b>)?:\s+(?:include|require)(?:_once)?\(","PHP include error may indicate local or remote file inclusion is possible."
-"750502","","failed to open stream: No such file or directory in (?:<b>)?(?:[a-zA-Z]:\\|\/)","PHP include error reveals the full path to the web root."
+"750500","CWE-548","[iI]ndex\s[oO]f\s\/","Directory indexing found."
+"750501","","(Warning(?:<\/b>)?:\s+(?:include|require)(?:_once)?\()","PHP include error may indicate local or remote file inclusion is possible. The error is: $1 ."
+"750502","","failed to open stream: No such file or directory in (?:<b>)?([a-zA-Z]:\\|\/)","PHP include error reveals the full path to the web root. The error is: $1 ."
 "750503","","mysql_p?connect\(","Potential PHP MySQL database connection string found."
 "750504","","pgp_p?connect\(","Potential PHP PostgreSQL database connection string found."
 "750505","","sqlite_p?open\(","Potential PHP SQLite database connection string found."
 "750506","","mssql_p?connect\(","Potential PHP MSSQL database connection string found."
 "750507","","Call to undefined function.*\(\) in \/","PHP error reveals file system path."
-"750508","CVE-2006-5272","FrameworkLog.xsl\"\\?>.*<version>(?:[0-2]|3\.(?:[0-5]|6\.0\.(?:[0-4]|5(?:[0-3]|4[0-5]))))","McAfee Common Management Agent 3.6.0.546 and below contain multiple overflows."
+"750508","CVE-2006-5272","FrameworkLog.xsl\"\\?>.*<version>([0-2]|3\.(?:[0-5]|6\.0\.(?:[0-4]|5(?:[0-3]|4[0-5]))))","McAfee Common Management Agent version $1 found."
 "750509","","However, we found documents with names similar to the one you requested","The mod_speling module can reveal otherwise 'hidden' files in directories."
 "750510","","makes use of the Zend Scripting Language","Output from the phpinfo() function was found."
 "750511","","SQLSTATE\[","A database error may reveal internal details about the running database."
-"750512","CWE-548","jetty-dir.css\" REL=\"stylesheet\" TYPE=\"text/css\"\/><TITLE>Directory: \/","Directory indexing found (Jetty)."
+"750512","CWE-548","jetty-dir.css\" REL=\"stylesheet\" TYPE=\"text/css\"\/><TITLE>Directory: \/","Jetty directory indexing found."
 "750516","","plain HTTP to an SSL","You appear to be scanning an HTTPS site with HTTP. This probably isn't what you want."
 "750517","","plain HTTP request was sent to HTTPS","You appear to be scanning an HTTPS site with HTTP. This probably isn't what you want."
-"750519","","[Tt]omcat\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}","The detailed Tomcat version is disclosed in error pages."
+"750519","","[Tt]omcat\s([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})","The Tomcat version is disclosed in error pages: $1."
 "750520","","\<html\>\<head\>\<title\>Remote Access Controller<\/title>","Host seems to be a Dell Remote Access Controller."
 "750521","https://makeawebsitehub.com/parked-domains/","parked FREE","Domain is parked at GoDaddy."
 "750522","https://makeawebsitehub.com/parked-domains/","courtesy of GoDaddy\.com","Domain is parked at GoDaddy."
@@ -45,3 +44,4 @@
 "750531","https://makeawebsitehub.com/parked-domains/","Sponsored Listings","Domain is parked at Voodoo.com."
 "750532","https://makeawebsitehub.com/parked-domains/","FUTURE HOME OF A DOTSTER","Domain is parked at Dotster."
 "750533","https://makeawebsitehub.com/parked-domains/","Share this \.tel","Domain is parked at Knipp."
+"750534","https://trufflesecurity.com/blog/google-api-keys-werent-secrets-but-then-gemini-changed-the-rules","([>\"=]AIz[\w_\.-]+)","Google API keys may now be used for Gemini API access. The key is: $1 ."

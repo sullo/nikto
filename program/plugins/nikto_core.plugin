@@ -5043,6 +5043,29 @@ sub validate_and_fix_regex {
     return $mode ? ($regex, $fixed) : $regex;
 }
 ###############################################################################
+# Process captured groups in message strings
+# Replaces $1, $2, etc. with captured group values
+sub process_captured_groups {
+    my ($message, $captures) = @_;
+
+    # Quick exit if no message or captures
+    return $message unless $message && $captures && @$captures;
+
+    # Quick exit if message has no placeholder patterns
+    return $message unless $message =~ /\$\d+/;
+
+    # Replace $1, $2, etc. with captured values
+    for my $i (1 .. @$captures) {
+        my $value = $captures->[ $i - 1 ];
+
+        # Replace with captured value or empty string if undefined
+        $value = '' unless defined $value;
+        $message =~ s/\$$i(?!\d)/$value/g;
+    }
+
+    return $message;
+}
+###############################################################################
 sub rquote {
     my $string = $_[0] || return;
     $string =~ s/([^A-Za-z_0-9 "'\\])/\\$1/g;

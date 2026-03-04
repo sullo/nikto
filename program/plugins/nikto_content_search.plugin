@@ -51,7 +51,9 @@ sub nikto_content_search {
 
         # Check whether we've already matched it
         if ($body =~ $testid->{'compiled'}) {
-            my $outmessage = "$file: $testid->{'message'}";
+            my @caps = grep { defined $_ } ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+            my $msg = process_captured_groups($testid->{'message'}, \@caps);
+            my $outmessage = "$file: $msg";
             add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'refs'},
                               $method, $file, $request, $response);
             $matched->{$file} = 1;
