@@ -32,7 +32,15 @@ sub nikto_content_search_load {
 
     # to try and speed it up - precompile the regular expressions
     foreach my $testid (@$CONTENTSEARCH) {
-        $testid->{'compiled'} = qr/$testid->{'matchstring'}/;
+        my $compiled = eval { qr/$testid->{'matchstring'}/ };
+        if ($@ || !defined $compiled) {
+            nprint(
+                "+ Invalid content search regex for test ID $testid->{'nikto_id'}; skipping.",
+                "d"
+                );
+            next;
+        }
+        $testid->{'compiled'} = $compiled;
     }
 }
 
