@@ -35,7 +35,7 @@ sub nikto_auth_load {
         use Text::ParseWords;
         my @array = nested_quotewords(':', 0, $CLI{'hostauth'});
 
-        if (($array[0][0] ne "") || ($array[0][1] ne "")) {
+        if ((defined $array[0][0] && $array[0][0] ne "") || (defined $array[0][1] && $array[0][1] ne "")) {
 
             my $HOSTAUTH = { nikto_id => "700500",
                              realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
@@ -122,7 +122,7 @@ sub nikto_auth {
 
     nprint("+ $response->{'whisker'}->{'uri'} - Requires Authentication for realm '$realm'",
            "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
-      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^$CLI{'root'}\/?$/);
+      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$CLI{'root'}\E\/?$/);
 
     # Save to revert
     my $save_auth = $response->{'www-authenticate'};
@@ -168,7 +168,7 @@ sub nikto_auth {
         if (   $response->{'whisker'}->{'code'} !~ /40[13]/
             && $response->{'whisker'}->{'code'} ne "500"
             && !defined $response->{'whisker'}->{'error'}) {
-            unless ($entry->{'checked'} == 1) {
+            unless ($entry->{'checked'}) {
                 my $message;
                 my $ref;
                 if ($entry->{'message'} eq "Credentials provided via CLI.") {
@@ -177,7 +177,7 @@ sub nikto_auth {
                 }
                 elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
                     $message =
-                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'msg'}.";
+                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
                     $ref = "CWE-16";
                 }
                 else {

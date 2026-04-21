@@ -3,6 +3,7 @@
 # PURPOSE: General HTTP cookie checks
 ###############################################################################
 sub nikto_cookies_init {
+    use vars qw/%CFOUND/;
     my $id = {
          name        => "cookies",
          full_name   => "HTTP Cookie Internal IP",
@@ -13,7 +14,7 @@ sub nikto_cookies_init {
          };
 
     # Store cookies to ensure we don't report multiple times.
-    my %CFOUND;
+    %CFOUND = ();
     return $id;
 }
 
@@ -108,8 +109,8 @@ sub decode_netscaler_cookie {
     my $ip_value   = hex($1) ^ 0x03081e11;
     my $port_value = hex($2) ^ 0x3630;
 
-    $ip_hex_str      = sprintf("0x%X", $ip_value);
-    $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
+    my $ip_hex_str      = sprintf("0x%X", $ip_value);
+    my $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
     return
         hex('0x' . substr($ip_hex_zero_pad, 0, 2)) . "."
       . hex('0x' . substr($ip_hex_zero_pad, 2, 2)) . "."
