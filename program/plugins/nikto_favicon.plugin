@@ -25,11 +25,13 @@ sub nikto_favicon_load {
 sub nikto_favicon {
     my ($mark) = @_;
     return if $mark->{'terminate'};
+    %LINKICONS = ();
+    my ($res, $content, $error, $request, $response);
 
     # Check /favicon.ico
     foreach my $ext (split(/,/, "ico,gif,png")) {
         foreach my $path (split /,/, ",/favicons") {
-            my ($res, $content, $error, $request, $response) =
+            ($res, $content, $error, $request, $response) =
               nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
             if (($res eq "200") && ($content ne "")) {
@@ -43,7 +45,7 @@ sub nikto_favicon {
     }
 
     # Check for a <link> favicon
-    ($res, $content, $error, $request, $response) =
+    my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", "", "favicon");
     if ($content =~ /link\s[^<]+icon+[^>]+\.(ico|png|gif)/i) {
         my %tags;
