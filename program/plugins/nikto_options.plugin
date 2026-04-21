@@ -23,41 +23,33 @@ sub nikto_options_init {
 sub nikto_httpoptions {
     my ($mark) = @_;
     return if $mark->{'terminate'};
-    my (%request, %response, $dbarray, $txt, $allow_methods, $public_methods);
-    my $junkmethodresp;
-    $txt     = "";
-    $dbarray = init_db("db_options");
+    my ($aoptions, $poptions, $allow_methods, $public_methods, $junkmethodresp);
+    my $dbarray = init_db("db_options");
+    my $txt     = "";
 
-    # test for both OPTIONS / and OPTIONS * as they may give different results
-    # my ($res, $content, $errors, $request, $response) =
-    # nfetch($mark, "*", "OPTIONS", "", "", "", "httpoptions: OPTIONS *");
-
-    # my $aoptions = "$response->{'allow'}, ";
-    # my $poptions = "$response->{'public'}, ";
-
-    ($res, $content, $errors, $request, $response) =
+    my ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
-    $aoptions .= $response->{'allow'};
-    $poptions .= $response->{'public'};
+    $aoptions = $response->{'allow'};
+    $poptions = $response->{'public'};
 
-    foreach my $o (split(/,[ ]?/, $aoptions)) {
-        $allow_methods .= ", $o" unless ($allow_methods =~ /\b$o\b/ || $o eq '');
+    foreach my $o (split(/\s*,\s*/, $aoptions)) {
+        $allow_methods .= ", $o" unless ($allow_methods =~ /\b\Q$o\E\b/ || $o eq '');
     }
 
     $allow_methods =~ s/^[ ]?, //;
-    foreach my $o (split(/,[ ]?/, $poptions)) {
-        $public_methods .= ", $o" unless ($public_methods =~ /\b$o\b/ || $o eq '');
+    foreach my $o (split(/\s*,\s*/, $poptions)) {
+        $public_methods .= ", $o" unless ($public_methods =~ /\b\Q$o\E\b/ || $o eq '');
     }
     $public_methods =~ s/^[ ]?, //;
 
     # proxy can impose its methods... should actually check this not just warn
     if ($CLI{'useproxy'} ne "") { $txt = "(May be proxy's methods, not server's)"; }
 
-    %davmethods = ();
+    my %davmethods = ();
     if ($allow_methods ne "") {
         add_vulnerability($mark, "OPTIONS: Allowed HTTP Methods: $allow_methods $txt",
                           "999990", "", "OPTIONS", "/", $request, $response);
-        foreach my $m (split /,? /, $allow_methods) {
+        foreach my $m (split(/\s*,\s*/, $allow_methods)) {
             my $method = eval_methods($m, "Allow", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
         }
@@ -66,15 +58,15 @@ sub nikto_httpoptions {
     if ($public_methods ne "") {
         add_vulnerability($mark, "OPTIONS: Public HTTP Methods: $public_methods $txt",
                           "999985", "", "OPTIONS", "/", $request, $response);
-        foreach my $m (split /,? /, $public_methods) {
+        foreach my $m (split(/\s*,\s*/, $public_methods)) {
             my $method = eval_methods($m, "Public", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
         }
     }
 
     if (scalar(keys(%davmethods)) > 0) {
-        $message = "OPTIONS: WebDAV enabled (";
-        for my $key (keys %davmethods) {
+        my $message = "OPTIONS: WebDAV enabled (";
+        for my $key (sort keys %davmethods) {
             $message .= "$key ";
         }
         $message .= "listed as allowed)";
@@ -83,7 +75,7 @@ sub nikto_httpoptions {
 
     # Check to see what the web server does on out of standard headers
     my $junkmethod = LW2::utils_randstr(8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-    ($res, $content, $error, $request, $response) =
+    ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
     if ($res == 200) {
         add_vulnerability(
@@ -102,7 +94,7 @@ sub nikto_httpoptions {
     # Check for other weirdness
     # IIS Debug
     return if $mark->{'terminate'};
-    ($res, $content, $error, $request, $response) =
+    ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
     if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
         add_vulnerability(
@@ -121,7 +113,7 @@ sub nikto_httpoptions {
     return if $mark->{'terminate'};
     my %headers = ("Host"           => "",
                    "Content-Length" => "0",);
-    ($res, $content, $error, $request, $response) =
+    ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
     if ($res == 207) {
         if ($content =~ "<a:href>https?://") {
@@ -148,7 +140,7 @@ sub nikto_httpoptions {
         # Check for all flavours of HTTP
         foreach my $version (split(/ /, "0.9 1.0 1.1")) {
             return if $mark->{'terminate'};
-            ($res, $content, $error, $request, $response) =
+            ($res, $content, $errors, $request, $response) =
               nfetch($mark, "/", $method, "", \%headers, {}, "httpoptions: $method", $version);
             if ($res == 200) {
                 if ($content =~ /Trace-Test: Nikto/) {
