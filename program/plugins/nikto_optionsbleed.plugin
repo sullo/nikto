@@ -20,16 +20,17 @@ sub nikto_optionsbleed {
     my $path         = $mark->{'root'} || '/';
 
     for (my $i = 0 ; $i < $num_requests ; $i++) {
+        return if $mark->{'terminate'};
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, $path, 'OPTIONS', '', '', undef, 'optionsbleed');
-        my $allow = $response->{'allow'};
-        if (!defined $allow) {
+        my $allow = $response->{'allow'} // '';
 
-            # No Allow header exit early
+        # Ensure header is present
+        if (!defined $allow || $allow eq '') {
             last;
         }
 
-        # Should only be uppercase letters and commas, no spaces
+        # Should only be uppercase letters and commas, spaces between
         if ($allow =~ /[^A-Z, ]/ || $allow =~ /,,+/) {
             add_vulnerability($mark,
                        "$path: Potential OPTIONSBLEED vulnerability detected. Allow header: $allow",
