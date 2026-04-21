@@ -72,21 +72,32 @@ sub nikto_auth_pre {
 sub split_auth_header {
     my $header = $_[0] || return;
     my ($realm, $authtype);
-    my @authenticate = split(/=/, $header);
-    if ($authenticate[0] =~ /^ntlm/i) {
+
+    # Parse auth scheme first, then parameters.
+    my ($scheme, $params) = $header =~ /^\s*([A-Za-z]+)\s*(.*)$/;
+    return unless defined $scheme;
+
+    if ($scheme =~ /^ntlm$/i) {
         $realm = $authtype = 'ntlm';
+        return $realm, $authtype;
     }
-    else {
-        $realm = $authenticate[1];
-        $realm =~ s/^\"//;
-        $realm =~ s/\".*$//;
-        if ($authenticate[0] =~ /^basic/i) {
-            $authtype = 'basic';
+
+    if ($scheme =~ /^basic$/i) {
+        $authtype = 'basic';
+    }
+    elsif ($scheme =~ /^digest$/i) {
+        $authtype = 'digest';
+    }
+
+    if (defined $params && $params ne "") {
+        if ($params =~ /(?:^|,\s*)realm\s*=\s*"([^"]*)"/i) {
+            $realm = $1;
         }
-        elsif ($authenticate[0] =~ /^digest/i) {
-            $authtype = 'digest';
+        elsif ($params =~ /(?:^|,\s*)realm\s*=\s*([^,\s]+)/i) {
+            $realm = $1;
         }
     }
+
     return $realm, $authtype;
 }
 
