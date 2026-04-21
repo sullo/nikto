@@ -24,12 +24,15 @@ sub nikto_ms10_070 {
     my ($mark, $parameters, $request, $response) = @_;
     return if $mark->{'terminate'};
     return if $mark->{'ms100707'};
-    my $method = $response->{'whisker'}->{'method'} || "GET";
+    return if !defined $response->{'whisker'} || !defined $response->{'whisker'}->{'data'};
+    my $method = $response->{'whisker'}->{'method'} // "GET";
 
     while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
         return if $mark->{'terminate'};
         my $string = $1;
-        my $dedupe_key = $mark->{'hostname'} . ":" . $mark->{'port'} . ":" . $string;
+        next if $string eq '';
+        my $scan_host = $mark->{'hostname'} // $mark->{'ip'} // 'unknown';
+        my $dedupe_key = $scan_host . ":" . $mark->{'port'} . ":" . $string;
         next if $MS10070{$dedupe_key};
         $MS10070{$dedupe_key} = 1;
         $string =~ s/\-/\+/g;
@@ -39,6 +42,7 @@ sub nikto_ms10_070 {
         next if $count !~ /^[0-9]$/;
         $string = $string . ("=" x int($count));
         $string = LW2::decode_base64($string);
+        next if !defined $string;
 
         if ((length($string) % 8) == 0) {
             $mark->{'ms100707'} = 1;

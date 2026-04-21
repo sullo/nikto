@@ -47,14 +47,15 @@ sub nikto_headers_postfetch {
       set-cookie
       );
 
+    # Check for interesting headers once per response
+    nikto_headers_check($mark, $response, 999986, $request);
+
     # look for internal IPs
     foreach my $header (keys %$response) {
         next
           if exists $skip_headers{$header}
           || exists $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header};
 
-        # Check for known headers
-        nikto_headers_check($mark, $response, $header, 999986, $request);
         my $header_value = $response->{$header};
 
         # Do not check the Location header's path target for internal IPs
@@ -188,7 +189,7 @@ sub nikto_headers_postfetch {
             $x =~ s/\s+.*$//;
             $mark->{'components'}->{$x} = 1;
             my $values = report_multiheaders($response->{$header});
-            $vuln = $request->{'whisker'}{'uri'}
+            my $vuln = $request->{'whisker'}{'uri'}
               . ": Uncommon header(s) '$header' found, with contents: $values.";
             add_vulnerability($mark, $vuln, "999100", "",
                               $request->{'whisker'}->{'method'},
@@ -262,7 +263,8 @@ sub nikto_headers_postfetch {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
-                  . ": There appears to be Clacks Overhead on the server and the message is: $response->{'x-clacks-overhead'}",
+                  . ": There appears to be Clacks Overhead on the server and the message is: "
+                  . report_multiheaders($response->{'x-clacks-overhead'}),
                 "999104",
                 "https://xclacksoverhead.org/home/about",
                 $request->{'whisker'}->{'method'},
@@ -281,7 +283,8 @@ sub nikto_headers_postfetch {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
-                  . ": A CSP report-uri header was found. The URL is: $response->{'report-uri'}",
+                  . ": A CSP report-uri header was found. The URL is: "
+                  . report_multiheaders($response->{'report-uri'}),
                 "000433",
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-uri",
                 $request->{'whisker'}->{'method'},
@@ -317,16 +320,20 @@ sub nikto_headers_postfetch {
 # If multiple headers were sent with the same name, turn the array into a string for reporting
 sub report_multiheaders {
     my $header = $_[0] || return;
+    my $value;
     if (ref($header) eq 'ARRAY') {
-        return join(',', @{$header});
+        $value = join(',', @{$header});
     }
     else {
-        return $header;
+        $value = $header;
     }
+    $value = validate_and_fix_regex($value);
+    $value =~ s/[\r\n]+/ /g;
+    return $value;
 }
 
 sub nikto_headers_check {
-    my ($mark, $response, $header, $tid, $request) = @_;
+    my ($mark, $response, $tid, $request) = @_;
     return if $mark->{'terminate'};
     my @interesting_headers = split(" ", $VARIABLES{'@INTERESTING_HEADERS'});
 
@@ -341,6 +348,8 @@ sub nikto_headers_check {
                 else {
                     $value = $response->{$header};
                 }
+                $value = validate_and_fix_regex($value);
+                $value =~ s/[\r\n]+/ /g;
                 $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }{"interesting-$header"} = 1;
                 add_vulnerability(
                                 $mark,
@@ -549,12 +558,13 @@ sub nikto_headers {
 
     if (!$BREACH{ $mark->{hostname} }{ $mark->{port} } && defined $response && $mark->{'ssl'}) {
         if (defined $response->{'content-encoding'}) {
-            if ($response->{'content-encoding'} =~ "(deflate|gzip)") {
+            if ($response->{'content-encoding'} =~ /(deflate|gzip)/i) {
+                my $encoding = lc($1);
                 $BREACH{ $mark->{hostname} }{ $mark->{port} } = 1;
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
-                      . ": The Content-Encoding header is set to \"deflate\" which may mean that the server is vulnerable to the BREACH attack.",
+                      . ": The Content-Encoding header is set to \"$encoding\" which may mean that the server is vulnerable to the BREACH attack.",
                     "999966",
                     "http://breachattack.com/",
                     $request->{'whisker'}->{'method'},

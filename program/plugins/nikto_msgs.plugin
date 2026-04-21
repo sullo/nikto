@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: Various messages relating to the server banner
 ###############################################################################
+use vars qw/$MSGS_DB/;
+
 # NOTES:
 # versions are loaded from the "db_server_msgs" file, which should be in the
 # plugins directory this plugin checks the server version to see if there are
@@ -15,6 +17,7 @@ sub nikto_msgs_init {
                author      => "Sullo",
                description => "Checks the server version against known issues.",
                hooks       => {
+                          start => { method => \&nikto_msgs_load, },
                           scan => { method => \&nikto_msgs,
                                     weight => 5,
                                     },
@@ -24,11 +27,14 @@ sub nikto_msgs_init {
     return $id;
 }
 
+sub nikto_msgs_load {
+    $MSGS_DB = init_db("db_server_msgs");
+}
+
 sub nikto_msgs {
     my ($mark) = @_;
     return if $mark->{'terminate'};
-    my $dbarray;
-    $dbarray = init_db("db_server_msgs");
+    my $dbarray = $MSGS_DB || init_db("db_server_msgs");
 
     foreach my $item (@$dbarray) {
         $item->{'server'} = validate_and_fix_regex($item->{'server'});
@@ -43,7 +49,7 @@ sub nikto_msgs {
     if ($mark->{'banner'} =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/_LOGFILENAME_", "GET", "", "", "", "msgs: Agent-ListenServer-HttpSvr");
-        return unless ($res == 200);
+        next unless ($res == 200);
 
         # Computer name
         return if $mark->{'terminate'};
@@ -81,16 +87,16 @@ sub nikto_msgs {
     if ($mark->{'banner'} =~ /CompaqHTTPServer/i) {
         ($res, $content, $error, $request, $response) =
           nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
-        return unless ($res == 200);
+        next unless ($res == 200);
         return if $mark->{'terminate'};
         my $ipaddrs = "";
         my $name;
         foreach my $line (split(/\n/, $content)) {
-            if ($line =~ "System Management Homepage for ") {
+            if ($line =~ /System Management Homepage for /) {
                 $name = $line;
                 $name =~ s#(^.*System Management Homepage for )([a-zA-Z0-9]*)(</font>.*$)#$2#;
             }
-            if ($line =~ "new ObjectIpAddresses") {
+            if ($line =~ /new ObjectIpAddresses/) {
                 my $ipaddr = $line;
                 $ipaddr =~ s#(^.*new ObjectIpAddresses\(")([\d\.]+)("\);.*$)#$2#;
                 nprint("$ipaddr", "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
