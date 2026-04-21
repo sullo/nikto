@@ -344,7 +344,7 @@ sub nikto_sitefiles {
                         add_vulnerability(
                             $mark,
                             "/$f: Potentially interesting backup/cert file found. $msg [$type_info]",
-                            740001,
+                            "740001",
                             "https://cwe.mitre.org/data/definitions/530.html",
                             "HEAD",
                             "/$f",

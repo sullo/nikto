@@ -50,7 +50,7 @@ sub nikto_shellshock {
             add_vulnerability(
                 $mark,
                 "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).",
-                999949,
+                "999949",
                 "CVE-2014-6271",
                 "GET",
                 "$parameters->{'uri'}",
@@ -63,7 +63,7 @@ sub nikto_shellshock {
             add_vulnerability(
                  $mark,
                  "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.",
-                 999948,
+                 "999948",
                  "CVE-2014-6278",
                  "GET",
                  "$parameters->{'uri'}",
@@ -85,7 +85,7 @@ sub nikto_shellshock {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
-                         999947,
+                         "999947",
                          "CVE-2014-6271",
                          "GET",
                          "$cgidir$file",
@@ -98,7 +98,7 @@ sub nikto_shellshock {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
-                         999946,
+                         "999946",
                          "CVE-2014-6278",
                          "GET",
                          "$cgidir$file",

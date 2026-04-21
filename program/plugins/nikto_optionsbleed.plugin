@@ -33,7 +33,7 @@ sub nikto_optionsbleed {
         if ($allow =~ /[^A-Z, ]/ || $allow =~ /,,+/) {
             add_vulnerability($mark,
                        "$path: Potential OPTIONSBLEED vulnerability detected. Allow header: $allow",
-                       740002, "CVE-2017-9798", 'OPTIONS', $path, $request, $response,
+                       "740002", "CVE-2017-9798", 'OPTIONS', $path, $request, $response,
                        "Allow header value contains [^A-Z, ] or ,,");
             return;
         }

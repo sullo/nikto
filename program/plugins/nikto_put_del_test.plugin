@@ -32,7 +32,7 @@ sub nikto_put_del_test {
             add_vulnerability(
                           $mark,
                           "$uri: HTTP method 'PUT' allows clients to save files on the web server.",
-                          999995,
+                          "999995",
                           "https://portswigger.net/kb/issues/00100900_http-put-method-is-enabled",
                           "PUT",
                           $uri,
@@ -51,7 +51,7 @@ sub nikto_put_del_test {
                     add_vulnerability(
                         $mark,
                         "$uri: HTTP method 'DELETE' allows clients to delete files on the web server.",
-                        999994,
+                        "999994",
                         "https://cwe.mitre.org/data/definitions/650.html",
                         "DELETE",
                         $uri,

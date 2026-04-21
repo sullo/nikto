@@ -3,6 +3,8 @@
 # PURPOSE: Attempt to guess authentication realms
 ###############################################################################
 
+our $REALMS;
+
 sub nikto_auth_init {
     my $id = { name        => 'auth',
                full_name   => 'Test Authentication',
@@ -23,8 +25,6 @@ sub nikto_auth_init {
                copyright => "2010 Chris Sullo"
                };
 
-    use vars qw/$REALMS/;
-
     return $id;
 }
 
@@ -35,7 +35,7 @@ sub nikto_auth_load {
         use Text::ParseWords;
         my @array = nested_quotewords(':', 0, $CLI{'hostauth'});
 
-        if (($array[0][0] ne "") || ($array[0][1] ne "")) {
+        if ((defined $array[0][0] && $array[0][0] ne "") || (defined $array[0][1] && $array[0][1] ne "")) {
 
             my $HOSTAUTH = { nikto_id => "700500",
                              realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
@@ -70,23 +70,34 @@ sub nikto_auth_pre {
 
 # Split up www-authenticate to realm and method
 sub split_auth_header {
-    my $header = $_[0] || return;
+    my $header = $_[0] // return;
     my ($realm, $authtype);
-    my @authenticate = split(/=/, $header);
-    if ($authenticate[0] =~ /^ntlm/i) {
+
+    # Parse auth scheme first, then parameters.
+    my ($scheme, $params) = $header =~ /^\s*([A-Za-z]+)\s*(.*)$/;
+    return unless defined $scheme;
+
+    if ($scheme =~ /^ntlm$/i) {
         $realm = $authtype = 'ntlm';
+        return $realm, $authtype;
     }
-    else {
-        $realm = $authenticate[1];
-        $realm =~ s/^\"//;
-        $realm =~ s/\".*$//;
-        if ($authenticate[0] =~ /^basic/i) {
-            $authtype = 'basic';
+
+    if ($scheme =~ /^basic$/i) {
+        $authtype = 'basic';
+    }
+    elsif ($scheme =~ /^digest$/i) {
+        $authtype = 'digest';
+    }
+
+    if (defined $params && $params ne "") {
+        if ($params =~ /(?:^|,\s*)realm\s*=\s*"([^"]*)"/i) {
+            $realm = $1;
         }
-        elsif ($authenticate[0] =~ /^digest/i) {
-            $authtype = 'digest';
+        elsif ($params =~ /(?:^|,\s*)realm\s*=\s*([^,\s]+)/i) {
+            $realm = $1;
         }
     }
+
     return $realm, $authtype;
 }
 
@@ -102,19 +113,19 @@ sub nikto_auth {
     }
 
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
-    $authtype = 'basic' if $authtype eq '';
+    $authtype = 'basic' if (!defined $authtype || $authtype eq '');
 
     # did we already test this realm?
-    if (exists $mark->{'realms'}{$realm}{'status'}) {
+    if (exists $mark->{'realms'}{$realm} && exists $mark->{'realms'}{$realm}{'status'}) {
         return $request, $response;
     }
 
     nprint("+ $response->{'whisker'}->{'uri'} - Requires Authentication for realm '$realm'",
            "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
-      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^$CLI{'root'}\/?$/);
+      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$CLI{'root'}\E\/?$/);
 
     # Save to revert
-    $save_auth = $response->{'www-authenticate'};
+    my $save_auth = $response->{'www-authenticate'};
 
     # Now we can try the passwords
     nprint("Testing creds for '$realm'",
@@ -122,7 +133,11 @@ sub nikto_auth {
     my $success = 0;
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
-        unless ($realm =~ /$entry->{'realm'}/i || $entry->{'realm'} eq '@ANY') { next; }
+        my $entry_realm = defined $entry->{'realm'} ? $entry->{'realm'} : '';
+        my $realm_matches =
+          ($entry_realm eq '@ANY')
+          || (defined $realm && $realm =~ /\Q$entry_realm\E/i);
+        unless ($realm_matches) { next; }
 
         # Set up LW hash
         LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
@@ -153,16 +168,16 @@ sub nikto_auth {
         if (   $response->{'whisker'}->{'code'} !~ /40[13]/
             && $response->{'whisker'}->{'code'} ne "500"
             && !defined $response->{'whisker'}->{'error'}) {
-            unless ($entry->{'checked'} == 1) {
+            unless ($entry->{'checked'}) {
                 my $message;
                 my $ref;
-                if ($entry->{'message'} eq "Credentials provided via CLI.") {
+                if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
                     $message =
                       "Successfully authenticated to realm '$realm' with user-supplied credentials.";
                 }
                 elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
                     $message =
-                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'msg'}.";
+                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
                     $ref = "CWE-16";
                 }
                 else {

@@ -32,22 +32,20 @@ sub nikto_apacheusers {
                    && $parameters->{'enumerate'} == 1);
 
     # First ensure that the server is vulnerable
-    my ($response, $content) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
+    my ($res, $content, $error, $request, $response) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
-    $content = quotemeta($content);
     if ($content =~ /forbidden/i)    # good on "bin"
     {
-        my ($response, $content, $errors, $request, $response) =
+        my ($res, $content, $errors, $request, $response) =
           nfetch($mark, "/~" . LW2::utils_randstr(8),
                  "GET", "", "", "", "apacheusers: invalid user");
 
-        $content = quotemeta($content);
         if ($content !~ /forbidden/i)    # Good, it gave an error instead of forbidden
         {
             add_vulnerability(
                 $mark,
                 "/~bin: Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users and 'not found' for non-existent users).",
-                999999,
+                "999999",
                 "CVE-2001-1013",
                 "GET",
                 "/~bin",
@@ -70,7 +68,7 @@ sub nikto_apacheusers {
         $dictfile = $parameters->{'dictionary'};
     }
     if (defined $parameters->{'size'}) {
-        $size = $parameters->{'size'};
+        $size = $parameters->{'size'} if $parameters->{'size'} =~ /^\d+$/;
     }
 
     # Set the URL according to the parameters
@@ -128,7 +126,7 @@ sub nikto_user_enum_apache_brute {
     # be 'brute force' would it? (jfs)
 
     my ($url, $mark, $size) = @_;
-    $size = 5 if ($size eq "");
+    $size //= 5;
     nprint("- Enumerating Apache users (1 to $size characters).", "v", "apacheusers");
 
     my $text    = "a";
@@ -138,10 +136,10 @@ sub nikto_user_enum_apache_brute {
     my @foundusers = ();
     while (length($text) <= $size) {
         return if $mark->{'terminate'};
-        if (($ctr % 500) eq 0) {
+        if (($ctr % 500) == 0) {
             nprint("- User enumeration guess $ctr ($text)", "v", "apacheusers");
         }
-        ($response, $content, $errors, $request, $response) =
+        my ($res, $content, $errors, $request, $response) =
           nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
         my $user = nikto_user_enum_apache_check($response, $text);
         if (defined $user && $user ne "") {
@@ -155,7 +153,6 @@ sub nikto_user_enum_apache_brute {
         add_vulnerability($mark, $message . $u,
                           "000479", "CVE-2001-1013", "HEAD", "/", $request, $response);
     }
-
 }
 
 sub nikto_user_enum_apache_dictionary {
@@ -166,12 +163,11 @@ sub nikto_user_enum_apache_dictionary {
     my $ctr = 0;
 
     nprint("- Enumerating Apache users (using dictionary $filename).", "v", "apacheusers");
-    unless (open(IN, "<$filename")) {
-        nprint("+ ERROR: Unable to open dictionary file $filename: $!.");
-    }
+    open(my $fh, "<", $filename)
+      or do { nprint("+ ERROR: Unable to open dictionary file $filename: $!."); return; };
 
     # Now attempt on each entry
-    while (<IN>) {
+    while (<$fh>) {
         return if $mark->{'terminate'};
         chomp;
         s/\#.*$//;
@@ -180,7 +176,7 @@ sub nikto_user_enum_apache_dictionary {
         s/^~//;
         if ($_ eq "")          { next }
         if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v", "apacheusers"); }
-        ($response, $content, $errors, $request, $response) =
+        my($res, $content, $errors, $request, $response) =
           nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
         my $user = nikto_user_enum_apache_check($response, $_);
         if ($user) {
@@ -188,7 +184,7 @@ sub nikto_user_enum_apache_dictionary {
         }
         $ctr++;
     }
-    close(IN);
+    close($fh);
     if (scalar(@foundusers)) {
         my $u = join(', ', @foundusers);
         add_vulnerability($mark, $message . $u,
@@ -197,7 +193,7 @@ sub nikto_user_enum_apache_dictionary {
 }
 
 sub nikto_user_enum_apache_check {
-    (my $code, $user) = @_;
+    (my $code, my $user) = @_;
     my $response = "";
 
     foreach my $found (split(/ /, $VARIABLES{"\@HTTPFOUND"})) {

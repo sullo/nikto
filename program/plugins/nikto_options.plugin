@@ -56,7 +56,7 @@ sub nikto_httpoptions {
     %davmethods = ();
     if ($allow_methods ne "") {
         add_vulnerability($mark, "OPTIONS: Allowed HTTP Methods: $allow_methods $txt",
-                          999990, "", "OPTIONS", "/", $request, $response);
+                          "999990", "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $allow_methods) {
             my $method = eval_methods($m, "Allow", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
@@ -65,7 +65,7 @@ sub nikto_httpoptions {
 
     if ($public_methods ne "") {
         add_vulnerability($mark, "OPTIONS: Public HTTP Methods: $public_methods $txt",
-                          999985, "", "OPTIONS", "/", $request, $response);
+                          "999985", "", "OPTIONS", "/", $request, $response);
         foreach my $m (split /,? /, $public_methods) {
             my $method = eval_methods($m, "Public", $dbarray, $mark);
             if ($method ne "") { $davmethods{$method} = 1 }
@@ -89,7 +89,7 @@ sub nikto_httpoptions {
         add_vulnerability(
             $mark,
             "/: Web Server returns a valid response with junk HTTP methods which may cause false positives.",
-            999967,
+            "999967",
             "",
             $junkmethod,
             '/',
@@ -108,7 +108,7 @@ sub nikto_httpoptions {
         add_vulnerability(
             $mark,
             "/: DEBUG HTTP verb may show server debugging information.",
-            999972,
+            "999972",
             "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017",
             "DEBUG",
             '/',
@@ -131,7 +131,7 @@ sub nikto_httpoptions {
             add_vulnerability(
                 $mark,
                 "/: PROPFIND HTTP verb may show the server's internal IP address: $ipfound",
-                999973,
+                "999973",
                 "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)",
                 "PROPFIND",
                 "/",

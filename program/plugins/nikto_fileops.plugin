@@ -26,46 +26,47 @@ sub save_item {
     my $json_response   = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
     my $cookies_written = 0;
 
-    open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $@\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Information\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
-    print SAVEFILE "References: \t" . $resulthash->{'refs'} . "\n";
-    print SAVEFILE "Message:  \t" . $message . "\n";
-    print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Request\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    my $save_fh;
+    open($save_fh, ">>", $fn) || die print "ERROR opening savefile '$fn': $!\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
+    print $save_fh "			  Information\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
+    print $save_fh "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
+    print $save_fh "References: \t" . $resulthash->{'refs'} . "\n";
+    print $save_fh "Message:  \t" . $message . "\n";
+    print $save_fh "Reason:   \t" . $resulthash->{'reason'} . "\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
+    print $save_fh "			  Request\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
 
     if ($request->{'whisker'}{'method'} eq '') {
-        print SAVEFILE "Not Applicable\n";
+        print $save_fh "Not Applicable\n";
     }
     else {
         my $request_string = rebuild_request($request);
-        print SAVEFILE $request_string;
+        print $save_fh $request_string;
     }
-    print SAVEFILE "\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Response\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    print $save_fh "\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
+    print $save_fh "			  Response\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
     if ($response->{'whisker'}{'protocol'} eq '') {
-        print SAVEFILE "Not Applicable\n";
+        print $save_fh "Not Applicable\n";
     }
     else {
-        print SAVEFILE rebuild_response($response);
+        print $save_fh rebuild_response($response);
     }
 
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Data Objects\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
+    print $save_fh "			  Data Objects\n";
+    print $save_fh $VARIABLES{'DIV'} . "\n";
     if ($request->{'whisker'}{'method'} ne '') {
-        print SAVEFILE "REQUEST:$json_request\n";
+        print $save_fh "REQUEST:$json_request\n";
     }
     if ($response->{'whisker'}{'protocol'} ne '') {
-        print SAVEFILE "RESPONSE:$json_response\n";
+        print $save_fh "RESPONSE:$json_response\n";
     }
-    close(SAVEFILE);
+    close($save_fh);
 }
 
 ###############################################################################
@@ -102,9 +103,8 @@ sub save_createdir {
 
     # create?
     if (!-d $savedir) {
-        mkdir($savedir);
-        if (!-d $savedir) {
-            nprint("+ ERROR: Unable to create -Save directory '$savedir'",
+        if (!mkdir($savedir)) {
+            nprint("+ ERROR: Unable to create -Save directory '$savedir': $!",
                    "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit 1;
         }
@@ -119,10 +119,9 @@ sub parse_hostfile {
     my (@results, $hostdesc);
     my $nmap = 0;
 
-    open(IN, $file) || die print STDERR "+ ERROR: Cannot open '$file':$@\n";
-    while (<IN>) {
-        my $found = 0;
-
+    my $in_fh;
+    open($in_fh, "<", $file) || die print STDERR "+ ERROR: Cannot open '$file':$!\n";
+    while (<$in_fh>) {
         # Check whether this is a greppable nmap file
         chomp;
         $nmap = 1 if (/^# Nmap/);
@@ -131,7 +130,7 @@ sub parse_hostfile {
 
         # Parse for nmap files
         if ($nmap) {
-            if (($_ !~ /Host/) || ($_ !~ /Ports/) || ($_ !~ /open/) || ($_ !~ /(?:http|ssl)/i)) {
+            unless (/Host/ && /Ports/ && /open/ && /(?:http|ssl)/i) {
                 next;
             }
 
@@ -147,13 +146,15 @@ sub parse_hostfile {
             $fields[1] =~ s/^Ports: //;
             my @ports = parse_csv($fields[1]);
             foreach my $nmp (@ports) {
-                if (($nmp !~ /(?:80|443)?\/open\/tcp/) || ($nmp !~ /(?:http|ssl)/i)) {
+                unless (($nmp =~ /\/open\/tcp/)
+                    && (($nmp =~ /^(?:\s+)?(?:80|443)\//) || ($nmp =~ /(?:http|ssl)/i)))
+                {
                     nprint("\tNon web port identified: $hostdesc:$nmp", "d", ($hostdesc));
                     next;
                 }
                 $nmp =~ /^(?:\s+)?(\d+)\//;
-                nprint("+ nmap Input Queued: $hostdesc:$1");
-                push(@results, $hostdesc . "_" . $1);
+                nprint("+ Nmap Input Queued: $hostdesc:$1");
+                push(@results, $hostdesc . ":" . $1);
             }
         }
         else {
@@ -161,7 +162,7 @@ sub parse_hostfile {
             push(@results, $_);
         }
     }
-    close(IN);
+    close($in_fh);
     return (@results);
 }
 

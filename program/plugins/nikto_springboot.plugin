@@ -92,9 +92,9 @@ sub nikto_springboot {
                     add_vulnerability(
                         $mark,
                         "$report_val: Spring Boot Actuator endpoint discovered via /actuator _links.",
-                        750001,
+                        "750001",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                        'GET',
+                        "GET",
                         $report_val
                         );
                 }
@@ -111,9 +111,9 @@ sub nikto_springboot {
                 add_vulnerability(
                         $mark,
                         "$path: Spring Boot Actuator health endpoint exposed",
-                        750002,
+                        "750002",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#health",
-                        'GET',
+                        "GET",
                         $path
                         );
             }
@@ -128,9 +128,9 @@ sub nikto_springboot {
                 add_vulnerability(
                     $mark,
                     "$path: Spring Boot Actuator info endpoint exposed (build version: $json->{'build'}{'version'})",
-                    750003,
+                    "750003",
                     "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#info",
-                    'GET',
+                    "GET",
                     $path
                     );
             }
@@ -141,8 +141,8 @@ sub nikto_springboot {
         if (ref($json) eq 'HASH' && scalar(keys %$json) > 0) {
             add_vulnerability(
                        $mark,  "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
-                       750004, "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                       'GET',  $path
+                        "750004", "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
+                       "GET",  $path
                        );
         }
     }

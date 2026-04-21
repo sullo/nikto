@@ -3,6 +3,7 @@
 # PURPOSE: General HTTP cookie checks
 ###############################################################################
 sub nikto_cookies_init {
+    use vars qw/%CFOUND/;
     my $id = {
          name        => "cookies",
          full_name   => "HTTP Cookie Internal IP",
@@ -13,7 +14,7 @@ sub nikto_cookies_init {
          };
 
     # Store cookies to ensure we don't report multiple times.
-    my %CFOUND;
+    %CFOUND = ();
     return $id;
 }
 
@@ -26,17 +27,16 @@ sub nikto_cookies_postfetch {
 
     foreach my $c (@{ $response->{'whisker'}->{'cookies'} }) {
         my $c2 = $c;
-        $c =~ /([^=]+)+=([^;]+)/;
-        my $cname  = $1;
-        my $cvalue = $2;
+        my ($cname, $cvalue) = ($c =~ /([^=]+)+=([^;]+)/);
+        next if (!defined $cname || !defined $cvalue || $cname =~ /^\s*;/);
         next if (defined $CFOUND{$cname}{ $mark->{hostname} });
 
         # secure flag
-        if ($c !~ /secure/i && $mark->{ssl}) {
+        if ($c !~ /(?:^|;\s*)secure(?:\s*;|\s*$)/i && $mark->{ssl}) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
                                 . ": Cookie $cname created without the secure flag",
-                              999961,
+                              "999961",
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
@@ -46,11 +46,11 @@ sub nikto_cookies_postfetch {
         }
 
         # httponly flag
-        if ($c !~ /httponly/i) {
+        if ($c !~ /(?:^|;\s*)httponly(?:\s*;|\s*$)/i) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
                                 . ": Cookie $cname created without the httponly flag",
-                              000137,
+                              "000137",
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
@@ -86,12 +86,12 @@ sub nikto_cookies_postfetch {
                     else {
 
                         # is it an internal, or just different?
-                        my $int;
+                        my $int = "";
                         if ($internal) { $int = "RFC-1918 "; }
                         $msg = $request->{'whisker'}->{'uri'}
                           . ": ${int}IP address found in the '$cname' cookie. The IP is \"$ip\".";
                     }
-                    add_vulnerability($mark, $msg, 999991, $refs,
+                    add_vulnerability($mark, $msg, "999991", $refs,
                                       $request->{'whisker'}->{'method'},
                                       $request->{'whisker'}->{'uri'},
                                       $request, $response);
@@ -104,17 +104,17 @@ sub nikto_cookies_postfetch {
 
 sub decode_netscaler_cookie {
     my ($cookie_val) = @_;
-    $cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*([0-9a-f]{4})$/;
-    my $ip_value   = hex($1) ^ 0x03081e11;
-    my $port_value = hex($2) ^ 0x3630;
+    my ($ip_hex, $port_hex) = ($cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*([0-9a-f]{4})$/);
+    return unless defined $ip_hex && defined $port_hex;
+    my $ip_value   = hex($ip_hex) ^ 0x03081e11;
+    my $port_value = hex($port_hex) ^ 0x3630;
 
-    $ip_hex_str      = sprintf("0x%X", $ip_value);
-    $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
+    my $ip_hex_zero_pad = sprintf("%08X", $ip_value);
     return
-        hex('0x' . substr($ip_hex_zero_pad, 0, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 2, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 4, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 6, 2));
+        hex(substr($ip_hex_zero_pad, 0, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 2, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 4, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 6, 2));
 }
 
 1;

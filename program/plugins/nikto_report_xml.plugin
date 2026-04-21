@@ -37,7 +37,7 @@ sub xml_open {
 
     # Open file with lexical handle for writing
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);

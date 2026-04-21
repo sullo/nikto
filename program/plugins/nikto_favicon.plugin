@@ -25,11 +25,13 @@ sub nikto_favicon_load {
 sub nikto_favicon {
     my ($mark) = @_;
     return if $mark->{'terminate'};
+    %LINKICONS = ();
+    my ($res, $content, $error, $request, $response);
 
     # Check /favicon.ico
     foreach my $ext (split(/,/, "ico,gif,png")) {
         foreach my $path (split /,/, ",/favicons") {
-            my ($res, $content, $error, $request, $response) =
+            ($res, $content, $error, $request, $response) =
               nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
             if (($res eq "200") && ($content ne "")) {
@@ -43,9 +45,9 @@ sub nikto_favicon {
     }
 
     # Check for a <link> favicon
-    ($res, $content, $error, $request, $response) =
+    my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", "", "favicon");
-    if ($content =~ /link\s[^<]+icon+[^>]+\.(ico|png|gif)/i) {
+    if ($content =~ /<link\b[^>]*\brel\s*=\s*["'][^"']*\bicon\b[^"']*["'][^>]*\bhref\s*=\s*["'][^"']+\.(?:ico|png|gif)(?:\?[^"']*)?["']/i) {
         my %tags;
         $tags{'link'} = 1;
         LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);
@@ -66,7 +68,9 @@ sub favicon_checkhash {
     my ($tag, $elements) = @_;
     while ((my ($e, $v)) = each(%{$elements})) {
         if ($e ne 'href') { next; }
-        if ($v =~ /\.(ico|png|gif)$/) {
+        if ($v =~ /\.(ico|png|gif)(?:\?.*)?$/i
+            && ($v =~ m{^/} || $v =~ m{^https?://}i))
+        {
             my @url = LW2::uri_split($v);
             $LINKICONS{ $url[0] } = 1;
         }

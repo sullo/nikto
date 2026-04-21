@@ -105,7 +105,7 @@ sub nikto_robots {
                     add_vulnerability(
                         $mark,
                         "/robots.txt: Entry '$line' is returned a non-forbidden or redirect HTTP code ($res)",
-                        999997,
+                        "999997",
                         "https://portswigger.net/kb/issues/00600600_robots-txt-file",
                         "GET",
                         "/$line",
@@ -126,7 +126,7 @@ sub nikto_robots {
 
         if ($has_non_root_entries eq 0) {
             add_vulnerability($mark, "/robots.txt: $msg",
-                             999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
+                              "999996", "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
                              "GET",  "/robots.txt", $request, $response);
         }
     }

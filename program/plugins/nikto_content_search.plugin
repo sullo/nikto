@@ -29,11 +29,22 @@ sub nikto_content_search_load {
 
     $CONTENTSEARCH = init_db("db_content_search");
     %CSMATCHED     = ();
+    my @valid_tests = ();
 
     # to try and speed it up - precompile the regular expressions
     foreach my $testid (@$CONTENTSEARCH) {
-        $testid->{'compiled'} = qr/$testid->{'matchstring'}/;
+        my $compiled = eval { qr/$testid->{'matchstring'}/ };
+        if ($@ || !defined $compiled) {
+            nprint(
+                "+ Invalid content search regex for test ID $testid->{'nikto_id'}; skipping.",
+                "d"
+                );
+            next;
+        }
+        $testid->{'compiled'} = $compiled;
+        push @valid_tests, $testid;
     }
+    $CONTENTSEARCH = \@valid_tests;
 }
 
 sub nikto_content_search {
@@ -42,7 +53,7 @@ sub nikto_content_search {
     my $whisker = $response->{'whisker'};
     my $body    = $whisker->{'data'};
     my ($file)  = LW2::uri_split($whisker->{'uri'});
-    my $method  = $whisker->{'method'} || "GET";
+    my $method  = $whisker->{'method'} // "GET";
     my $host    = $mark->{'hostname'};
     my $matched = ($CSMATCHED{$host} ||= {});
 

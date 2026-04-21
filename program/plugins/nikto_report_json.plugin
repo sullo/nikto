@@ -36,7 +36,7 @@ sub json_open {
 
     # Open file with lexical handle (read-write mode for JSON)
     my $fh;
-    open($fh, "+>", $file) || die "+ ERROR: Unable to open '$file' for write: $@\n";
+    open($fh, "+>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);

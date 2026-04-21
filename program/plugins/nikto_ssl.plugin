@@ -53,7 +53,7 @@ sub nikto_ssl {
             # wildcard cert
             elsif ($cert_name =~ /^\*/) {
                 add_vulnerability($mark,  "/: Server is using a wildcard certificate: $cert_name",
-                                  999992, "https://en.wikipedia.org/wiki/Wildcard_certificate");
+                                  "999992", "https://en.wikipedia.org/wiki/Wildcard_certificate");
                 $cert_name =~ s/^\*\.//;
                 $cert_name = rquote($cert_name);
 
@@ -71,7 +71,7 @@ sub nikto_ssl {
         if (!$match) {
             my $error_msg = "/: Hostname '$mark->{'hostname'}' does not match certificate names";
             $error_msg .= " (CN: $cn_list, SAN: $san_list)";
-            add_vulnerability($mark, $error_msg, 999993,
+            add_vulnerability($mark, $error_msg, "999993",
                               "https://cwe.mitre.org/data/definitions/297.html");
         }
     }
