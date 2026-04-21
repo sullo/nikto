@@ -29,6 +29,7 @@ sub nikto_content_search_load {
 
     $CONTENTSEARCH = init_db("db_content_search");
     %CSMATCHED     = ();
+    my @valid_tests = ();
 
     # to try and speed it up - precompile the regular expressions
     foreach my $testid (@$CONTENTSEARCH) {
@@ -41,7 +42,9 @@ sub nikto_content_search_load {
             next;
         }
         $testid->{'compiled'} = $compiled;
+        push @valid_tests, $testid;
     }
+    $CONTENTSEARCH = \@valid_tests;
 }
 
 sub nikto_content_search {
