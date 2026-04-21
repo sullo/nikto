@@ -22,7 +22,6 @@ sub nikto_cgi {
     if (defined $CLI{'forcecgi'}) {
         if ($CLI{'forcecgi'} eq "all") {
             nprint("Using all known CGI directories\n", "d");
-            $VARIABLES{'@CGIDIRS'} = @CFGCGI ? join(" ", @CFGCGI) : "";
         }
         elsif ($CLI{'forcecgi'} eq "none") {
             nprint("- No CGI directories are set\n", "v", "cgi");
