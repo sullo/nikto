@@ -70,7 +70,7 @@ sub nikto_apacheusers {
         $dictfile = $parameters->{'dictionary'};
     }
     if (defined $parameters->{'size'}) {
-        $size = $parameters->{'size'};
+        $size = $parameters->{'size'} if $parameters->{'size'} =~ /^\d+$/;
     }
 
     # Set the URL according to the parameters
@@ -166,12 +166,13 @@ sub nikto_user_enum_apache_dictionary {
     my $ctr = 0;
 
     nprint("- Enumerating Apache users (using dictionary $filename).", "v", "apacheusers");
-    unless (open(IN, "<$filename")) {
+    unless (open(my $fh, "<", $filename)) {
         nprint("+ ERROR: Unable to open dictionary file $filename: $!.");
+        return;
     }
 
     # Now attempt on each entry
-    while (<IN>) {
+    while (<$fh>) {
         return if $mark->{'terminate'};
         chomp;
         s/\#.*$//;
@@ -188,7 +189,7 @@ sub nikto_user_enum_apache_dictionary {
         }
         $ctr++;
     }
-    close(IN);
+    close($fh);
     if (scalar(@foundusers)) {
         my $u = join(', ', @foundusers);
         add_vulnerability($mark, $message . $u,
