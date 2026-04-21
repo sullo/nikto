@@ -55,12 +55,14 @@ sub nikto_dictionary_attack {
     my $host = $mark->{'hostname'};
 
     nprint("- Guessing directories/files (using dictionary $dictfile).", "v", "dictionary");
-    unless (open(IN, "<$dictfile")) {
+    my $fh;
+    unless (open($fh, "<", $dictfile)) {
         nprint("+ ERROR: Unable to open dictionary file $dictfile: $!.");
+        return;
     }
 
     # Now attempt on each entry
-    while (<IN>) {
+    while (<$fh>) {
         return if $mark->{'terminate'};
         chomp;
         s/\#.*$//;
@@ -75,12 +77,12 @@ sub nikto_dictionary_attack {
 
             if ($code eq $found) {
                 add_vulnerability($mark, "/$dir: Found a file",
-                                  999969, "", "HEAD", "/$dir", $request, $response);
+                                  999969, "", $method, "/$dir", $request, $response);
             }
         }
         $ctr++;
     }
-    close(IN);
+    close($fh);
 }    # End sub
 
 1;
