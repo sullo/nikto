@@ -70,7 +70,7 @@ sub nikto_auth_pre {
 
 # Split up www-authenticate to realm and method
 sub split_auth_header {
-    my $header = $_[0] || return;
+    my $header = $_[0] // return;
     my ($realm, $authtype);
 
     # Parse auth scheme first, then parameters.
@@ -116,7 +116,7 @@ sub nikto_auth {
     $authtype = 'basic' if (!defined $authtype || $authtype eq '');
 
     # did we already test this realm?
-    if (exists $mark->{'realms'}{$realm}{'status'}) {
+    if (exists $mark->{'realms'}{$realm} && exists $mark->{'realms'}{$realm}{'status'}) {
         return $request, $response;
     }
 
@@ -171,7 +171,7 @@ sub nikto_auth {
             unless ($entry->{'checked'}) {
                 my $message;
                 my $ref;
-                if ($entry->{'message'} eq "Credentials provided via CLI.") {
+                if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
                     $message =
                       "Successfully authenticated to realm '$realm' with user-supplied credentials.";
                 }
