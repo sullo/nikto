@@ -62,6 +62,7 @@ sub nikto_outdated {
 
     # Finally, unknown banners
     else {
+        my $MATCHSTRING = "";
 
         # use the last non 0-9 . a-z char as a sepr (' ', '-', '_' etc)
         my $sepr = $mark->{'banner'};
@@ -73,7 +74,7 @@ sub nikto_outdated {
             $sepr = substr($sepr, (length($sepr) - 1), 1);
 
             # break up ID string on $sepr
-            my @T = split(/\\$sepr/, $mark->{'banner'});
+            my @T = split(/\Q$sepr\E/, $mark->{'banner'});
 
             # assume last is version...
             for ($i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
@@ -128,6 +129,7 @@ sub nikto_outdated {
 #	2: item being matched against in db_outdated
 #	3: mark hash
 sub vereval {
+    my $mark         = $_[3];
 
     # split both by last char of $_[2], as it is the name to version separator
     my $sepr = substr($_[2], (length($_[2]) - 1), 1);
@@ -138,7 +140,6 @@ sub vereval {
     my $RUNNING      = lc($_[1]);
     my $CURRENT_ORIG = $CURRENT;
     my $RUNNING_ORIG = $RUNNING;
-    my $mark         = $_[3];
 
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING:",
            "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
@@ -161,6 +162,7 @@ sub vereval {
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING\: (after numberifcation)",
            "d", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
 
+    my (@CUR, @RUN);
     if (($CURRENT !~ /[a-z]/) && ($RUNNING !~ /[a-z]/)) {
         @CUR = split(/\./, $CURRENT);
         @RUN = split(/\./, $RUNNING);
