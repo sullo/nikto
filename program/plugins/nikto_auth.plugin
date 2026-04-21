@@ -3,6 +3,8 @@
 # PURPOSE: Attempt to guess authentication realms
 ###############################################################################
 
+our $REALMS;
+
 sub nikto_auth_init {
     my $id = { name        => 'auth',
                full_name   => 'Test Authentication',
@@ -22,8 +24,6 @@ sub nikto_auth_init {
                             },
                copyright => "2010 Chris Sullo"
                };
-
-    use vars qw/$REALMS/;
 
     return $id;
 }
@@ -102,7 +102,7 @@ sub nikto_auth {
     }
 
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
-    $authtype = 'basic' if $authtype eq '';
+    $authtype = 'basic' if (!defined $authtype || $authtype eq '');
 
     # did we already test this realm?
     if (exists $mark->{'realms'}{$realm}{'status'}) {
@@ -114,7 +114,7 @@ sub nikto_auth {
       if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^$CLI{'root'}\/?$/);
 
     # Save to revert
-    $save_auth = $response->{'www-authenticate'};
+    my $save_auth = $response->{'www-authenticate'};
 
     # Now we can try the passwords
     nprint("Testing creds for '$realm'",
@@ -122,7 +122,11 @@ sub nikto_auth {
     my $success = 0;
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
-        unless ($realm =~ /$entry->{'realm'}/i || $entry->{'realm'} eq '@ANY') { next; }
+        my $entry_realm = defined $entry->{'realm'} ? $entry->{'realm'} : '';
+        my $realm_matches =
+          ($entry_realm eq '@ANY')
+          || (defined $realm && $realm =~ /\Q$entry_realm\E/i);
+        unless ($realm_matches) { next; }
 
         # Set up LW hash
         LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
