@@ -370,7 +370,8 @@ sub load_config {
 #################################################################################
 # find plugins directory
 sub setup_dirs {
-    my $CURRENTDIR = abs_path($0);
+    my $CURRENTDIR = $FindBin::RealBin || $FindBin::Bin || abs_path($0);
+    $CURRENTDIR = File::Spec->rel2abs($CURRENTDIR) if defined $CURRENTDIR;
     chomp($CURRENTDIR);
     $CURRENTDIR =~ s#[\\/]nikto.pl$##;
     $CURRENTDIR = "." if $CURRENTDIR =~ /^nikto.pl$/;
