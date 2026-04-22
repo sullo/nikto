@@ -25,11 +25,14 @@ sub nikto_report_html_init {
 ###############################################################################
 sub html_head {
     my ($file) = @_;
-    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+    if ($file eq '') {
+        print STDERR "+ ERROR: Output file not specified.\n";
+        exit;
+    }
 
     # Write header for html file, return file handle
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $!\n";
+    open($fh, ">>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
@@ -414,7 +417,7 @@ sub linkify_refs {
     my $refs = $_[0] || return;
     my @rs   = split(/ /, $refs);
     for (my $i = 0 ; $i <= $#rs ; $i++) {
-        $r = $rs[$i];
+        my $r = $rs[$i];
         my $escaped_r = simple_enc($r);
         if ($r =~ /^OSVDB-(\d+)$/) {
             my $id = $1;

@@ -19,11 +19,13 @@ sub nikto_report_text_init {
 
 sub text_open {
     my ($file) = @_;
-    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+    if ($file eq '') {
+        die "+ ERROR: Output file not specified.\n";
+    }
 
     # Open file with lexical handle and produce header
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $!\n";
+    open($fh, ">>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
@@ -36,7 +38,6 @@ sub text_open {
 
 sub text_host {
     my ($handle, $mark) = @_;
-    my ($curr_host, $curr_port);
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     print $handle "+ Target Host: $hostname\n";
     print $handle "+ Target Port: $mark->{port}\n";
@@ -48,13 +49,13 @@ sub text_ssl_info {
 
     # Extract and display CN separately
     my $cn = '';
-    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
         $cn = $1;
         print $handle "                      CN:       $cn\n";
     }
 
     # Display SAN if present
-    if ($mark->{'ssl_cert_altnames'} ne '') {
+    if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
         print $handle "                      SAN:      $mark->{'ssl_cert_altnames'}\n";
     }
 
@@ -72,7 +73,7 @@ sub text_item {
             $line .= $mark->{'root'} . $uri . ": ";
         }
         $line .= $item->{message};
-        if ($item->{refs} ne "") { $line .= " See: " . $item->{refs} . ": " }
+        if (defined $item->{refs} && $item->{refs} ne "") { $line .= " See: " . $item->{refs} . ": " }
         print $handle "$line\n";
     }
 }

@@ -33,6 +33,10 @@ sub nikto_report_json_init {
 # open output file
 sub json_open {
     my ($file) = @_;
+    if ($file eq '') {
+        print STDERR "+ ERROR: Output file not specified.\n";
+        exit;
+    }
 
     # Open file with lexical handle (read-write mode for JSON)
     my $fh;
@@ -76,7 +80,7 @@ sub json_ssl_info {
 
     # Extract CN from subject
     my $cn = '';
-    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
         $cn = $1;
     }
 
