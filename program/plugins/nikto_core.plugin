@@ -2336,7 +2336,7 @@ sub port_check {
                 # Some Apache servers are annoying and answer non-TLS requests on a TLS server.
                 if (defined $content
                     && ($content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
-                    dump_var("Result Hash", \%result,
+                    dump_var("Response Hash", $response,
                              ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
