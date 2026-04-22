@@ -541,7 +541,7 @@ sub nprint {
     return if defined $CLI{'file'} && $CLI{'file'} eq "-";
 
     $line =~
-      s/(CVE\-[12][0-9]{3}-[0-9]{4,5})/https:\/\/cve.mitre.org\/cgi-bin\/cvename.cgi?name\=$1/g;
+      s/(CVE\-\d{4}\-\d{4,})/https:\/\/nvd.nist.gov\/vuln\/detail\/$1/g;
     $line =~ s/(CA\-[12][0-9]{3}-[0-9]{2})/https:\/\/www.cert.org\/advisories\/$1.html/g;
     $line =~
       s/(MS([0-9]{2})\-[0-9]{3})/https\:\/\/docs\.microsoft\.com\/en-us\/security-updates\/securitybulletins\/20$2\/$1/gi;
@@ -2393,8 +2393,8 @@ sub load_plugins {
 
                 # Add default weights if not already assigned
                 while (my ($hook, $hook_params) = each(%{ $pluginhash->{'hooks'} })) {
-                    $hook_params->{$hook}->{'weight'} = 50
-                      unless (defined $hook_params->{$hook}->{'weight'});
+                    $hook_params->{'weight'} = 50
+                      unless (defined $hook_params->{'weight'});
                 }
                 $pluginhash->{report_weight} = 50 unless (defined $pluginhash->{report_weight});
                 push(@all_names, $pluginhash->{name});
@@ -3992,8 +3992,6 @@ sub is_ip {
     elsif ($ip =~ /^$LW2::IPv6_re_inc_zoneid(?:\/[0-9]+)?$/) {
 
         # check for internal
-        if ($ip =~ /^(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\./) { $internal = 1; }
-
         if ($ip =~ /^(?:fe80     # is a link local unicast address
                                           |ff0[1-8] # is a multicast address
                                           |fc00     # private network
