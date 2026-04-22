@@ -43,6 +43,9 @@ sub nikto_robots {
 
         my (%DIRS, %RFILES);
         my $DISCTR = 0;
+        my $positive_hits     = 0;
+        my $positive_hit_cap  = 25;
+        my $capped_positives  = 0;
         my @DOC    = split(/\n/, $content);
         my %tocheck;
         foreach my $line (@DOC) {
@@ -111,6 +114,11 @@ sub nikto_robots {
                         $request,
                         $response
                         );
+                    $positive_hits++;
+                    if ($positive_hits >= $positive_hit_cap) {
+                        $capped_positives = 1;
+                        last;
+                    }
                 }
             }
         }
@@ -122,6 +130,9 @@ sub nikto_robots {
             ($DISCTR == 1) ? "contains 1 entry which should be manually viewed."
           : ($DISCTR > 1)  ? "contains $DISCTR entries which should be manually viewed."
           :   "retrieved but it does not contain any Allow/Disallow entries...";
+        if ($capped_positives) {
+            $msg .= " Capped at 25 positive results.";
+        }
 
         if ($has_non_root_entries == 0) {
             add_vulnerability($mark, "/robots.txt: $msg",
