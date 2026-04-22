@@ -3222,7 +3222,7 @@ sub nfetch {
         # Is a full URL redirect the same host?
         # Pre-compute host alternatives for better performance
         my $host_re = join '|',
-          map { quotemeta $_ } ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'display_name'});
+          map { quotemeta $_ } ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'});
 
         # Only build port regex if port is specified
         if ($port && $port != 80 && $port != 443) {
@@ -4424,7 +4424,7 @@ sub send_updates {
                 'port'  => 443
                 );
 
-    ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'}) = resolve($CONFIGFILE{CIRT}, 0);
+    ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}) = resolve($CONFIGFILE{CIRT}, 0);
 
     $upd_enc = LW2::encode_base64($updated_version);
     chomp($upd_enc);
@@ -4472,7 +4472,7 @@ sub send_updates {
                  . $response{'location'}
                  . "\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.",
                "",
-               ($mark{'hostname'}, $mark{'ip'}, $mark{'display_name'})
+               ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'})
                );
     }
     else {

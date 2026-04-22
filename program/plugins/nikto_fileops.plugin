@@ -73,7 +73,7 @@ sub save_item {
 # get the prefix for all current host's save files
 sub save_getprefix {
     my ($mark) = @_;
-    my $prefix = $mark->{'display_name'} . '_' . $mark->{'port'};
+    my $prefix = $mark->{'displayname'} . '_' . $mark->{'port'};
     $prefix =~ s/,/\-/g;
     $prefix =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
     $prefix =~ s/_+/_/g;
@@ -88,7 +88,7 @@ sub save_getprefix {
 sub save_createdir {
     my ($savedir, $mark) = @_;
     if ($savedir eq '.') {
-        $savedir = 'savedir_' . $mark->{'display_name'} . '_' . $mark->{'port'};
+        $savedir = 'savedir_' . $mark->{'displayname'} . '_' . $mark->{'port'};
         $savedir =~ s/,/\-/g;
         $savedir =~ s/[^a-zA-Z0-9\.\-\_]/_/g;
         $savedir =~ s/_+/_/g;

@@ -175,7 +175,7 @@ sub process_template {
     $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'};
 
     # Create base URL once - prefer hostname (vhost if set), fall back to IP if hostname empty
-    # Consistent with nikto's display_name logic: prefer name, fall back to IP
+    # Consistent with nikto's displayname logic: prefer name, fall back to IP
     my $base_host = ($hostname ne "") ? $hostname : $mark->{'ip'};
     my $base_url =
         $protocol . "://"
@@ -355,7 +355,7 @@ sub process_template {
                 $f =~ s/\s//g;
                 next if $f eq '';
                 my $escaped_f       = simple_enc($f);
-                my $escaped_display = simple_enc($mark->{'display_name'});
+                my $escaped_display = simple_enc($mark->{'displayname'});
                 push(@links,
                      "<a href=\"$protocol://$escaped_display:$mark->{'port'}/$escaped_f\">$escaped_f</a>"
                      );

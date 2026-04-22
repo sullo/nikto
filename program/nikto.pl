@@ -86,7 +86,7 @@ foreach my $mark (@MARKS) {
 
     # Try to resolve the host
     my $msgs;
-    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) =
+    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}, $msgs) =
       resolve($mark->{'ident'});
     if ($msgs ne "") {
         push(@{ $mark->{'messages'} }, $msgs);
