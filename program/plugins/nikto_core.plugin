@@ -1306,9 +1306,9 @@ sub general_config {
     }
 
     # get core version
-    open(FI, "<$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin");
-    my @F = <FI>;
-    close(FI);
+    open(my $core_fh, '<', "$CONFIGFILE{'PLUGINDIR'}/nikto_core.plugin");
+    my @F = <$core_fh>;
+    close($core_fh);
     my @VERS = grep(/^#VERSION/, @F);
     $VARIABLES{'core_version'} = $VERS[0];
     $VARIABLES{'core_version'} =~ s/\#VERSION,//;
@@ -1784,17 +1784,17 @@ sub load_databases {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
         nprint("- Loading DB: $filename", "d");
-        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        open(my $in, '<', $filename) || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
 
         # db_tests
-        if ($file =~ /u?db_tests/) { push(@DBFILE, <IN>); next; }
+        if ($file =~ /u?db_tests/) { push(@DBFILE, <$in>); close($in); next; }
 
         # all the other files require per-line processing
         else {
             my @file;
 
             # Cleanup
-            while (<IN>) {
+            while (<$in>) {
                 chomp;
                 $_ =~ s/#.*$//;
                 $_ =~ s/\s+$//;
@@ -1866,7 +1866,7 @@ sub load_databases {
                     push @{ $VARIABLES{'@USERAGENTS'} }, $l;
                 }
             }
-            close(IN);
+            close($in);
         }
     }
 
@@ -1903,13 +1903,14 @@ sub check_dbs {
             nprint("+ ERROR: Unable to read \"$filename\"");
             next;
         }
-        open(IN, "<$filename") || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        my $db_fh;
+        open($db_fh, '<', $filename) || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
         nprint("Syntax Check: $filename");
 
         if ($file =~ /u?db_outdated/) {
             my $count = 0;
             my %BANNER;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
@@ -1934,7 +1935,7 @@ sub check_dbs {
         elsif ($file =~ /u?db_favicon/ || $file =~ /u?db_domino/) {
             my $counter = 0;
             my %ENTRY;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
@@ -1956,7 +1957,7 @@ sub check_dbs {
 
         elsif ($file =~ /u?db_tests/) {
             my %ENTRIES;
-            foreach my $line (<IN>) {
+            foreach my $line (<$db_fh>) {
                 chomp($line);
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
@@ -2077,7 +2078,7 @@ sub check_dbs {
         }
         elsif ($file =~ /u?db_variables/) {
             my $ctr = 0;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 if ($line !~ /^\@/)         { next; }
                 if ($line !~ /^\@.+\=.+$/i) { nprint("\t+ ERROR: Invalid syntax: $line"); }
                 $ctr++;
@@ -2087,7 +2088,7 @@ sub check_dbs {
         elsif ($file =~ /u?db_404_strings/ || $file =~ /u?db_dictionary/) {
             my $ctr = 1;
             my %STRINGS;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
@@ -2106,7 +2107,7 @@ sub check_dbs {
         elsif ($file =~ /u?db_headers_suggested/) {
             my $ctr = 0;
             my %HEADERS;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
@@ -2130,7 +2131,7 @@ sub check_dbs {
         elsif ($file =~ /u?db_headers_common/) {
             my $ctr = 0;
             my %HEADERS;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
@@ -2147,7 +2148,7 @@ sub check_dbs {
         }
         elsif ($file =~ /u?db_multiple_index/) {
             my $ctr = 0;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
@@ -2157,7 +2158,7 @@ sub check_dbs {
         }
         elsif ($file =~ /u?db_useragents/) {
             my $ctr = 0;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 chomp($line);
                 next if $line =~ /^\#/;
                 next if $line eq '';
@@ -2172,7 +2173,7 @@ sub check_dbs {
             # It's a file of standard DB type, we can do this intelligently
             my (@headers, @regex_fields);
             my $ctr = 0, $fields = 0;
-            foreach $line (<IN>) {
+            foreach $line (<$db_fh>) {
                 $line =~ s/^#.*//;
                 next if $line eq "";
 
@@ -2219,7 +2220,7 @@ sub check_dbs {
             nprint("\t$ctr entries");
         }
 
-        close(IN);
+        close($db_fh);
     }
 
     # Try to grab the test IDs from plugins to check for duplicates. Not foolproof.
@@ -2227,10 +2228,10 @@ sub check_dbs {
     my $found      = 0;
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
-        open(PF, "<$CONFIGFILE{'PLUGINDIR'}/$pf")
+        open(my $pfh, '<', "$CONFIGFILE{'PLUGINDIR'}/$pf")
           || die print STDERR "+ ERROR: Unable to open '$pf': $!\n";
-        my @file = <PF>;
-        close(PF);
+        my @file = <$pfh>;
+        close($pfh);
         my @adds = grep(/add_vulnerability\(/, @file);
         foreach my $addv (@adds) {
             chomp($addv);
@@ -4588,13 +4589,14 @@ sub init_db {
     if ($CLI{'userdbs'} ne 'all') {
 
         # Check that the database exists
-        unless (open(IN, "<$filename")) {
+        my $db_main_fh;
+        unless (open($db_main_fh, '<', $filename)) {
             nprint("+ ERROR: Unable to open database file $dbname: $!.");
             return $dbarray;
         }
 
         # Now read the header values
-        while (<IN>) {
+        while (<$db_main_fh>) {
             chomp;
             s/\#.*$//;
             if     ($_ eq "") { next }
@@ -4612,13 +4614,14 @@ sub init_db {
                 push(@dbarray, $hashref);
             }
         }
-        close(IN);
+        close($db_main_fh);
     }
 
     # And the udb_* file
     $filename = "$CONFIGFILE{'DBDIR'}/u" . $dbname;
-    if (open(IN, "<$filename")) {
-        while (<IN>) {
+    my $db_udb_fh;
+    if (open($db_udb_fh, '<', $filename)) {
+        while (<$db_udb_fh>) {
             chomp;
             s/\#.*$//;
             if ($_ eq "") { next; }
@@ -4631,8 +4634,8 @@ sub init_db {
             }
             push(@dbarray, $hashref);
         }
+        close($db_udb_fh);
     }
-    close(IN);
 
     return \@dbarray;
 }
