@@ -351,9 +351,9 @@ sub load_modules {
 sub load_config {
     my $configfile = $_[0] || return 1;
 
-    open(CONF, "<$configfile") || return 1;   # "+ ERROR: Unable to open config file '$configfile'";
-    my @CONFILE = <CONF>;
-    close(CONF);
+    open(my $conf_fh, '<', $configfile) || return 1;   # "+ ERROR: Unable to open config file '$configfile'";
+    my @CONFILE = <$conf_fh>;
+    close($conf_fh);
 
     foreach my $line (@CONFILE) {
         $line =~ s/\#.*$//;
