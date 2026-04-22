@@ -1643,7 +1643,7 @@ sub set_targets {
                 $hostdata[0] =~ s/\/$//;
                 $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
-                       "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                       "v", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
             }
             push(@marks, $markhash);
         }
@@ -1656,7 +1656,7 @@ sub set_targets {
                 }
                 else {
                     nprint("- ERROR: Unrecognised target host format: $host",
-                           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                           "", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
                 }
             }
             else {
@@ -1665,7 +1665,7 @@ sub set_targets {
                     nprint(
                         "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
                         "",
-                        ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+                        ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'})
                         );
                 }
                 else {
