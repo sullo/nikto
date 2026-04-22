@@ -56,7 +56,7 @@ sub nikto_siebel {
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
         add_vulnerability(
             $mark,
-            "$path: Siebel version $siebelver found application version $appver and applied hostfixes are $hotfix",
+            "$path: Siebel version $siebelver found application version $appver and applied hotfixes are $hotfix",
             "999901",
             "https://www.oracle.com/applications/siebel/",
             "GET",
@@ -69,7 +69,7 @@ sub nikto_siebel {
     $path = $application . "/_stats.swe";
     ($res, $content, $error, $request, $response) =
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-    if ($res eq "200") {
+    if ($res == 200) {
         add_vulnerability(
                         $mark, "/_stats.swe: Siebel stats page found",
                         "999902",
@@ -81,6 +81,7 @@ sub nikto_siebel {
     foreach
       my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm"))
     {
+        return if $mark->{'terminate'};
         $path = $application . "/$page";
         ($res, $content, $error, $request, $response) =
           nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
@@ -116,7 +117,7 @@ sub nikto_siebel_enumerate {
         foreach my $application (split(/ /, $apps)) {
             my $appname   = $application . "_" . $language;
             my $startname = $appname . "/start.swe";
-            ($res, $content, $error, $request, $response) =
+            my ($res, $content, $error, $request, $response) =
               nfetch($mark, $startname, "GET", "", "", "", "Siebel: enumerate application");
             if ($res eq "200") {
 

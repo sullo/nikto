@@ -18,6 +18,8 @@ sub nikto_shellshock_init {
 sub nikto_shellshock {
     my ($mark, $parameters) = @_;
     my ($found, @names,);
+    my $found_6271 = 0;
+    my $found_6278 = 0;
 
     # This would be better coming from live scan results and not db_variables
     my @files = split(/ /, $VARIABLES{"\@SHELLSHOCK"});
@@ -49,7 +51,7 @@ sub nikto_shellshock {
             || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))) {
             add_vulnerability(
                 $mark,
-                "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability).",
+                "$parameters->{'uri'}: Site appears vulnerable to the 'shellshock' vulnerability.",
                 "999949",
                 "CVE-2014-6271",
                 "GET",
@@ -76,12 +78,15 @@ sub nikto_shellshock {
         foreach my $cgidir (@dirs) {
             foreach my $file (@files) {
                 return if $mark->{'terminate'};
+                last if ($found_6271 && $found_6278);
 
                 # request by hostname
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
-                if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
-                    || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))) {
+                if (   !$found_6271
+                    && (   $response->{'93e4r0-cve-2014-6271'} eq 'true'
+                        || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))
+                       )) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -92,9 +97,12 @@ sub nikto_shellshock {
                          $request,
                          $response
                          );
+                    $found_6271 = 1;
                 }
-                if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
-                    || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/))) {
+                if (   !$found_6278
+                    && (   $response->{'93e4r0-cve-2014-6278'} eq 'true'
+                        || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/))
+                       )) {
                     add_vulnerability(
                          $mark,
                          "$cgidir$file: Site appears vulnerable to the 'shellshock' vulnerability.",
@@ -105,8 +113,10 @@ sub nikto_shellshock {
                          $request,
                          $response
                          );
+                    $found_6278 = 1;
                 }
             }
+            last if ($found_6271 && $found_6278);
         }
     }
 }
