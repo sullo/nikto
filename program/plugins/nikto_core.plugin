@@ -2834,7 +2834,7 @@ sub read_data {
 
     # Done with waiting for input. Let's not leave the cursor sitting
     # there, after the prompt.
-    print TTY "\n";
+    print TTYOUT "\n";
     nprint("\n");
 
     # Let's put everything back where we found it.
@@ -5090,13 +5090,18 @@ sub gmt_offset {
 }
 ###############################################################################
 sub expand_range {
-    local $" = '..';
-    my (@range);
-
+    # Expand "N-M" into N..M (numeric only; no string eval). Same idea as the old
+    # eval('map {$_} ' . "@range") with local $", which produced "N..M" for two-part splits.
     sort { $a <=> $b }
       map {
-        map { ((@range = split /-/) == 2) ? eval('map {$_} ' . "@range") : $_ }
-          split /\s/
+        my $chunk = $_;
+        map {
+            my $tok = $_;
+            my @r   = split /-/, $tok;
+            (   @r == 2
+                && $r[0] =~ /^\d+$/
+                && $r[1] =~ /^\d+$/ ) ? ( $r[0] .. $r[1] ) : $tok;
+          } split /\s+/, $chunk;
       } @_;
 }
 ###############################################################################
