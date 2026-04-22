@@ -44,12 +44,14 @@ sub nikto_tests {
                 # Apply variable replacement to headers
                 my @header_lines = split /\r\n/, $header;
                 foreach my $h (@header_lines) {
-                    my ($key, $value) = split(/: /, $h);
+                    my ($key, $value) = split(/: /, $h, 2);
+                    next unless defined $key && defined $value;
                     $key = lc($key);
 
                     # Apply change_variables to the value part
                     my @replaced_values = change_variables($value, $mark, $checkid);
                     foreach my $replaced_value (@replaced_values) {
+                        # This could be a problem if there is more than one value for the same header (key)
                         $headrs{$key} = $replaced_value;
                     }
                 }
@@ -60,7 +62,7 @@ sub nikto_tests {
             if ($TESTS{$checkid}{'data'} ne '') {
                 $data = unslash($TESTS{$checkid}{'data'});
                 $headrs{'content-length'} = length($data)
-                  unless grep(/^(transfer-encoding|content-length)$/i, keys %headrs);
+                  unless exists $headrs{'transfer-encoding'} || exists $headrs{'content-length'};
             }
 
             my ($res, $content, $error, $request, $response) =
@@ -256,8 +258,9 @@ sub allchecks {
 
             if ($dir ne "") {
                 $DIRS{$dir} = "";
-                $dir  =~ s/([^a-zA-Z0-9])/\\$1/g;
-                $file =~ s/$dir//;
+                if (index($file, $dir) == 0) {
+                    $file = substr($file, length($dir));
+                }
             }
             if (($file ne "") && ($file !~ /^\?/)) {
                 $FILES{$file} = "";
