@@ -1793,7 +1793,7 @@ sub load_databases {
         my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
         if (!-r $filename) { next; }
         nprint("- Loading DB: $filename", "d");
-        open(my $in, '<', $filename) || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        open(my $in, '<', $filename) || die "+ ERROR: Can't open \"$filename\":$!\n";
 
         # db_tests
         if ($file =~ /u?db_tests/) { push(@DBFILE, <$in>); close($in); next; }
@@ -1889,7 +1889,7 @@ sub dirlist {
     my $PATTERN   = $_[1] || "";
     my @FILES_TMP = ();
 
-    opendir(DIRECTORY, $DIR) || die print STDERR "+ ERROR: Can't open directory '$DIR': $!";
+    opendir(DIRECTORY, $DIR) || die "+ ERROR: Can't open directory '$DIR': $!";
     foreach my $file (readdir(DIRECTORY)) {
         if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
         if ($PATTERN ne "") {
@@ -1913,7 +1913,7 @@ sub check_dbs {
             next;
         }
         my $db_fh;
-        open($db_fh, '<', $filename) || die nprint("+ ERROR: Can't open \"$filename\":$!\n");
+        open($db_fh, '<', $filename) || die "+ ERROR: Can't open \"$filename\":$!\n";
         nprint("Syntax Check: $filename");
 
         if ($file =~ /u?db_outdated/) {
@@ -2238,7 +2238,7 @@ sub check_dbs {
     my @pluginlist = dirlist("$CONFIGFILE{'PLUGINDIR'}", '\.plugin$');
     foreach my $pf (@pluginlist) {
         open(my $pfh, '<', "$CONFIGFILE{'PLUGINDIR'}/$pf")
-          || die print STDERR "+ ERROR: Unable to open '$pf': $!\n";
+          || die "+ ERROR: Unable to open '$pf': $!\n";
         my @file = <$pfh>;
         close($pfh);
         my @adds = grep(/add_vulnerability\(/, @file);
