@@ -29,7 +29,7 @@ sub nikto_paths {
     my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "Paths");
     $CLI{'followredirects'} = $followredirects;
 
-    if (length($content)) {
+    if (defined $content && length $content) {
 
         # get links
         my @links = LW2::html_link_extractor($content);
@@ -39,8 +39,7 @@ sub nikto_paths {
         foreach my $link (@links) {
 
             # if not relative
-            if ($link !~ /^\//) {
-
+            if (($link !~ /^\//) && ($link =~ /https?:/i)) {
                 # check host
                 my @uri = LW2::uri_split($link);
                 if (exists $valid_hosts{ $uri[2] }) {

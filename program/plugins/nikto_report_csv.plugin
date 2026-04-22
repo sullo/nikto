@@ -21,11 +21,14 @@ sub nikto_report_csv_init {
 # open output file
 sub csv_open {
     my ($file) = @_;
-    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+    if ($file eq '') {
+        print STDERR "+ ERROR: Output file not specified.\n";
+        exit;
+    }
 
     # Open file with lexical handle and produce header
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $!\n";
+    open($fh, ">>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
@@ -39,13 +42,14 @@ sub csv_open {
 # start output
 sub csv_host_start {
     my ($handle, $mark) = @_;
-    $mark->{'banner'} =~ s/"/\\"/g;
+    my $banner = $mark->{'banner'} // '';
+    $banner =~ s/"/\\"/g;
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     print $handle "\""
       . csv_safecell($hostname) . "\"," . "\""
       . csv_safecell($mark->{'ip'}) . "\"," . "\""
       . csv_safecell($mark->{'port'}) . "\"," . "\"\"," . "\"\"," . "\"\"," . "\""
-      . csv_safecell($mark->{'banner'}) . "\"\n";
+      . csv_safecell($banner) . "\"\n";
     return;
 }
 
@@ -124,11 +128,11 @@ sub csv_item {
         $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
 
         $line .= "\"";
-        if ($item->{'refs'} ne '') { $line .= $item->{'refs'}; }
+        if ($item->{'refs'} ne '') { $line .= csv_safecell($item->{'refs'}); }
         $line .= "\",";
 
         $line .= "\"";
-        if ($item->{'method'} ne '') { $line .= $item->{'method'}; }
+        if ($item->{'method'} ne '') { $line .= csv_safecell($item->{'method'}); }
         $line .= "\",";
 
         $line .= "\"";
