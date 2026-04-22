@@ -21,7 +21,7 @@ load_modules();
 
 # global var/definitions
 use vars qw/$TEMPLATES %CLI %VARIABLES %TESTS/;
-use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions %DSL_CACHE/;
+use vars qw/%NIKTO %CONFIGFILE %COUNTERS %DSL_CACHE/;
 use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup

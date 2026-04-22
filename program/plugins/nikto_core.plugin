@@ -3448,9 +3448,6 @@ sub set_scan_items {
 
             # If $add is still true, then add it
             if ($add) {
-                my $ext = get_ext($item[3]);
-                $db_extensions{$ext} = 1;
-
                 $COUNTERS{total_checks}++;
                 $TESTS{ $item[0] }{'references'} = $item[1];
                 $TESTS{ $item[0] }{'tuning'}     = $item[2];
