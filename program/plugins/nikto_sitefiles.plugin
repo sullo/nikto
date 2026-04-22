@@ -21,7 +21,7 @@ sub nikto_sitefiles_init {
 sub detect_file_type {
     my ($content, $uri) = @_;
     my $first_bytes    = substr($content, 0, 64);    # Check first 64 bytes
-    my $content_length = length($content);
+    my $content_length = length($content) || 0;
 
     # Return early for empty content
     return 'empty' if $content_length == 0;
@@ -31,7 +31,6 @@ sub detect_file_type {
 
         # Archive formats
         'zip'  => qr/^PK\x03\x04|PK\x05\x06|PK\x07\x08/,
-        'tar'  => qr/^.{257}ustar|^.{257}ustar\x00|^.{257}ustar  |^.{257}ustar\x00\x00/,
         'gz'   => qr/^\x1f\x8b/,
         'bz2'  => qr/^BZh/,
         'lzma' => qr/^\x5d\x00\x00/,
@@ -49,6 +48,14 @@ sub detect_file_type {
     foreach my $type (keys %signatures) {
         if ($first_bytes =~ $signatures{$type}) {
             return $type;
+        }
+    }
+
+    # tar magic appears at offset 257; check it separately
+    if ($content_length >= 265) {
+        my $tar_magic = substr($content, 257, 8);
+        if ($tar_magic =~ /^ustar(?:\x00\x00|\x00|  )?/) {
+            return 'tar';
         }
     }
 
@@ -120,6 +127,18 @@ sub detect_file_type {
 
 sub calculate_entropy {
     my ($content) = @_;
+
+    # Bound entropy work for large responses: sample up to 16KB total
+    my $max_entropy_bytes = 16384;
+    my $content_len       = length($content);
+    if ($content_len > $max_entropy_bytes) {
+        my $chunk = int($max_entropy_bytes / 3);
+        my $start = substr($content, 0, $chunk);
+        my $mid_start = int(($content_len - $chunk) / 2);
+        my $middle = substr($content, $mid_start, $chunk);
+        my $end    = substr($content, -$chunk);
+        $content = $start . $middle . $end;
+    }
 
     my %freq;
     my $len = length($content);
@@ -266,6 +285,7 @@ sub analyze_file_details {
 sub nikto_sitefiles {
     my ($mark) = @_;
     my (%flags, %files, %names);
+    my %files_ci_seen;
 
     # Minimum confidence required to report a file
     my $confidence_threshold = 60;
@@ -301,9 +321,15 @@ sub nikto_sitefiles {
 
     foreach my $item (keys %names) {
         next if $item eq '';
+        next if $item !~ /^[A-Za-z0-9._ -]+$/;    # whitelist with space allowed
         foreach
           my $ext (qw/jks cer pem zip tar tar.gz gz tgz tar.bz2 tar.lzma bz2 lzma egg war sql/) {
-            $files{"$item\.$ext"} = 1;
+            next if length($item) < 2 || length($item) > 75;
+            my $candidate = "$item\.$ext";
+            my $ci_key    = lc($candidate);
+            next if $files_ci_seen{$ci_key};
+            $files_ci_seen{$ci_key} = 1;
+            $files{$candidate}      = 1;
         }
     }
 
@@ -339,14 +365,14 @@ sub nikto_sitefiles {
                     my $conf     = $analysis->[3];
 
                     # Only report if confidence is high enough
-                    if ($conf > $confidence_threshold) {
+                    if ($conf >= $confidence_threshold) {
                         my $type_info = "Confidence: $conf%";
                         add_vulnerability(
                             $mark,
                             "/$f: Potentially interesting backup/cert file found. $msg [$type_info]",
                             "740001",
                             "https://cwe.mitre.org/data/definitions/530.html",
-                            "HEAD",
+                            "GET",
                             "/$f",
                             $request,
                             $response
