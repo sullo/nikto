@@ -1395,7 +1395,7 @@ sub safe_quit {
         report_summary($mark);
         report_close($mark);
     }
-    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/);
+    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/ && defined $NIKTO{'POSIX'}{'term'});
     exit 1;
 }
 
