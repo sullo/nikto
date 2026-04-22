@@ -91,6 +91,7 @@ sub nikto_robots {
                   if (   ($realdir eq "/" && $realfile eq "")
                       || ($realfile eq "/" && $realdir eq ""));
                 next if ($line =~ /\*/);    # Wildcards
+                $line = "/$line" unless $line =~ /^\//;
                 $tocheck{$line} = 1;
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
