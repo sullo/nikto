@@ -20,15 +20,20 @@ sub nikto_ssl {
         my @cn_names;
         my @san_names;
         my $match = 0;
+        my $wildcard_reported = 0;
+        my $hostname_cmp = lc($mark->{'hostname'} || '');
+        $hostname_cmp =~ s/\.$//;
 
         # Extract CN from subject
-        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
             push(@cn_names, $1);
         }
 
         # Extract SAN names
-        if ($mark->{'ssl_cert_altnames'} ne '') {
-            foreach my $n (split(/, /, $mark->{'ssl_cert_altnames'})) {
+        if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
+            foreach my $n (split(/\s*,\s*/, $mark->{'ssl_cert_altnames'})) {
+                $n =~ s/^\s+|\s+$//g;
+                $n =~ s/^dns://i;
                 push(@san_names, $n);
             }
         }
@@ -40,26 +45,30 @@ sub nikto_ssl {
         # Create detailed name lists for error messages
         my $cn_list  = @cn_names  ? join(", ", @cn_names)  : "none";
         my $san_list = @san_names ? join(", ", @san_names) : "none";
-        my $allnames = join(", ", @all_names);
 
         foreach my $cert_name (@all_names) {
             next unless $cert_name;    # Skip empty names
+            my $cert_name_cmp = lc($cert_name);
+            $cert_name_cmp =~ s/\.$//;
 
             # straight up match
-            if (lc($mark->{'hostname'}) eq lc($cert_name)) {
+            if ($hostname_cmp eq $cert_name_cmp) {
                 $match = 1;
             }
 
             # wildcard cert
-            elsif ($cert_name =~ /^\*/) {
-                add_vulnerability($mark,  "/: Server is using a wildcard certificate: $cert_name",
-                                  "999992", "https://en.wikipedia.org/wiki/Wildcard_certificate");
-                $cert_name =~ s/^\*\.//;
-                $cert_name = rquote($cert_name);
+            elsif ($cert_name_cmp =~ /^\*/) {
+                if (!$wildcard_reported) {
+                    add_vulnerability($mark,  "/: Server is using a wildcard certificate: $cert_name",
+                                      "999992", "https://en.wikipedia.org/wiki/Wildcard_certificate");
+                    $wildcard_reported = 1;
+                }
+                $cert_name_cmp =~ s/^\*\.//;
+                $cert_name_cmp = rquote($cert_name_cmp);
 
                 # must match leading dot
                 # only one level of subdomain allowed
-                if ($mark->{'hostname'} =~ /^(.*)\.?$cert_name/i) {
+                if ($hostname_cmp =~ /^(.*)\.?$cert_name_cmp/i) {
                     my $matched  = $1;
                     my $tldcount = ($matched =~ tr/\.//);
                     if ($tldcount <= 1) { $match = 1; }
