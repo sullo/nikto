@@ -226,12 +226,21 @@ sub lfi_function {
 ###############################################################################
 sub unslash {
     my $line = $_[0] || return;    # $line is the slash-escaped variable
+    my %esc  = (
+                'a' => "\a",
+                'b' => "\b",
+                'e' => "\e",
+                'f' => "\f",
+                'n' => "\n",
+                'r' => "\r",
+                't' => "\t"
+                );
 
     # Early return for empty strings
     return $line if $line eq '';
 
-    # Use a single regex with eval to handle all escape sequences at once
-    $line =~ s/\\([abefnrt])|\\x([[:xdigit:]]{2})/defined($1) ? eval("qq{\\$1}") : chr(hex($2))/ge;
+    # Convert standard escapes and \xNN hex escapes without eval
+    $line =~ s/\\([abefnrt])|\\x([[:xdigit:]]{2})/defined($1) ? $esc{$1} : chr(hex($2))/ge;
 
     return $line;
 }
@@ -1894,11 +1903,11 @@ sub dirlist {
 }
 ###############################################################################
 sub check_dbs {
-    @dbs = dirlist($CONFIGFILE{'DBDIR'}, "^u?db_*");
+    my @dbs = dirlist($CONFIGFILE{'DBDIR'}, "^u?db_*");
     my %ALL_IDS;
 
     for my $file (@dbs) {
-        my $filename = $CONFIGFILE{DBDIR} . "/" . $prefix . $file;
+        my $filename = $CONFIGFILE{DBDIR} . "/" . $file;
         if (!-r $filename) {
             nprint("+ ERROR: Unable to read \"$filename\"");
             next;
@@ -1910,7 +1919,7 @@ sub check_dbs {
         if ($file =~ /u?db_outdated/) {
             my $count = 0;
             my %BANNER;
-            foreach $line (<$db_fh>) {
+            foreach my $line (<$db_fh>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
