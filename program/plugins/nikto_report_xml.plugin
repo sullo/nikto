@@ -6,6 +6,7 @@ our $XMLRPT_ALL  = [];       # Arrayref to hold all hosts' reports
 our $XMLRPT_CURR = undef;    # Scalarref to current host's report
 our $XML_WRITER  = undef;    # XML::Writer instance
 our $XML_HANDLE  = undef;    # File handle
+our $XML_FILE    = undef;    # Output filename for validation
 
 use XML::Writer;
 use Time::Piece;
@@ -33,17 +34,20 @@ sub nikto_report_xml_init {
 # open output file
 sub xml_open {
     my ($file) = @_;
-    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+    if ($file eq '') {
+        die "+ ERROR: Output file not specified.\n";
+    }
 
     # Open file with lexical handle for writing
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $!\n";
+    open($fh, ">>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
 
     # Store lexical handle reference in package variable
     $XML_HANDLE = $fh;
+    $XML_FILE   = $file;
 
     # Initialize XML writer with proper settings
     $XML_WRITER = XML::Writer->new(OUTPUT      => $fh,
@@ -146,7 +150,7 @@ sub xml_ssl_info {
 
     # Extract CN from subject for separate reporting
     my $cn = '';
-    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
         $cn = $1;
     }
 
@@ -216,26 +220,12 @@ sub xml_item {
                           method => $item->{'method'}
                           );
 
-    # Write item content with CDATA for potentially problematic content
-    $XML_WRITER->startTag('description');
-    $XML_WRITER->cdata($item->{'message'});
-    $XML_WRITER->endTag('description');
-
-    $XML_WRITER->startTag('uri');
-    $XML_WRITER->cdata($item->{'uri'});
-    $XML_WRITER->endTag('uri');
-
-    $XML_WRITER->startTag('namelink');
-    $XML_WRITER->cdata($item->{'namelink'} || '');
-    $XML_WRITER->endTag('namelink');
-
-    $XML_WRITER->startTag('iplink');
-    $XML_WRITER->cdata($item->{'iplink'} || '');
-    $XML_WRITER->endTag('iplink');
-
-    $XML_WRITER->startTag('references');
-    $XML_WRITER->cdata($item->{'refs'} || '');
-    $XML_WRITER->endTag('references');
+    # Write item content as normal character data so XML::Writer handles escaping safely
+    $XML_WRITER->dataElement('description', $item->{'message'} || '');
+    $XML_WRITER->dataElement('uri',         $item->{'uri'} || '');
+    $XML_WRITER->dataElement('namelink',    $item->{'namelink'} || '');
+    $XML_WRITER->dataElement('iplink',      $item->{'iplink'} || '');
+    $XML_WRITER->dataElement('references',  $item->{'refs'} || '');
 
     $XML_WRITER->endTag('item');
 }
@@ -255,7 +245,7 @@ sub xml_close {
     close($XML_HANDLE) if $XML_HANDLE;
 
     # Validate XML if possible
-    xml_validate_output($handle);
+    xml_validate_output($XML_FILE) if defined $XML_FILE && $XML_FILE ne '';
 
     nprint("- XML report completed with proper structure", "v", "report_xml");
 }
