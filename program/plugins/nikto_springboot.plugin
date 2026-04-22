@@ -43,9 +43,9 @@ sub nikto_springboot {
     my $host     = $mark->{'hostname'};
     my $port     = $mark->{'port'};
     my $proto    = $mark->{'ssl'} ? 'https' : 'http';
-    my $base_url = "$proto://$host:$port";
 
     foreach my $ep (@endpoints) {
+        return if $mark->{'terminate'};
         my $path = $root . $ep;
         nprint("Checking $path", "v", "springboot");
         my ($res, $content, $error, $request, $response) =
@@ -62,7 +62,7 @@ sub nikto_springboot {
         }
 
         # resposnes should be JSON
-        next unless ($ct =~ /application\/json/i || $content =~ /^\s*\{/);
+        next unless ($ct =~ /application\/json/i || $content =~ /^\s*[\{\[]/);
 
         my $json;
         eval { $json = decode_json($content); };
