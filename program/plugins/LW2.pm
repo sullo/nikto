@@ -182,13 +182,14 @@ $PACKAGE='LW2';
     
     # check for Socket
     eval "use Socket qw(:DEFAULT :addrinfo SOCK_STREAM inet_pton pack_sockaddr_in6)"; # Have IPv6-capable Socket.pm?
-    if ($@) { # No IPv6, fallback to older Socket test
-        eval "use Socket";   
+    my $ipv6_err = $@;
+    if ($ipv6_err) { # No IPv6, fallback to older Socket test
+        eval "use Socket";
         if ( $@ ) {
 	        die('You have to install the module Socket');
         }
-    }    
-    our $LW2_CAN_IPv6 = ( $@) ? 0 : 1;
+    }
+    our $LW2_CAN_IPv6 = ($ipv6_err) ? 0 : 1;
     
     # init SSL with autoconfig first. App can later override this
     init_ssl_engine('auto');
@@ -5073,7 +5074,7 @@ sub _stream_socket_alloc {
         
         my ($ip, $port);
 
-        $xr->{sock_hints}->{family} = ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET ;
+        $xr->{sock_hints}->{family} //= ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET ;
         
         if ( defined $wh->{whisker}->{bind_socket} ) {
             $port = $wh->{whisker}->{bind_port} || 0;
