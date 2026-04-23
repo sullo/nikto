@@ -7283,4 +7283,4 @@
 "007669","CVE-2023-1389","8","/cgi-bin/luci/;stok=/locale?form=country&operation=write&country=$(ls+/etc/)","GET","CODE:200&&BODY:passwd&&BODY:hosts","TP-Link Archer AX21 (AX1800) is vulnerable to remote command execution vulnerability","",""
 "007670","RFC-5785,https://www.w3.org/TR/passkey-endpoints/","1","/.well-known/passkeypendpoints","GET","BODY:enroll\"&&BODY:manage\"","The passkey-endpoints file lists the defined Passkey locations.","",""
 "007671","https://wordpress.org/plugins/a-smart-excerpt/","3","@WORDPRESSwp-content/ai-smart-excerpt-debug.log","GET","BODY:AI Smart Excerpt:","AI Smart Excerpt debug log present.","",""
-"007672","","23","/Arracorn/arrconfig.txt","GET","BODY:[Arracorn]:","Arracorn Wiz config file found.","",""
+"007672","","23","/Arracorn/arrconfig.txt","GET","BODY:\[Arracorn\]:","Arracorn Wiz config file found.","",""
