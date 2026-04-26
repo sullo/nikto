@@ -27,7 +27,7 @@ use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 # setup
 $COUNTERS{'scan_start'} = time();
 $VARIABLES{'name'}      = "Nikto";
-$VARIABLES{'version'}   = "2.6.0";
+$VARIABLES{'version'}   = "2.6.1";
 Getopt::Long::Configure('no_ignore_case');
 
 # signal trap so we can close down reports properly

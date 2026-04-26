@@ -27,7 +27,7 @@ sub save_item {
     my $cookies_written = 0;
 
     my $save_fh;
-    open($save_fh, ">>", $fn) || die print "ERROR opening savefile '$fn': $!\n";
+    open($save_fh, ">>", $fn) || die "ERROR opening savefile '$fn': $!\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
     print $save_fh "			  Information\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";

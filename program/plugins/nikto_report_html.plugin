@@ -143,13 +143,14 @@ sub html_item {
 }
 ###############################################################################
 sub html_open_templates {
-    foreach my $t (dirlist($CONFIGFILE{'TEMPLATEDIR'}, "htm.*")) {
-        open(T, "<$CONFIGFILE{'TEMPLATEDIR'}/$t");
+    foreach my $template_name (dirlist($CONFIGFILE{'TEMPLATEDIR'}, "htm.*")) {
+        my $fh;
+        open($fh, '<', "$CONFIGFILE{'TEMPLATEDIR'}/$t") || die "+ ERROR: Unable to open '$t': $!\n";
         my @TEMPLATE = <T>;
-        close(T);
-        my $T = join("", @TEMPLATE);
-        $t =~ s/\..*$//;
-        $TEMPLATES{$t} = $T;
+        close($fh);
+        my $template_content = join("", @TEMPLATE);
+        $template_name =~ s/\..*$//;
+        $TEMPLATES{$template_name} = $template_content;
     }
 
     return;
