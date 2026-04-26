@@ -120,7 +120,7 @@ sub parse_hostfile {
     my $nmap = 0;
 
     my $in_fh;
-    open($in_fh, "<", $file) || die print STDERR "+ ERROR: Cannot open '$file':$!\n";
+    open($in_fh, "<", $file) || die "+ ERROR: Cannot open '$file':$!\n";
     while (<$in_fh>) {
         # Check whether this is a greppable nmap file
         chomp;
