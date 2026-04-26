@@ -270,7 +270,7 @@ sub is_404 {
     # Check user-specified error strings (second priority, before expensive checks)
     if (defined $VARIABLES{'ERRSTRINGS'} && ref($VARIABLES{'ERRSTRINGS'}) eq 'HASH') {
         foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS'} }) {
-            if ($response->{'content'} =~ /$pattern/) {
+            if ($response->{'whisker'}{'data'} =~ /$pattern/) {
                 print "404: 2\n" if $debug_404;
                 return 1;
             }
@@ -571,9 +571,9 @@ sub status_report {
     my $line;
 
     # without this we could face a div by 0 error
-    if (   $COUNTERS{'totalrequests'} eq 0
-        || $COUNTERS{'total_checks'} eq 0
-        || $COUNTERS{'total_targets'} eq 0) {
+    if (   $COUNTERS{'totalrequests'} == 0
+        || $COUNTERS{'total_checks'} == 0
+        || $COUNTERS{'total_targets'} == 0) {
         nprint("- STATUS: Starting up!");
         return;
     }
@@ -1859,8 +1859,8 @@ sub load_databases {
                     my @T = parse_csv($l);
                     next if $T[1] eq '';
                     $T[1]                    = validate_and_fix_regex($T[1]);
-                    $OVERS{ $T[1] }{ $T[2] } = $T[3];
-                    $OVERS{ $T[1] }{'tid'}   = $T[0];
+                    $OVERS{ $T[1] }{ $T[2] }{'msg'} = $T[3];
+                    $OVERS{ $T[1] }{ $T[2] }{'tid'} = $T[0];
                 }
             }
 
