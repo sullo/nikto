@@ -2514,16 +2514,25 @@ sub run_hooks {
         my $hook = $plugin->{'hooks'}->{$type};
         next unless $hook;
 
+        # Cache plugin parameters and full_name
+        my $parameters = $plugin->{'parameters'};
+        my $full_name  = $plugin->{'full_name'};
+
         # Check conditionals more efficiently
         my $run = 1;
         if (my $condition = $hook->{'cond'}) {
             $run = eval($condition);
+            if ($@) {
+                chomp($@);
+                nprint(
+                    "+ ERROR: Plugin condition eval failed for '$full_name' ($type): $@",
+                    "e",
+                    "Plugins"
+                    );
+                next;
+            }
             next unless $run;
         }
-
-        # Cache plugin parameters and full_name
-        my $parameters = $plugin->{'parameters'};
-        my $full_name  = $plugin->{'full_name'};
 
         # Save current output states
         my $oldverbose = $OUTPUT{'verbose'};

@@ -137,9 +137,14 @@ sub parse_hostfile {
             # parse out the line
             my @fields = split("\t", $_);
 
-            # Get the host name
-            $fields[0] =~ /Host:\s+($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)\s+\(([^\)]+)?\)/;
-            $hostdesc = ($2 ne "") ? $2 : $1;
+            # Get the host name only if parsing succeeded, so stale captures are never reused
+            my ($host_ip, $host_name) =
+              $fields[0] =~ /Host:\s+($LW2::IPv4_re|$LW2::IPv6_re_inc_zoneid)\s+\(([^\)]+)?\)/;
+            if (!defined $host_ip) {
+                nprint("\tUnable to parse Nmap host field: $fields[0]", "d");
+                next;
+            }
+            $hostdesc = (defined $host_name && $host_name ne "") ? $host_name : $host_ip;
 
             # Parse the ports list from:
             # Host: 1.0.0.0 ()  Ports: 80/open/tcp//http///, 8000/open/tcp//http-alt///
