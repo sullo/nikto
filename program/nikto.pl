@@ -321,7 +321,7 @@ sub load_modules {
     my $errors = 0;
     my @modules = ("Cwd 'abs_path'",                                        "File::Spec",
                    "FindBin",                                               "Getopt::Long",
-                   "IO::Socket",                                            "JSON",
+                   "IO::Socket",                                            "JSON::PP",
                    "List::Util qw(sum)",                                    "Net::hostent",
                    "POSIX qw(:termios_h)",                                  "Socket",
                    "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)", "Time::Local",

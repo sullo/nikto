@@ -68,7 +68,7 @@ sub nikto_ssl {
 
                 # must match leading dot
                 # only one level of subdomain allowed
-                if ($hostname_cmp =~ /^(.*)\.?$cert_name_cmp/i) {
+                if ($hostname_cmp =~ /^(.*)\.?$cert_name_cmp\z/i) {
                     my $matched  = $1;
                     my $tldcount = ($matched =~ tr/\.//);
                     if ($tldcount <= 1) { $match = 1; }

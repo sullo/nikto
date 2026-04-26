@@ -203,7 +203,7 @@ sub nikto_headers_postfetch {
     if (   $mark->{'ssl'}
         && !$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'strict-transport-security'}
         && defined $response) {
-        if ($response->{'strict-transport-security'} =~ /max-age="?0"?/i) {
+        if ($response->{'strict-transport-security'} =~ /max-age\s*=\s*"?0"?(?!\d)/i) {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
@@ -342,7 +342,7 @@ sub nikto_headers_check {
             if (!exists $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }
                 {"interesting-$header"}) {
                 my $value = "";
-                if (ref($response->{$header}) eq ARRAY) {
+                if (ref($response->{$header}) eq 'ARRAY') {
                     $value = join(', ', @{ $response->{$header} });
                 }
                 else {

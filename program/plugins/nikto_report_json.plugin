@@ -5,13 +5,12 @@
 our $JSONRPT_ALL  = [];       # Arrayref to hold all hosts' reports
 our $JSONRPT_CURR = undef;    # Scalarref to current host's report
 
-use JSON;
+use JSON::PP;
 use Time::Piece;
 use Time::Seconds;
 
 ###############################################################################
 sub nikto_report_json_init {
-    use JSON;
 
     my $id = { name              => "report_json",
                full_name         => "JSON reports",
@@ -113,7 +112,7 @@ sub json_host_end {
 # close output file
 sub json_close {
     my ($handle, $mark) = @_;
-    my $json_encoder = JSON->new->utf8->canonical->pretty->convert_blessed;
+    my $json_encoder = JSON::PP->new->utf8->canonical->pretty->convert_blessed;
     my $json_output  = $json_encoder->encode($JSONRPT_ALL);
     print $handle $json_output;
     close($handle);

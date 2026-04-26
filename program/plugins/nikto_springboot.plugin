@@ -3,7 +3,7 @@
 # PURPOSE: Scan for exposed Spring Boot Actuator endpoints and basic info leaks
 ###############################################################################
 
-use JSON;
+use JSON::PP;
 
 sub nikto_springboot_init {
     my $id = { name        => "springboot",
