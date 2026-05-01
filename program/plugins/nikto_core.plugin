@@ -3557,7 +3557,9 @@ sub check_updates {
                 );
         }
         else {
-            nprint("+ Your Nikto installation is out of date.");
+            nprint(
+                "+ Your Nikto installation or DB files may be outdated. Update via your package manager, or install via git to stay current with the latest changes."
+                );
         }
         $VARIABLES{'deferout'} = $defer;
     }
