@@ -3577,26 +3577,36 @@ sub check_updates {
         $ver_cmp = nikto_version_compare($local_version, $remote_version);
     }
 
-    # Local is same or newer than published (timestamp and/or version, e.g. pre-rel)
-    return if ($remote_epoch > 0 && $epoch >= $remote_epoch);
-    return if ($ver_cmp > 0);
+    # Compare against the manifest. Git checkouts track individual commits, so
+    # the epoch is a valid signal; stable/packaged releases only compare release
+    # versions to avoid false positives from git commit epochs.
+    #
+    # Detect the install type from EXECDIR (Nikto's install directory), not the
+    # process CWD: nikto.pl never chdir()s to EXECDIR, so a CWD-relative check
+    # would misclassify a stable install run from inside an unrelated git repo
+    # as a git checkout and reintroduce the false "out of date" warning.
+    my $execdir = defined $CONFIGFILE{'EXECDIR'} ? $CONFIGFILE{'EXECDIR'} : '.';
+    my $is_git = (-d "$execdir/.git" || -d "$execdir/../.git");
 
-    # Published release is newer by epoch or version
-    if ($remote_epoch > $epoch || $ver_cmp < 0) {
-        my $defer = $VARIABLES{'deferout'};
-        $VARIABLES{'deferout'} = 0;
-
-        # Check if git install
-        my $is_git = (-d '.git' || -d '../.git' || -d '../../.git');
-        if ($is_git) {
+    if ($is_git) {
+        # Git installations: use epoch comparison since we track commits
+        if ($remote_epoch > $epoch) {
+            my $defer = $VARIABLES{'deferout'};
+            $VARIABLES{'deferout'} = 0;
             nprint(
                 "+ Your Nikto installation is out of date. Please run 'git pull' to update to the latest version of Nikto."
                 );
+            $VARIABLES{'deferout'} = $defer;
         }
-        else {
+    }
+    else {
+        # Stable releases: compare versions semantically
+        if ($ver_cmp < 0) {
+            my $defer = $VARIABLES{'deferout'};
+            $VARIABLES{'deferout'} = 0;
             nprint("+ Your Nikto installation is out of date.");
+            $VARIABLES{'deferout'} = $defer;
         }
-        $VARIABLES{'deferout'} = $defer;
     }
 }
 #######################################################################
