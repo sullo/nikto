@@ -111,14 +111,6 @@ sub nikto_tests {
             # matched on something, check fails/ands
             if ($positive) {
 
-                # if it's an index.php, check for normal /index.php to see if it's a FP
-                # if ($uri =~ /^\/index.php\?/i) {
-                #     my $clean_content = rm_active_content($content, $mark->{'root'} . $uri);
-                #     if (LW2::md5($clean_content) eq $mark->{'FoF'}{'index.php'}{'match'}) {
-                #         next;
-                #     }
-                # }
-
                 # Check user-specified error codes/strings first (highest priority, always wins)
                 # This must be checked before any other 404 detection logic
                 if (defined $VARIABLES{'ERRCODES'} && ref($VARIABLES{'ERRCODES'}) eq 'HASH') {
