@@ -3588,8 +3588,12 @@ sub check_updates {
     my $execdir = defined $CONFIGFILE{'EXECDIR'} ? $CONFIGFILE{'EXECDIR'} : '.';
     my $is_git = (-d "$execdir/.git" || -d "$execdir/../.git");
 
+    # Dev/pre-release branches often bump version before publish; never warn then.
+    return if ($ver_cmp > 0);
+
     if ($is_git) {
         # Git installations: use epoch comparison since we track commits
+        return if ($remote_epoch > 0 && $epoch >= $remote_epoch);
         if ($remote_epoch > $epoch) {
             my $defer = $VARIABLES{'deferout'};
             $VARIABLES{'deferout'} = 0;
