@@ -26,46 +26,49 @@ sub save_item {
     my $json_response   = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
     my $cookies_written = 0;
 
-    open(SAVEFILE, ">>$fn") || die print "ERROR opening savefile '$fn': $@\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Information\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
-    print SAVEFILE "References: \t" . $resulthash->{'refs'} . "\n";
-    print SAVEFILE "Message:  \t" . $message . "\n";
-    print SAVEFILE "Reason:   \t" . $resulthash->{'reason'} . "\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Request\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    open(my $savefile, ">>", $fn) or do {
+        nprint("+ ERROR: Cannot open savefile '$fn': $!");
+        return;
+    };
+    print $savefile $VARIABLES{'DIV'} . "\n";
+    print $savefile "			  Information\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
+    print $savefile "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
+    print $savefile "References: \t" . $resulthash->{'refs'} . "\n";
+    print $savefile "Message:  \t" . $message . "\n";
+    print $savefile "Reason:   \t" . $resulthash->{'reason'} . "\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
+    print $savefile "			  Request\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
 
     if ($request->{'whisker'}{'method'} eq '') {
-        print SAVEFILE "Not Applicable\n";
+        print $savefile "Not Applicable\n";
     }
     else {
         my $request_string = rebuild_request($request);
-        print SAVEFILE $request_string;
+        print $savefile $request_string;
     }
-    print SAVEFILE "\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Response\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    print $savefile "\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
+    print $savefile "			  Response\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
     if ($response->{'whisker'}{'protocol'} eq '') {
-        print SAVEFILE "Not Applicable\n";
+        print $savefile "Not Applicable\n";
     }
     else {
-        print SAVEFILE rebuild_response($response);
+        print $savefile rebuild_response($response);
     }
 
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
-    print SAVEFILE "			  Data Objects\n";
-    print SAVEFILE $VARIABLES{'DIV'} . "\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
+    print $savefile "			  Data Objects\n";
+    print $savefile $VARIABLES{'DIV'} . "\n";
     if ($request->{'whisker'}{'method'} ne '') {
-        print SAVEFILE "REQUEST:$json_request\n";
+        print $savefile "REQUEST:$json_request\n";
     }
     if ($response->{'whisker'}{'protocol'} ne '') {
-        print SAVEFILE "RESPONSE:$json_response\n";
+        print $savefile "RESPONSE:$json_response\n";
     }
-    close(SAVEFILE);
+    close($savefile);
 }
 
 ###############################################################################
@@ -119,8 +122,11 @@ sub parse_hostfile {
     my (@results, $hostdesc);
     my $nmap = 0;
 
-    open(IN, $file) || die print STDERR "+ ERROR: Cannot open '$file':$@\n";
-    while (<IN>) {
+    open(my $in, "<", $file) or do {
+        nprint("+ ERROR: Cannot open '$file': $!");
+        return ();
+    };
+    while (<$in>) {
         my $found = 0;
 
         # Check whether this is a greppable nmap file
@@ -161,7 +167,7 @@ sub parse_hostfile {
             push(@results, $_);
         }
     }
-    close(IN);
+    close($in);
     return (@results);
 }
 

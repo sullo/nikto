@@ -141,9 +141,9 @@ sub html_item {
 ###############################################################################
 sub html_open_templates {
     foreach my $t (dirlist($CONFIGFILE{'TEMPLATEDIR'}, "htm.*")) {
-        open(T, "<$CONFIGFILE{'TEMPLATEDIR'}/$t");
-        my @TEMPLATE = <T>;
-        close(T);
+        open(my $t_fh, "<", "$CONFIGFILE{'TEMPLATEDIR'}/$t");
+        my @TEMPLATE = <$t_fh>;
+        close($t_fh);
         my $T = join("", @TEMPLATE);
         $t =~ s/\..*$//;
         $TEMPLATES{$t} = $T;
