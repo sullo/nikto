@@ -3054,7 +3054,7 @@
 "003332","https://seclists.org/bugtraq/2003/Nov/226","a","/_layouts/settings.htm","GET","CODE:200","Microsoft SharePoint Portal and Team Services vulnerable to NT or NTLM authentication bypass on Win2000 SP4 using IE 6.x.","",""
 "003333","https://seclists.org/bugtraq/2003/Nov/226","a","/_layouts/userinfo.htm","GET","CODE:200","Microsoft SharePoint Portal and Team Services vulnerable to NT or NTLM authentication bypass on Win2000 SP4 using IE 6.x.","",""
 "003334","http://freshmeat.net/users/rizen/","8","@CGIDIRSindex.pl","GET","BODY:Powered By WebGUI 4\.6\.8","WebGUI version 4.6.8, according to the documentation, may allow arbitrary code execution.","",""
-"003335","CVE-2001-1446","3","/.DS_Store","GET","BODY:Bud1","Apache on Mac OSX will serve the .DS_Store file, which contains sensitive information. Configure Apache to ignore this file or upgrade to a newer version.","",""
+"003335","CVE-2001-1446","3","/.DS_Store","GET","BODY:Bud1","A .DS_Store file is available which may contain sensitive information.","",""
 "003336","CVE-2002-1089","3","@CGIDIRSrwcgi60","GET","CODE:200","Oracle report server reveals system information without authorization. See Oracle note 133957.1 - Restricting Access to the Reports Server Environment and Output","",""
 "003337","CVE-2002-1089","3","@CGIDIRSrwcgi60/showenv","GET","CODE:200","Oracle report server reveals system information without authorization. See Oracle note 133957.1 - Restricting Access to the Reports Server Environment and Output","",""
 "003338","http://freshmeat.net/users/rizen/","8","@CGIDIRSindex.pl","GET","BODY:Powered By WebGUI 4\.6\.9","WebGUI version 4.6.9 has a \"very obsure [sic] and unlikely security hole\" according to the documentation. .","",""
