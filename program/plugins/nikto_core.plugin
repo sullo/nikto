@@ -1889,15 +1889,15 @@ sub dirlist {
     my $PATTERN   = $_[1] || "";
     my @FILES_TMP = ();
 
-    opendir(DIRECTORY, $DIR) || die "+ ERROR: Can't open directory '$DIR': $!";
-    foreach my $file (readdir(DIRECTORY)) {
+    opendir(my $directory, $DIR) || die "+ ERROR: Can't open directory '$DIR': $!";
+    foreach my $file (readdir($directory)) {
         if ($file =~ /^\./) { next; }    # skip hidden files, '.' and '..'
         if ($PATTERN ne "") {
             if ($file =~ /$PATTERN/) { push(@FILES_TMP, $file); }
         }
         else { push(@FILES_TMP, $file); }
     }
-    closedir(DIRECTORY);
+    closedir($directory);
 
     return @FILES_TMP;
 }

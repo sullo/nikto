@@ -995,7 +995,7 @@
 "000994","","3","/chat/data/usr","GET","CODE:200","SimpleChat! 1.3 allows retrieval of user information.","",""
 "000995","","3","/com","GET","BODY:(?i)(?:index of \/|directory listing (?:of|for))","Java class files may be browsable.","",""
 "000996","","3","/COM","GET","BODY:(?i)(?:index of \/|directory listing (?:of|for))","Java class files may be browsable.","",""
-"000997","","3","/config.php","GET","CODE:200","PHP Config file may contain database IDs and passwords.","",""
+"000997","","3","/config.php","GET","CODE:200&&BODY:\<\?","PHP Config file may contain database IDs and passwords.","",""
 "000998","","3","/config/","GET","CODE:200","Configuration information may be available remotely.","",""
 "000999","https://securitytracker.com/id/1004318,http://www.xmbforum.com","3","/cplogfile.log","GET","CODE:200","XMB Magic Lantern forum 1.6b final log file is readable remotely. Upgrade to the latest version.","",""
 "001000","https://seclists.org/fulldisclosure/2003/Dec/15","3","/cutenews/index.php?debug","GET","BODY:PHP Version","Cutenews 1.3 contains an information disclosure bug that reveals standard 'phpinfo' page output.","",""
