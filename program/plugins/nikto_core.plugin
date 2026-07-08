@@ -921,13 +921,14 @@ sub general_config {
         $CLI{'ipv4'} = 1;
     }
 
-    # 404string
+    # 404string — user-specified; stored in _USER variant so it can override BODY matches
     if ($CLI{'404string'} ne '') {
         my $s = validate_and_fix_regex($CLI{'404string'});
-        $VARIABLES{'ERRSTRINGS'}->{$s} = 1;
+        $VARIABLES{'ERRSTRINGS_USER'}->{$s} = 1;
+        $VARIABLES{'ERRSTRINGS'}->{$s}      = 1;    # also keep in DB hash for is_404()
     }
 
-    # 404code
+    # 404code — user-specified; stored in _USER variant so it can override BODY matches
     if ($CLI{'404code'} ne '') {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
             $code =~ s/^\s+|\s+$//g;    # Trim whitespace
@@ -935,7 +936,8 @@ sub general_config {
                 nprint("+ ERROR: Invalid 404code, must be an integer");
                 exit 1;
             }
-            $VARIABLES{'ERRCODES'}->{$code} = 1;
+            $VARIABLES{'ERRCODES_USER'}->{$code} = 1;
+            $VARIABLES{'ERRCODES'}->{$code}      = 1;    # also keep in DB hash for is_404()
         }
     }
 

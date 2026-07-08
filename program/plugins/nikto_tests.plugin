@@ -111,18 +111,21 @@ sub nikto_tests {
             # matched on something, check fails/ands
             if ($positive) {
 
-                # Check user-specified error codes/strings first (highest priority, always wins)
-                # This must be checked before any other 404 detection logic
-                if (defined $VARIABLES{'ERRCODES'} && ref($VARIABLES{'ERRCODES'}) eq 'HASH') {
+                # Check user-specified error codes/strings first (highest priority, always wins).
+                # We deliberately check only the _USER variants here, NOT the DB-loaded ERRCODES/
+                # ERRSTRINGS from db_404_strings. DB patterns are heuristics for is_404() and must
+                # not suppress explicit BODY matches (e.g. reflected XSS on a 404 page). Only
+                # user-supplied -404code/-404string should be able to override a BODY match.
+                if (defined $VARIABLES{'ERRCODES_USER'} && ref($VARIABLES{'ERRCODES_USER'}) eq 'HASH') {
                     my $code_str = "$res";
-                    if (exists $VARIABLES{'ERRCODES'}->{$code_str}) {
-                        next URI;    # Skip this test, it's a 404
+                    if (exists $VARIABLES{'ERRCODES_USER'}->{$code_str}) {
+                        next URI;    # Skip this test, it's a user-defined 404
                     }
                 }
-                if (defined $VARIABLES{'ERRSTRINGS'} && ref($VARIABLES{'ERRSTRINGS'}) eq 'HASH') {
-                    foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS'} }) {
+                if (defined $VARIABLES{'ERRSTRINGS_USER'} && ref($VARIABLES{'ERRSTRINGS_USER'}) eq 'HASH') {
+                    foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS_USER'} }) {
                         if ($content =~ /$pattern/) {
-                            next URI;    # Skip this test, it's a 404
+                            next URI;    # Skip this test, it's a user-defined 404
                         }
                     }
                 }
