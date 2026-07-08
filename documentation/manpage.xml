@@ -106,7 +106,7 @@
       <varlistentry>
         <term><option>-evasion</option> <replaceable>technique</replaceable></term>
         <listitem>
-          <para>Encoding technique: 1 (Random URI encoding), 2 (Directory self-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer).</para>
+          <para>Encoding technique: 1 (Random URI encoding), 2 (Directory self-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer), R (Random User-Agent from database; default is first entry; ignored when -useragent is set; note the suggested-headers check always uses the first entry regardless).</para>
         </listitem>
       </varlistentry>
 
@@ -355,7 +355,7 @@
       <varlistentry>
         <term><option>-useragent</option> <replaceable>string</replaceable></term>
         <listitem>
-          <para>Over-rides the default useragent.</para>
+          <para>Forces a specific User-Agent string, overriding the database entirely.</para>
         </listitem>
       </varlistentry>
 

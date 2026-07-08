@@ -824,6 +824,7 @@ sub general_config {
     $NIKTO{'anti_ids'}{'8'} = "Use Windows directory separator (\\)";
     $NIKTO{'anti_ids'}{'A'} = "Use a carriage return (0x0d) as a request spacer";
     $NIKTO{'anti_ids'}{'B'} = "Use binary value 0x0b as a request spacer";
+    $NIKTO{'anti_ids'}{'R'} = "Random User-Agent from database per request";
 
     # This is used in dump_target_info(), not just help output
     $NIKTO{'mutate_opts'}{'1'} = "Test all files with all root directories";
@@ -1258,7 +1259,7 @@ sub general_config {
     }
 
     if (defined $CLI{'evasion'}) {
-        $CLI{'evasion'} =~ s/[^1-8AB]//g;
+        $CLI{'evasion'} =~ s/[^1-8ABR]//g;
     }
 
     if (!defined $CLI{'plugins'} || $CLI{'plugins'} eq "") {
@@ -2947,11 +2948,12 @@ sub get_ua {
         return $CLI{'useragent'};
     }
 
-    # Return a random User-Agent from @USERAGENTS array
+    # Pull from @USERAGENTS array: random if evasion R, otherwise first entry
     if (   defined($VARIABLES{'@USERAGENTS'})
         && ref($VARIABLES{'@USERAGENTS'}) eq 'ARRAY'
         && @{ $VARIABLES{'@USERAGENTS'} }) {
-        my $ua = $VARIABLES{'@USERAGENTS'}->[ rand(@{ $VARIABLES{'@USERAGENTS'} }) ];
+        my $idx = (defined $CLI{'evasion'} && $CLI{'evasion'} =~ /R/) ? int(rand(@{ $VARIABLES{'@USERAGENTS'} })) : 0;
+        my $ua  = $VARIABLES{'@USERAGENTS'}->[$idx];
         $ua =~ s/^"//;
         $ua =~ s/"$//;
         return $ua;
