@@ -87,13 +87,18 @@ foreach my $key (keys %{$s_request}) {
 
 # proxy
 if ($proxy ne '') {
-    my @p = split(/:/, $proxy);
-    if (($p[0] eq '') || ($p[1] eq '') || ($p[1] =~ /[^\d]/)) {
+    $proxy =~ s{^https?://}{}i;    # strip optional scheme prefix
+    $proxy =~ s{/.*$}{};           # strip any trailing path
+    my ( $proxy_host, $proxy_port ) = split(/:/, $proxy, 2);
+    if (   !defined $proxy_host || $proxy_host eq ''
+        || !defined $proxy_port || $proxy_port eq ''
+        || $proxy_port =~ /[^\d]/ )
+    {
         print "ERROR: Invalid proxy -- use 'host:port' format\n";
         exit 1;
     }
-    $request{'whisker'}->{'proxy_host'} = $p[0];
-    $request{'whisker'}->{'proxy_port'} = $p[1];
+    $request{'whisker'}->{'proxy_host'} = $proxy_host;
+    $request{'whisker'}->{'proxy_port'} = $proxy_port;
 }
 
 # output for the user
@@ -104,14 +109,25 @@ print "://"
   . $request{'whisker'}->{'host'} . ":"
   . $request{'whisker'}->{'port'}
   . $request{'whisker'}->{'uri'} . "\n";
+if ($proxy ne '') {
+    print "Via proxy:      "
+      . $request{'whisker'}->{'proxy_host'} . ":"
+      . $request{'whisker'}->{'proxy_port'} . "\n";
+}
 print $header;
 
 # make request
 LW2::http_fixup_request(\%request);
-LW2::http_do_request_timeout(\%request, \%result);
+my $ret = LW2::http_do_request_timeout(\%request, \%result);
 
 # output for the user
 print "-" x 44, "  Response\n";
+
+if ($ret != 0) {
+    my $errmsg = $result{'whisker'}->{'error'} || 'Unknown error';
+    print "ERROR: Request failed: $errmsg\n";
+    exit 1;
+}
 
 # Use rebuild_response to properly format the response
 print rebuild_response(\%result, 1);
