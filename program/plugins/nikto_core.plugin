@@ -1294,14 +1294,6 @@ sub general_config {
 
     $CLI{'timeout'} = $CLI{'timeout'} || 10;
 
-    # RFI URL -- push it to VARIABLES
-    if (defined $CONFIGFILE{'RFIURL'}) {
-        $VARIABLES{'@RFIURL'} = $CONFIGFILE{'RFIURL'};
-    }
-    else {
-        nprint("- ***** RFIURL is not defined in nikto.conf--no RFI tests will run *****");
-    }
-
     # SSL keep-alive: enabled by default; disable via -nosslkeepalive or SSLKEEPALIVE=0 in conf
     if ($CLI{'nosslkeepalive'} ||
         (defined $CONFIGFILE{'SSLKEEPALIVE'} && $CONFIGFILE{'SSLKEEPALIVE'} eq '0')) {

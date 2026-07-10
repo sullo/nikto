@@ -68,6 +68,14 @@ my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
 load_databases();
 load_databases('u');
 
+# RFI URL: db_variables default; conf RFIURL (if set) overrides
+if (defined $CONFIGFILE{'RFIURL'} && $CONFIGFILE{'RFIURL'} ne '') {
+    $VARIABLES{'@RFIURL'} = $CONFIGFILE{'RFIURL'};
+}
+elsif (!defined $VARIABLES{'@RFIURL'} || $VARIABLES{'@RFIURL'} eq '') {
+    nprint("- ***** \@RFIURL is not defined--no RFI tests will run *****");
+}
+
 if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'key'}  = $CLI{'cert'} unless (defined($CLI{'key'}));
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));

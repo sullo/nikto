@@ -7,9 +7,9 @@
 # default command line options, can't be an option that requires a value.  used for ALL runs.
 # CLIOPTS=-g -a
 
-# RFI URL. This remote file should return a phpinfo call, for example: <?php phpinfo(); ?>
-# You may use the one below, if you like.
-RFIURL=https://cirt.net/public/rfiinc.txt
+# Override default @RFIURL in db_variables/udb_variables.
+# Uncomment to override (this remote file should return <?php phpinfo(); ?>).
+#RFIURL=
 
 # IDs never to alert on (Note: this only works for IDs loaded from db_tests)
 #SKIPIDS=
