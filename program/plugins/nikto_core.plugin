@@ -1468,7 +1468,7 @@ sub resolve {
     my $is6 = 0;
 
     if (($CONFIGFILE{'PROXYHOST'} ne '') && $CLI{'useproxy'}) {
-        return $ident, $ident, $ident;
+        return $ident, $ident, $ident, '';
     }
 
     if ($ident =~ /^$LW2::IPv4_re$/) {    # ident is IPv4
@@ -1558,7 +1558,7 @@ sub resolve {
     }
 
     my $displayname = ($name) ? $name : $ip;
-    return $name, $ip, $displayname;
+    return $name, $ip, $displayname, '';
 }
 
 ###############################################################################
@@ -3463,11 +3463,11 @@ sub set_scan_items {
     }
 
     nprint("- $COUNTERS{'total_checks'} server checks loaded", "v", "Init");
-    if ($COUNTERS{'total_checks'} eq 0 && !defined $CLI{'tuning'}) {
+    if ($COUNTERS{'total_checks'} == 0 && !defined $CLI{'tuning'}) {
         nprint("+ Unable to load valid checks!");
-        $mark->{'terminate'} = 1;
+        return 0;
     }
-    return;
+    return 1;
 }
 #######################################################################
 # Compare dotted release strings (e.g. 2.6.1 vs 2.6.0). Returns -1, 0, or 1.

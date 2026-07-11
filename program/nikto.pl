@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 use strict;
+use warnings;
 
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
@@ -68,6 +69,10 @@ my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
 load_databases();
 load_databases('u');
 
+unless (set_scan_items()) {
+    exit 1;
+}
+
 # RFI URL: db_variables default; conf RFIURL (if set) overrides
 if (defined $CONFIGFILE{'RFIURL'} && $CONFIGFILE{'RFIURL'} ne '') {
     $VARIABLES{'@RFIURL'} = $CONFIGFILE{'RFIURL'};
@@ -96,12 +101,10 @@ foreach my $mark (@MARKS) {
     my $msgs;
     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}, $msgs) =
       resolve($mark->{'ident'});
-    if ($msgs ne "") {
+    $msgs //= '';
+    if ($msgs ne '') {
         push(@{ $mark->{'messages'} }, $msgs);
     }
-
-    # Load db_tests
-    set_scan_items();
 
     # Start hook to allow plugins to load databases etc
     run_hooks($mark, "start");
