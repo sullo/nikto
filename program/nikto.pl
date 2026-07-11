@@ -51,7 +51,7 @@ nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
 # No targets - quit before we do anything
-if ($CLI{'host'} eq '') {
+if (($CLI{'host'} // '') eq '') {
     if (!$CLI{'nocheck'}) {
         check_updates();
     }
@@ -88,7 +88,7 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
 
 # Open reporting
 report_head();
-$VARIABLES{'deferout'} = 1 unless $CLI{'display'} ne "";
+$VARIABLES{'deferout'} = 1 unless ($CLI{'display'} // '') ne '';
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
@@ -166,14 +166,14 @@ if (!$CLI{'nocheck'}) {
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
     $NIKTO{'current_mark'}  = $mark;
-    $VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
+    $VARIABLES{'deferout'}  = 1 unless ($CLI{'display'} // '') ne '';
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'}   = time();
     report_host_start($mark);
 
     if (!$mark->{'test'}) {
-        if ($mark->{'errmsg'} ne "") {
+        if (($mark->{'errmsg'} // '') ne '') {
             $VARIABLES{'deferout'} = 0;
             add_vulnerability($mark, $mark->{'errmsg'}, "FAIL", "", "GET", "/", "", "",
                               "Failed to scan");
@@ -192,7 +192,7 @@ foreach my $mark (@MARKS) {
     $mark->{'has_vhost'} = (defined($mark->{'vhost'}) && $mark->{'vhost'} ne '');
 
     # Saving responses
-    if ($CLI{'saveresults'} ne '') {
+    if (($CLI{'saveresults'} // '') ne '') {
         $mark->{'save_dir'}    = save_createdir($CLI{'saveresults'}, $mark);
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
