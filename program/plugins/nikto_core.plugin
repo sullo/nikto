@@ -3107,7 +3107,7 @@ sub nfetch {
 
     $request{'whisker'}->{'method'} = $method;
 
-    # POST data?
+    # POST/body data: unescape DB-style \" before measuring or sending
     if (length($data)) {
         $data =~ s/\\\"/\"/g;
         $request{'whisker'}->{'data'} = $data;
@@ -3143,6 +3143,17 @@ sub nfetch {
                 my ($headername, $value) = ($1, $2);
                 $request{$headername} = $value;
             }
+        }
+    }
+
+    # Default Content-Length from the post-unescape body. 
+    # Skip if CL or TE was already supplied
+    if (length($data)) {
+        my ($have_cl) = LW2::utils_find_lowercase_key(\%request, 'content-length');
+        my ($have_te) = LW2::utils_find_lowercase_key(\%request, 'transfer-encoding');
+        if ((!defined $have_cl || $have_cl eq '')
+            && (!defined $have_te || $have_te eq '')) {
+            $request{'Content-Length'} = length($data);
         }
     }
 

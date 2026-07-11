@@ -61,8 +61,6 @@ sub nikto_tests {
             }
             if ($TESTS{$checkid}{'data'} ne '') {
                 $data = unslash($TESTS{$checkid}{'data'});
-                $headrs{'content-length'} = length($data)
-                  unless exists $headrs{'transfer-encoding'} || exists $headrs{'content-length'};
             }
 
             my ($res, $content, $error, $request, $response) =
