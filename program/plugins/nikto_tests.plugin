@@ -44,9 +44,12 @@ sub nikto_tests {
                 # Apply variable replacement to headers
                 my @header_lines = split /\r\n/, $header;
                 foreach my $h (@header_lines) {
-                    my ($key, $value) = split(/: /, $h, 2);
+                    # Optional whitespace after colon ("Name: value" or "Name:value")
+                    my ($key, $value) = split(/:\s*/, $h, 2);
                     next unless defined $key && defined $value;
                     $key = lc($key);
+                    $key =~ s/^\s+|\s+$//g;
+                    next if $key eq '' || $key =~ /\s/;
 
                     # Apply change_variables to the value part
                     my @replaced_values = change_variables($value, $mark, $checkid);
