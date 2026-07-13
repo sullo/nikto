@@ -199,7 +199,7 @@ sub passchecks {
     nprint("- Performing passfiles mutation.", "v", "tests");
 
     # Update total requests for status reports
-    my @CGIS = split(/ /, $VARIABLES{'@CGIDIRS'});
+    my @CGIS = map { s/\/$//; $_ } split(/ /, $VARIABLES{'@CGIDIRS'});
     $COUNTERS{'total_checks'} =
       $COUNTERS{'total_checks'} +
       (scalar(@DIRS) * scalar(@PFILES)) +
@@ -221,8 +221,6 @@ sub passchecks {
                 testfile($mark, "$dir$file.$ext", "passfiles", "299998");
 
                 foreach my $cgi (@CGIS) {
-                    $cgi =~ s/\/$//;
-
                     # dir/file.ext
                     testfile($mark, "$cgi$dir$file.$ext", "passfiles", "299998");
 
