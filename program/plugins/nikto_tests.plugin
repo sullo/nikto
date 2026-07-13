@@ -69,6 +69,13 @@ sub nikto_tests {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $data, \%headrs, \%flags, $checkid);
 
+            # Percentages
+            if (   $OUTPUT{'progress'}
+                && $parameters->{'report'}
+                && ($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
+                status_report();
+            }
+
             # DSL matcher expects response headers as a hashref
             my $response_string = rebuild_response($response, 0);
             my %response_headers;
@@ -173,13 +180,6 @@ sub nikto_tests {
                                   $reason
                                   );
             }
-        }
-
-        # Percentages
-        if (   $OUTPUT{'progress'}
-            && $parameters->{'report'}
-            && ($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
-            status_report();
         }
     }    # end check loop
 
