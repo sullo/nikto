@@ -7285,3 +7285,4 @@
 "007671","https://wordpress.org/plugins/a-smart-excerpt/","3","@WORDPRESSwp-content/ai-smart-excerpt-debug.log","GET","BODY:AI Smart Excerpt:","AI Smart Excerpt debug log present.","",""
 "007672","","23","/Arracorn/arrconfig.txt","GET","BODY:\[Arracorn\]:","Arracorn Wiz config file found.","",""
 "007673","https://wordpress.org/plugins/wp-optimize/","3","@WORDPRESSwp-content/uploads/wpo/wpo-plugins-tables-list.json","GET","CODE:200&&BODY:\[\"(word(press|fence)|wp-opt)","WordPress plugin list leaked by WP-Optimize.","",""
+"007674","CVE-2023-29298","3ae","//CFIDE/wizards/common/utils.cfc?method=wizardHash&inPassword=abc&_cfclient=true&returnFormat=wddx","GET","CODE:200&&BODY:\b[A-Z0-9]{40}\b","ColdFusion admin password hash retrieved.","",""
