@@ -81,6 +81,16 @@ elsif (!defined $VARIABLES{'@RFIURL'} || $VARIABLES{'@RFIURL'} eq '') {
     nprint("- ***** \@RFIURL is not defined--no RFI tests will run *****");
 }
 
+# -Cgidirs must apply even when the cgi plugin is disabled (e.g. -Plugins "@NONE;tests")
+if (defined $CLI{'forcecgi'}) {
+    if ($CLI{'forcecgi'} eq 'none') {
+        $VARIABLES{'@CGIDIRS'} = '';
+    }
+    elsif ($CLI{'forcecgi'} ne 'all') {
+        $VARIABLES{'@CGIDIRS'} = $CLI{'forcecgi'};
+    }
+}
+
 if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'key'}  = $CLI{'cert'} unless (defined($CLI{'key'}));
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));
