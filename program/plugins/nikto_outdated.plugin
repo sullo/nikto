@@ -147,7 +147,7 @@ sub vereval {
     # split both by last char of $_[2], as it is the name to version separator
     my $sepr = substr($_[2], (length($_[2]) - 1), 1);
     nprint("nikto_outdated.plugin: verstring: $_[2], sepr:$sepr",
-           "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "d", "outdated", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     my $CURRENT      = lc($_[0]);
     my $RUNNING      = lc($_[1]);
@@ -155,7 +155,7 @@ sub vereval {
     my $RUNNING_ORIG = $RUNNING;
 
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING:",
-           "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "d", "outdated", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     my @T = split(/\Q$sepr\E/, $CURRENT);
     $CURRENT = $T[$#T];                    # should be version...
@@ -173,7 +173,7 @@ sub vereval {
     $CURRENT =~ s/\.$//;
 
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING\: (after numberifcation)",
-           "d", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
+           "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
 
     my (@CUR, @RUN);
     if (($CURRENT !~ /[a-z]/) && ($RUNNING !~ /[a-z]/)) {
@@ -188,7 +188,7 @@ sub vereval {
     # start with 0... eval each in turn...
     for (my $i = 0 ; $i <= $#CUR ; $i++) {
         nprint("nikto_outdated.plugin: major compare: \$CUR[$i]:$CUR[$i]: \$RUN[$i]:$RUN[$i]:",
-               "d", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
+               "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
         if ($CUR[$i] > $RUN[$i])                  { return 1; }    # running is older
         if (($CUR[$i] ne "") && ($RUN[$i] eq "")) { return 1; }    # running is older
         if ($CUR[$i] < $RUN[$i])                                   # running is newer

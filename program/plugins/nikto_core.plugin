@@ -509,16 +509,18 @@ sub nprint {
     my ($line, $mode, $testid) = @_;
     chomp($line);
 
+    # scrub values - only pass scrub values (everything after $line, $mode and $testid)
+    # Must happen before deferring: the deferred queue only stores the final line,
+    # so anything not scrubbed here would be printed unscrubbed later.
+    if ($OUTPUT{'scrub'}) {
+        my @scrub_values = @_[ 3 .. $#_ ];
+        $line = scrub($line, @scrub_values);
+    }
+
     # Deferred output?
     if ($VARIABLES{'deferout'}) {
         push @{ $VARIABLES{'defertxt'} }, $mode . "::" . ($testid // '') . "::" . $line;
         return;
-    }
-
-    # scrub values - only pass scrub values (everything after $line and $mode)
-    if ($OUTPUT{'scrub'}) {
-        my @scrub_values = @_[ 3 .. $#_ ];
-        $line = scrub($line, @scrub_values);
     }
 
     # don't print debug & verbose to output file...
@@ -726,35 +728,35 @@ sub dump_target_info {
 
     if ($CLI{'plugins'} ne '@@NONE') {
         if ($mark->{ip} =~ /^$LW2::IPv4_re$/ || $mark->{ip} =~ /^$LW2::IPv6_re_inc_zoneid$/) {
-            nprint("+ Target IP:          $mark->{ip}", "", ($mark->{'ip'}));
+            nprint("+ Target IP:          $mark->{ip}", "", undef, ($mark->{'ip'}));
         }
         else {
-            nprint("+ Target IP:          (proxied)", "", ($mark->{'ip'}));
+            nprint("+ Target IP:          (proxied)", "", undef, ($mark->{'ip'}));
         }
 
         nprint("+ Target Hostname:    $mark->{hostname}",
-               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+               "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         nprint("+ Target Port:        $mark->{port}");
         if (defined $CLI{'root'}) {
             nprint("+ Target Path:        $CLI{'root'}",
-                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ((defined $CLI{'vhost'}) && ($CLI{'vhost'} ne $mark->{hostname})) {
             nprint("+ Virtual Host:       $CLI{'vhost'}",
-                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if ($request{'whisker'}->{'proxy_host'} ne '') {
             nprint(
                 "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}",
-                "",
+                "", undef,
                 ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                 );
         }
 
         if ($mark->{ssl}) {
-            nprint($sslprint, "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint($sslprint, "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if (defined $NIKTO{'anti_ids'} && defined $CLI{'evasion'}) {
@@ -776,7 +778,7 @@ sub dump_target_info {
             my @msgs = @{ $mark->{'messages'} };
             foreach my $m (@msgs) {
                 nprint("+ Message:            $m",
-                       "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                       "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             }
         }
 
@@ -796,7 +798,7 @@ sub dump_target_info {
 
     if ($mark->{banner} ne "") {
         nprint("+ Server: $mark->{banner}",
-               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+               "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
     else {
         nprint("+ Server: No banner retrieved");
@@ -1130,7 +1132,7 @@ sub general_config {
 
             $CLI{'files'}{$fmt} = $file_name;
             nprint("- Auto-generated save file: $file_name",
-                   "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "v", "core", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
     elsif (defined $CLI{'file'} && $CLI{'file'} ne '' && $CLI{'file'} ne '.') {
@@ -1204,7 +1206,7 @@ sub general_config {
 
             $CLI{'files'}{$fmt} = $file_name;
             nprint("- Auto-generated save file: $file_name",
-                   "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "v", "core", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
     }
 
@@ -1544,13 +1546,13 @@ sub resolve {
         }
 
         if ($ipcache ne "" && $report) {
-            nprint("+ Multiple IPs found: $ip, $ipcache", "", @scrub);
+            nprint("+ Multiple IPs found: $ip, $ipcache", "", undef, @scrub);
         }
 
         if (   $ip !~ /^$LW2::IPv4_re$/
             && $ip !~ /^$LW2::IPv6_re$/) {
             nprint("+ ERROR: Invalid IP: $ip\n\n",
-                   "", ($ident, $ip, $ident));
+                   "", undef, ($ident, $ip, $ident));
             exit 1;
         }
 
@@ -1638,7 +1640,7 @@ sub set_targets {
                 $hostdata[0] =~ s/\/$//;
                 $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
-                       "v", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
+                       "v", "core", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
             }
             push(@marks, $markhash);
         }
@@ -1651,7 +1653,7 @@ sub set_targets {
                 }
                 else {
                     nprint("- ERROR: Unrecognised target host format: $host",
-                           "", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
+                           "", undef, ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
                 }
             }
             else {
@@ -1659,7 +1661,7 @@ sub set_targets {
                 if (scalar @h > 2 || $h[0] eq '') { # Possible invalid IPv6 format has been supplied
                     nprint(
                         "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
-                        "",
+                        "", undef,
                         ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'})
                         );
                 }
@@ -2313,14 +2315,14 @@ sub port_check {
                 # Some Apache servers are annoying and answer non-TLS requests on a TLS server.
                 if (defined $content
                     && ($content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
-                    dump_var("Response Hash", $response,
+                    dump_var("Response Hash", $response, "port_check",
                              ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
                 nprint("- $checkssl server found: "
                          . ($m->{'hostname'} || $m->{'ip'})
                          . ":$port \t$response->{server}",
-                       "d",
+                       "d", "core",
                        ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                        );
                 return $m->{'ssl'} + 1;
@@ -2848,10 +2850,10 @@ sub proxy_check {
         sleeper();
         LW2::http_do_request_timeout(\%request, \%response);
         $COUNTERS{'totalrequests'}++;
-        dump_var("Request Hash", \%request,
+        dump_var("Request Hash", \%request, "proxy_check",
                  ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        dump_var("Response Hash",
-                 \%response, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        dump_var("Response Hash", \%response, "proxy_check",
+                 ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         # First check that we can connect to the proxy
         if (exists $response{'whisker'}{'error'}) {
@@ -2886,10 +2888,10 @@ sub proxy_check {
             sleeper();
             LW2::http_do_request_timeout(\%request, \%response);
             $COUNTERS{'totalrequests'}++;
-            dump_var("Request Hash", \%request,
+            dump_var("Request Hash", \%request, "proxy_check",
                      ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            dump_var("Response Hash",
-                     \%response, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            dump_var("Response Hash", \%response, "proxy_check",
+                     ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             if ($response{'proxy-authenticate'} ne "") {
                 my @pauthinfo  = split(/ /, $response{'proxy-authenticate'});
@@ -2911,10 +2913,13 @@ sub proxy_check {
 #######################################################################
 sub dump_var {
     return if !$OUTPUT{'debug'};
+
+    # dump_var($msg, $hashref, $testid, @scrub_values)
     my $msg     = $_[0];
     my %hash_in = %{ $_[1] };
+    my $testid  = $_[2];
     my @scrubs;
-    for (my $i = 2 ; $i <= $#_ ; $i++) {
+    for (my $i = 3 ; $i <= $#_ ; $i++) {
         push(@scrubs, $_[$i]);
     }
     my $display = LW2::dump('', \%hash_in);
@@ -2928,7 +2933,7 @@ sub dump_var {
         }
         $display = $new;
     }
-    nprint($display, "d");
+    nprint($display, "d", $testid);
     return;
 }
 
@@ -3267,7 +3272,7 @@ sub nfetch {
             "+ ERROR: *** Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: "
               . $response{'whisker'}->{'error'}
               . ". ***\n+ ERROR: *** Consider using mitmproxy to avoid TLS fingerprinting. ***",
-            "",
+            "", undef,
             ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
             );
         $mark->{'terminate'} = 1;
@@ -3275,10 +3280,10 @@ sub nfetch {
     }
 
     if ($OUTPUT{'debug'}) {
-        dump_var("Request Hash", \%request,
+        dump_var("Request Hash", \%request, $testid,
                  ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
-        dump_var("Response Hash",
-                 \%response, ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
+        dump_var("Response Hash", \%response, $testid,
+                 ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
     }
 
     # Snarf what we can from the whisker hash and put in mark
@@ -3360,7 +3365,7 @@ sub nfetch {
             && !exists $flags->{'noerror'}) {
             $mark->{'total_errors'}++;
             nprint("+ ERROR: $whisker->{'uri_requested'} returned an error: $whisker->{'error'}\n",
-                   "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "e", "core", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             if ($whisker->{'code'} eq '502' && $CLI{'useproxy'}) {
                 nprint("+ ERROR: Received 502 'Bad Gateway' from proxy\n");
             }
@@ -3377,7 +3382,7 @@ sub nfetch {
         my $displayname   = $mark->{'displayname'};
 
         foreach my $c (@$cookies) {
-            nprint("+ $uri_requested sent cookie: $c", "", ($hostname, $ip, $displayname));
+            nprint("+ $uri_requested sent cookie: $c", "", undef, ($hostname, $ip, $displayname));
         }
     }
 
@@ -4519,7 +4524,7 @@ sub send_updates {
         nprint("+ ERROR: $code -> "
                  . $response{'location'}
                  . "\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.",
-               "",
+               "", undef,
                ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'})
                );
     }
@@ -4565,6 +4570,7 @@ sub usage {
                                json  JSON Format
                                htm   HTML Format
                                sql   Generic SQL (see docs for schema)
+                               sqld  SQL Direct (MySQL/PostgreSQL via DBI)
                                txt   Plain text
                                xml   XML Format
                                (if not specified the format will be taken from the file extension passed to -output)
@@ -4759,7 +4765,7 @@ sub add_vulnerability {
     }
 
     nprint("+ [$nikto_id] $message",
-           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Save it
     if ($CLI{'saveresults'} ne '') {

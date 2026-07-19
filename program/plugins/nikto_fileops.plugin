@@ -108,7 +108,7 @@ sub save_createdir {
     if (!-d $savedir) {
         if (!mkdir($savedir)) {
             nprint("+ ERROR: Unable to create -Save directory '$savedir': $!",
-                   "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
             exit 1;
         }
     }
@@ -157,7 +157,7 @@ sub parse_hostfile {
                 unless (($nmp =~ /\/open\/tcp/)
                     && (($nmp =~ /^(?:\s+)?(?:80|443)\//) || ($nmp =~ /(?:http|ssl)/i)))
                 {
-                    nprint("\tNon web port identified: $hostdesc:$nmp", "d", ($hostdesc));
+                    nprint("\tNon web port identified: $hostdesc:$nmp", "d", "fileops", ($hostdesc));
                     next;
                 }
                 $nmp =~ /^(?:\s+)?(\d+)\//;

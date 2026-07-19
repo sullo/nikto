@@ -38,7 +38,7 @@ sub nikto_cgi {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $possiblecgidir, "GET", "", "", "", "CGI");
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res",
-                   "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "d", "cgi", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             my $is_index = ($res eq "200" && $content =~ /(?:index of \/|directory listing (?:of|for))/i);
             if (   ($res =~ /^40[135]$/ || $is_index)

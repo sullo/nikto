@@ -75,7 +75,7 @@ sub nikto_robots {
                 $realfile =~ s/^$realdir//;
 
                 nprint("- robots.txt entry dir:$realdir -- file:$realfile",
-                       "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                       "d", "robots", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 if (($realdir ne "") && ($realdir ne "/")) {
                     $realdir =~ s/\\//g;
                     $DIRS{$realdir} = 1;

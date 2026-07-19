@@ -280,11 +280,11 @@ sub testfile {
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
     nprint("- $res for $uri (error: $error)",
-           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "v", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     if ($error) {
         $mark->{'total_errors'}++;
         nprint("+ ERROR: $uri returned an error: $error",
-               "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+               "e", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return;
     }
     if ($res == 200) {
