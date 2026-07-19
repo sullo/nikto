@@ -29,6 +29,15 @@ sub nikto_report_sqld_init {
 }
 
 ###############################################################################
+# Fetch an environment variable, tolerating case differences.
+# Windows environment names are case-insensitive at the OS level, but %ENV is a
+# plain (case-sensitive) hash, so 'set nikto_db_pass=x' would otherwise be missed.
+sub sqld_env {
+    my ($name) = @_;
+    return $ENV{$name} // $ENV{ lc($name) } // $ENV{ uc($name) };
+}
+
+###############################################################################
 # Does this DBI error string indicate the connection is gone?
 # Covers both MySQL/MariaDB and PostgreSQL (DBD::Pg) wordings.
 sub sqld_conn_lost {
@@ -114,13 +123,16 @@ sub validate_sqld_config {
     }
 
     # Check for environment variables
-    if (!defined $ENV{'NIKTO_DB_USER'} || $ENV{'NIKTO_DB_USER'} eq '') {
+    my $env_user = sqld_env('NIKTO_DB_USER');
+    my $env_pass = sqld_env('NIKTO_DB_PASS');
+
+    if (!defined $env_user || $env_user eq '') {
         nprint("+ ERROR: NIKTO_DB_USER environment variable not set");
         nprint("+        Set NIKTO_DB_USER before running nikto");
         $errors = 1;
     }
 
-    if (!defined $ENV{'NIKTO_DB_PASS'} || $ENV{'NIKTO_DB_PASS'} eq '') {
+    if (!defined $env_pass || $env_pass eq '') {
         nprint("+ ERROR: NIKTO_DB_PASS environment variable not set");
         nprint("+        Set NIKTO_DB_PASS before running nikto");
         $errors = 1;
@@ -240,8 +252,8 @@ sub sqld_open {
     }
 
     # Get credentials from environment
-    my $db_user = $ENV{'NIKTO_DB_USER'};
-    my $db_pass = $ENV{'NIKTO_DB_PASS'};
+    my $db_user = sqld_env('NIKTO_DB_USER');
+    my $db_pass = sqld_env('NIKTO_DB_PASS');
 
     # Connect
     nprint("- Connecting to $db_type DB $db_name at $db_host:$db_port", "v", "report_sqld");
