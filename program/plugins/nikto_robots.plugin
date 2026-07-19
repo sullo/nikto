@@ -58,7 +58,7 @@ sub nikto_robots {
                 $line =~ s/\#.*$//;
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
-                $line =~ s/(?:dis)?allow(?:\\:)?(?:\\\s+)?//i;
+                $line =~ s/^(?:dis)?allow\s*:?\s*//i;
                 $line =~ s/\/+/\//g;
                 $line =~ s/\\//g;
 
