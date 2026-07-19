@@ -25,7 +25,19 @@ sub nikto_tests_init {
 sub nikto_tests {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my $data;
+
+    # Pre-compile the user-supplied -404string patterns once
+    my @errstrings_user;
+    if (defined $VARIABLES{'ERRSTRINGS_USER'} && ref($VARIABLES{'ERRSTRINGS_USER'}) eq 'HASH') {
+        foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS_USER'} }) {
+            my $compiled = eval { qr/$pattern/ };
+            if (!defined $compiled) {
+                nprint("+ ERROR: invalid -404string pattern ignored: $pattern", "e", "tests");
+                next;
+            }
+            push(@errstrings_user, $compiled);
+        }
+    }
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
@@ -38,7 +50,7 @@ sub nikto_tests {
       URI: foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
             my (%headrs, %flags, $data);
-            if ($TESTS{$checkid}{'headers'} ne '') {
+            if (defined $TESTS{$checkid}{'headers'} && $TESTS{$checkid}{'headers'} ne '') {
                 my $header = unslash($TESTS{$checkid}{'headers'});
 
                 # Apply variable replacement to headers
@@ -62,12 +74,17 @@ sub nikto_tests {
                   unless ($headrs{'host'});    # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
-            if ($TESTS{$checkid}{'data'} ne '') {
+            if (defined $TESTS{$checkid}{'data'} && $TESTS{$checkid}{'data'} ne '') {
                 $data = unslash($TESTS{$checkid}{'data'});
             }
 
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $data, \%headrs, \%flags, $checkid);
+
+            # An errored request is still matched as long as something came back.
+            $res     = '' unless defined $res;
+            $content = '' unless defined $content;
+            next URI if $res eq '' && $content eq '';
 
             # Percentages
             if (   $OUTPUT{'progress'}
@@ -130,11 +147,9 @@ sub nikto_tests {
                         next URI;    # Skip this test, it's a user-defined 404
                     }
                 }
-                if (defined $VARIABLES{'ERRSTRINGS_USER'} && ref($VARIABLES{'ERRSTRINGS_USER'}) eq 'HASH') {
-                    foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS_USER'} }) {
-                        if ($content =~ /$pattern/) {
-                            next URI;    # Skip this test, it's a user-defined 404
-                        }
+                foreach my $pattern (@errstrings_user) {
+                    if ($content =~ $pattern) {
+                        next URI;    # Skip this test, it's a user-defined 404
                     }
                 }
 
@@ -159,7 +174,7 @@ sub nikto_tests {
                 # Check if DSL has positive BODY patterns (BODY: but not !BODY:)
                 my $has_body_match = ($TESTS{$checkid}{'dsl'} =~ /(?:^|[^!])BODY:/i);
 
-                if (   $res == 200
+                if (   $res eq '200'
                     && !$has_body_match
                     && !$has_explicit_non200_code
                     && is_404($mark, $mark->{'root'} . $uri, $response)) {
@@ -192,14 +207,16 @@ sub nikto_tests {
 
 sub passchecks {
     my ($mark) = @_;
-    my @DIRS   = (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
-    my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
+    my @DIRS = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
+
+    # Empty entries are dropped up front so the counter math matches reality
+    my @PFILES = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
     my @EXTS   = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
     nprint("- Performing passfiles mutation.", "v", "tests");
 
     # Update total requests for status reports
-    my @CGIS = map { s/\/$//; $_ } split(/ /, $VARIABLES{'@CGIDIRS'});
+    my @CGIS = grep { $_ ne "" } map { s/\/$//; $_ } split(/ /, $VARIABLES{'@CGIDIRS'});
     $COUNTERS{'total_checks'} =
       $COUNTERS{'total_checks'} +
       (scalar(@DIRS) * scalar(@PFILES)) +
@@ -209,7 +226,6 @@ sub passchecks {
     foreach my $dir (@DIRS) {
         return if $mark->{'terminate'};
         foreach my $file (@PFILES) {
-            next if ($file eq "");
 
             # dir/file
             testfile($mark, "$dir$file", "passfiles", "299998");
@@ -221,6 +237,8 @@ sub passchecks {
                 testfile($mark, "$dir$file.$ext", "passfiles", "299998");
 
                 foreach my $cgi (@CGIS) {
+                    return if $mark->{'terminate'};
+
                     # dir/file.ext
                     testfile($mark, "$cgi$dir$file.$ext", "passfiles", "299998");
 
@@ -278,16 +296,14 @@ sub testfile {
     my ($mark, $uri, $name, $tid) = @_;
     return if $mark->{'terminate'};
     my ($res, $content, $error, $request, $response) =
-      nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
+      nfetch($mark, $uri, "GET", "", {}, {}, "Tests: $name");
+    $res   = '' unless defined $res;
+    $error = '' unless defined $error;
     nprint("- $res for $uri (error: $error)",
            "v", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-    if ($error) {
-        $mark->{'total_errors'}++;
-        nprint("+ ERROR: $uri returned an error: $error",
-               "e", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        return;
-    }
-    if ($res == 200) {
+
+    # Mutations only care about the response code, so an error w/code is real hit
+    if ($res eq '200') {
         add_vulnerability($mark, "$uri: file found during $name mutation",
                           $tid, "", "GET", $uri, $request, $response);
     }

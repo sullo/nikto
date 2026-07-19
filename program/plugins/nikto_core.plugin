@@ -3173,7 +3173,7 @@ sub nfetch {
     LW2::cookie_write($mark->{'cookiejar'}, \%request, 1) if defined($mark->{'cookiejar'});
 
     # Override HTTP version
-    $request{'whisker'}->{'version'} = $httpver if ($httpver ne '');
+    $request{'whisker'}->{'version'} = $httpver if (defined $httpver && $httpver ne '');
 
     $request{'whisker'}->{'host'} = $mark->{'ip'} if ($flags->{'nohost'});
 
