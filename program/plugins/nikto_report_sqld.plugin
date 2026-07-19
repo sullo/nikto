@@ -1,0 +1,602 @@
+###############################################################################
+# SPDX-License-Identifier: GPL-3.0-only
+# PURPOSE: SQL Direct Database Reporting - Directly inserts scan results into MySQL or PostgreSQL databases using DBI
+################################################################################
+
+our $SQLD_DBH          = undef;    # Database handle
+our $SQLD_MYSQL_DRIVER = undef;    # Which MySQL driver to use: 'mariadb' or 'mysql'
+our $SQLD_STMT_HOST    = undef;    # Prepared statement for host start inserts
+our $SQLD_STMT_ITEM    = undef;    # Prepared statement for item inserts
+our $SQLD_TABLE_NAME   = undef;    # Table name from config
+
+###############################################################################
+
+###############################################################################
+sub nikto_report_sqld_init {
+    my $id = { name        => "report_sqld",
+               full_name   => "SQL Direct Database reports",
+               author      => "Sullo",
+               description => "Directly inserts scan results into MySQL or PostgreSQL databases.",
+               report_head => \&sqld_open,
+               report_host_start => \&sqld_host_start,
+               report_item       => \&sqld_item,
+               report_close      => \&sqld_close,
+               report_ssl_info   => \&sqld_ssl_info,
+               report_format     => 'sqld',
+               copyright         => "2025 Chris Sullo"
+               };
+    return $id;
+}
+
+###############################################################################
+# Does this DBI error string indicate the connection is gone?
+# Covers both MySQL/MariaDB and PostgreSQL (DBD::Pg) wordings.
+sub sqld_conn_lost {
+    my ($error) = @_;
+    return 0 unless defined $error;
+    return $error =~ /lost\s+connection
+                     |server\s+has\s+gone\s+away
+                     |server\s+closed\s+the\s+connection
+                     |no\s+connection\s+to\s+the\s+server
+                     |terminating\s+connection
+                     |connection\s+(?:not\s+open|unexpectedly|.*(?:closed|reset|refused|failed))
+                     /xi ? 1 : 0;
+}
+
+###############################################################################
+# Validate configuration and dependencies
+sub validate_sqld_config {
+    my $errors = 0;
+
+    # Check for required configuration values
+    if (!defined $CONFIGFILE{'DB_TYPE'} || $CONFIGFILE{'DB_TYPE'} eq '') {
+        nprint("+ ERROR: DB_TYPE not configured in nikto.conf");
+        nprint("+        Set DB_TYPE=mysql or DB_TYPE=postgresql");
+        $errors = 1;
+    }
+    elsif ($CONFIGFILE{'DB_TYPE'} !~ /^(mysql|postgresql)$/i) {
+        nprint("+ ERROR: Invalid DB_TYPE: $CONFIGFILE{'DB_TYPE'}");
+        nprint("+        DB_TYPE must be 'mysql' or 'postgresql'");
+        $errors = 1;
+    }
+
+    if (!defined $CONFIGFILE{'DB_HOST'} || $CONFIGFILE{'DB_HOST'} eq '') {
+        nprint("+ ERROR: DB_HOST not configured in nikto.conf");
+        $errors = 1;
+    }
+    elsif ($CONFIGFILE{'DB_HOST'} !~ /^[\[\]A-Za-z0-9._:-]+$/) {
+        # Reject DSN metacharacters (;= etc.) in host
+        nprint("+ ERROR: Invalid DB_HOST: contains unsupported characters");
+        $errors = 1;
+    }
+
+    if (!defined $CONFIGFILE{'DB_PORT'} || $CONFIGFILE{'DB_PORT'} eq '') {
+
+        # Set defaults based on DB_TYPE
+        if (defined $CONFIGFILE{'DB_TYPE'} && $CONFIGFILE{'DB_TYPE'} =~ /^mysql$/i) {
+            $CONFIGFILE{'DB_PORT'} = 3306;
+        }
+        elsif (defined $CONFIGFILE{'DB_TYPE'} && $CONFIGFILE{'DB_TYPE'} =~ /^postgresql$/i) {
+            $CONFIGFILE{'DB_PORT'} = 5432;
+        }
+        else {
+            nprint("+ ERROR: DB_PORT not configured in nikto.conf");
+            $errors = 1;
+        }
+    }
+    elsif ($CONFIGFILE{'DB_PORT'} !~ /^\d+$/
+        || $CONFIGFILE{'DB_PORT'} < 1
+        || $CONFIGFILE{'DB_PORT'} > 65535) {
+        nprint("+ ERROR: Invalid DB_PORT: must be an integer 1-65535");
+        $errors = 1;
+    }
+
+    if (!defined $CONFIGFILE{'DB_NAME'} || $CONFIGFILE{'DB_NAME'} eq '') {
+        nprint("+ ERROR: DB_NAME not configured in nikto.conf");
+        $errors = 1;
+    }
+    elsif ($CONFIGFILE{'DB_NAME'} !~ /^[A-Za-z0-9_]+$/) {
+        nprint("+ ERROR: Invalid DB_NAME: use only letters, digits, underscore");
+        $errors = 1;
+    }
+
+    # Get table name from config, default to 'nikto_table'
+    # Must be a safe SQL identifier (interpolated into prepared statements)
+    if (!defined $CONFIGFILE{'DB_TABLE'} || $CONFIGFILE{'DB_TABLE'} eq '') {
+        $SQLD_TABLE_NAME = 'nikto_table';
+    }
+    elsif ($CONFIGFILE{'DB_TABLE'} =~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
+        $SQLD_TABLE_NAME = $CONFIGFILE{'DB_TABLE'};
+    }
+    else {
+        nprint("+ ERROR: Invalid DB_TABLE: must be a simple identifier (letters, digits, underscore)");
+        $errors = 1;
+    }
+
+    # Check for environment variables
+    if (!defined $ENV{'NIKTO_DB_USER'} || $ENV{'NIKTO_DB_USER'} eq '') {
+        nprint("+ ERROR: NIKTO_DB_USER environment variable not set");
+        nprint("+        Set NIKTO_DB_USER before running nikto");
+        $errors = 1;
+    }
+
+    if (!defined $ENV{'NIKTO_DB_PASS'} || $ENV{'NIKTO_DB_PASS'} eq '') {
+        nprint("+ ERROR: NIKTO_DB_PASS environment variable not set");
+        nprint("+        Set NIKTO_DB_PASS before running nikto");
+        $errors = 1;
+    }
+
+    # Check for required DBI modules. A failed require can mean "not installed"
+    # or "installed but unloadable" (e.g. XS built against a different perl), so
+    # report the underlying error rather than always claiming it is missing.
+    eval "require DBI";
+    if ($@) {
+        my $err = $@;
+        $err =~ s/\s+$//;
+        $err =~ s{\n}{\n+        }g;
+        nprint("+ ERROR: DBI module could not be loaded");
+        nprint("+        $err");
+        nprint("+        Install/rebuild with: cpan DBI");
+        $errors = 1;
+    }
+
+    # Check for database-specific driver
+    # For MySQL, prefer DBD::MariaDB, fallback to DBD::mysql
+    if (defined $CONFIGFILE{'DB_TYPE'} && $CONFIGFILE{'DB_TYPE'} =~ /^mysql$/i) {
+        my $driver_found = 0;
+
+        # Try DBD::MariaDB first (preferred)
+        eval "require DBD::MariaDB";
+        my $mariadb_err = $@;
+        if (!$mariadb_err) {
+            $SQLD_MYSQL_DRIVER = 'MariaDB';    # Capital letters for DSN
+            $driver_found      = 1;
+            nprint("- Using DBD::MariaDB driver", "v", "report_sqld");
+        }
+        else {
+            # Fallback to DBD::mysql
+            eval "require DBD::mysql";
+            my $mysql_err = $@;
+            if (!$mysql_err) {
+                $SQLD_MYSQL_DRIVER = 'mysql';
+                $driver_found      = 1;
+                nprint("- Using DBD::mysql driver", "v", "report_sqld");
+            }
+            else {
+                for my $e ($mariadb_err, $mysql_err) {
+                    $e =~ s/\s+$//;
+                    $e =~ s{\n}{\n+        }g;
+                    nprint("+        $e", "v", "report_sqld");
+                }
+            }
+        }
+
+        if (!$driver_found) {
+            nprint("+ ERROR: Neither DBD::MariaDB nor DBD::mysql could be loaded");
+            nprint("+        Install/rebuild with: cpan DBD::MariaDB (preferred) or cpan DBD::mysql");
+            nprint("+        Use -Display V to see the underlying load error");
+            $errors = 1;
+        }
+    }
+    elsif (defined $CONFIGFILE{'DB_TYPE'} && $CONFIGFILE{'DB_TYPE'} =~ /^postgresql$/i) {
+        eval "require DBD::Pg";
+        if ($@) {
+            my $err = $@;
+            $err =~ s/\s+$//;
+        $err =~ s{\n}{\n+        }g;
+            nprint("+ ERROR: DBD::Pg module could not be loaded");
+            nprint("+        $err");
+            nprint("+        Install/rebuild with: cpan DBD::Pg");
+            $errors = 1;
+        }
+    }
+
+    if ($errors) {
+        nprint("+ SQL Direct Database reporting cannot be used without proper configuration");
+        exit 1;
+    }
+
+    return;
+}
+
+###############################################################################
+# open database connection
+sub sqld_open {
+    my ($file) = @_;
+
+    # Validate configuration and dependencies only when format is selected
+    validate_sqld_config();
+
+    # Build DSN based on database type
+    my $dsn;
+    my $db_type = lc($CONFIGFILE{'DB_TYPE'});
+    my $db_host = $CONFIGFILE{'DB_HOST'};
+    my $db_port = $CONFIGFILE{'DB_PORT'};
+    my $db_name = $CONFIGFILE{'DB_NAME'};
+
+    if ($db_type eq 'mysql') {
+
+        # Use the driver we detected during validation
+        my $driver = $SQLD_MYSQL_DRIVER || 'mysql';    # Default to mysql if not set
+
+        # When host is 'localhost', DBD::mysql/DBD::MariaDB uses Unix socket
+        # and port cannot be specified. Use 127.0.0.1 to force TCP connection.
+        my $connect_host = $db_host;
+        if (lc($db_host) eq 'localhost') {
+            $connect_host = '127.0.0.1';
+            nprint("- Converting 'localhost' to '127.0.0.1' to allow port specification",
+                   "v", "report_sqld");
+        }
+
+        # Build DSN with port
+        $dsn = "DBI:$driver:database=$db_name;host=$connect_host;port=$db_port";
+    }
+    elsif ($db_type eq 'postgresql') {
+        $dsn = "DBI:Pg:dbname=$db_name;host=$db_host;port=$db_port";
+    }
+    else {
+        nprint("+ ERROR: Unsupported database type: $db_type");
+        exit 1;
+    }
+
+    # Get credentials from environment
+    my $db_user = $ENV{'NIKTO_DB_USER'};
+    my $db_pass = $ENV{'NIKTO_DB_PASS'};
+
+    # Connect
+    nprint("- Connecting to $db_type DB $db_name at $db_host:$db_port", "v", "report_sqld");
+    $SQLD_DBH = DBI->connect($dsn, $db_user, $db_pass,
+                             {  RaiseError => 0,
+                                PrintError => 0,
+                                AutoCommit => 1,
+                                }
+                             );
+
+    if (!$SQLD_DBH) {
+        my $error = DBI->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to connect to database: $error");
+        nprint("+        DSN: $dsn", "d");
+        nprint("+        Check database credentials and network connectivity");
+        exit 1;
+    }
+
+    nprint("- Database connection successful", "v", "report_sqld");
+
+    # Check if table exists
+    my $table_exists = 0;
+    my $table_name   = $SQLD_TABLE_NAME;
+
+    if ($db_type eq 'mysql') {
+
+        # Use information_schema rather than SHOW TABLES LIKE: LIKE treats '_'
+        # and '%' as wildcards, so 'nikto_table' would also match 'niktoXtable'
+        my $table_check =
+          $SQLD_DBH->prepare("SELECT table_name FROM information_schema.tables "
+                             . "WHERE table_schema = DATABASE() AND table_name = ?");
+        if ($table_check) {
+            if ($table_check->execute($table_name) && $table_check->fetchrow_array()) {
+                $table_exists = 1;
+            }
+            $table_check->finish();
+        }
+    }
+    elsif ($db_type eq 'postgresql') {
+
+        # Use information_schema to check for table existence
+        # Check across multiple schemas (current schema, search_path, and public)
+        my @schemas_to_check = ();
+
+        # Get current schema
+        my $curr_schema = $SQLD_DBH->selectrow_array("SELECT current_schema()");
+        if ($curr_schema) {
+            push @schemas_to_check, $curr_schema;
+        }
+
+        # Get search_path and current user
+        my $search_path  = $SQLD_DBH->selectrow_array("SHOW search_path");
+        my $current_user = $SQLD_DBH->selectrow_array("SELECT current_user");
+        if ($search_path) {
+            my @path_schemas = split(/\s*,\s*/, $search_path);
+            for my $schema (@path_schemas) {
+                $schema =~ s/^["']|["']$//g;
+                $schema =~ s/^\s+|\s+$//g;
+
+                # Resolve $user placeholder to actual username
+                if ($schema eq '$user' && $current_user) {
+                    $schema = $current_user;
+                }
+
+                # Skip $user placeholder if we couldn't resolve it
+                next if $schema eq '$user';
+
+                push @schemas_to_check, $schema unless grep { $_ eq $schema } @schemas_to_check;
+            }
+        }
+
+        # Always check public schema
+        push @schemas_to_check, 'public' unless grep { $_ eq 'public' } @schemas_to_check;
+
+        # Check each schema in information_schema
+        for my $schema (@schemas_to_check) {
+            my $table_check = $SQLD_DBH->prepare("SELECT table_name FROM information_schema.tables "
+                                                 . "WHERE table_schema = ? AND table_name = ?");
+            next unless $table_check;
+            if ($table_check->execute($schema, $table_name) && $table_check->fetchrow_array()) {
+                $table_exists = 1;
+            }
+            $table_check->finish();
+            last if $table_exists;
+        }
+    }
+
+    if (!$table_exists) {
+        nprint("+ ERROR: Table '$table_name' does not exist in database '$db_name'");
+        nprint("+        Please create the table before using SQL Direct reporting");
+        if ($db_type eq 'postgresql') {
+            nprint("+        See documentation/nikto_schema_postgresql.sql for PostgreSQL schema");
+        }
+        else {
+            nprint("+        See documentation/nikto_schema_mysql.sql for MySQL/MariaDB schema");
+        }
+
+        # TODO: Future enhancement - auto-create table if missing
+        $SQLD_DBH->disconnect();
+        exit 1;
+    }
+
+    nprint("- Table '$table_name' verified", "d");
+
+    # Prepare statements
+    # Host start statement (without request/response columns)
+    $SQLD_STMT_HOST = $SQLD_DBH->prepare(
+        "INSERT INTO $table_name (scanid, testid, ip, hostname, port, tls, refs, httpmethod, uri, message) "
+          . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    if (!$SQLD_STMT_HOST) {
+        my $error = $SQLD_DBH->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to prepare host start statement: $error");
+        $SQLD_DBH->disconnect();
+        exit 1;
+    }
+
+    # Item statement (with request/response columns)
+    $SQLD_STMT_ITEM = $SQLD_DBH->prepare(
+        "INSERT INTO $table_name (scanid, testid, ip, hostname, port, tls, refs, httpmethod, uri, message, request, response) "
+          . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    if (!$SQLD_STMT_ITEM) {
+        my $error = $SQLD_DBH->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to prepare item statement: $error");
+        $SQLD_STMT_HOST->finish() if $SQLD_STMT_HOST;
+        $SQLD_DBH->disconnect();
+        exit 1;
+    }
+
+    # Return the handle (though it's also stored in $SQLD_DBH for other functions)
+    return $SQLD_DBH;
+}
+
+###############################################################################
+# start output for a host
+sub sqld_host_start {
+    my ($handle, $mark) = @_;
+
+    return unless defined $SQLD_DBH;
+
+    my $banner   = $mark->{'banner'} || '';
+    # mark->{ssl} is set during port check; ssl_cipher is not available yet at host_start
+    my $ssl      = $mark->{'ssl'} ? 1 : 0;
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    my $scanid   = $mark->{'scanid'} || '';
+
+    # Use pre-prepared statement
+    if (!$SQLD_STMT_HOST) {
+        nprint("+ ERROR: Host start statement not prepared");
+        return;
+    }
+
+    # Execute with parameters - handle errors if connection is lost
+    my $msg = $banner ne '' ? "Server banner: $banner" : "Host scan started";
+    if (!$SQLD_STMT_HOST->execute($scanid,         '999958', $mark->{'ip'}, $hostname,
+                                  $mark->{'port'}, $ssl,     '0',           'GET',
+                                  '/',             $msg
+                                  )
+        ) {
+        my $error = $SQLD_DBH->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to insert host start record: $error");
+        nprint("+        Scanid: $scanid, Host: $hostname:$mark->{'port'}",
+               "d", "report_sqld", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+
+        # If connection lost, mark handle as invalid
+        if (sqld_conn_lost($error)) {
+            $SQLD_DBH = undef;
+        }
+        return;
+    }
+
+    return;
+}
+
+###############################################################################
+# write SSL info
+sub sqld_ssl_info {
+    my ($handle, $mark) = @_;
+
+    return unless defined $SQLD_DBH;
+
+    my $hostname     = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    my $ssl          = $mark->{'ssl'} ? 1 : 0;
+    my $scanid       = $mark->{'scanid'}            || '';
+    my $ssl_cipher   = $mark->{'ssl_cipher'}        || '';
+    my $ssl_subject  = $mark->{'ssl_cert_subject'}  || '';
+    my $ssl_issuer   = $mark->{'ssl_cert_issuer'}   || '';
+    my $ssl_altnames = $mark->{'ssl_cert_altnames'} || '';
+
+    # Extract CN from subject. RDNs are separated by ',' or '/', and a CN may
+    # legitimately contain spaces, so only those two are terminators.
+    my $ssl_cn = '';
+    if ($ssl_subject =~ /\bCN\s*=\s*([^,\/]+)/i) {
+        $ssl_cn = $1;
+        $ssl_cn =~ s/^\s+|\s+$//g;
+    }
+
+    # Build combined SSL info message
+    my $ssl_message = "SSL/TLS Information - ";
+    $ssl_message .= "Subject: $ssl_subject"  if $ssl_subject ne '';
+    $ssl_message .= "; CN: $ssl_cn"          if $ssl_cn ne '';
+    $ssl_message .= "; SAN: $ssl_altnames"   if $ssl_altnames ne '';
+    $ssl_message .= "; Ciphers: $ssl_cipher" if $ssl_cipher ne '';
+    $ssl_message .= "; Issuer: $ssl_issuer"  if $ssl_issuer ne '';
+
+    # Use pre-prepared statement for items
+    if (!$SQLD_STMT_ITEM) {
+        nprint("+ ERROR: Item statement not prepared for SSL info");
+        return;
+    }
+
+    # Single INSERT statement with all SSL info
+    if (!$SQLD_STMT_ITEM->execute($scanid,         '000137', $mark->{'ip'}, $hostname,
+                                  $mark->{'port'}, $ssl,     '0', 'GET', '/', $ssl_message, '', ''
+                                  )
+        ) {
+        my $error = $SQLD_DBH->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to insert SSL info record: $error", "d");
+
+        if (sqld_conn_lost($error)) {
+            $SQLD_DBH = undef;
+        }
+    }
+}
+
+###############################################################################
+# print an item
+sub sqld_item {
+    my ($handle, $mark, $item) = @_;
+
+    return unless defined $SQLD_DBH;
+
+    foreach my $uri (split(' ', $item->{'uri'})) {
+        my $hostname   = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+        my $httpmethod = $item->{'method'}  || 'GET';
+        my $msg        = $item->{'message'} || '';
+        my $root       = $mark->{'root'}    || '';
+        my $ssl        = $mark->{'ssl'} ? 1 : 0;
+        my $scanid     = $mark->{'scanid'} || '';
+
+        # testid is NOT NULL in the schema, so never pass an undef/empty id
+        my $testid =
+          (defined $item->{'nikto_id'} && $item->{'nikto_id'} ne '')
+          ? $item->{'nikto_id'}
+          : '000000';
+
+        # Build URI with root if needed (path-boundary match, not bare prefix)
+        my $full_uri = $uri;
+        if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+            $full_uri = $root . $uri;
+        }
+
+        # Clean message - remove URI prefix if present
+        my $uri_escaped  = quotemeta($uri);
+        my $root_escaped = quotemeta($root);
+        $msg =~ s/^$uri_escaped:\s//;
+        $msg =~ s/^$root_escaped$uri_escaped:\s//;
+
+        # Rebuild the request from the hash
+        my $request_string = rebuild_request($item->{'request'});
+
+        # Limit request data size for database compatibility and performance
+        # MySQL/MariaDB: BLOB is 64KB limit
+        # PostgreSQL: bytea can be larger, but we cap at same limit for consistency
+        # Base64 encoding increases size by ~33%, so we limit raw data to ~48KB
+        # to ensure encoded fits in MySQL BLOB (64KB) and for performance
+
+        my $max_request_size = 48000;    # ~48KB raw data (becomes ~64KB when base64 encoded)
+        if (length($request_string) > $max_request_size) {
+            my $original_size = length($request_string);
+            $request_string = substr($request_string, 0, $max_request_size);
+            $request_string .= "\n[Request truncated - original size: $original_size bytes]";
+            nprint(
+                "- WARNING: Request data truncated for testid $testid (original: $original_size bytes)",
+                "v", "report_sqld"
+                );
+        }
+
+        # Base64 encode request data for consistent storage format
+        my $request_data = length($request_string) ? LW2::encode_base64($request_string, '') : '';
+
+        # Rebuild the response content
+        my $response_string = rebuild_response($item->{'response'}, 1);
+
+        my $max_response_size = 12000000;    # ~12MB raw data (becomes ~16MB when base64 encoded)
+        if (length($response_string) > $max_response_size) {
+            my $original_size = length($response_string);
+            $response_string = substr($response_string, 0, $max_response_size);
+            $response_string .= "\n[Response truncated - original size: $original_size bytes]";
+            nprint(
+                "- WARNING: Response data truncated for testid $testid (original: $original_size bytes)",
+                "v", "report_sqld"
+                );
+        }
+
+        my $response_data =
+          length($response_string) ? LW2::encode_base64($response_string, '') : '';
+
+        # Use pre-prepared statement
+        if (!$SQLD_STMT_ITEM) {
+            nprint("+ ERROR: Item statement not prepared");
+            next;
+        }
+
+        # Execute with parameters - handle errors if connection is lost
+        if (!$SQLD_STMT_ITEM->execute($scanid,               $testid,
+                                      $mark->{'ip'},         $hostname,
+                                      $mark->{'port'},       $ssl,
+                                      $item->{'refs'} || '', $httpmethod,
+                                      $full_uri,             $msg,
+                                      $request_data,         $response_data
+                                      )
+            ) {
+            my $error = $SQLD_DBH->errstr || "Unknown error";
+            nprint("+ ERROR: Failed to insert item record (testid: $testid): $error");
+
+            # If connection lost, mark handle as invalid and exit loop
+            if (sqld_conn_lost($error)) {
+                $SQLD_DBH = undef;
+                last;    # Exit the foreach loop
+            }
+            next;
+        }
+
+        nprint("- Inserted item record (testid: $testid, scanid: $scanid)", "d");
+    }
+
+    return;
+}
+
+###############################################################################
+# close database connection
+sub sqld_close {
+    my ($handle) = @_;
+
+    # Clean up prepared statements
+    if (defined $SQLD_STMT_HOST) {
+        eval { $SQLD_STMT_HOST->finish(); };
+        $SQLD_STMT_HOST = undef;
+    }
+
+    if (defined $SQLD_STMT_ITEM) {
+        eval { $SQLD_STMT_ITEM->finish(); };
+        $SQLD_STMT_ITEM = undef;
+    }
+
+    if (defined $SQLD_DBH) {
+        nprint("- Closing database connection", "v", "report_sqld");
+        eval { $SQLD_DBH->disconnect(); };
+        $SQLD_DBH = undef;
+    }
+
+    return;
+}
+
+1;
+
