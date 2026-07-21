@@ -155,30 +155,17 @@ sub nikto_tests {
 
              # Lastly check for a false positive based on file extension or type.
              # We check is_404 when the actual response code is 200, because 404 error pages
-             # can return 200 status codes. However, we skip the check if:
-             # 1. There's a positive BODY match (specific body content indicates real content)
-             # 2. The DSL has an explicit non-200 CODE match (like CODE:404, CODE:403)
-             #    without including 200, as those are intentional matches for specific status codes.
-                my $has_code_match = ($TESTS{$checkid}{'dsl'} =~ /CODE:/i);
-
-                # Check if DSL has an explicit non-200 CODE match that doesn't include 200
-                # (e.g., CODE:404, CODE:403, but not CODE:200 or CODE:200|404)
-                my $has_explicit_non200_code = 0;
-                if ($has_code_match) {
-                    my $includes_code_200 = ($TESTS{$checkid}{'dsl'} =~ /\bCODE:\s*200(\D|$)/i);
-
-                    # If there's a CODE match but it doesn't include 200, skip is_404 check
-                    $has_explicit_non200_code = !$includes_code_200;
-                }
-
-                # Check if DSL has positive BODY patterns (BODY: but not !BODY:)
-                my $has_body_match = ($TESTS{$checkid}{'dsl'} =~ /(?:^|[^!])BODY:/i);
-
+             # can return 200 status codes. A test whose match depends on specific body
+             # content is exempt: that content is better evidence than the 404 heuristics.
+             #
+             # There is deliberately no test for the DSL carrying a non-200 CODE term here.
+             # Getting this far means the matcher already returned true for this response,
+             # so a code of 200 proves the DSL's code terms admit 200 -- an explicitly
+             # non-200 test cannot reach this point with $res eq '200' to begin with.
                 if (   $res eq '200'
-                    && !$has_body_match
-                    && !$has_explicit_non200_code
+                    && !$TESTS{$checkid}{'requires_body_match'}
                     && is_404($mark, $mark->{'root'} . $uri, $response)) {
-                    next;
+                    next URI;
                 }
 
                 # Process message with captured groups (if any)

@@ -3293,20 +3293,25 @@ sub nfetch {
     if (!exists $whisker->{'error'}) {
 
         # Banner processing
+        # Duplicate headers are ARRAY refs when ignore_duplicate_headers=0;
+        my $server = $response{'server'};
+        $server =
+          (ref($server) eq 'ARRAY') ? ($server->[0] // '') : ($server // '');
+
         if ($$banner eq "") {
-            $$banner = $response{'server'};
+            $$banner = $server;
         }
-        elsif (   exists $response{'server'}
+        elsif (   $server ne ''
                && !exists $mark->{'bannerchanged'}
-               && ($$banner ne $response{'server'})
-               && ($response{'server'} ne 'Microsoft-HTTPAPI/2.0')) {
+               && ($$banner ne $server)
+               && ($server ne 'Microsoft-HTTPAPI/2.0')) {
             $request{'whisker'}->{'uri'} = "/"
               if (   !defined $request{'whisker'}->{'uri'}
                   || $request{'whisker'}->{'uri'} eq ""
                   || $request{'whisker'}->{'uri'} eq ".");
             add_vulnerability($mark,
                               $request{'whisker'}->{'uri'}
-                                . ": Server banner changed from '$$banner' to '$response{server}'",
+                                . ": Server banner changed from '$$banner' to '$server'",
                               "999962",
                               "",
                               $method,
@@ -3319,12 +3324,20 @@ sub nfetch {
 
         # Also check X-Powered-By header for outdated version checking
         # Only add to components if it contains version-like information (digits, slashes, or dots)
-        if (exists $response{'x-powered-by'}
-            && $response{'x-powered-by'} =~ /(?:\d|\/|\.)/) {
-            my $xpb_value = $response{'x-powered-by'};
-            $xpb_value =~ s/\s+.*$//;    # Strip any trailing whitespace/content
-            if (!exists $mark->{'components'}->{$xpb_value}) {
-                $mark->{'components'}->{$xpb_value} = 1;
+        if (exists $response{'x-powered-by'}) {
+            my @xpb_values =
+              (ref($response{'x-powered-by'}) eq 'ARRAY')
+              ? @{ $response{'x-powered-by'} }
+              : ($response{'x-powered-by'});
+            foreach my $xpb_value (@xpb_values) {
+                next unless defined $xpb_value && !ref($xpb_value);
+                next unless $xpb_value =~ /(?:\d|\/|\.)/;
+                $xpb_value =~ s/\s+.*$//;    # Strip any trailing whitespace/content
+                next if $xpb_value eq '';
+                next if $xpb_value =~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
+                if (!exists $mark->{'components'}->{$xpb_value}) {
+                    $mark->{'components'}->{$xpb_value} = 1;
+                }
             }
         }
 
@@ -3474,6 +3487,10 @@ sub set_scan_items {
                 $TESTS{ $item[0] }{'data'}       = $item[7];
                 $TESTS{ $item[0] }{'headers'}    = $item[8];
                 $TESTS{ $item[0] }{'matcher'}    = build_matcher($item[5], $item[0]);
+
+                # Constant for the life of the scan, so work it out once here
+                # rather than per response in the scan loop
+                $TESTS{ $item[0] }{'requires_body_match'} = dsl_requires_body_match($item[5]);
             }
         }
     }
@@ -3641,11 +3658,13 @@ sub expand_lfi_dsl {
             return $dsl;
         }
 
-        # Build the OR pattern: (@LFIMATCHWIN|@LFIMATCHNIX)
+        # Build the OR pattern: (@LFIMATCHWIN||@LFIMATCHNIX)
+        # || is the DSL's OR operator. A single | has to stay out of it, since
+        # that belongs to the regex inside a term.
         # Use string concatenation to preserve backslashes and avoid interpolation issues
         my $replacement;
         if ($lfi_match_win && $lfi_match_nix) {
-            $replacement = '(' . $lfi_match_win . '|' . $lfi_match_nix . ')';
+            $replacement = '(' . $lfi_match_win . '||' . $lfi_match_nix . ')';
         }
         elsif ($lfi_match_win) {
             $replacement = $lfi_match_win;
@@ -3662,6 +3681,142 @@ sub expand_lfi_dsl {
     }
 
     return $dsl;
+}
+
+#######################################################################
+# Does every way this DSL can match require a positive BODY pattern?
+#
+# Used to decide whether is_404() is allowed to veto a finding: a match
+# driven by specific body content is trusted over the 404 heuristics.
+# This asks the parsed structure rather than pattern matching the raw DSL
+# string, so token values that happen to contain "BODY:" are not mistaken
+# for a BODY term.
+sub dsl_requires_body_match {
+    my ($dsl) = @_;
+    return 0 unless defined $dsl && length $dsl;
+
+    my $expanded = expand_lfi_dsl($dsl);
+    my $parsed   = $DSL_CACHE{$expanded};
+    if (!$parsed) {
+        $parsed = eval { parse_dsl($expanded) };
+        return 0 unless $parsed;
+        $DSL_CACHE{$expanded} = $parsed;
+    }
+    return _parsed_requires_body_match($parsed);
+}
+
+sub _parsed_requires_body_match {
+    my ($parsed) = @_;
+    return 0 unless ref($parsed) eq 'HASH';
+
+    # A top level positive BODY term has to match for the test to fire
+    return 1 if ref($parsed->{'body_pos'}) eq 'ARRAY' && @{ $parsed->{'body_pos'} };
+
+    # Only one alternative in an OR group has to match for the group to pass,
+    # and we cannot tell from here which one did. So the group only tells us a
+    # body pattern was matched when every alternative in it needs one.
+    foreach my $group (@{ $parsed->{'or_groups'} || [] }) {
+        next unless ref($group) eq 'ARRAY' && @$group;
+        my $all_alternatives = 1;
+        foreach my $alt (@$group) {
+            next if _parsed_requires_body_match($alt);
+            $all_alternatives = 0;
+            last;
+        }
+        return 1 if $all_alternatives;
+    }
+    return 0;
+}
+
+#######################################################################
+# Evaluate a parsed DSL against one response.
+#
+# Returns ($matched, \@captures). Captures are the $1..$9 of every
+# positive term that matched, in evaluation order, so a message can
+# interpolate them.
+#
+# Terms are checked cheapest first -- code, then headers and cookies,
+# then the body, which is the only one that scans the whole response --
+# and groups last. Groups recurse back into this function, so they nest
+# to any depth.
+sub dsl_evaluate {
+    my ($parsed, $code, $body, $headers, $cookies) = @_;
+
+    my @captured_groups = ();
+
+    # --- CODE ---
+    for my $re (@{ $parsed->{code_neg} }) {
+        return (0, []) if $code =~ $re;
+    }
+    for my $re (@{ $parsed->{code_pos} }) {
+        return (0, []) unless $code =~ $re;
+        push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+    }
+
+    # --- HEADERS ---
+    for my $h (@{ $parsed->{header_neg} }) {
+        if (exists $headers->{ $h->{name} }) {
+
+            # With a regex the header must not match, without one it must not exist
+            return (0, []) if $h->{regex} && $headers->{ $h->{name} } =~ $h->{regex};
+            return (0, []) unless $h->{regex};
+        }
+    }
+    for my $h (@{ $parsed->{header_pos} }) {
+        return (0, []) unless exists $headers->{ $h->{name} };
+        next unless $h->{regex};
+        return (0, []) unless $headers->{ $h->{name} } =~ $h->{regex};
+        push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+    }
+
+    # --- COOKIES ---
+    for my $c (@{ $parsed->{cookie_neg} }) {
+        if (exists $cookies->{ $c->{name} }) {
+            return (0, []) if $c->{regex} && $cookies->{ $c->{name} } =~ $c->{regex};
+            return (0, []) unless $c->{regex};
+        }
+    }
+    for my $c (@{ $parsed->{cookie_pos} }) {
+        return (0, []) unless exists $cookies->{ $c->{name} };
+        next unless $c->{regex};
+        return (0, []) unless $cookies->{ $c->{name} } =~ $c->{regex};
+        push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+    }
+
+    # --- BODY ---
+    for my $re (@{ $parsed->{body_neg} }) {
+        return (0, []) if $body =~ $re;
+    }
+    for my $re (@{ $parsed->{body_pos} }) {
+        return (0, []) unless $body =~ $re;
+        push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+    }
+
+    # --- GROUPS ---
+    # Every group has to be satisfied by at least one of its alternatives
+    foreach my $group (@{ $parsed->{or_groups} || [] }) {
+        my $matched = 0;
+        foreach my $alt (@$group) {
+            my ($alt_match, $alt_captures) =
+              dsl_evaluate($alt, $code, $body, $headers, $cookies);
+            next unless $alt_match;
+            $matched = 1;
+            push @captured_groups, @$alt_captures if $alt_captures;
+            last;    # One match is enough for OR
+        }
+        return (0, []) unless $matched;
+    }
+
+    # A negated group fails the match if any of its alternatives match,
+    # since !(A||B) means neither A nor B
+    foreach my $group (@{ $parsed->{not_groups} || [] }) {
+        foreach my $alt (@$group) {
+            my ($alt_match) = dsl_evaluate($alt, $code, $body, $headers, $cookies);
+            return (0, []) if $alt_match;
+        }
+    }
+
+    return (1, \@captured_groups);
 }
 
 sub build_matcher {
@@ -3683,244 +3838,16 @@ sub build_matcher {
 
     return sub {
         my ($code, $body, $headers, $cookies) = @_;
-        my @captured_groups = ();    # Store captured groups for extraction
 
-        # --- CODE NEGATIVES ---
-        for my $re (@{ $parsed->{code_neg} }) {
-            return (0, []) if $code =~ $re;
-        }
-
-        # --- CODE POSITIVES ---
-        for my $re (@{ $parsed->{code_pos} }) {
-            if ($code =~ $re) {
-
-                # Capture groups if they exist
-                push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
-            }
-            else {
-                return (0, []);
-            }
-        }
-
-        # --- HEADER NEGATIVES ---
-        for my $h (@{ $parsed->{header_neg} }) {
-            if (exists $headers->{ $h->{name} }) {
-
-                # If regex defined, header must NOT match
-                return (0, []) if $h->{regex} && $headers->{ $h->{name} } =~ $h->{regex};
-
-                # If no regex, header must not exist
-                return (0, []) unless $h->{regex};
-            }
-        }
-
-        # --- HEADER POSITIVES ---
-        for my $h (@{ $parsed->{header_pos} }) {
-
-            # Must exist
-            return (0, []) unless exists $headers->{ $h->{name} };
-
-            # Must match regex if defined
-            if ($h->{regex}) {
-                if ($headers->{ $h->{name} } =~ $h->{regex}) {
-
-                    # Capture groups if they exist
-                    push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
-                }
-                else {
-                    return (0, []);
-                }
-            }
-        }
-
-        # --- COOKIE NEGATIVES ---
-        for my $c (@{ $parsed->{cookie_neg} }) {
-            if (exists $cookies->{ $c->{name} }) {
-
-                # If regex defined, cookie must NOT match
-                return (0, []) if $c->{regex} && $cookies->{ $c->{name} } =~ $c->{regex};
-
-                # If no regex, cookie must not exist
-                return (0, []) unless $c->{regex};
-            }
-        }
-
-        # --- COOKIE POSITIVES ---
-        for my $c (@{ $parsed->{cookie_pos} }) {
-
-            # Must exist
-            return (0, []) unless exists $cookies->{ $c->{name} };
-
-            # Must match regex if defined
-            if ($c->{regex}) {
-                if ($cookies->{ $c->{name} } =~ $c->{regex}) {
-
-                    # Capture groups if they exist
-                    push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
-                }
-                else {
-                    return (0, []);
-                }
-            }
-        }
-
-        # --- BODY NEGATIVES ---
-        for my $re (@{ $parsed->{body_neg} }) {
-            return (0, []) if $body =~ $re;
-        }
-
-        # --- BODY POSITIVES ---
-        for my $re (@{ $parsed->{body_pos} }) {
-            if ($body =~ $re) {
-
-                # Capture groups if they exist
-                push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
-            }
-            else {
-                return (0, []);
-            }
-        }
-
-        # --- OR GROUPS ---
-        # Each OR group must have at least one alternative that matches
-        if (exists $parsed->{or_groups} && @{ $parsed->{or_groups} }) {
-            for my $or_group (@{ $parsed->{or_groups} }) {
-                my $or_matched = 0;
-                foreach my $alt_parsed (@$or_group) {
-
-                    # Build a temporary matcher for this alternative
-                    my $alt_matcher = sub {
-                        my ($alt_code, $alt_body, $alt_headers, $alt_cookies) = @_;
-                        my @alt_captures = ();
-
-                        # Check all conditions in this alternative
-                        for my $re (@{ $alt_parsed->{code_neg} }) {
-                            return (0, []) if $alt_code =~ $re;
-                        }
-                        for my $re (@{ $alt_parsed->{code_pos} }) {
-                            return (0, []) unless $alt_code =~ $re;
-                        }
-                        for my $h (@{ $alt_parsed->{header_neg} }) {
-                            if (exists $alt_headers->{ $h->{name} }) {
-                                return (0, [])
-                                  if $h->{regex} && $alt_headers->{ $h->{name} } =~ $h->{regex};
-                                return (0, []) unless $h->{regex};
-                            }
-                        }
-                        for my $h (@{ $alt_parsed->{header_pos} }) {
-                            return (0, []) unless exists $alt_headers->{ $h->{name} };
-                            if ($h->{regex}) {
-                                return (0, []) unless $alt_headers->{ $h->{name} } =~ $h->{regex};
-                            }
-                        }
-                        for my $c (@{ $alt_parsed->{cookie_neg} }) {
-                            if (exists $alt_cookies->{ $c->{name} }) {
-                                return (0, [])
-                                  if $c->{regex} && $alt_cookies->{ $c->{name} } =~ $c->{regex};
-                                return (0, []) unless $c->{regex};
-                            }
-                        }
-                        for my $c (@{ $alt_parsed->{cookie_pos} }) {
-                            return (0, []) unless exists $alt_cookies->{ $c->{name} };
-                            if ($c->{regex}) {
-                                return (0, []) unless $alt_cookies->{ $c->{name} } =~ $c->{regex};
-                            }
-                        }
-                        for my $re (@{ $alt_parsed->{body_neg} }) {
-                            return (0, []) if $alt_body =~ $re;
-                        }
-                        for my $re (@{ $alt_parsed->{body_pos} }) {
-                            return (0, []) unless $alt_body =~ $re;
-                        }
-
-                        # Check nested OR groups in this alternative
-                        if (exists $alt_parsed->{or_groups} && @{ $alt_parsed->{or_groups} }) {
-                            for my $nested_or_group (@{ $alt_parsed->{or_groups} }) {
-                                my $nested_or_matched = 0;
-                                foreach my $nested_alt (@$nested_or_group) {
-                                    my $nested_alt_matcher = sub {
-                                        my ($n_code, $n_body, $n_headers, $n_cookies) = @_;
-                                        for my $re (@{ $nested_alt->{code_neg} }) {
-                                            return (0, []) if $n_code =~ $re;
-                                        }
-                                        for my $re (@{ $nested_alt->{code_pos} }) {
-                                            return (0, []) unless $n_code =~ $re;
-                                        }
-                                        for my $h (@{ $nested_alt->{header_neg} }) {
-                                            if (exists $n_headers->{ $h->{name} }) {
-                                                return (0, [])
-                                                  if $h->{regex}
-                                                  && $n_headers->{ $h->{name} } =~ $h->{regex};
-                                                return (0, []) unless $h->{regex};
-                                            }
-                                        }
-                                        for my $h (@{ $nested_alt->{header_pos} }) {
-                                            return (0, []) unless exists $n_headers->{ $h->{name} };
-                                            if ($h->{regex}) {
-                                                return (0, [])
-                                                  unless $n_headers->{ $h->{name} } =~ $h->{regex};
-                                            }
-                                        }
-                                        for my $c (@{ $nested_alt->{cookie_neg} }) {
-                                            if (exists $n_cookies->{ $c->{name} }) {
-                                                return (0, [])
-                                                  if $c->{regex}
-                                                  && $n_cookies->{ $c->{name} } =~ $c->{regex};
-                                                return (0, []) unless $c->{regex};
-                                            }
-                                        }
-                                        for my $c (@{ $nested_alt->{cookie_pos} }) {
-                                            return (0, []) unless exists $n_cookies->{ $c->{name} };
-                                            if ($c->{regex}) {
-                                                return (0, [])
-                                                  unless $n_cookies->{ $c->{name} } =~ $c->{regex};
-                                            }
-                                        }
-                                        for my $re (@{ $nested_alt->{body_neg} }) {
-                                            return (0, []) if $n_body =~ $re;
-                                        }
-                                        for my $re (@{ $nested_alt->{body_pos} }) {
-                                            return (0, []) unless $n_body =~ $re;
-                                        }
-                                        return (1, []);
-                                    };
-                                    my ($n_match, $n_caps) =
-                                      $nested_alt_matcher->(
-                                                    $alt_code, $alt_body, $alt_headers, $alt_cookies
-                                                    );
-                                    if ($n_match) {
-                                        $nested_or_matched = 1;
-                                        push @alt_captures, @$n_caps if $n_caps;
-                                        last;
-                                    }
-                                }
-                                return (0, []) unless $nested_or_matched;
-                            }
-                        }
-                        return (1, \@alt_captures);
-                    };
-
-                    # Test this alternative
-                    my ($alt_match, $alt_caps) = $alt_matcher->($code, $body, $headers, $cookies);
-                    if ($alt_match) {
-                        $or_matched = 1;
-                        push @captured_groups, @$alt_caps if $alt_caps;
-                        last;    # One match is enough for OR
-                    }
-                }
-
-                # If no alternative matched, the OR group fails
-                return (0, []) unless $or_matched;
-            }
-        }
+        my ($matched, $captures) = dsl_evaluate($parsed, $code, $body, $headers, $cookies);
+        return (0, []) unless $matched;
 
         # Filter out undefined captured groups and build final array
         my @final_captures = ();
-        for my $capture (@captured_groups) {
+        for my $capture (@$captures) {
             push @final_captures, $capture if defined $capture;
         }
-
-        return (1, \@final_captures);    # All conditions passed, return captures
+        return (1, \@final_captures);
     };
 }
 #######################################################################
@@ -4065,145 +3992,165 @@ sub is_ip {
 }
 
 #######################################################################
+# Split a DSL string on the given delimiters, but only where they sit at
+# the top level of the string.
+#
+# "Top level" means outside any parentheses and outside any character
+# class, with backslash escapes skipped. All three matter: a term's value
+# is a regex, so it can legitimately contain "(", "[|]" or "\(" without
+# any of those being DSL syntax.
+#
+# Delimiters are tried in the order given, so pass the longest first
+# ("||" before "|") or the long one will never match.
+sub dsl_split_top_level {
+    my ($dsl, $delimiters) = @_;
+
+    my @parts;
+    my $current  = '';
+    my $depth    = 0;
+    my $in_class = 0;
+    my $i        = 0;
+    my $len      = length($dsl);
+
+    while ($i < $len) {
+        my $char = substr($dsl, $i, 1);
+
+        # An escape and whatever it escapes travel together
+        if ($char eq '\\') {
+            $current .= substr($dsl, $i, 2);
+            $i += 2;
+            next;
+        }
+
+        # Inside [...] nothing is DSL syntax
+        if ($in_class) {
+            $in_class = 0 if $char eq ']';
+            $current .= $char;
+            $i++;
+            next;
+        }
+        if ($char eq '[') {
+            $in_class = 1;
+            $current .= $char;
+            $i++;
+            next;
+        }
+
+        if ($char eq '(') { $depth++ }
+        elsif ($char eq ')') { $depth-- if $depth > 0 }
+        elsif ($depth == 0) {
+            my $found;
+            foreach my $delimiter (@$delimiters) {
+                if (substr($dsl, $i, length($delimiter)) eq $delimiter) {
+                    $found = $delimiter;
+                    last;
+                }
+            }
+            if (defined $found) {
+                push @parts, $current;
+                $current = '';
+                $i += length($found);
+                next;
+            }
+        }
+
+        $current .= $char;
+        $i++;
+    }
+    push @parts, $current;
+
+    return \@parts;
+}
+
+#######################################################################
+# Is this token a DSL group -- a parenthesised sub-expression -- rather
+# than a term whose regex happens to contain parentheses?
+#
+# It is a group when the token opens with "(" and that parenthesis closes
+# on the very last character, so "(A||B)" is a group but "BODY:x(y)z" and
+# "BODY:(a)(b)" are not. A leading "(?" is always a regex construct
+# ((?i), (?:...) and friends), never a group.
+sub dsl_is_group {
+    my ($token) = @_;
+
+    return 0 unless defined $token && length($token) > 1;
+    return 0 unless substr($token, 0,  1) eq '(';
+    return 0 unless substr($token, -1, 1) eq ')';
+    return 0 if substr($token, 0, 2) eq '(?';
+
+    my $depth    = 0;
+    my $in_class = 0;
+    my $i        = 0;
+    my $len      = length($token);
+
+    while ($i < $len) {
+        my $char = substr($token, $i, 1);
+        if ($char eq '\\') { $i += 2; next; }
+        if ($in_class) {
+            $in_class = 0 if $char eq ']';
+            $i++;
+            next;
+        }
+        if ($char eq '[') { $in_class = 1 }
+        elsif ($char eq '(') { $depth++ }
+        elsif ($char eq ')') {
+            $depth--;
+
+            # The opening parenthesis closed: it is only a group if that
+            # happened at the end of the token
+            return ($i == $len - 1) ? 1 : 0 if $depth == 0;
+        }
+        $i++;
+    }
+    return 0;
+}
+
+#######################################################################
+# An OR alternative with no TYPE: prefix is shorthand for a BODY pattern
+sub dsl_default_alternative_type {
+    my ($alt) = @_;
+
+    return $alt if $alt =~ /^!?(CODE|BODY|HEADER|COOKIE):/i;
+    return $alt if substr($alt, 0, 1) eq '(' || substr($alt, 0, 2) eq '!(';
+    return "BODY:$alt";
+}
+
+#######################################################################
+# Parse an OR group's contents into a list of parsed alternatives
+sub dsl_parse_alternatives {
+    my ($content) = @_;
+
+    my @parsed;
+    foreach my $alt (@{ dsl_split_top_level($content, ['||']) }) {
+        $alt =~ s/^\s+|\s+$//g;
+        next unless length $alt;
+        push @parsed, parse_dsl(dsl_default_alternative_type($alt));
+    }
+    die "Empty OR group in DSL" unless @parsed;
+    return \@parsed;
+}
+
+#######################################################################
+# Parse a DSL expression into a compiled structure.
+#
+# Grammar, loosest binding first:
+#
+#   expression  := and_expr ( '||' and_expr )*
+#   and_expr    := factor ( '&&' factor )*
+#   factor      := '!'? ( group | term )
+#   group       := '(' expression ')'
+#   term        := TYPE ':' VALUE
+#
+# VALUE is opaque to the grammar. It is a regex and may contain "(", "|",
+# "{" or anything else without that being DSL syntax, which is why the
+# splitting above only ever looks at the top level.
+#
+# Groups nest to any depth: a group's alternatives are parsed by this same
+# function, and the matcher walks the result recursively.
 sub parse_dsl {
     my ($dsl) = @_;
 
     die "Empty DSL string" unless defined $dsl && length $dsl;
-
-    # Split top-level conditions on && and ||, but not inside parentheses
-    # This preserves OR patterns like (PATTERN1|PATTERN2&&PATTERN3)
-    # First, check if there's a top-level || (OR operator)
-    my $has_top_level_or = 0;
-    my $depth            = 0;
-    for (my $i = 0 ; $i < length($dsl) ; $i++) {
-        my $char       = substr($dsl, $i, 1);
-        my $next_char  = ($i < length($dsl) - 1) ? substr($dsl, $i + 1, 1) : '';
-        my $prev_char  = ($i > 0)                ? substr($dsl, $i - 1, 1) : '';
-        my $is_escaped = ($prev_char eq '\\');
-
-        if (!$is_escaped) {
-            if ($char eq '(') {
-                $depth++;
-            }
-            elsif ($char eq ')') {
-                $depth--;
-            }
-            elsif ($char eq '|' && $next_char eq '|' && $depth == 0) {
-                $has_top_level_or = 1;
-                last;
-            }
-        }
-    }
-
-    # If we have a top-level ||, split on it and wrap in OR group
-    if ($has_top_level_or) {
-        my @or_alternatives = ();
-        $depth = 0;
-        my $current_alt = '';
-        for (my $i = 0 ; $i < length($dsl) ; $i++) {
-            my $char       = substr($dsl, $i, 1);
-            my $next_char  = ($i < length($dsl) - 1) ? substr($dsl, $i + 1, 1) : '';
-            my $prev_char  = ($i > 0)                ? substr($dsl, $i - 1, 1) : '';
-            my $is_escaped = ($prev_char eq '\\');
-
-            if (!$is_escaped) {
-                if ($char eq '|' && $next_char eq '|' && $depth == 0) {
-                    push @or_alternatives, $current_alt if $current_alt ne '';
-                    $current_alt = '';
-                    $depth       = 0;    # Reset depth for new alternative
-                    $i += 1; # Skip first |, loop will auto-increment to skip second |
-                    next;    # Continue to next iteration (will auto-increment i, skipping second |)
-                }
-                elsif ($char eq '(') {
-                    $depth++;
-                    $current_alt .= $char;
-                }
-                elsif ($char eq ')') {
-                    $depth--;
-                    $current_alt .= $char;
-                }
-                else {
-                    $current_alt .= $char;
-                }
-            }
-            else {
-                $current_alt .= $char;
-            }
-        }
-        push @or_alternatives, $current_alt if $current_alt ne '';
-
-        # Parse each alternative and create an OR group
-        my @or_parsed = ();
-        foreach my $alt (@or_alternatives) {
-            $alt =~ s/^\s+|\s+$//g;
-            next unless $alt;
-
-     # If alternative doesn't start with a known type prefix or OR group, assume it's a BODY pattern
-            if ($alt !~ /^(CODE|BODY|HEADER|COOKIE|!CODE|!BODY|!HEADER|!COOKIE):/i && $alt !~ /^\(/)
-            {
-                $alt = "BODY:$alt";
-            }
-            my $alt_parsed = parse_dsl($alt);
-            push @or_parsed, $alt_parsed;
-        }
-
-        # Return a compiled structure with just the OR group
-        my %compiled = (code_pos   => [],
-                        code_neg   => [],
-                        body_pos   => [],
-                        body_neg   => [],
-                        header_pos => [],
-                        header_neg => [],
-                        cookie_pos => [],
-                        cookie_neg => [],
-                        or_groups  => [ \@or_parsed ],
-                        );
-        return \%compiled;
-    }
-
-    # No top-level ||, proceed with normal && splitting
-    my @tokens = ();
-    $depth = 0;
-    my $current_token = '';
-    my $i             = 0;
-    my $len           = length($dsl);
-
-    while ($i < $len) {
-        my $char      = substr($dsl, $i, 1);
-        my $next_char = ($i < $len - 1) ? substr($dsl, $i + 1, 1) : '';
-        my $prev_char = ($i > 0)        ? substr($dsl, $i - 1, 1) : '';
-
-        # Check if && is escaped (previous char is backslash, similar to original regex)
-        my $is_escaped = ($prev_char eq '\\');
-
-        if (!$is_escaped) {
-            if ($char eq '(') {
-                $depth++;
-                $current_token .= $char;
-            }
-            elsif ($char eq ')') {
-                $depth--;
-                $current_token .= $char;
-            }
-            elsif ($char eq '&' && $next_char eq '&' && $depth == 0) {
-
-                # Found top-level && delimiter
-                push @tokens, $current_token if $current_token ne '';
-                $current_token = '';
-                $i += 2;    # Skip both & characters
-                next;
-            }
-            else {
-                $current_token .= $char;
-            }
-        }
-        else {
-            # Escaped character, just add it
-            $current_token .= $char;
-        }
-        $i++;
-    }
-    push @tokens, $current_token if $current_token ne '';
 
     my %compiled = (code_pos   => [],
                     code_neg   => [],
@@ -4213,83 +4160,38 @@ sub parse_dsl {
                     header_neg => [],
                     cookie_pos => [],
                     cookie_neg => [],
-                    or_groups  => [],    # Store OR patterns for special handling
+                    or_groups  => [],    # each entry: at least one alternative must match
+                    not_groups => [],    # each entry: no alternative may match
                     );
 
-    foreach my $token (@tokens) {
+    # A top level || makes the whole expression one OR group
+    my $alternatives = dsl_split_top_level($dsl, ['||']);
+    if (@$alternatives > 1) {
+        $compiled{or_groups} = [ dsl_parse_alternatives($dsl) ];
+        return \%compiled;
+    }
+
+    foreach my $token (@{ dsl_split_top_level($dsl, ['&&']) }) {
         $token =~ s/^\s+|\s+$//g;                     # trim whitespace
         $token =~ s/,\s*$// if length($token) > 1;    # trim trailing comma
         next unless $token;
 
-        # Check if this is an OR pattern (starts with ( and ends with ))
-        # Use regex to check if it's a properly formed OR pattern
-        if ($token =~ /^\((.*)\)$/) {
-
-            # Verify balanced parentheses in the content (the outer parens are already matched)
-            my $or_content = $1;
-            my $depth      = 0;
-            my $valid_or   = 1;
-            for my $i (0 .. length($or_content) - 1) {
-                my $char       = substr($or_content, $i, 1);
-                my $prev_char  = ($i > 0) ? substr($or_content, $i - 1, 1) : '';
-                my $is_escaped = ($prev_char eq '\\');
-
-                if (!$is_escaped) {
-                    if ($char eq '(') {
-                        $depth++;
-                    }
-                    elsif ($char eq ')') {
-                        $depth--;
-                        if ($depth < 0) {
-                            $valid_or = 0;
-                            last;
-                        }
-                    }
-                }
-            }
-
-            # Content must have balanced parentheses
-            if ($valid_or && $depth == 0) {
-
-                # Split on | but not escaped |
-                my @alternatives = split /(?<!\\)\|/, $or_content;
-
-                # Parse each alternative as a separate DSL expression
-                my @or_parsed = ();
-                foreach my $alt (@alternatives) {
-                    $alt =~ s/^\s+|\s+$//g;
-                    next unless $alt;
-
-                    # Recursively parse this alternative
-                    my $alt_parsed = parse_dsl($alt);
-                    push @or_parsed, $alt_parsed;
-                }
-
-                # Store the OR group
-                push @{ $compiled{or_groups} }, \@or_parsed;
-                next;
-            }
-            else {
-                # Token looks like an OR pattern but has unbalanced parentheses
-                die "Invalid DSL token: OR pattern has unbalanced parentheses: $token";
-            }
-        }
-        elsif ($token =~ /^\(/) {
-
-            # Token starts with ( but doesn't match OR pattern format
-            # Show token details for debugging
-            my $token_len  = length($token);
-            my $first_char = substr($token, 0, 1);
-            my $last_char  = substr($token, -1);
-            die
-              "Invalid DSL token: token starts with '(' but is not a properly formed OR pattern (must start with '(' and end with ')'): length=$token_len, first='$first_char', last='$last_char', token='$token'";
-        }
-
         # Check negation
         my $neg = 0;
         if ($token =~ /^!/) {
-            $neg   = 1;
+            $neg = 1;
             $token = substr($token, 1);
+            $token =~ s/^\s+//;
+        }
+
+        # A parenthesised sub-expression, negated or not
+        if (dsl_is_group($token)) {
+            my $parsed = dsl_parse_alternatives(substr($token, 1, -1));
+            push @{ $neg ? $compiled{not_groups} : $compiled{or_groups} }, $parsed;
+            next;
+        }
+        if (substr($token, 0, 1) eq '(' && substr($token, 0, 2) ne '(?') {
+            die "Invalid DSL token: unbalanced parentheses in group: $token";
         }
 
         # Skip @LFI() tokens - they are placeholders that will be expanded at runtime
@@ -4430,6 +4332,45 @@ sub version {
 }
 
 #######################################################################
+# True if $component looks like a product label + version worth submitting
+# (e.g. Jetty/12.0.22, Microsoft-IIS/10.0, thing-1.0). Rejects bare
+# versions (2.3), status codes, hex blobs, Refresh values, ARRAY(0x...), etc.
+sub is_submitable_component {
+    my ($c) = @_;
+    return 0 unless defined $c;
+    my $s = $c;
+    $s =~ s/%20/ /g;
+    $s =~ s/^\s+|\s+$//g;
+
+    return 0 if $s eq '' || length($s) > 128;
+    return 0 if $s =~ /[;<>\"\'\`\{\}=]/;
+    return 0 if $s =~ m{https?:}i;
+    return 0 if $s =~ /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i;
+    return 0 if $s =~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
+    return 0 if $s =~ /^cache-/i;
+    return 0 if $s =~ /^HTTP\/\d/i;
+
+    # Pure versions / status codes / hex — no product label
+    return 0 if $s =~ /^[0-9]+(?:\.[0-9]+)*$/;
+    return 0 if $s =~ /^[0-9a-f]{8,}$/i;
+
+    # product label (must include a letter) + sep + version-like token
+    return 1
+      if $s =~ m{
+        ^
+        (?:[A-Za-z0-9.+_\s-]*[A-Za-z][A-Za-z0-9.+_\s-]*)
+        [\/\-_\s]
+        [Vv]?\d+
+        (?:[.][0-9A-Za-z]+)*
+        (?:[/-][0-9A-Za-z.]+)*
+        (?:\s*\([A-Za-z0-9._+-]+\))?
+        \z
+      }x;
+
+    return 0;
+}
+
+#######################################################################
 sub send_updates {
     return if ($CONFIGFILE{'UPDATES'} !~ /yes|auto/i);
     my (@MARKS) = @_;
@@ -4438,13 +4379,10 @@ sub send_updates {
 
     foreach my $mark (@MARKS) {
         foreach my $component (keys %{ $mark->{'components'} }) {
-            if ($mark->{'components'}->{$component} eq 2) {
-                if    ($component !~ /\d/)                               { next; }
-                elsif ($component =~ /^(?:\(?Win32\)?|Linux-Mandrake$)/) { next; }
-                elsif ($component eq "")                                 { next; }
-                $have_updates = 1;
-                $updated_version .= "$component ";
-            }
+            next unless $mark->{'components'}->{$component} eq 2;
+            next unless is_submitable_component($component);
+            $have_updates = 1;
+            $updated_version .= "$component ";
         }
     }
 
