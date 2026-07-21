@@ -23,12 +23,13 @@ sub nikto_outdated {
     if ($mark->{'banner'} !~ /(?:\d|\/|\.)/) { return; }
 
     # Platform tags are not part of product/version (e.g. IIS "Microsoft-IIS/10.0 (Win64)")
-    $mark->{'banner'} =~ s/\s*\(Win64\)//gi;
+    $mark->{'banner'} =~ s/\s*\(Win(?:32|64)\)//gi;
 
     # If Apache, split on space...
     if (   ($mark->{'banner'} =~ /apache/i)
            || (($mark->{'banner'} =~ /\s/) && ($mark->{'banner'} =~ /\//))) {
         foreach my $item (split(/ /, $mark->{'banner'})) {
+            next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
     }
@@ -59,6 +60,7 @@ sub nikto_outdated {
 
         # try converting () to spaces
         foreach my $item (split(/[\(\)]/, $mark->{'banner'})) {
+            next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
     }
@@ -103,6 +105,8 @@ sub nikto_outdated {
 
         # Skip noisy upstream/CDN cache identifiers that aren't real components
         next if $BI =~ /^cache-/i;
+        # Platform tags (may also arrive via headers) are not version strings
+        next if is_platform_component($BI);
 
         # Check it against each value from db_outdated
         foreach $V (sort keys %OVERS) {
@@ -133,6 +137,14 @@ sub nikto_outdated {
         if (!$have_match) { $mark->{'components'}->{$BI} = 2; }
     }
     return;
+}
+
+# True for OS/platform tokens that must not become update candidates
+sub is_platform_component {
+    my ($s) = @_;
+    return 0 unless defined $s && $s ne '';
+    return 1 if $s =~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
+    return 0;
 }
 
 # do version evaluation
