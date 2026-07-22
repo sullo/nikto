@@ -4522,6 +4522,14 @@ sub send_updates {
 
     LW2::http_fixup_request(\%request);
 
+    nprint(
+        "- Sending update to $CONFIGFILE{CIRT}: GET /nikto-updates.php?version=$upd_enc ($updated_version)",
+        "v", "update");
+    if ($OUTPUT{'debug'}) {
+        dump_var("Update Request", \%request, "update",
+                 ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
+    }
+
     LW2::http_do_request_timeout(\%request, \%response);
     $code    = $response{'whisker'}->{'code'};
     $content = $response{'whisker'}->{'data'};
@@ -4544,9 +4552,19 @@ sub send_updates {
         $mark{'ip'} = $fallback_ip;
         $request{'whisker'}->{'host'} = $fallback_hostname;
         LW2::http_fixup_request(\%request);
+        nprint("- Update request retry via fallback host $fallback_hostname", "v", "update");
+        if ($OUTPUT{'debug'}) {
+            dump_var("Update Request (fallback)", \%request, "update",
+                     ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
+        }
         LW2::http_do_request_timeout(\%request, \%response);
         $code    = $response{'whisker'}->{'code'};
         $content = $response{'whisker'}->{'data'};
+    }
+
+    if ($OUTPUT{'debug'}) {
+        dump_var("Update Response", \%response, "update",
+                 ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
     }
 
     if (($code != 200) || ($content !~ /SUCCESS/)) {
