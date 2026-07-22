@@ -852,7 +852,7 @@
 "600847","WebCompanion/","6.0v1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600848","webfs/","1.21","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600849","weBLink/","0.3.9","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600850","WebLogic ","5.1.0 Service Pack 9 04/06/2001 12:48:33 #105983","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600850","WebLogic ","5.1.0 Service Pack 9 04/06/2001 12:48:33","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600851","WebLogic WebLogic Server ","7.0 SP2  Sun Jan 26 23:09:32 PST 2003 234192","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600852","WebLogic WebLogic Temporary Patch ","5 for PeopleSoft","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600853","WebLogic WebLogic Temporary Patch for ","CR067505 02/12/2002 17:10:21","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"

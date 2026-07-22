@@ -1915,6 +1915,10 @@ sub check_dbs {
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
                 if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 $count++;
                 my @L = parse_csv($line);
                 if ($#L ne 3) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
@@ -1940,6 +1944,10 @@ sub check_dbs {
                 if ($line =~ /^\#/) { next; }
                 chomp($line);
                 if ($line eq "" || $line =~ /"nikto_id"/) { next; }
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 $counter++;
                 my @L = parse_csv($line);
                 if ($#L ne 2) { nprint("\t+ ERROR: Invalid syntax ($#L): $line"); next; }
@@ -1961,6 +1969,10 @@ sub check_dbs {
                 chomp($line);
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#|^$/) { next; }
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 my @L = parse_csv($line);
 
                 # Validate field count (should be 9 fields)
@@ -2093,6 +2105,10 @@ sub check_dbs {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 my @fields = parse_csv($line);
 
                 # Skip header line if present
@@ -2117,6 +2133,10 @@ sub check_dbs {
                 chomp($line);
                 $line =~ s/\#.*$//;
                 next if $line eq '';
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
@@ -2131,6 +2151,12 @@ sub check_dbs {
         elsif ($file =~ /u?db_multiple_index/) {
             my $ctr = 0;
             foreach $line (<$db_fh>) {
+                chomp($line);
+                next if $line =~ /^\#/ || $line eq '';
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
@@ -2144,6 +2170,10 @@ sub check_dbs {
                 chomp($line);
                 next if $line =~ /^\#/;
                 next if $line eq '';
+                if (!csv_line_fully_quoted($line)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
+                    next;
+                }
                 if ($line !~ /^\"[^"]+\"/) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
@@ -2158,6 +2188,16 @@ sub check_dbs {
             foreach $line (<$db_fh>) {
                 $line =~ s/^#.*//;
                 next if $line eq "";
+
+                # Quote-check on a chomped copy; keep $line intact for header
+                # parsing (trailing newline is historically part of field count).
+                my $qline = $line;
+                chomp($qline);
+                next if $qline eq '';
+                if ($file !~ /u?db_404_strings/ && !csv_line_fully_quoted($qline)) {
+                    nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $qline");
+                    next;
+                }
 
                 # first, grab the headers
                 if ($fields == 0) {
@@ -2266,6 +2306,14 @@ sub count_fields {
     my @L = parse_csv($line);
     if ($checkid && ($L[0] ne 'nikto_id') && (($L[0] =~ /[^0-9]/) || ($L[0] eq ''))) { return -1; }
     return $#L;
+}
+
+#######################################################################
+# True if $line is fully double-quoted CSV: "a","b",... (escapes allowed).
+sub csv_line_fully_quoted {
+    my ($line) = @_;
+    return 0 unless defined $line;
+    return $line =~ /^"(?:[^"\\]|\\.)*(?:","(?:[^"\\]|\\.)*)*"$/ ? 1 : 0;
 }
 
 ###############################################################################
