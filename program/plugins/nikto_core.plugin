@@ -1795,10 +1795,7 @@ sub load_databases {
 
             # Cleanup
             while (<$in>) {
-                chomp;
-                $_ =~ s/#.*$//;
-                $_ =~ s/\s+$//;
-                $_ =~ s/^\s+//;
+                $_ = db_preprocess($file, $_);
                 if ($_ ne "") { push(@file, $_); }
             }
 
@@ -1903,6 +1900,17 @@ sub check_dbs {
             nprint("+ ERROR: Unable to read \"$filename\"");
             next;
         }
+
+        # db_404_strings holds bare match strings, not structured records, so
+        # there is nothing to validate. It previously fell through to the
+        # generic CSV branch, which treated every line as a header row and
+        # silently reported "0 entries".
+        if ($file =~ /u?db_404_strings/) {
+            nprint("Syntax Check: $filename");
+            nprint("\tskipped (bare strings, no structure to check)");
+            next;
+        }
+
         my $db_fh;
         open($db_fh, '<', $filename) || die "+ ERROR: Can't open \"$filename\":$!\n";
         nprint("Syntax Check: $filename");
@@ -1913,7 +1921,7 @@ sub check_dbs {
             foreach my $line (<$db_fh>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
-                chomp($line);
+                $line = db_preprocess($file, $line);
                 if ($line eq "" || $line =~ /"nikto_id"/) { next; }
                 if (!csv_line_fully_quoted($line)) {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
@@ -1942,7 +1950,7 @@ sub check_dbs {
             foreach $line (<$db_fh>) {
                 $line =~ s/^\s+//;
                 if ($line =~ /^\#/) { next; }
-                chomp($line);
+                $line = db_preprocess($file, $line);
                 if ($line eq "" || $line =~ /"nikto_id"/) { next; }
                 if (!csv_line_fully_quoted($line)) {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
@@ -2102,8 +2110,7 @@ sub check_dbs {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<$db_fh>) {
-                chomp($line);
-                $line =~ s/\#.*$//;
+                $line = db_preprocess($file, $line);
                 next if $line eq '';
                 if (!csv_line_fully_quoted($line)) {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
@@ -2130,8 +2137,7 @@ sub check_dbs {
             my $ctr = 0;
             my %HEADERS;
             foreach $line (<$db_fh>) {
-                chomp($line);
-                $line =~ s/\#.*$//;
+                $line = db_preprocess($file, $line);
                 next if $line eq '';
                 if (!csv_line_fully_quoted($line)) {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
@@ -2189,12 +2195,13 @@ sub check_dbs {
                 $line =~ s/^#.*//;
                 next if $line eq "";
 
-                # Quote-check on a chomped copy; keep $line intact for header
-                # parsing (trailing newline is historically part of field count).
-                my $qline = $line;
-                chomp($qline);
+                # Quote-check on a preprocessed copy, so the check sees exactly
+                # what init_db will hand to parse_csv. Keep $line intact for
+                # header parsing (the trailing newline is historically part of
+                # the field count).
+                my $qline = db_preprocess($file, $line);
                 next if $qline eq '';
-                if ($file !~ /u?db_404_strings/ && !csv_line_fully_quoted($qline)) {
+                if (!csv_line_fully_quoted($qline)) {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $qline");
                     next;
                 }
@@ -2314,6 +2321,48 @@ sub csv_line_fully_quoted {
     my ($line) = @_;
     return 0 unless defined $line;
     return $line =~ /^"(?:[^"\\]|\\.)*(?:","(?:[^"\\]|\\.)*)*"$/ ? 1 : 0;
+}
+
+#######################################################################
+# Strip a trailing comment, ignoring any '#' inside a quoted field.
+# A bare s/#.*$// also eats the field's closing quote, so parse_csv falls
+# back to its unquoted branch and either swallows the remaining fields or
+# splits one field on the commas inside it. Both are silent corruption.
+sub strip_comment {
+    my ($line) = @_;
+    return $line unless defined $line;
+    return $line if index($line, '#') < 0;    # ~98% of lines; skips the scan below
+    my $in_quote = 0;
+    my $len      = length($line);
+    for (my $i = 0 ; $i < $len ; $i++) {
+        my $c = substr($line, $i, 1);
+        if ($in_quote && $c eq '\\') { $i++; next; }    # escaped char in a quoted field
+        if    ($c eq '"')               { $in_quote = !$in_quote; }
+        elsif ($c eq '#' && !$in_quote) { return substr($line, 0, $i); }
+    }
+    return $line;
+}
+
+#######################################################################
+# Preprocess one database line exactly as that file's loader does, so
+# -dbcheck validates the same string the scanner will act on. Call this
+# from both the loaders and check_dbs; if the two ever disagree again,
+# validation silently stops covering what actually runs.
+#
+#   db_tests            loaded verbatim (load_databases), no stripping
+#   load_databases set  comment stripped, then whitespace trimmed
+#   init_db set         comment stripped only
+sub db_preprocess {
+    my ($file, $line) = @_;
+    return $line unless defined $line;
+    chomp($line);
+    return $line if $file =~ /u?db_tests/;
+    $line = strip_comment($line);
+    if ($file =~ /u?db_(?:useragents|404_strings|outdated|variables|headers_suggested)/) {
+        $line =~ s/\s+$//;
+        $line =~ s/^\s+//;
+    }
+    return $line;
 }
 
 ###############################################################################
@@ -4639,8 +4688,7 @@ sub init_db {
 
         # Now read the header values
         while (<$db_main_fh>) {
-            chomp;
-            s/\#.*$//;
+            $_ = db_preprocess($dbname, $_);
             if     ($_ eq "") { next }
             unless (@headers) {
                 @headers = parse_csv($_);
@@ -4664,8 +4712,7 @@ sub init_db {
     my $db_udb_fh;
     if (open($db_udb_fh, '<', $filename)) {
         while (<$db_udb_fh>) {
-            chomp;
-            s/\#.*$//;
+            $_ = db_preprocess($dbname, $_);
             if ($_ eq "") { next; }
 
             # contents; so split them up and apply to hash
