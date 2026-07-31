@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,15 +30,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/nikto
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nikto
+            ghcr.io/${{ github.repository_owner }}/nikto
+          flavor: |
+            latest=false
           tags: |
-            latest
-            type=ref,event=branch
-            type=sha
+            # Every master commit → floating "rolling" (+ sha for pin-by-commit)
+            type=raw,value=rolling,enable={{is_default_branch}}
+            type=sha,enable={{is_default_branch}}
+            # Manual test runs (Actions → Run workflow) → "test" tag only
+            type=raw,value=test,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
+            # Tagged releases → pinned versions (+ latest = newest release)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
