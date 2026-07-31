@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 use strict;
+use warnings;
 
 # Modules are now loaded in a function so errors can be trapped and evaluated
 load_modules();
@@ -21,13 +22,13 @@ load_modules();
 
 # global var/definitions
 use vars qw/$TEMPLATES %CLI %VARIABLES %TESTS/;
-use vars qw/%NIKTO %CONFIGFILE %COUNTERS %db_extensions %DSL_CACHE/;
+use vars qw/%NIKTO %CONFIGFILE %COUNTERS %DSL_CACHE/;
 use vars qw/@RESULTS @PLUGINS @DBFILE @REPORTS %CONTENTSEARCH/;
 
 # setup
 $COUNTERS{'scan_start'} = time();
 $VARIABLES{'name'}      = "Nikto";
-$VARIABLES{'version'}   = "2.6.0";
+$VARIABLES{'version'}   = "2.6.1";
 Getopt::Long::Configure('no_ignore_case');
 
 # signal trap so we can close down reports properly
@@ -50,7 +51,7 @@ nprint("- $VARIABLES{'name'} v$VARIABLES{'version'}");
 nprint($VARIABLES{'DIV'});
 
 # No targets - quit before we do anything
-if ($CLI{'host'} eq '') {
+if (($CLI{'host'} // '') eq '') {
     if (!$CLI{'nocheck'}) {
         check_updates();
     }
@@ -68,6 +69,28 @@ my @MARKS = set_targets($CLI{'host'}, $CLI{'ports'}, $CLI{'ssl'}, $CLI{'root'});
 load_databases();
 load_databases('u');
 
+unless (set_scan_items()) {
+    exit 1;
+}
+
+# RFI URL: db_variables default; conf RFIURL (if set) overrides
+if (defined $CONFIGFILE{'RFIURL'} && $CONFIGFILE{'RFIURL'} ne '') {
+    $VARIABLES{'@RFIURL'} = $CONFIGFILE{'RFIURL'};
+}
+elsif (!defined $VARIABLES{'@RFIURL'} || $VARIABLES{'@RFIURL'} eq '') {
+    nprint("- ***** \@RFIURL is not defined--no RFI tests will run *****");
+}
+
+# -Cgidirs must apply even when the cgi plugin is disabled (e.g. -Plugins "@NONE;tests")
+if (defined $CLI{'forcecgi'}) {
+    if ($CLI{'forcecgi'} eq 'none') {
+        $VARIABLES{'@CGIDIRS'} = '';
+    }
+    elsif ($CLI{'forcecgi'} ne 'all') {
+        $VARIABLES{'@CGIDIRS'} = $CLI{'forcecgi'};
+    }
+}
+
 if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
     $CLI{'key'}  = $CLI{'cert'} unless (defined($CLI{'key'}));
     $CLI{'cert'} = $CLI{'key'}  unless (defined($CLI{'cert'}));
@@ -75,7 +98,7 @@ if (defined($CLI{'key'}) || defined($CLI{'cert'})) {
 
 # Open reporting
 report_head();
-$VARIABLES{'deferout'} = 1 unless $CLI{'display'} ne "";
+$VARIABLES{'deferout'} = 1 unless ($CLI{'display'} // '') ne '';
 
 # Now check each target is real and remove duplicates/fill in extra information
 foreach my $mark (@MARKS) {
@@ -86,14 +109,12 @@ foreach my $mark (@MARKS) {
 
     # Try to resolve the host
     my $msgs;
-    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'display_name'}, $msgs) =
+    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}, $msgs) =
       resolve($mark->{'ident'});
-    if ($msgs ne "") {
+    $msgs //= '';
+    if ($msgs ne '') {
         push(@{ $mark->{'messages'} }, $msgs);
     }
-
-    # Load db_tests
-    set_scan_items();
 
     # Start hook to allow plugins to load databases etc
     run_hooks($mark, "start");
@@ -155,14 +176,14 @@ if (!$CLI{'nocheck'}) {
 # Now we've done the precursor, do the scan
 foreach my $mark (@MARKS) {
     $NIKTO{'current_mark'}  = $mark;
-    $VARIABLES{'deferout'}  = 1 unless $CLI{'display'} ne "";
+    $VARIABLES{'deferout'}  = 1 unless ($CLI{'display'} // '') ne '';
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'}   = time();
     report_host_start($mark);
 
     if (!$mark->{'test'}) {
-        if ($mark->{'errmsg'} ne "") {
+        if (($mark->{'errmsg'} // '') ne '') {
             $VARIABLES{'deferout'} = 0;
             add_vulnerability($mark, $mark->{'errmsg'}, "FAIL", "", "GET", "/", "", "",
                               "Failed to scan");
@@ -181,7 +202,7 @@ foreach my $mark (@MARKS) {
     $mark->{'has_vhost'} = (defined($mark->{'vhost'}) && $mark->{'vhost'} ne '');
 
     # Saving responses
-    if ($CLI{'saveresults'} ne '') {
+    if (($CLI{'saveresults'} // '') ne '') {
         $mark->{'save_dir'}    = save_createdir($CLI{'saveresults'}, $mark);
         $mark->{'save_prefix'} = save_getprefix($mark);
     }
@@ -206,7 +227,7 @@ foreach my $mark (@MARKS) {
             nprint($line, $mode, $testid);
         }
     }
-    undef $VARIABLES{'defertxt'};
+    $VARIABLES{'defertxt'} = [];
 
     run_hooks($mark, "recon");
     run_hooks($mark, "scan");
@@ -283,7 +304,6 @@ sub config_init {
       if defined $VARIABLES{'configfile'} && $VARIABLES{'configfile'} ne "";
     push(@CF, File::Spec->catfile($NIKTODIR, "nikto.conf"))         if defined $NIKTODIR;
     push(@CF, File::Spec->catfile($NIKTODIR, "nikto.conf.default")) if defined $NIKTODIR;
-    push(@CF, "nikto.conf");
     push(@CF, File::Spec->catfile($home, "nikto.conf")) if defined $home;
 
     # Only check /etc/nikto.conf on non-Windows systems
@@ -321,7 +341,7 @@ sub load_modules {
     my $errors = 0;
     my @modules = ("Cwd 'abs_path'",                                        "File::Spec",
                    "FindBin",                                               "Getopt::Long",
-                   "IO::Socket",                                            "JSON",
+                   "IO::Socket",                                            "JSON::PP",
                    "List::Util qw(sum)",                                    "Net::hostent",
                    "POSIX qw(:termios_h)",                                  "Socket",
                    "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)", "Time::Local",
@@ -351,9 +371,9 @@ sub load_modules {
 sub load_config {
     my $configfile = $_[0] || return 1;
 
-    open(CONF, "<$configfile") || return 1;   # "+ ERROR: Unable to open config file '$configfile'";
-    my @CONFILE = <CONF>;
-    close(CONF);
+    open(my $conf_fh, '<', $configfile) || return 1;   # "+ ERROR: Unable to open config file '$configfile'";
+    my @CONFILE = <$conf_fh>;
+    close($conf_fh);
 
     foreach my $line (@CONFILE) {
         $line =~ s/\#.*$//;
@@ -370,14 +390,15 @@ sub load_config {
 #################################################################################
 # find plugins directory
 sub setup_dirs {
-    my $CURRENTDIR = abs_path($0);
+    my $CURRENTDIR = $FindBin::RealBin || $FindBin::Bin || abs_path($0);
+    $CURRENTDIR = File::Spec->rel2abs($CURRENTDIR) if defined $CURRENTDIR;
     chomp($CURRENTDIR);
     $CURRENTDIR =~ s#[\\/]nikto.pl$##;
     $CURRENTDIR = "." if $CURRENTDIR =~ /^nikto.pl$/;
 
     # First assume we get it from CONFIGFILE
     unless (defined $CONFIGFILE{'EXECDIR'}) {
-        if (-d "$ENV{'PWD'}/plugins") {
+        if (defined $ENV{'PWD'} && $ENV{'PWD'} ne '' && -d "$ENV{'PWD'}/plugins") {
             $CONFIGFILE{'EXECDIR'} = $ENV{'PWD'};
         }
         elsif (-d "$CURRENTDIR/plugins") {

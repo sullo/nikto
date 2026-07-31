@@ -16,71 +16,88 @@ sub nikto_ssl_init {
 sub nikto_ssl {
     my ($mark) = @_;
 
-    if ($mark->{ssl}) {
-        my @cn_names;
-        my @san_names;
-        my $match = 0;
+    return unless $mark->{ssl};
 
-        # Extract CN from subject
-        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
-            push(@cn_names, $1);
+    my @cn_names;
+    my @san_names;
+    my $match             = 0;
+    my $wildcard_reported = 0;
+    my $hostname_cmp      = lc($mark->{'hostname'} || '');
+    $hostname_cmp =~ s/\.$//;
+
+    # Extract CN from subject
+    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        push(@cn_names, $1);
+    }
+
+    # Extract SAN names
+    if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
+        foreach my $n (split(/\s*,\s*/, $mark->{'ssl_cert_altnames'})) {
+            $n =~ s/^\s+|\s+$//g;
+            $n =~ s/^dns://i;
+            push(@san_names, $n) if length($n);
+        }
+    }
+
+    # RFC 6125: if DNS SANs are present, verify against those only
+    my %seen;
+    my @all_names = grep { length($_) && !$seen{$_}++ } (@san_names ? @san_names : @cn_names);
+
+    # Nothing to compare against (cert fields missing / no usable names)
+    return unless @all_names;
+
+    # Create detailed name lists for error messages (sanitize untrusted cert data)
+    my $cn_list  = @cn_names  ? join(", ", map { nikto_ssl_safe_str($_) } @cn_names)  : "none";
+    my $san_list = @san_names ? join(", ", map { nikto_ssl_safe_str($_) } @san_names) : "none";
+
+    foreach my $cert_name (@all_names) {
+        my $cert_name_cmp = lc($cert_name);
+        $cert_name_cmp =~ s/\.$//;
+
+        # straight up match
+        if ($hostname_cmp eq $cert_name_cmp) {
+            $match = 1;
         }
 
-        # Extract SAN names
-        if ($mark->{'ssl_cert_altnames'} ne '') {
-            foreach my $n (split(/, /, $mark->{'ssl_cert_altnames'})) {
-                push(@san_names, $n);
+        # wildcard cert
+        elsif ($cert_name_cmp =~ /^\*/) {
+            if (!$wildcard_reported) {
+                add_vulnerability($mark,
+                                  "/: Server is using a wildcard certificate: "
+                                    . nikto_ssl_safe_str($cert_name),
+                                  "999992",
+                                  "https://en.wikipedia.org/wiki/Wildcard_certificate"
+                                  );
+                $wildcard_reported = 1;
             }
-        }
+            $cert_name_cmp =~ s/^\*\.//;
+            next unless length($cert_name_cmp);
+            $cert_name_cmp = rquote($cert_name_cmp);
 
-        # Combine all names for validation
-        my @all_names = (@cn_names, @san_names);
-        @all_names = unique_vals(@all_names);
-
-        # Create detailed name lists for error messages
-        my $cn_list  = @cn_names  ? join(", ", @cn_names)  : "none";
-        my $san_list = @san_names ? join(", ", @san_names) : "none";
-        my $allnames = join(", ", @all_names);
-
-        foreach my $cert_name (@all_names) {
-            next unless $cert_name;    # Skip empty names
-
-            # straight up match
-            if (lc($mark->{'hostname'}) eq lc($cert_name)) {
+            # Require the separating dot; exactly one label (no dots in prefix).
+            # Apex (example.com) must not match *.example.com.
+            if ($hostname_cmp =~ /^[^.]+\.$cert_name_cmp\z/) {
                 $match = 1;
             }
-
-            # wildcard cert
-            elsif ($cert_name =~ /^\*/) {
-                add_vulnerability($mark,  "/: Server is using a wildcard certificate: $cert_name",
-                                  999992, "https://en.wikipedia.org/wiki/Wildcard_certificate");
-                $cert_name =~ s/^\*\.//;
-                $cert_name = rquote($cert_name);
-
-                # must match leading dot
-                # only one level of subdomain allowed
-                if ($mark->{'hostname'} =~ /^(.*)\.?$cert_name/i) {
-                    my $matched  = $1;
-                    my $tldcount = ($matched =~ tr/\.//);
-                    if ($tldcount <= 1) { $match = 1; }
-                }
-            }
-            last if $match;
         }
+        last if $match;
+    }
 
-        if (!$match) {
-            my $error_msg = "/: Hostname '$mark->{'hostname'}' does not match certificate names";
-            $error_msg .= " (CN: $cn_list, SAN: $san_list)";
-            add_vulnerability($mark, $error_msg, 999993,
-                              "https://cwe.mitre.org/data/definitions/297.html");
-        }
+    if (!$match) {
+        my $host_disp = nikto_ssl_safe_str($mark->{'hostname'} || '');
+        my $error_msg = "/: Hostname '$host_disp' does not match certificate names";
+        $error_msg .= " (CN: $cn_list, SAN: $san_list)";
+        add_vulnerability($mark, $error_msg, "999993",
+                          "https://cwe.mitre.org/data/definitions/297.html");
     }
 }
 
-sub unique_vals {
-    my %seen;
-    grep !$seen{$_}++, @_;
+# Strip controls / limit length so cert/host data cannot break report/console output
+sub nikto_ssl_safe_str {
+    my ($s) = @_;
+    $s = '' unless defined $s;
+    $s =~ s/[\x00-\x1f\x7f]//g;
+    return length($s) > 256 ? substr($s, 0, 256) : $s;
 }
 
 1;
-

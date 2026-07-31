@@ -24,15 +24,15 @@ sub nikto_put_del_test {
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "PUT", "This was a Nikto test.", "", "", "put_del_test: PUT");
 
-    # Request it back
-    if ($res eq 201) {
+    # Request it back (PUT may return 200 OK, 201 Created, or 204 No Content)
+    if ($res == 200 || $res == 201 || $res == 204) {
         ($res, $content, $error, $request, $response) =
           nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
         if ($content =~ /This was a Nikto test/) {
             add_vulnerability(
                           $mark,
                           "$uri: HTTP method 'PUT' allows clients to save files on the web server.",
-                          999995,
+                          "999995",
                           "https://portswigger.net/kb/issues/00100900_http-put-method-is-enabled",
                           "PUT",
                           $uri,
@@ -43,7 +43,9 @@ sub nikto_put_del_test {
             # we were able to put it there--can we delete it?
             ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, "DELETE", "", "", "", "put_del_test: DELETE");
-            if ($res eq 200) {
+
+            # DELETE often returns 200 OK or 204 No Content
+            if ($res == 200 || $res == 204) {
                 ($res, $content, $error, $request, $response) =
                   nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
                 if ($content !~ /This was a Nikto test/)    # gone now
@@ -51,7 +53,7 @@ sub nikto_put_del_test {
                     add_vulnerability(
                         $mark,
                         "$uri: HTTP method 'DELETE' allows clients to delete files on the web server.",
-                        999994,
+                        "999994",
                         "https://cwe.mitre.org/data/definitions/650.html",
                         "DELETE",
                         $uri,

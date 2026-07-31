@@ -22,10 +22,14 @@ sub nikto_outdated {
     # If banner has nothing that can be a version... return
     if ($mark->{'banner'} !~ /(?:\d|\/|\.)/) { return; }
 
+    # Platform tags are not part of product/version (e.g. IIS "Microsoft-IIS/10.0 (Win64)")
+    $mark->{'banner'} =~ s/\s*\(Win(?:32|64)\)//gi;
+
     # If Apache, split on space...
-    elsif (   ($mark->{'banner'} =~ /apache/i)
-           || (($mark->{'banner'} =~ /\s/) && ($mark->{'banner'} =~ /\//))) {
+    if (   ($mark->{'banner'} =~ /apache/i)
+        || (($mark->{'banner'} =~ /\s/) && ($mark->{'banner'} =~ /\//))) {
         foreach my $item (split(/ /, $mark->{'banner'})) {
+            next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
     }
@@ -54,14 +58,24 @@ sub nikto_outdated {
            && ($mark->{'banner'} =~ /\/.*\//)
            && ($mark->{'banner'} =~ /\(/)) {
 
-        # try converting () t spaces
+        # try converting () to spaces
         foreach my $item (split(/[\(\)]/, $mark->{'banner'})) {
+            next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
     }
 
-    # Finally, unknown banners
+    # Single "name/version" banner that didn't match any specific branch
+    # (e.g. nginx/1.29.4, Microsoft-IIS/10.0). Store the whole banner so
+    # the DB regex (which anchors on the trailing separator) can match
+    # and vereval can extract the version from the last token.
+    elsif ($mark->{'banner'} =~ /\//) {
+        $mark->{'components'}->{ $mark->{'banner'} } = 1;
+    }
+
+    # Finally, unknown banners (no slash; fall back to messy-separator heuristic)
     else {
+        my $MATCHSTRING = "";
 
         # use the last non 0-9 . a-z char as a sepr (' ', '-', '_' etc)
         my $sepr = $mark->{'banner'};
@@ -73,21 +87,27 @@ sub nikto_outdated {
             $sepr = substr($sepr, (length($sepr) - 1), 1);
 
             # break up ID string on $sepr
-            my @T = split(/\\$sepr/, $mark->{'banner'});
+            my @T = split(/\Q$sepr\E/, $mark->{'banner'});
 
             # assume last is version...
-            for ($i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
+            for (my $i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
         }
         $MATCHSTRING =~ s/\s+$//;
         $mark->{'components'}->{$MATCHSTRING} = 1;
         nprint("Server Version String:$MATCHSTRING", "d");
     }
 
-    my ($v, $V, $BI, $k) = "";
+    my ($v, $V, $BI) = "";
 
     # For each running component
     foreach $BI (keys %{ $mark->{'components'} }) {
         my $have_match = 0;
+
+        # Skip noisy upstream/CDN cache identifiers that aren't real components
+        next if $BI =~ /^cache-/i;
+
+        # Platform tags (may also arrive via headers) are not version strings
+        next if is_platform_component($BI);
 
         # Check it against each value from db_outdated
         foreach $V (sort keys %OVERS) {
@@ -96,29 +116,34 @@ sub nikto_outdated {
             {
                 $have_match = 1;
 
-                # nab version
-                foreach $k (keys %{ $OVERS{$V} }) {
-                    if ($k eq "")    { next; }
-                    if ($k eq "tid") { next; }
-                    $v = $k;
-                }
+                # check every known version for this component; the DB may
+                # contain multiple entries per server (e.g. AuthMySQL/, Zope/)
+                foreach $v (keys %{ $OVERS{$V} }) {
+                    next if $v eq "";
 
-                # do version check (return true if we should alert)
-                if (vereval($v, $BI, $V, $mark)) {
-                    my $msg = $OVERS{$V}{$v};
-                    $msg =~ s/\@RUNNING_VER/$BI/g;
-                    $msg =~ s/\@CURRENT_VER/$v/g;
-                    chomp($msg);
-                    add_vulnerability($mark,  $msg, $OVERS{$V}{'tid'}, "",
-                                      "HEAD", "/",  "",                "",
-                                      "Content match"
-                                      );
+                    # do version check (return true if we should alert)
+                    if (vereval($v, $BI, $V, $mark)) {
+                        my $msg = $OVERS{$V}{$v}{'msg'};
+                        $msg =~ s/\@RUNNING_VER/$BI/g;
+                        $msg =~ s/\@CURRENT_VER/$v/g;
+                        chomp($msg);
+                        add_vulnerability($mark, $msg, $OVERS{$V}{$v}{'tid'},
+                                          "", "HEAD", "/", "", "", "Content match");
+                    }
                 }
             }
         }
         if (!$have_match) { $mark->{'components'}->{$BI} = 2; }
     }
     return;
+}
+
+# True for OS/platform tokens that must not become update candidates
+sub is_platform_component {
+    my ($s) = @_;
+    return 0 unless defined $s && $s ne '';
+    return 1 if $s =~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
+    return 0;
 }
 
 # do version evaluation
@@ -128,25 +153,25 @@ sub nikto_outdated {
 #	2: item being matched against in db_outdated
 #	3: mark hash
 sub vereval {
+    my $mark = $_[3];
 
     # split both by last char of $_[2], as it is the name to version separator
     my $sepr = substr($_[2], (length($_[2]) - 1), 1);
     nprint("nikto_outdated.plugin: verstring: $_[2], sepr:$sepr",
-           "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "d", "outdated", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     my $CURRENT      = lc($_[0]);
     my $RUNNING      = lc($_[1]);
     my $CURRENT_ORIG = $CURRENT;
     my $RUNNING_ORIG = $RUNNING;
-    my $mark         = $_[3];
 
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING:",
-           "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "d", "outdated", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     my @T = split(/\Q$sepr\E/, $CURRENT);
-    $CURRENT = $T[$#T];                    # should be version...
+    $CURRENT = $T[$#T];                        # should be version...
     @T       = split(/\Q$sepr\E/, $RUNNING);
-    $RUNNING = $T[$#T];                    # should be version...
+    $RUNNING = $T[$#T];                        # should be version...
 
     # convert alphas to numerics so we can do a real comparison
     $CURRENT =~ s/([^0-9\.]){1}/"." . ord($1) . "."/eg;
@@ -159,8 +184,9 @@ sub vereval {
     $CURRENT =~ s/\.$//;
 
     nprint("nikto_outdated.plugin: \$CURRENT:$CURRENT:\$RUNNING:$RUNNING\: (after numberifcation)",
-           "d", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
+           "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
 
+    my (@CUR, @RUN);
     if (($CURRENT !~ /[a-z]/) && ($RUNNING !~ /[a-z]/)) {
         @CUR = split(/\./, $CURRENT);
         @RUN = split(/\./, $RUNNING);
@@ -173,7 +199,7 @@ sub vereval {
     # start with 0... eval each in turn...
     for (my $i = 0 ; $i <= $#CUR ; $i++) {
         nprint("nikto_outdated.plugin: major compare: \$CUR[$i]:$CUR[$i]: \$RUN[$i]:$RUN[$i]:",
-               "d", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
+               "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
         if ($CUR[$i] > $RUN[$i])                  { return 1; }    # running is older
         if (($CUR[$i] ne "") && ($RUN[$i] eq "")) { return 1; }    # running is older
         if ($CUR[$i] < $RUN[$i])                                   # running is newer

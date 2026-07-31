@@ -3,7 +3,7 @@
 # PURPOSE: Scan for exposed Spring Boot Actuator endpoints and basic info leaks
 ###############################################################################
 
-use JSON;
+use JSON::PP;
 
 sub nikto_springboot_init {
     my $id = { name        => "springboot",
@@ -40,12 +40,12 @@ sub nikto_springboot {
       /actuator/prometheus
       );
 
-    my $host     = $mark->{'hostname'};
-    my $port     = $mark->{'port'};
-    my $proto    = $mark->{'ssl'} ? 'https' : 'http';
-    my $base_url = "$proto://$host:$port";
+    my $host  = $mark->{'hostname'};
+    my $port  = $mark->{'port'};
+    my $proto = $mark->{'ssl'} ? 'https' : 'http';
 
     foreach my $ep (@endpoints) {
+        return if $mark->{'terminate'};
         my $path = $root . $ep;
         nprint("Checking $path", "v", "springboot");
         my ($res, $content, $error, $request, $response) =
@@ -62,7 +62,7 @@ sub nikto_springboot {
         }
 
         # resposnes should be JSON
-        next unless ($ct =~ /application\/json/i || $content =~ /^\s*\{/);
+        next unless ($ct =~ /application\/json/i || $content =~ /^\s*[\{\[]/);
 
         my $json;
         eval { $json = decode_json($content); };
@@ -92,9 +92,9 @@ sub nikto_springboot {
                     add_vulnerability(
                         $mark,
                         "$report_val: Spring Boot Actuator endpoint discovered via /actuator _links.",
-                        750001,
+                        "750001",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                        'GET',
+                        "GET",
                         $report_val
                         );
                 }
@@ -111,9 +111,9 @@ sub nikto_springboot {
                 add_vulnerability(
                         $mark,
                         "$path: Spring Boot Actuator health endpoint exposed",
-                        750002,
+                        "750002",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#health",
-                        'GET',
+                        "GET",
                         $path
                         );
             }
@@ -128,9 +128,9 @@ sub nikto_springboot {
                 add_vulnerability(
                     $mark,
                     "$path: Spring Boot Actuator info endpoint exposed (build version: $json->{'build'}{'version'})",
-                    750003,
+                    "750003",
                     "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#info",
-                    'GET',
+                    "GET",
                     $path
                     );
             }
@@ -140,10 +140,10 @@ sub nikto_springboot {
         # Other endpoints: report if valid, non-empty JSON
         if (ref($json) eq 'HASH' && scalar(keys %$json) > 0) {
             add_vulnerability(
-                       $mark,  "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
-                       750004, "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                       'GET',  $path
-                       );
+                     $mark,    "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
+                     "750004", "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
+                     "GET",    $path
+                     );
         }
     }
 }

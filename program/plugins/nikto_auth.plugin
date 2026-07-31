@@ -31,11 +31,16 @@ sub nikto_auth_init {
 # Load up the database as soon as we can
 sub nikto_auth_load {
 
-    if (defined $CLI{'hostauth'}) {
-        use Text::ParseWords;
-        my @array = nested_quotewords(':', 0, $CLI{'hostauth'});
+    # Always reload the default-credential DB.
+    $REALMS = init_db("db_realms");
 
-        if ((defined $array[0][0] && $array[0][0] ne "") || (defined $array[0][1] && $array[0][1] ne "")) {
+    # If the user supplied credentials, try them first
+    if (defined $CLI{'hostauth'}) {
+        require Text::ParseWords;
+        my @array = Text::ParseWords::nested_quotewords(':', 0, $CLI{'hostauth'});
+
+        if (   (defined $array[0][0] && $array[0][0] ne "")
+            || (defined $array[0][1] && $array[0][1] ne "")) {
 
             my $HOSTAUTH = { nikto_id => "700500",
                              realm    => (defined $array[0][2]) ? $array[0][2] : '@ANY',
@@ -45,9 +50,6 @@ sub nikto_auth_load {
                              };
             unshift(@{$REALMS}, $HOSTAUTH);
         }
-    }
-    else {
-        $REALMS = init_db("db_realms");
     }
 }
 
@@ -108,12 +110,13 @@ sub nikto_auth {
 
     unless (defined $response->{'www-authenticate'}) {
         nprint("+ ERROR: No authentication header defined: $response->{'whisker'}->{'uri'}",
-               "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+               "v", "auth", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
     my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
     $authtype = 'basic' if (!defined $authtype || $authtype eq '');
+    $realm    = ''      if (!defined $realm);
 
     # did we already test this realm?
     if (exists $mark->{'realms'}{$realm} && exists $mark->{'realms'}{$realm}{'status'}) {
@@ -121,7 +124,7 @@ sub nikto_auth {
     }
 
     nprint("+ $response->{'whisker'}->{'uri'} - Requires Authentication for realm '$realm'",
-           "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
+           "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
       if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$CLI{'root'}\E\/?$/);
 
     # Save to revert
@@ -129,13 +132,12 @@ sub nikto_auth {
 
     # Now we can try the passwords
     nprint("Testing creds for '$realm'",
-           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+           "v", "auth", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     my $success = 0;
     foreach my $entry (@{$REALMS}) {
         return if $mark->{'terminate'};
-        my $entry_realm = defined $entry->{'realm'} ? $entry->{'realm'} : '';
-        my $realm_matches =
-          ($entry_realm eq '@ANY')
+        my $entry_realm   = defined $entry->{'realm'} ? $entry->{'realm'} : '';
+        my $realm_matches = ($entry_realm eq '@ANY')
           || (defined $realm && $realm =~ /\Q$entry_realm\E/i);
         unless ($realm_matches) { next; }
 
@@ -149,14 +151,15 @@ sub nikto_auth {
         sleeper();
         LW2::http_do_request_timeout($request, $response);    # test auth
         $COUNTERS{'totalrequests'}++;
-        dump_var("Auth Request",  $request);
-        dump_var("Auth Response", $response);
+        dump_var("Auth Request",  $request,  "auth");
+        dump_var("Auth Response", $response, "auth");
         nprint("- Tested credentials: "
                  . $entry->{'id'} . "/"
                  . $entry->{'password'}
                  . "- response: "
                  . $response->{'whisker'}->{'code'},
                "v",
+               "auth",
                ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                );
 
@@ -204,9 +207,14 @@ sub nikto_auth {
         }
     }
     LW2::auth_unset($request);
+
+    # Record that we've processed this realm even when nothing matched, so a
+    # later 401 for the same realm doesn't trigger a full re-test.
+    $mark->{'realms'}{$realm}{'status'} //= 0;
+
     if (!$success) {
         nprint("+ " . $request->{'whisker'}->{'uri'} . ": No creds found for realm '$realm'",
-               "", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+               "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     }
 
     return $request, $response;

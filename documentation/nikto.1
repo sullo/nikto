@@ -2,12 +2,12 @@
 .\"     Title: nikto.pl
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 12/24/2025
+.\"      Date: 07/30/2026
 .\"    Manual: Vulnerability Scanner
 .\"    Source: http://www.cirt.net/ 2.5.0
 .\"  Language: English
 .\"
-.TH "NIKTO\&.PL" "1" "12/24/2025" "http://www\&.cirt\&.net/ 2\&.5" "Vulnerability Scanner"
+.TH "NIKTO\&.PL" "1" "07/30/2026" "http://www\&.cirt\&.net/ 2\&.5" "Vulnerability Scanner"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -142,7 +142,7 @@ Turn on/off display outputs: 1 (Show redirects), 2 (Show cookies received), 3 (S
 .PP
 \fB\-evasion\fR \fItechnique\fR
 .RS 4
-Encoding technique: 1 (Random URI encoding), 2 (Directory self\-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer)\&.
+Encoding technique: 1 (Random URI encoding), 2 (Directory self\-reference), 3 (Premature URL ending), 4 (Prepend long random string), 5 (Fake parameter), 6 (TAB as request spacer), 7 (Change the case of the URL), 8 (Use Windows directory separator), A (Use carriage return as request spacer), B (Use binary value 0x0b as request spacer), R (Random User\-Agent from database; default is first entry; ignored when \-useragent is set; note the suggested\-headers check always uses the first entry regardless)\&.
 .RE
 .PP
 \fB\-followredirects\fR
@@ -197,7 +197,7 @@ Maximum testing time per host (e\&.g\&., 1h, 60m, 3600s)\&.
 .PP
 \fB\-mutate\fR \fIoptions\fR
 .RS 4
-Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap), 6 (Attempt to guess directory names from dictionary file)\&.
+Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap)\&.
 .RE
 .PP
 \fB\-mutate\-options\fR \fIoptions\fR
@@ -205,9 +205,9 @@ Guess additional file names: 1 (Test all files with all root directories), 2 (Gu
 Provide information for mutates\&.
 .RE
 .PP
-\fB\-no404\fR
+\fB\-nocheck\fR
 .RS 4
-Disables nikto attempting to guess a 404 page\&.
+Do not check for updates on startup\&. Successful version checks are otherwise cached for 6 hours in EXECDIR/\&.last_update_check; delete that file to force a fresh check\&.
 .RE
 .PP
 \fB\-nocookies\fR
@@ -233,6 +233,11 @@ Strip trailing slash from URL (e\&.g\&., \*(Aq/admin/\*(Aq to \*(Aq/admin\*(Aq)\
 \fB\-nossl\fR
 .RS 4
 Do not use SSL to connect to the server\&.
+.RE
+.PP
+\fB\-nosslkeepalive\fR
+.RS 4
+Disable TLS connection reuse (keep\-alive is on by default)\&. Useful for servers that misbehave with reused TLS sessions\&.
 .RE
 .PP
 \fB\-Option\fR \fIname=value\fR
@@ -483,7 +488,7 @@ Load only user databases, not the standard databases\&. Options: all (Disable st
 .PP
 \fB\-useragent\fR \fIstring\fR
 .RS 4
-Over\-rides the default useragent\&.
+Forces a specific User\-Agent string, overriding the database entirely\&.
 .RE
 .PP
 \fB\-useproxy\fR \fIproxy\fR

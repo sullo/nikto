@@ -2,7 +2,7 @@ CREATE TABLE nikto_table (
   id serial NOT NULL,
   scanid varchar(32) DEFAULT NULL,
   testid varchar(6) NOT NULL,
-  ip varchar(15) DEFAULT NULL,
+  ip varchar(45) DEFAULT NULL,
   hostname text DEFAULT NULL,
   port integer DEFAULT NULL,
   tls smallint DEFAULT NULL,

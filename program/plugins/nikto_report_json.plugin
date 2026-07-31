@@ -5,13 +5,12 @@
 our $JSONRPT_ALL  = [];       # Arrayref to hold all hosts' reports
 our $JSONRPT_CURR = undef;    # Scalarref to current host's report
 
-use JSON;
+use JSON::PP;
 use Time::Piece;
 use Time::Seconds;
 
 ###############################################################################
 sub nikto_report_json_init {
-    use JSON;
 
     my $id = { name              => "report_json",
                full_name         => "JSON reports",
@@ -33,10 +32,14 @@ sub nikto_report_json_init {
 # open output file
 sub json_open {
     my ($file) = @_;
+    if ($file eq '') {
+        print STDERR "+ ERROR: Output file not specified.\n";
+        exit;
+    }
 
     # Open file with lexical handle (read-write mode for JSON)
     my $fh;
-    open($fh, "+>", $file) || die "+ ERROR: Unable to open '$file' for write: $@\n";
+    open($fh, "+>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
@@ -76,7 +79,7 @@ sub json_ssl_info {
 
     # Extract CN from subject
     my $cn = '';
-    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
         $cn = $1;
     }
 
@@ -109,7 +112,7 @@ sub json_host_end {
 # close output file
 sub json_close {
     my ($handle, $mark) = @_;
-    my $json_encoder = JSON->new->utf8->canonical->pretty->convert_blessed;
+    my $json_encoder = JSON::PP->new->utf8->canonical->pretty->convert_blessed;
     my $json_output  = $json_encoder->encode($JSONRPT_ALL);
     print $handle $json_output;
     close($handle);

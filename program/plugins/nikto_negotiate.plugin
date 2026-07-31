@@ -17,33 +17,67 @@ sub nikto_negotiate_init {
 sub nikto_negotiate {
     my ($mark) = @_;
     return if $mark->{'terminate'};
-    my %headers = ('Accept', 'application/whatever; q=1.0');
 
+    my %headers = ('Accept' => 'application/whatever; q=1.0');
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/index", "GET", "", \%headers, "", "negotiate");
 
-    if ($response->{'alternates'} =~ /\{\"/) {
-        my $message =
-          "/index: Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: ";
-        my @alts = split(/,/, $response->{'alternates'});
-        foreach my $h (@alts) {
-            $h =~ /\s?\{"([^"]+)"/;
-            $message .= $1 . ", ";
+    return if $mark->{'terminate'};
+    return if (defined $error && $error ne '');
+
+    # Real MultiViews list responses are typically 300/406; allow 2xx/3xx too.
+    # Exclude 401/403/404/5xx (stale Alternates on error pages).
+    return unless (defined $res && $res =~ /^(?:[23]\d\d|406)$/);
+
+    my $raw = $response->{'alternates'};
+    return unless defined $raw && $raw ne '';
+
+    my $alternates =
+      ref($raw) eq 'ARRAY' ? join(', ', grep { defined $_ && $_ ne '' } @$raw) : $raw;
+    return unless (defined $alternates && $alternates =~ /\{\s*"/);
+
+    # Extract names in list context (no /g pos state). Cap count and length.
+    my @raw_alts = ($alternates =~ /\{\s*"([^"]+)"/g);
+    my @alts;
+    my $max_alts    = 20;
+    my $max_alt_len = 128;
+    my $truncated   = 0;
+
+    foreach my $alt (@raw_alts) {
+        next unless defined $alt && length($alt);
+
+        # Skip negotiated error-document variants (common on some Apache configs)
+        next if ($alt =~ /^HTTP_/i);
+
+        $alt = nikto_negotiate_safe_str($alt, $max_alt_len);
+        next unless length($alt);
+
+        if (@alts >= $max_alts) {
+            $truncated = 1;
+            last;
         }
-        $message =~ s/, $//;
-
-        add_vulnerability(
-            $mark,
-            $message,
-            999965,
-            "http://www.wisec.it/sectou.php?id=4698ebdc59d15,https://exchange.xforce.ibmcloud.com/vulnerabilities/8275",
-            GET,
-            "/index",
-            $request,
-            $response
-            );
+        push(@alts, $alt);
     }
+    return unless @alts;
 
+    my $uri = $request->{'whisker'}->{'uri'} || '/index';
+    my $message =
+      "$uri: Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: "
+      . join(", ", @alts);
+    $message .= ", ..." if $truncated;
+
+    add_vulnerability($mark, $message, "999965",
+                      "https://exchange.xforce.ibmcloud.com/vulnerabilities/8275",
+                      "GET", $uri, $request, $response);
+}
+
+# Strip controls / limit length so Alternates data cannot bloat reports
+sub nikto_negotiate_safe_str {
+    my ($s, $max_len) = @_;
+    $s       = ''  unless defined $s;
+    $max_len = 128 unless defined $max_len && $max_len > 0;
+    $s =~ s/[\x00-\x1f\x7f]//g;
+    return length($s) > $max_len ? substr($s, 0, $max_len) : $s;
 }
 
 1;

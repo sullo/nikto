@@ -19,17 +19,16 @@ sub nikto_cgi {
     my @POSSIBLECGI;
     my @CFGCGI = split(' ', $VARIABLES{'@CGIDIRS'});
 
+    # @CGIDIRS already set from -Cgidirs in nikto.pl; only log / probe here
     if (defined $CLI{'forcecgi'}) {
         if ($CLI{'forcecgi'} eq "all") {
             nprint("Using all known CGI directories\n", "d");
         }
         elsif ($CLI{'forcecgi'} eq "none") {
             nprint("- No CGI directories are set\n", "v", "cgi");
-            $VARIABLES{'@CGIDIRS'} = "";
         }
         else {
             nprint("Using CGI dir '$CLI{'forcecgi'}'\n", "d");
-            $VARIABLES{'@CGIDIRS'} = $CLI{'forcecgi'};
         }
     }
     else    # or normal testing of each dir
@@ -39,9 +38,12 @@ sub nikto_cgi {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $possiblecgidir, "GET", "", "", "", "CGI");
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res",
-                   "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                   "d", "cgi", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-            if ($res =~ /^40[135]$/ && !is_404($mark, $possiblecgidir, $response)) {
+            my $is_index =
+              ($res eq "200" && $content =~ /(?:index of \/|directory listing (?:of|for))/i);
+            if (($res =~ /^40[135]$/ || $is_index)
+                && !is_404($mark, $possiblecgidir, $response)) {
                 $gotvalid++;
                 push @POSSIBLECGI, $possiblecgidir;
             }

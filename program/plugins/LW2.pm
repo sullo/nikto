@@ -150,7 +150,7 @@ $PACKAGE='LW2';
     ## LW module manager stuff ##
 
     $LW_SSL_LIB          = 0;
-    $LW_SSL_KEEPALIVE    = 0;
+    $LW_SSL_KEEPALIVE    = 1;
     $LW_NONBLOCK_CONNECT = 1;
 
     $_SSL_LIBRARY = undef;
@@ -182,13 +182,14 @@ $PACKAGE='LW2';
     
     # check for Socket
     eval "use Socket qw(:DEFAULT :addrinfo SOCK_STREAM inet_pton pack_sockaddr_in6)"; # Have IPv6-capable Socket.pm?
-    if ($@) { # No IPv6, fallback to older Socket test
-        eval "use Socket";   
+    my $ipv6_err = $@;
+    if ($ipv6_err) { # No IPv6, fallback to older Socket test
+        eval "use Socket";
         if ( $@ ) {
 	        die('You have to install the module Socket');
         }
-    }    
-    our $LW2_CAN_IPv6 = ( $@) ? 0 : 1;
+    }
+    our $LW2_CAN_IPv6 = ($ipv6_err) ? 0 : 1;
     
     # init SSL with autoconfig first. App can later override this
     init_ssl_engine('auto');
@@ -3582,9 +3583,9 @@ EOT
 
 ########################################################################
 
-# {    # start md4 packaged varbs
-#     my ( @S, @T, @M );
-#     my $code = '';
+ {    # start md4 packaged varbs
+     my ( @S, @T, @M );
+     my $code = '';
 
 =item B<md4>
 
@@ -3598,85 +3599,85 @@ available.
 
 =cut
 
-    # sub md4 {
-    #     return undef if ( !defined $_[0] );    # oops, forgot the data
-    #     my $DATA = _md5_pad( $_[0] );
-    #     &_md4_init() if ( !defined $M[0] );
-    #     return _md4_perl_generated( \$DATA );
-    # }
+     sub md4 {
+         return undef if ( !defined $_[0] );    # oops, forgot the data
+         my $DATA = _md5_pad( $_[0] );
+         &_md4_init() if ( !defined $M[0] );
+         return _md4_perl_generated( \$DATA );
+     }
 
 ########################################################################
 
-#     sub _md4_init {
-#         return if ( defined $S[0] );
-#         my $i;
-#         my @t = ( 3, 7, 11, 19, 3, 5, 9, 13, 3, 9, 11, 15 );
-#         for ( $i = 0 ; $i < 48 ; $i++ ) {
-#             $S[$i] = $t[ ( int( $i / 16 ) * 4 ) + ( $i % 4 ) ];
-#         }
-#         @M = (
-#             0, 1, 2, 3,  4, 5,  6, 7,  8, 9, 10, 11, 12, 13, 14, 15,
-#             0, 4, 8, 12, 1, 5,  9, 13, 2, 6, 10, 14, 3,  7,  11, 15,
-#             0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5,  13, 3,  11, 7,  15
-#         );
+     sub _md4_init {
+         return if ( defined $S[0] );
+         my $i;
+        my @t = ( 3, 7, 11, 19, 3, 5, 9, 13, 3, 9, 11, 15 );
+        for ( $i = 0 ; $i < 48 ; $i++ ) {
+            $S[$i] = $t[ ( int( $i / 16 ) * 4 ) + ( $i % 4 ) ];
+        }
+        @M = (
+            0, 1, 2, 3,  4, 5,  6, 7,  8, 9, 10, 11, 12, 13, 14, 15,
+            0, 4, 8, 12, 1, 5,  9, 13, 2, 6, 10, 14, 3,  7,  11, 15,
+            0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5,  13, 3,  11, 7,  15
+        );
 
-#         my $N = 'abcddabccdabbcda';
-#         my $M = '';
-#         $M = '&0xffffffff' if ( ( 1 << 16 ) << 16 );    # mask for 64bit systems
+        my $N = 'abcddabccdabbcda';
+        my $M = '';
+        $M = '&0xffffffff' if ( ( 1 << 16 ) << 16 );    # mask for 64bit systems
 
-#         $code = <<EOT;
-#         sub _md4_perl_generated {
-# 	BEGIN { \$^H |= 1; }; # use integer
-#         my (\$A,\$B,\$C,\$D)=(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
-#         my (\$a,\$b,\$c,\$d,\$t,\$i);
-#         my \$dr=shift;
-#         my \$l=length(\$\$dr);
-#         for my \$L (0 .. ((\$l/64)-1) ) {
-#                 my \@D = unpack('V16', substr(\$\$dr, \$L*64,64));
-#                 (\$a,\$b,\$c,\$d)=(\$A,\$B,\$C,\$D);
-# EOT
+        $code = <<EOT;
+        sub _md4_perl_generated {
+	BEGIN { \$^H |= 1; }; # use integer
+        my (\$A,\$B,\$C,\$D)=(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
+        my (\$a,\$b,\$c,\$d,\$t,\$i);
+        my \$dr=shift;
+        my \$l=length(\$\$dr);
+        for my \$L (0 .. ((\$l/64)-1) ) {
+                my \@D = unpack('V16', substr(\$\$dr, \$L*64,64));
+                (\$a,\$b,\$c,\$d)=(\$A,\$B,\$C,\$D);
+EOT
 
-#         for ( $i = 0 ; $i < 16 ; $i++ ) {
-#             my ( $a, $b, $c, $d ) =
-#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-#             $code .= "\$t=((\$$d^(\$$b\&(\$$c^\$$d)))+\$$a+\$D[$M[$i]])$M;\n";
-#             $code .=
-# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-#         }
-#         for ( ; $i < 32 ; $i++ ) {
-#             my ( $a, $b, $c, $d ) =
-#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-#             $code .=
-# "\$t=(( (\$$b&\$$c)|(\$$b&\$$d)|(\$$c&\$$d) )+\$$a+\$D[$M[$i]]+0x5a827999)$M;\n";
-#             $code .=
-# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-#         }
-#         for ( ; $i < 48 ; $i++ ) {
-#             my ( $a, $b, $c, $d ) =
-#               split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
-#             $code .=
-#               "\$t=(( \$$b^\$$c^\$$d )+\$$a+\$D[$M[$i]]+0x6ed9eba1)$M;\n";
-#             $code .=
-# "\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
-#         }
+        for ( $i = 0 ; $i < 16 ; $i++ ) {
+            my ( $a, $b, $c, $d ) =
+              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+            $code .= "\$t=((\$$d^(\$$b\&(\$$c^\$$d)))+\$$a+\$D[$M[$i]])$M;\n";
+            $code .=
+"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+        }
+        for ( ; $i < 32 ; $i++ ) {
+            my ( $a, $b, $c, $d ) =
+              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+            $code .=
+"\$t=(( (\$$b&\$$c)|(\$$b&\$$d)|(\$$c&\$$d) )+\$$a+\$D[$M[$i]]+0x5a827999)$M;\n";
+            $code .=
+"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+        }
+        for ( ; $i < 48 ; $i++ ) {
+            my ( $a, $b, $c, $d ) =
+              split( '', substr( $N, ( $i % 4 ) * 4, 4 ) );
+            $code .=
+              "\$t=(( \$$b^\$$c^\$$d )+\$$a+\$D[$M[$i]]+0x6ed9eba1)$M;\n";
+            $code .=
+"\$$a=(((\$t<<$S[$i])|((\$t>>(32-$S[$i]))&((1<<$S[$i])-1))))$M;\n";
+        }
 
-#         $code .= <<EOT;
-#                 \$A=\$A+\$a\&0xffffffff; \$B=\$B+\$b\&0xffffffff;
-#                 \$C=\$C+\$c\&0xffffffff; \$D=\$D+\$d\&0xffffffff;
-#         } # for
-# 	return unpack('H*', pack('V4',\$A,\$B,\$C,\$D)); }
-# EOT
-#         eval "$code";
+        $code .= <<EOT;
+                \$A=\$A+\$a\&0xffffffff; \$B=\$B+\$b\&0xffffffff;
+                \$C=\$C+\$c\&0xffffffff; \$D=\$D+\$d\&0xffffffff;
+        } # for
+	return unpack('H*', pack('V4',\$A,\$B,\$C,\$D)); }
+EOT
+        eval "$code";
 
-#         my $TEST = _md5_pad('foobar');
-#         if ( _md4_perl_generated( \$TEST ) ne
-#             '547aefd231dcbaac398625718336f143' )
-#         {
-#             utils_carp('md4: MD4 self-test not successful.');
-#         }
-#     }
+        my $TEST = _md5_pad('foobar');
+        if ( _md4_perl_generated( \$TEST ) ne
+            '547aefd231dcbaac398625718336f143' )
+        {
+            utils_carp('md4: MD4 self-test not successful.');
+        }
+    }
 
-# }    # md4 package container
+}    # md4 package container
 
 
 ########################################################################
@@ -5073,7 +5074,7 @@ sub _stream_socket_alloc {
         
         my ($ip, $port);
 
-        $xr->{sock_hints}->{family} = ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET ;
+        $xr->{sock_hints}->{family} //= ( $main::CLI{'ipv6'} ) ?  AF_INET6 :  AF_INET ;
         
         if ( defined $wh->{whisker}->{bind_socket} ) {
             $port = $wh->{whisker}->{bind_port} || 0;

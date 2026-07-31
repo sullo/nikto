@@ -42,12 +42,14 @@ sub nikto_robots {
         }
 
         my (%DIRS, %RFILES);
-        my $DISCTR = 0;
-        my @DOC    = split(/\n/, $content);
-        my $tocheck;
+        my $DISCTR           = 0;
+        my $positive_hits    = 0;
+        my $positive_hit_cap = 25;
+        my $capped_positives = 0;
+        my @DOC              = split(/\n/, $content);
+        my %tocheck;
         foreach my $line (@DOC) {
             $line =~ s/(?:^\s+|\s+$)//g;
-            $line = quotemeta($line);
             if ($line =~ /allow/i) {
                 chomp($line);
 
@@ -56,7 +58,7 @@ sub nikto_robots {
                 $line =~ s/\#.*$//;
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
-                $line =~ s/(?:dis)?allow(?:\\:)?(?:\\\s+)?//i;
+                $line =~ s/^(?:dis)?allow\s*:?\s*//i;
                 $line =~ s/\/+/\//g;
                 $line =~ s/\\//g;
 
@@ -73,7 +75,7 @@ sub nikto_robots {
                 $realfile =~ s/^$realdir//;
 
                 nprint("- robots.txt entry dir:$realdir -- file:$realfile",
-                       "d", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                       "d", "robots", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 if (($realdir ne "") && ($realdir ne "/")) {
                     $realdir =~ s/\\//g;
                     $DIRS{$realdir} = 1;
@@ -89,6 +91,7 @@ sub nikto_robots {
                   if (   ($realdir eq "/" && $realfile eq "")
                       || ($realfile eq "/" && $realdir eq ""));
                 next if ($line =~ /\*/);    # Wildcards
+                $line = "/$line" unless $line =~ /^\//;
                 $tocheck{$line} = 1;
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
@@ -99,19 +102,24 @@ sub nikto_robots {
             if (!defined($parameters->{'nocheck'})) {
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, $line, "GET", "", "", "", "Robots: Check for URI");
-                if (!is_404($mark, $line, $response)
+                if (   !is_404($mark, $line, $response)
                     && ($res !~ /^40[346]$/)
                     && ($res !~ /^30[21]$/)) {
                     add_vulnerability(
                         $mark,
                         "/robots.txt: Entry '$line' is returned a non-forbidden or redirect HTTP code ($res)",
-                        999997,
+                        "999997",
                         "https://portswigger.net/kb/issues/00600600_robots-txt-file",
                         "GET",
-                        "/$line",
+                        "$line",
                         $request,
                         $response
                         );
+                    $positive_hits++;
+                    if ($positive_hits >= $positive_hit_cap) {
+                        $capped_positives = 1;
+                        last;
+                    }
                 }
             }
         }
@@ -122,12 +130,15 @@ sub nikto_robots {
         my $msg =
             ($DISCTR == 1) ? "contains 1 entry which should be manually viewed."
           : ($DISCTR > 1)  ? "contains $DISCTR entries which should be manually viewed."
-          :   "retrieved but it does not contain any 'disallow' entries (which is odd).";
+          :                  "retrieved but it does not contain any Allow/Disallow entries...";
+        if ($capped_positives) {
+            $msg .= " Capped at 25 positive results.";
+        }
 
-        if ($has_non_root_entries eq 0) {
+        if ($has_non_root_entries == 0) {
             add_vulnerability($mark, "/robots.txt: $msg",
-                             999996, "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
-                             "GET",  "/robots.txt", $request, $response);
+                           "999996", "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
+                           "GET",    "/robots.txt", $request, $response);
         }
     }
 }

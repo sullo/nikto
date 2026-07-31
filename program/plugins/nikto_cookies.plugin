@@ -21,24 +21,31 @@ sub nikto_cookies_init {
 sub nikto_cookies_postfetch {
     my ($mark, $parameters, $request, $response) = @_;
 
-    if (!exists $response->{'set-cookie'}) {
-        return $request, $response;
-    }
+    my $cookies = $response->{'whisker'}->{'cookies'};
+    return unless ref($cookies) eq 'ARRAY' && @$cookies;
 
-    foreach my $c (@{ $response->{'whisker'}->{'cookies'} }) {
-        my $c2 = $c;
-        $c =~ /([^=]+)+=([^;]+)/;
-        next if (!defined $1 || !defined $2 || $1 =~ /^\s*;/);
-        my $cname  = $1;
-        my $cvalue = $2;
-        next if (defined $CFOUND{$cname}{ $mark->{hostname} });
+    # Dedup per cookie name + host + port (+ ident when present)
+    my $scope =
+      join("\0", $mark->{'hostname'} // '', $mark->{'port'} // '', $mark->{'ident'} // '');
+
+    foreach my $c (@$cookies) {
+        my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]+)/);
+        next if (!defined $cname || !defined $cvalue);
+
+        $cname =~ s/^\s+|\s+$//g;
+        next if ($cname eq '' || $cname =~ /^;/);
+
+        my $cname_key = lc($cname);
+        next if ($CFOUND{$cname_key}{$scope});
+
+        my $cname_disp = nikto_cookies_safe_str($cname);
 
         # secure flag
         if ($c !~ /(?:^|;\s*)secure(?:\s*;|\s*$)/i && $mark->{ssl}) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
-                                . ": Cookie $cname created without the secure flag",
-                              999961,
+                                . ": Cookie $cname_disp created without the secure flag",
+                              "999961",
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
@@ -51,8 +58,8 @@ sub nikto_cookies_postfetch {
         if ($c !~ /(?:^|;\s*)httponly(?:\s*;|\s*$)/i) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
-                                . ": Cookie $cname created without the httponly flag",
-                              000137,
+                                . ": Cookie $cname_disp created without the httponly flag",
+                              "000029",
                               "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
@@ -63,60 +70,74 @@ sub nikto_cookies_postfetch {
 
         my @ips = get_ips($c);
 
-        if (substr($cname, 0, 4) eq 'NSC_') {
-            push(@ips, decode_netscaler_cookie($cvalue));
+        if ($cname_key =~ /^nsc_/) {
+            if (my $decoded = decode_netscaler_cookie($cvalue)) {
+                push(@ips, $decoded);
+            }
         }
 
         foreach my $ip (@ips) {
+            next unless defined $ip && length($ip);
 
             # This often contains an IP-like string
-            if ($ip eq '1.0.1.1' && $cname eq '__cf_bm') {
+            if ($ip eq '1.0.1.1' && $cname_key eq '__cf_bm') {
                 next;
             }
 
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {
-                    my $msg  = "";
-                    my $refs = "";
+                    my $msg     = "";
+                    my $refs    = "";
+                    my $ip_disp = nikto_cookies_safe_str($ip);
 
-                    if ($cname eq 'ARPT') {
+                    if ($cname_key eq 'arpt') {
                         $msg =
-                          "Cisco content switch reveals internal IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                          "Cisco content switch reveals internal IP address found in the '$cname_disp' cookie. The IP is \"$ip_disp\".";
                         $refs = "CVE-2006-4352";
                     }
                     else {
 
                         # is it an internal, or just different?
-                        my $int;
+                        my $int = "";
                         if ($internal) { $int = "RFC-1918 "; }
                         $msg = $request->{'whisker'}->{'uri'}
-                          . ": ${int}IP address found in the '$cname' cookie. The IP is \"$ip\".";
+                          . ": ${int}IP address found in the '$cname_disp' cookie. The IP is \"$ip_disp\".";
                     }
-                    add_vulnerability($mark, $msg, 999991, $refs,
+                    add_vulnerability($mark, $msg, "999991", $refs,
                                       $request->{'whisker'}->{'method'},
                                       $request->{'whisker'}->{'uri'},
                                       $request, $response);
                 }
             }
         }
-        $CFOUND{$cname}{ $mark->{hostname} } = 1;
+        $CFOUND{$cname_key}{$scope} = 1;
     }
 }
 
 sub decode_netscaler_cookie {
     my ($cookie_val) = @_;
-    $cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*([0-9a-f]{4})$/;
-    my $ip_value   = hex($1) ^ 0x03081e11;
-    my $port_value = hex($2) ^ 0x3630;
+    return unless defined $cookie_val && length($cookie_val);
 
-    my $ip_hex_str      = sprintf("0x%X", $ip_value);
-    my $ip_hex_zero_pad = sprintf("%08s", substr($ip_hex_str, 2, 8));
+    # Format: 8-char pad + 8-char encoded IP + ... + 4-char encoded port
+    my ($ip_hex) = ($cookie_val =~ /[0-9a-f]{8}([0-9a-f]{8}).*[0-9a-f]{4}$/i);
+    return unless defined $ip_hex;
+
+    my $ip_value        = hex($ip_hex) ^ 0x03081e11;
+    my $ip_hex_zero_pad = sprintf("%08X", $ip_value);
     return
-        hex('0x' . substr($ip_hex_zero_pad, 0, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 2, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 4, 2)) . "."
-      . hex('0x' . substr($ip_hex_zero_pad, 6, 2));
+        hex(substr($ip_hex_zero_pad, 0, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 2, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 4, 2)) . "."
+      . hex(substr($ip_hex_zero_pad, 6, 2));
+}
+
+# Strip controls / limit length so cookie data cannot break report/console output
+sub nikto_cookies_safe_str {
+    my ($s) = @_;
+    $s = '' unless defined $s;
+    $s =~ s/[\x00-\x1f\x7f]//g;
+    return length($s) > 256 ? substr($s, 0, 256) : $s;
 }
 
 1;

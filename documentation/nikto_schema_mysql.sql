@@ -2,7 +2,7 @@ CREATE TABLE `nikto_table` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `scanid` varchar(32) DEFAULT NULL,
   `testid` varchar(6) NOT NULL,
-  `ip` varchar(15) DEFAULT NULL,
+  `ip` varchar(45) DEFAULT NULL,
   `hostname` text DEFAULT NULL,
   `port` int(5) DEFAULT NULL,
   `tls` tinyint(1) DEFAULT NULL,

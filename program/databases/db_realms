@@ -155,7 +155,7 @@
 "700137","@ANY","webadmin","1234","ZyXEL Prestige"
 "700138","@ANY","webadmin","webadmin","Broadlogic XLT router"
 "700139","@ANY","websecadm","changeme","Entrust getAccess"
-"700140","ConfigToolPassword",,,"Realm matches a Nokia Checkpoint Firewall-1"
+"700140","ConfigToolPassword","","","Realm matches a Nokia Checkpoint Firewall-1"
 "700141","daap","","","DAAP (iTunes?) server with authentication."
 "700142","EIC","root","ncr","Enterprise Intranet Configurator - NCR Teradata server"
 "700143","Entrust GetAccess SCA","admin","admin","Entrust GetAccess Service Control Agent"

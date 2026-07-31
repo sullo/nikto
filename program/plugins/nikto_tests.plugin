@@ -25,7 +25,19 @@ sub nikto_tests_init {
 sub nikto_tests {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my $data;
+
+    # Pre-compile the user-supplied -404string patterns once
+    my @errstrings_user;
+    if (defined $VARIABLES{'ERRSTRINGS_USER'} && ref($VARIABLES{'ERRSTRINGS_USER'}) eq 'HASH') {
+        foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS_USER'} }) {
+            my $compiled = eval { qr/$pattern/ };
+            if (!defined $compiled) {
+                nprint("+ ERROR: invalid -404string pattern ignored: $pattern", "e", "tests");
+                next;
+            }
+            push(@errstrings_user, $compiled);
+        }
+    }
 
     # this is the actual the looped code for all the checks
     foreach my $checkid (sort keys %TESTS) {
@@ -38,18 +50,25 @@ sub nikto_tests {
       URI: foreach my $uri (@urilist) {
             return if $mark->{'terminate'};
             my (%headrs, %flags, $data);
-            if ($TESTS{$checkid}{'headers'} ne '') {
+            if (defined $TESTS{$checkid}{'headers'} && $TESTS{$checkid}{'headers'} ne '') {
                 my $header = unslash($TESTS{$checkid}{'headers'});
 
                 # Apply variable replacement to headers
                 my @header_lines = split /\r\n/, $header;
                 foreach my $h (@header_lines) {
-                    my ($key, $value) = split(/: /, $h);
+
+                    # Optional whitespace after colon ("Name: value" or "Name:value")
+                    my ($key, $value) = split(/:\s*/, $h, 2);
+                    next unless defined $key && defined $value;
                     $key = lc($key);
+                    $key =~ s/^\s+|\s+$//g;
+                    next if $key eq '' || $key =~ /\s/;
 
                     # Apply change_variables to the value part
                     my @replaced_values = change_variables($value, $mark, $checkid);
                     foreach my $replaced_value (@replaced_values) {
+
+                 # This could be a problem if there is more than one value for the same header (key)
                         $headrs{$key} = $replaced_value;
                     }
                 }
@@ -57,14 +76,24 @@ sub nikto_tests {
                   unless ($headrs{'host'});    # Kludge not to override host injection vectors
                 $flags{'noclean'} = 1;
             }
-            if ($TESTS{$checkid}{'data'} ne '') {
+            if (defined $TESTS{$checkid}{'data'} && $TESTS{$checkid}{'data'} ne '') {
                 $data = unslash($TESTS{$checkid}{'data'});
-                $headrs{'content-length'} = length($data)
-                  unless grep(/^(transfer-encoding|content-length)$/i, keys %headrs);
             }
 
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $data, \%headrs, \%flags, $checkid);
+
+            # An errored request is still matched as long as something came back.
+            $res     = '' unless defined $res;
+            $content = '' unless defined $content;
+            next URI if $res eq '' && $content eq '';
+
+            # Percentages
+            if (   $OUTPUT{'progress'}
+                && $parameters->{'report'}
+                && ($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
+                status_report();
+            }
 
             # DSL matcher expects response headers as a hashref
             my $response_string = rebuild_response($response, 0);
@@ -109,56 +138,37 @@ sub nikto_tests {
             # matched on something, check fails/ands
             if ($positive) {
 
-                # if it's an index.php, check for normal /index.php to see if it's a FP
-                # if ($uri =~ /^\/index.php\?/i) {
-                #     my $clean_content = rm_active_content($content, $mark->{'root'} . $uri);
-                #     if (LW2::md5($clean_content) eq $mark->{'FoF'}{'index.php'}{'match'}) {
-                #         next;
-                #     }
-                # }
-
-                # Check user-specified error codes/strings first (highest priority, always wins)
-                # This must be checked before any other 404 detection logic
-                if (defined $VARIABLES{'ERRCODES'} && ref($VARIABLES{'ERRCODES'}) eq 'HASH') {
+                # Check user-specified error codes/strings first (highest priority, always wins).
+                # We deliberately check only the _USER variants here, NOT the DB-loaded ERRCODES/
+                # ERRSTRINGS from db_404_strings. DB patterns are heuristics for is_404() and must
+                # not suppress explicit BODY matches (e.g. reflected XSS on a 404 page). Only
+                # user-supplied -404code/-404string should be able to override a BODY match.
+                if (defined $VARIABLES{'ERRCODES_USER'}
+                    && ref($VARIABLES{'ERRCODES_USER'}) eq 'HASH') {
                     my $code_str = "$res";
-                    if (exists $VARIABLES{'ERRCODES'}->{$code_str}) {
-                        next URI;    # Skip this test, it's a 404
+                    if (exists $VARIABLES{'ERRCODES_USER'}->{$code_str}) {
+                        next URI;    # Skip this test, it's a user-defined 404
                     }
                 }
-                if (defined $VARIABLES{'ERRSTRINGS'} && ref($VARIABLES{'ERRSTRINGS'}) eq 'HASH') {
-                    foreach my $pattern (keys %{ $VARIABLES{'ERRSTRINGS'} }) {
-                        if ($content =~ /$pattern/) {
-                            next URI;    # Skip this test, it's a 404
-                        }
+                foreach my $pattern (@errstrings_user) {
+                    if ($content =~ $pattern) {
+                        next URI;    # Skip this test, it's a user-defined 404
                     }
                 }
 
-             # Lastly check for a false positive based on file extension or type.
-             # We check is_404 when the actual response code is 200, because 404 error pages
-             # can return 200 status codes. However, we skip the check if:
-             # 1. There's a positive BODY match (specific body content indicates real content)
-             # 2. The DSL has an explicit non-200 CODE match (like CODE:404, CODE:403)
-             #    without including 200, as those are intentional matches for specific status codes.
-                my $has_code_match = ($TESTS{$checkid}{'dsl'} =~ /CODE:/i);
-
-                # Check if DSL has an explicit non-200 CODE match that doesn't include 200
-                # (e.g., CODE:404, CODE:403, but not CODE:200 or CODE:200|404)
-                my $has_explicit_non200_code = 0;
-                if ($has_code_match) {
-                    my $includes_code_200 = ($TESTS{$checkid}{'dsl'} =~ /\bCODE:\s*200(\D|$)/i);
-
-                    # If there's a CODE match but it doesn't include 200, skip is_404 check
-                    $has_explicit_non200_code = !$includes_code_200;
-                }
-
-                # Check if DSL has positive BODY patterns (BODY: but not !BODY:)
-                my $has_body_match = ($TESTS{$checkid}{'dsl'} =~ /(?:^|[^!])BODY:/i);
-
-                if (   $res == 200
-                    && !$has_body_match
-                    && !$has_explicit_non200_code
+                # Lastly check for a false positive based on file extension or type.
+                # We check is_404 when the actual response code is 200, because 404 error pages
+                # can return 200 status codes. A test whose match depends on specific body
+                # content is exempt: that content is better evidence than the 404 heuristics.
+                #
+                # There is deliberately no test for the DSL carrying a non-200 CODE term here.
+                # Getting this far means the matcher already returned true for this response,
+                # so a code of 200 proves the DSL's code terms admit 200 -- an explicitly
+                # non-200 test cannot reach this point with $res eq '200' to begin with.
+                if (   $res eq '200'
+                    && !$TESTS{$checkid}{'requires_body_match'}
                     && is_404($mark, $mark->{'root'} . $uri, $response)) {
-                    next;
+                    next URI;
                 }
 
                 # Process message with captured groups (if any)
@@ -176,13 +186,6 @@ sub nikto_tests {
                                   );
             }
         }
-
-        # Percentages
-        if (   $OUTPUT{'progress'}
-            && $parameters->{'report'}
-            && ($COUNTERS{'totalrequests'} % $parameters->{'report'}) == 0) {
-            status_report();
-        }
     }    # end check loop
 
     # Perform mutation tests
@@ -194,14 +197,16 @@ sub nikto_tests {
 
 sub passchecks {
     my ($mark) = @_;
-    my @DIRS   = (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
-    my @PFILES = (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
+    my @DIRS = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
+
+    # Empty entries are dropped up front so the counter math matches reality
+    my @PFILES = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
     my @EXTS   = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
     nprint("- Performing passfiles mutation.", "v", "tests");
 
     # Update total requests for status reports
-    my @CGIS = split(/ /, $VARIABLES{'@CGIDIRS'});
+    my @CGIS = grep { $_ ne "" } map { s/\/$//; $_ } split(/ /, $VARIABLES{'@CGIDIRS'});
     $COUNTERS{'total_checks'} =
       $COUNTERS{'total_checks'} +
       (scalar(@DIRS) * scalar(@PFILES)) +
@@ -211,7 +216,6 @@ sub passchecks {
     foreach my $dir (@DIRS) {
         return if $mark->{'terminate'};
         foreach my $file (@PFILES) {
-            next if ($file eq "");
 
             # dir/file
             testfile($mark, "$dir$file", "passfiles", "299998");
@@ -223,7 +227,7 @@ sub passchecks {
                 testfile($mark, "$dir$file.$ext", "passfiles", "299998");
 
                 foreach my $cgi (@CGIS) {
-                    $cgi =~ s/\/$//;
+                    return if $mark->{'terminate'};
 
                     # dir/file.ext
                     testfile($mark, "$cgi$dir$file.$ext", "passfiles", "299998");
@@ -256,8 +260,9 @@ sub allchecks {
 
             if ($dir ne "") {
                 $DIRS{$dir} = "";
-                $dir  =~ s/([^a-zA-Z0-9])/\\$1/g;
-                $file =~ s/$dir//;
+                if (index($file, $dir) == 0) {
+                    $file = substr($file, length($dir));
+                }
             }
             if (($file ne "") && ($file !~ /^\?/)) {
                 $FILES{$file} = "";
@@ -281,16 +286,14 @@ sub testfile {
     my ($mark, $uri, $name, $tid) = @_;
     return if $mark->{'terminate'};
     my ($res, $content, $error, $request, $response) =
-      nfetch($mark, $uri, "GET", "", "", "", "Tests: $name");
+      nfetch($mark, $uri, "GET", "", {}, {}, "Tests: $name");
+    $res   = '' unless defined $res;
+    $error = '' unless defined $error;
     nprint("- $res for $uri (error: $error)",
-           "v", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-    if ($error) {
-        $mark->{'total_errors'}++;
-        nprint("+ ERROR: $uri returned an error: $error",
-               "e", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        return;
-    }
-    if ($res == 200) {
+           "v", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+
+    # Mutations only care about the response code, so an error w/code is real hit
+    if ($res eq '200') {
         add_vulnerability($mark, "$uri: file found during $name mutation",
                           $tid, "", "GET", $uri, $request, $response);
     }

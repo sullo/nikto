@@ -17,7 +17,7 @@ sub nikto_multiple_index_init {
 sub nikto_multiple_index {
     my ($mark) = @_;
     my $dbarray = init_db("db_multiple_index");
-    my ($found, $hashes);
+    my (%found, %hashes);
     foreach my $item (@$dbarray) {
         return if $mark->{'terminate'};
 
@@ -38,13 +38,13 @@ sub nikto_multiple_index {
     if ($count > 1) {
 
         # make sure we have unique pages
-        my $total_unique = grep { $hashes{$_} == 1 } keys %hashes;
+        my $total_unique = scalar keys %hashes;
 
-        # one unique hash... bogus responses
+        # one distinct hash means all responses are effectively the same
         if ($total_unique <= 1) {
             return;
         }
-        my $file_list = join(', ', keys %found);
+        my $file_list = join(', ', sort keys %found);
 
         my $msg = "Multiple index files found";
         if ($total_unique < $count) {

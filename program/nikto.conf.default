@@ -7,9 +7,9 @@
 # default command line options, can't be an option that requires a value.  used for ALL runs.
 # CLIOPTS=-g -a
 
-# RFI URL. This remote file should return a phpinfo call, for example: <?php phpinfo(); ?>
-# You may use the one below, if you like.
-RFIURL=https://cirt.net/public/rfiinc.txt
+# Override default @RFIURL in db_variables/udb_variables.
+# Uncomment to override (this remote file should return <?php phpinfo(); ?>).
+#RFIURL=
 
 # IDs never to alert on (Note: this only works for IDs loaded from db_tests)
 #SKIPIDS=
@@ -34,6 +34,8 @@ UPDATES=yes
 # Update server names
 CIRT=cirt.net
 VERSION_API=https://telemetry.hack.llc/products.json
+# Successful VERSION_API checks are cached for 6 hours in EXECDIR/.last_update_check.
+# Delete that file to force a fresh check, or use -nocheck to skip entirely.
 
 # Proxy settings -- still must be enabled by -useproxy
 #PROXYHOST=127.0.0.1
@@ -67,6 +69,10 @@ CHECKMETHODS=GET
 # SSL           - use Net::SSL  -- NOT recommended as it does not support SAN extraction
 # auto          - automatically choose best available 
 LW_SSL_ENGINE=auto
+
+# Keep TLS connections alive across requests (reuse TCP+TLS session).
+# Enabled by default; set to 0 or use -nosslkeepalive to disable for misbehaving servers.
+# SSLKEEPALIVE=0
 
 # Number of failures before giving up
 # Set to 0 to disable entirely

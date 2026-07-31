@@ -47,60 +47,69 @@ sub nikto_headers_postfetch {
       set-cookie
       );
 
+    # Check for interesting headers once per response
+    nikto_headers_check($mark, $response, "000287", $request);
+
     # look for internal IPs
     foreach my $header (keys %$response) {
         next
           if exists $skip_headers{$header}
           || exists $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header};
 
-        # Check for known headers
-        nikto_headers_check($mark, $response, $header, 999986, $request);
-        my $header_value = $response->{$header};
+        my $raw    = $response->{$header};
+        my @values = (ref($raw) eq 'ARRAY') ? @$raw : ($raw);
 
-        # Do not check the Location header's path target for internal IPs
-        if ($header eq 'location') {
-            if ($header_value =~ /^\//) {
-                next;
-            }
-            else {
-                my @uri_parts = LW2::uri_split($header_value);
+        foreach my $header_value (@values) {
+            next unless defined $header_value;
 
-                # reconstruct without path/query/fragment
-                $header_value = $uri_parts[2];
-            }
+            # Do not check the Location header's path target for internal IPs
+            if ($header eq 'location') {
+                if ($header_value =~ /^\//) {
+                    next;
+                }
+                else {
+                    my @uri_parts = LW2::uri_split($header_value);
 
-            # Is it what we scanned?
-            if (defined $header_value
-                && (   $header_value eq $mark->{'ip'}
-                    || (defined $mark->{'vhost'}       && $header_value eq $mark->{'vhost'})
-                    || (defined $mark->{'hostname'}    && $header_value eq $mark->{'hostname'})
-                    || (defined $mark->{'displayname'} && $header_value eq $mark->{'displayname'}))
+                    # reconstruct without path/query/fragment
+                    $header_value = $uri_parts[2];
+                }
+
+                # Is it what we scanned?
+                if (defined $header_value
+                    && (   $header_value eq $mark->{'ip'}
+                        || (defined $mark->{'vhost'}    && $header_value eq $mark->{'vhost'})
+                        || (defined $mark->{'hostname'} && $header_value eq $mark->{'hostname'})
+                        || (defined $mark->{'displayname'}
+                            && $header_value eq $mark->{'displayname'})
+                            )
                     ) {
-                next;
+                    next;
+                }
+                next unless defined $header_value;
             }
-        }
 
-        foreach my $ip (get_ips($header_value)) {
-            my ($valid, $internal, $loopback) = is_ip($ip);
-            if ($valid && !$loopback) {
-                if ($ip ne $mark->{'ip'}) {
+            foreach my $ip (get_ips($header_value)) {
+                my ($valid, $internal, $loopback) = is_ip($ip);
+                if ($valid && !$loopback) {
+                    if ($ip ne $mark->{'ip'}) {
 
-                    # is it an internal, or just different?
-                    my $msg;
-                    $msg .= $request->{'whisker'}{'uri'} . ": ";
-                    if ($internal) { $msg .= "RFC-1918 "; }
-                    $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
-                    add_vulnerability(
-                        $mark,
-                        $msg,
-                        999979,
-                        "https://portswigger.net/kb/issues/00600300_private-ip-addresses-disclosed",
-                        $request->{'whisker'}->{'method'},
-                        $request->{'whisker'}->{'uri'},
-                        $request,
-                        $response
-                        );
-                    $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header} = 1;
+                        # is it an internal, or just different?
+                        my $msg;
+                        $msg .= $request->{'whisker'}{'uri'} . ": ";
+                        if ($internal) { $msg .= "RFC-1918 "; }
+                        $msg .= "IP address found in the '$header' header. The IP is \"$ip\".";
+                        add_vulnerability(
+                            $mark,
+                            $msg,
+                            "999979",
+                            "https://portswigger.net/kb/issues/00600300_private-ip-addresses-disclosed",
+                            $request->{'whisker'}->{'method'},
+                            $request->{'whisker'}->{'uri'},
+                            $request,
+                            $response
+                            );
+                        $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header} = 1;
+                    }
                 }
             }
         }
@@ -147,7 +156,7 @@ sub nikto_headers_postfetch {
               ? sprintf(", inode: %d, size: %d, mtime: %s",
                         hex($inode), hex($size), scalar(localtime($ltime)))
               : sprintf(", inode: %s, size: %s, mtime: %s", $inode, $size, $mtime);
-            add_vulnerability($mark, $message, 999984, "CVE-2003-1418",
+            add_vulnerability($mark, $message, "999984", "CVE-2003-1418",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
                               $request, $response);
@@ -184,13 +193,19 @@ sub nikto_headers_postfetch {
             }
         }
         if ($found == 0) {
-            my $x = $response->{$header};
-            $x =~ s/\s+.*$//;
-            $mark->{'components'}->{$x} = 1;
+            my $raw = $response->{$header};
+            my $x   = (ref($raw) eq 'ARRAY') ? ($raw->[0] // '') : ($raw // '');
+            if (!ref($x)) {
+                $x =~ s/\s+.*$//;
+                $mark->{'components'}->{$x} = 1
+                  if $x ne ''
+                  && $x !~ /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i
+                  && $x !~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
+            }
             my $values = report_multiheaders($response->{$header});
-            $vuln = $request->{'whisker'}{'uri'}
+            my $vuln   = $request->{'whisker'}{'uri'}
               . ": Uncommon header(s) '$header' found, with contents: $values.";
-            add_vulnerability($mark, $vuln, 999100, "",
+            add_vulnerability($mark, $vuln, "999100", "",
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
                               $request, $response);
@@ -202,12 +217,12 @@ sub nikto_headers_postfetch {
     if (   $mark->{'ssl'}
         && !$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'strict-transport-security'}
         && defined $response) {
-        if ($response->{'strict-transport-security'} =~ /max-age="?0"?/i) {
+        if ($response->{'strict-transport-security'} =~ /max-age\s*=\s*"?0"?(?!\d)/i) {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
                   . ": The site uses TLS and the Strict-Transport-Security HTTP header is set with max-age=0, which effectively disables it.",
-                999971,
+                "999971",
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security",
                 $request->{'whisker'}->{'method'},
                 $request->{'whisker'}->{'uri'},
@@ -223,22 +238,21 @@ sub nikto_headers_postfetch {
     if (!$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'alt-svc'}
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'alt-svc'}) {
-            my ($protocol, $msg);
-            $response->{'alt-svc'} =~ /.*(h[23])="([^"]+)"/;
-            my $endpoint = $2;
-            if ($1 eq "h2") {
+            my ($protocol,     $msg);
+            my ($altsvc_proto, $endpoint) = $response->{'alt-svc'} =~ /.*(h2c|h2|h3)="([^"]+)"/;
+            if ($altsvc_proto eq "h2") {
                 $protocol = "HTTP/2 over TLS";
             }
-            elsif ($1 eq "h2c") {
+            elsif ($altsvc_proto eq "h2c") {
                 $protocol = "HTTP/2 over TCP";
                 $msg      = " Unencrypted.";
             }
-            elsif ($1 eq "h3") {
+            elsif ($altsvc_proto eq "h3") {
                 $protocol = "HTTP/3";
                 $msg      = " Nikto cannot test HTTP/3 over QUIC.";
             }
             else {
-                $protocol = $1;
+                $protocol = "an unknown protocol";
             }
 
             add_vulnerability(
@@ -261,16 +275,17 @@ sub nikto_headers_postfetch {
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'x-clacks-overhead'}) {
             add_vulnerability(
-                $mark,
-                $request->{'whisker'}{'uri'}
-                  . ": There appears to be Clacks Overhead on the server and the message is: $response->{'x-clacks-overhead'}",
-                999104,
-                "https://xclacksoverhead.org/home/about",
-                $request->{'whisker'}->{'method'},
-                $request->{'whisker'}->{'uri'},
-                $request,
-                $response
-                );
+                      $mark,
+                      $request->{'whisker'}{'uri'}
+                        . ": There appears to be Clacks Overhead on the server and the message is: "
+                        . report_multiheaders($response->{'x-clacks-overhead'}),
+                      "999104",
+                      "https://xclacksoverhead.org/home/about",
+                      $request->{'whisker'}->{'method'},
+                      $request->{'whisker'}->{'uri'},
+                      $request,
+                      $response
+                      );
             $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'x-clacks-overhead'} = 1;
         }
     }
@@ -282,8 +297,9 @@ sub nikto_headers_postfetch {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
-                  . ": A CSP report-uri header was found. The URL is: $response->{'report-uri'}",
-                000433,
+                  . ": A CSP report-uri header was found. The URL is: "
+                  . report_multiheaders($response->{'report-uri'}),
+                "000433",
                 "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-uri",
                 $request->{'whisker'}->{'method'},
                 $request->{'whisker'}->{'uri'},
@@ -302,7 +318,7 @@ sub nikto_headers_postfetch {
             $mark,
             $request->{'whisker'}{'uri'}
               . ": Cloudflare detected via cf-ray header. Recommend proxying via Burp or mitmproxy to avoid TLS fingerprint blocks.",
-            999106,
+            "999106",
             "https://github.com/sullo/nikto/wiki/Using-a-Proxy",
             $request->{'whisker'}->{'method'},
             $request->{'whisker'}->{'uri'},
@@ -318,16 +334,20 @@ sub nikto_headers_postfetch {
 # If multiple headers were sent with the same name, turn the array into a string for reporting
 sub report_multiheaders {
     my $header = $_[0] || return;
+    my $value;
     if (ref($header) eq 'ARRAY') {
-        return join(',', @{$header});
+        $value = join(',', @{$header});
     }
     else {
-        return $header;
+        $value = $header;
     }
+    $value = validate_and_fix_regex($value);
+    $value =~ s/[\r\n]+/ /g;
+    return $value;
 }
 
 sub nikto_headers_check {
-    my ($mark, $response, $header, $tid, $request) = @_;
+    my ($mark, $response, $tid, $request) = @_;
     return if $mark->{'terminate'};
     my @interesting_headers = split(" ", $VARIABLES{'@INTERESTING_HEADERS'});
 
@@ -336,12 +356,14 @@ sub nikto_headers_check {
             if (!exists $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }
                 {"interesting-$header"}) {
                 my $value = "";
-                if (ref($response->{$header}) eq ARRAY) {
+                if (ref($response->{$header}) eq 'ARRAY') {
                     $value = join(', ', @{ $response->{$header} });
                 }
                 else {
                     $value = $response->{$header};
                 }
+                $value = validate_and_fix_regex($value);
+                $value =~ s/[\r\n]+/ /g;
                 $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }{"interesting-$header"} = 1;
                 add_vulnerability(
                                 $mark,
@@ -380,7 +402,7 @@ sub nikto_headers {
                         $mark,
                         $request->{'whisker'}{'uri'}
                           . ": Host may be vulnerable to a source disclosure using the Translate: header",
-                        999983,
+                        "999983",
                         "CVE-2000-0778",
                         "GET",
                         $f,
@@ -417,7 +439,9 @@ sub nikto_headers {
         my ($res, $content, $errors, $request, $response) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
-        if (!$cl && ($response->{'content-location'} ne "")) {
+        if (   !$cl
+            && defined $response->{'content-location'}
+            && ($response->{'content-location'} ne "")) {
             my @ips = get_ips($response->{'content-location'});
             my ($valid, $internal, $loopback) = is_ip($ips[0]);
             if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
@@ -426,7 +450,7 @@ sub nikto_headers {
                     $mark,
                     $uri
                       . ": IIS may reveal its internal or real IP in the Content-Location header via a request with HTTP/1.0. The value is \"$ips[0]\".",
-                    999989,
+                    "999989",
                     "CVE-2000-0649",
                     "GET",
                     $uri,
@@ -436,7 +460,7 @@ sub nikto_headers {
             }
         }
 
-        if (!$l && ($response->{'location'} ne "")) {
+        if (!$l && defined $response->{'location'} && ($response->{'location'} ne "")) {
             my @ips = get_ips($response->{'location'});
             my ($valid, $internal, $loopback) = is_ip($ips[0]);
             if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
@@ -445,7 +469,7 @@ sub nikto_headers {
                     $mark,
                     $uri
                       . ": The web server may reveal its internal or real IP in the Location header via a request to with HTTP/1.0. The value is \"$ips[0]\".",
-                    999988,
+                    "999988",
                     "CVE-2000-0649",
                     "GET",
                     $uri,
@@ -455,7 +479,9 @@ sub nikto_headers {
             }
         }
 
-        if (!$wa && ($response->{'www-authenticate'} ne "")) {
+        if (   !$wa
+            && defined $response->{'www-authenticate'}
+            && ($response->{'www-authenticate'} ne "")) {
             my @ips = get_ips($response->{'www-authenticate'});
             my ($valid, $internal, $loopback) = is_ip($ips[0]);
             if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
@@ -464,7 +490,7 @@ sub nikto_headers {
                     $mark,
                     $request->{'whisker'}{'uri'}
                       . ": Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
-                    999986,
+                    "999986",
                     "CVE-2000-0649",
                     "GET",
                     $uri,
@@ -474,7 +500,7 @@ sub nikto_headers {
             }
         }
 
-        if (!$rt && ($response->{'report-to'} ne "")) {
+        if (!$rt && defined $response->{'report-to'} && ($response->{'report-to'} ne "")) {
             my @bits = split("url\": \"", $response->{'report-to'});
             my $have = 0;
             my @urls;
@@ -492,7 +518,7 @@ sub nikto_headers {
                     $request->{'whisker'}{'uri'}
                       . ": A CSP report-to header was found with the following URLs: "
                       . join(", ", @urls),
-                    999945,
+                    "999945",
                     "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to",
                     "GET",
                     $uri,
@@ -513,8 +539,8 @@ sub nikto_headers {
     }
     $locheaders{'User-Agent'} = get_ua();
 
-    ($res, $content, $errors, $request, $response) =
-      nfetch($mark, '.', "GET", "", \%locheaders, \%flags, "Headers", "1.0");
+    my ($res, $content, $errors, $request, $response) =
+      nfetch($mark, '.', "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
     my @ips = get_ips($response->{'location'});
     if ($ips[0] ne '') {
@@ -527,7 +553,7 @@ sub nikto_headers {
             add_vulnerability(
                 $mark,
                 $msg,
-                999987,
+                "999987",
                 "https://web.archive.org/web/20080821223545/http://archives.neohapsis.com/archives/bugtraq/2003-04/0034.html",
                 "GET",
                 ".",
@@ -546,17 +572,18 @@ sub nikto_headers {
     $locheaders{'User-Agent'}      = get_ua();
     $locheaders{'Accept-Encoding'} = "deflate, gzip";
     ($res, $content, $errors, $request, $response) =
-      nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "Headers", "1.1");
+      nfetch($mark, '/', "GET", "", \%locheaders, \%locflags, "Headers", "1.1");
 
-    if (!$BREACH && defined $response && $mark->{'ssl'}) {
+    if (!$BREACH{ $mark->{hostname} }{ $mark->{port} } && defined $response && $mark->{'ssl'}) {
         if (defined $response->{'content-encoding'}) {
-            if ($response->{'content-encoding'} =~ "(deflate|gzip)") {
-                $BREACH = 1;
+            if ($response->{'content-encoding'} =~ /(deflate|gzip)/i) {
+                my $encoding = lc($1);
+                $BREACH{ $mark->{hostname} }{ $mark->{port} } = 1;
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
-                      . ": The Content-Encoding header is set to \"deflate\" which may mean that the server is vulnerable to the BREACH attack.",
-                    999966,
+                      . ": The Content-Encoding header is set to \"$encoding\" which may mean that the server is vulnerable to the BREACH attack.",
+                    "999966",
                     "http://breachattack.com/",
                     $request->{'whisker'}->{'method'},
                     $request->{'whisker'}->{'uri'},
@@ -573,10 +600,10 @@ sub nikto_headers {
         delete $locheaders{$_};
     }
     $locheaders{'User-Agent'} = get_ua();
-    $locheaders{'Nikto'}      = "\\x1f";
+    $locheaders{'Nikto'}      = "\x1f";
 
     ($res, $content, $errors, $request, $response) =
-      nfetch($mark, '/', "GET", "", \%locheaders, \%flags, "Headers", "1.0");
+      nfetch($mark, '/', "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
     if (($res eq "400") && ($response->{'whisker'}->{'message'} =~ /x1f<<</)) {
         add_vulnerability(
@@ -593,9 +620,19 @@ sub nikto_headers {
     }
 
     #######################################################################
-    # Missing suggested headers
+    # Missing suggested headers (desktop Chrome unless -useragent set)
+    my %hdrs;
+    if (   !$CLI{'useragent'}
+        && defined($VARIABLES{'@USERAGENTS'})
+        && ref($VARIABLES{'@USERAGENTS'}) eq 'ARRAY'
+        && @{ $VARIABLES{'@USERAGENTS'} }) {
+        my $ua = $VARIABLES{'@USERAGENTS'}->[0];
+        $ua =~ s/^"//;
+        $ua =~ s/"$//;
+        $hdrs{'User-Agent'} = $ua;
+    }
     ($res, $content, $errors, $request, $response) =
-      nfetch($mark, '/', "GET", "", {}, {}, "Headers", "1.1");
+      nfetch($mark, '/', "GET", "", \%hdrs, { force_close => 1 }, "Headers", "1.1");
 
     while (my ($header, $ref) = each %{ $VARIABLES->{'SUGGESTED_HEADERS'} }) {
         if (!exists $response->{$header}) {

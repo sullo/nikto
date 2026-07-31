@@ -25,17 +25,19 @@ sub nikto_report_html_init {
 ###############################################################################
 sub html_head {
     my ($file) = @_;
-    print STDERR "+ ERROR: Output file not specified.\n" if $file eq '';
+    if ($file eq '') {
+        print STDERR "+ ERROR: Output file not specified.\n";
+        exit;
+    }
 
     # Write header for html file, return file handle
     my $fh;
-    open($fh, ">>", $file) || die print STDERR "+ ERROR: Unable to open '$file' for write: $@\n";
+    open($fh, ">>", $file) || die "+ ERROR: Unable to open '$file' for write: $!\n";
 
     # Enable autoflush
     $fh->autoflush(1);
 
-    my $html = process_template($TEMPLATES{'htm_start'}, $mark);
-    $html =~ s/\#NIKTODTD#/$CONFIGFILE{'NIKTODTD'}/;
+    my $html = process_template($TEMPLATES{'htm_start'}, {});
     print $fh "$html";
 
     return $fh;
@@ -65,6 +67,12 @@ our $HTML_HOST_MARK   = undef;
 
 sub html_host_start {
     my ($handle, $mark) = @_;
+
+    # Clear any state left over from a target that aborted before host_end,
+    # otherwise this host's header could be written to the previous handle.
+    $HTML_HOST_HEADER = undef;
+    $HTML_HOST_HANDLE = undef;
+    $HTML_HOST_MARK   = undef;
 
     # Store handle and mark for later use when SSL info is available
     $HTML_HOST_HANDLE = $handle;
@@ -99,10 +107,12 @@ sub html_ssl_info {
 sub html_host_end {
     my ($handle, $mark) = @_;
 
-    # If host header wasn't written yet (no SSL), write it now without SSL info
+    # If host header wasn't written yet (no SSL), write it now without SSL info.
+    # Always write to the handle we were passed, consistent with html_item()
+    # and html_ssl_info(); the stored handle may be stale.
     if (defined $HTML_HOST_HANDLE) {
-        my $html = process_template($TEMPLATES{'htm_host_head'}, $HTML_HOST_MARK);
-        print $HTML_HOST_HANDLE "$html\n";
+        my $html = process_template($TEMPLATES{'htm_host_head'}, $HTML_HOST_MARK || $mark);
+        print $handle "$html\n";
 
         # Clear stored values
         $HTML_HOST_HEADER = undef;
@@ -140,99 +150,117 @@ sub html_item {
 }
 ###############################################################################
 sub html_open_templates {
-    foreach my $t (dirlist($CONFIGFILE{'TEMPLATEDIR'}, "htm.*")) {
-        open(T, "<$CONFIGFILE{'TEMPLATEDIR'}/$t");
-        my @TEMPLATE = <T>;
-        close(T);
-        my $T = join("", @TEMPLATE);
-        $t =~ s/\..*$//;
-        $TEMPLATES{$t} = $T;
+    foreach my $template_name (dirlist($CONFIGFILE{'TEMPLATEDIR'}, "htm.*")) {
+        my $fh;
+        open($fh, '<', "$CONFIGFILE{'TEMPLATEDIR'}/$template_name")
+          || die "+ ERROR: Unable to open '$CONFIGFILE{'TEMPLATEDIR'}/$template_name': $!\n";
+        my @TEMPLATE = <$fh>;
+        close($fh);
+        my $template_content = join("", @TEMPLATE);
+        $template_name =~ s/\.[^.]*$//;
+        $TEMPLATES{$template_name} = $template_content;
     }
 
     return;
 }
 ###############################################################################
+# Bracket IPv6 literals for use in URLs (http://[::1]:80/)
+sub html_url_host {
+    my ($host) = @_;
+    return '' unless defined $host && $host ne '';
+    $host =~ s/^\[//;
+    $host =~ s/\]$//;
+    if ($host =~ /^$LW2::IPv6_re_inc_zoneid$/ || $host =~ /:/) {
+        return '[' . $host . ']';
+    }
+    return $host;
+}
+###############################################################################
 sub process_template {
     my ($template, $mark, $item) = @_;
+    $mark = {} unless ref($mark) eq 'HASH';
+    $item = {} unless ref($item) eq 'HASH';
+
     my %variables;
     my $protocol = "http";
     if ($mark->{'ssl'}) { $protocol .= "s"; }
-    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : ($mark->{'hostname'} // '');
+    $hostname = '' unless defined $hostname;
 
-    $variables{"#TEMPL_HCTR#"}               = $VARIABLES{'TEMPL_HCTR'};
+    $variables{"#TEMPL_HCTR#"}               = $VARIABLES{'TEMPL_HCTR'} // '';
     $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'});
     $variables{"#TEMPL_HOSTNAME#"}           = simple_enc($hostname);
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
-    $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{'total_checks'};
-    $variables{"#TEMPL_PORT#"}               = $mark->{'port'};
-    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'};
+    $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{'total_checks'} // '';
+    $variables{"#TEMPL_PORT#"}               = $mark->{'port'}           // '';
+    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'}     // '';
     $variables{"#TEMPL_BANNER#"}             = simple_enc($mark->{'banner'});
     $variables{"#TEMPL_NIKTO_CLI#"}          = simple_enc($CLI{'all_options'});
-    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'};
-    $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'};
+    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'}    // '';
+    $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'} // '';
 
     # Create base URL once - prefer hostname (vhost if set), fall back to IP if hostname empty
-    # Consistent with nikto's display_name logic: prefer name, fall back to IP
-    my $base_host = ($hostname ne "") ? $hostname : $mark->{'ip'};
+    my $base_host = ($hostname ne '') ? $hostname : ($mark->{'ip'} // '');
+    my $root      = $mark->{'root'} // '';
+    my $port      = $mark->{'port'} // '';
     my $base_url =
-        $protocol . "://"
-      . simple_enc($base_host) . ":"
-      . $mark->{'port'}
-      . simple_enc($mark->{'root'});
+      $protocol . '://' . simple_enc(html_url_host($base_host)) . ':' . $port . simple_enc($root);
 
     # IP-specific link (for host header template)
     my $link_ip =
-        $protocol . "://"
-      . simple_enc($mark->{'ip'}) . ":"
-      . $mark->{'port'}
-      . simple_enc($mark->{'root'});
+        $protocol . '://'
+      . simple_enc(html_url_host($mark->{'ip'})) . ':'
+      . $port
+      . simple_enc($root);
     if ($link_ip !~ /\/$/) { $link_ip .= '/'; }
     $variables{"#TEMPL_LINK_IP#"} = $link_ip;
 
-# Base link (hostname preferred, IP fallback) - reuse for both TEMPL_LINK_NAME and TEMPL_ITEM_NAME_LINK
-    $variables{"#TEMPL_LINK_NAME#"}    = $base_url;
-    $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'};
-    $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'});
-    $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'});
-    $variables{"#TEMPL_SCAN_ELAPSED#"} = $COUNTERS{'scan_elapsed'} . " seconds";
+    # Standalone link needs a trailing slash (item links append a URI to
+    # $base_url instead, so $base_url itself is left unterminated)
+    my $link_name = $base_url;
+    if ($link_name !~ /\/$/) { $link_name .= '/'; }
+    $variables{"#TEMPL_LINK_NAME#"}    = $link_name;
+    $variables{"#TEMPL_ITEMS_FOUND#"}  = $mark->{'total_vulns'} // '';
+    $variables{"#TEMPL_SCAN_START#"}   = localtime($COUNTERS{'scan_start'} || 0);
+    $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'}   || 0);
+    $variables{"#TEMPL_SCAN_ELAPSED#"} = ($COUNTERS{'scan_elapsed'} // 0) . " seconds";
     $variables{"#TEMPL_STATISTICS#"} =
-      "$COUNTERS{'totalrequests'} requests, $mark->{'total_errors'} errors, $mark->{'total_vulns'} findings";
-    $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
-    $variables{"#TEMPL_ELAPSED#"} = $mark->{'end_time'} - $mark->{'start_time'};
+        ($COUNTERS{'totalrequests'} // 0)
+      . " requests, "
+      . ($mark->{'total_errors'} // 0)
+      . " errors, "
+      . ($mark->{'total_vulns'} // 0)
+      . " findings";
+    $variables{"#TEMPL_START#"} = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_ELAPSED#"} =
+        (defined $mark->{'end_time'} && defined $mark->{'start_time'})
+      ? ($mark->{'end_time'} - $mark->{'start_time'})
+      : 0;
     my $references = linkify_refs($item->{'refs'}) || '';
     $variables{"#TEMPL_REFERENCES#"} = $references;
 
     # Process References row - extract row HTML from template and conditionally show/hide
-    # HTML structure is in template file; we process it like SSL rows
-    # Only process if this is an item template (has TEMPL_REFERENCES)
     if ($template =~ /#TEMPL_REFERENCES#/) {
         my $host_item_template = $TEMPLATES{'htm_host_item'} || '';
         my ($references_row_tmpl) =
           $host_item_template =~ /#TEMPL_REFERENCES_ROW#\s*(<tr>.*?<\/tr>)/s;
 
         if ($references_row_tmpl && $references ne '') {
-
-            # Process row template with variable substitution
             my $row = $references_row_tmpl;
             $row =~ s/#TEMPL_REFERENCES#/$references/g;
             $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = $row;
         }
         else {
-            # Hide References row if no references
             $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = "";
         }
-
-        # Set marker variable to empty - it will be replaced along with row HTML
         $variables{"#TEMPL_REFERENCES_ROW#"} = "";
     }
     else {
-        # Not an item template, ensure variables are set to avoid warnings
         $variables{"#TEMPL_REFERENCES_ROW_REPLACE#"} = "";
         $variables{"#TEMPL_REFERENCES_ROW#"}         = "";
     }
 
     # SSL Info template variables - populate if SSL info is available
-    # HTML structure is in the template; we process rows like other template variables
     if ($mark->{'ssl'} && defined $mark->{'ssl_cipher'}) {
         my $ssl_subject  = simple_enc($mark->{'ssl_cert_subject'}  || '');
         my $ssl_issuer   = simple_enc($mark->{'ssl_cert_issuer'}   || '');
@@ -240,19 +268,17 @@ sub process_template {
         my $ssl_altnames = simple_enc($mark->{'ssl_cert_altnames'} || '');
         my $ssl_cn       = '';
 
-        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        if (defined $mark->{'ssl_cert_subject'}
+            && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
             $ssl_cn = simple_enc($1);
         }
 
-        # Populate values - HTML structure is in template
         $variables{"#TEMPL_SSL_SUBJECT#"} = $ssl_subject;
         $variables{"#TEMPL_SSL_CN#"}      = $ssl_cn;
         $variables{"#TEMPL_SSL_SAN#"}     = $ssl_altnames;
         $variables{"#TEMPL_SSL_CIPHERS#"} = $ssl_ciphers;
         $variables{"#TEMPL_SSL_ISSUER#"}  = $ssl_issuer;
 
-       # Extract row HTML from template - HTML structure is in template file, extract and process it
-       # Row templates match the structure in htm_host_head.tmpl
         my $host_head_template = $TEMPLATES{'htm_host_head'} || '';
         my ($ssl_subject_row_tmpl) =
           $host_head_template =~ /#TEMPL_SSL_SUBJECT_ROW#\s*(<tr>.*?<\/tr>)/s;
@@ -263,8 +289,6 @@ sub process_template {
         my ($ssl_issuer_row_tmpl) =
           $host_head_template =~ /#TEMPL_SSL_ISSUER_ROW#\s*(<tr>.*?<\/tr>)/s;
 
-        # Process row templates with variable substitution - HTML structure comes from template file
-        # Store processed row HTML to replace marker + row HTML in template
         if ($ssl_subject_row_tmpl) {
             my $row = $ssl_subject_row_tmpl;
             $row =~ s/#TEMPL_SSL_SUBJECT#/$ssl_subject/g;
@@ -310,7 +334,6 @@ sub process_template {
             $variables{"#TEMPL_SSL_ISSUER_ROW_REPLACE#"} = "";
         }
 
-        # Set marker variables to empty - they'll be replaced along with row HTML
         $variables{"#TEMPL_SSL_SUBJECT_ROW#"} = "";
         $variables{"#TEMPL_SSL_CN_ROW#"}      = "";
         $variables{"#TEMPL_SSL_SAN_ROW#"}     = "";
@@ -318,14 +341,12 @@ sub process_template {
         $variables{"#TEMPL_SSL_ISSUER_ROW#"}  = "";
     }
     else {
-        # Hide SSL rows - replace marker + row HTML with empty string
         $variables{"#TEMPL_SSL_SUBJECT_ROW_REPLACE#"} = "";
         $variables{"#TEMPL_SSL_CN_ROW_REPLACE#"}      = "";
         $variables{"#TEMPL_SSL_SAN_ROW_REPLACE#"}     = "";
         $variables{"#TEMPL_SSL_CIPHERS_ROW_REPLACE#"} = "";
         $variables{"#TEMPL_SSL_ISSUER_ROW_REPLACE#"}  = "";
 
-        # Set marker variables to empty
         $variables{"#TEMPL_SSL_SUBJECT_ROW#"} = "";
         $variables{"#TEMPL_SSL_CN_ROW#"}      = "";
         $variables{"#TEMPL_SSL_SAN_ROW#"}     = "";
@@ -333,94 +354,90 @@ sub process_template {
         $variables{"#TEMPL_SSL_ISSUER_ROW#"}  = "";
     }
 
-    $variables{"#ID#"} = $item->{'nikto_id'};
-
-    # Scanner Messages Handling
+    $variables{"#ID#"}          = $item->{'nikto_id'} // '';
     $variables{"#TEMPL_SMMSG#"} = simple_enc($item->{'message'});
 
     # Positives Handling
     if ($template =~ /\#TEMPL_MSG#/) {
         my $msg = simple_enc($item->{'message'});
 
-        # Message & handling for customized html output
         # 740000 = multiple index files -- linkify file names
-        if ($item->{'nikto_id'} == 740000) {
-            $item->{'message'} =~ /^(.*: )(.*)$/;
-            $msg = simple_enc($1);
-            my @links;
-            foreach my $f (parse_csv($2)) {    #@files) {
-                $f =~ s/\s//g;
-                next if $f eq '';
-                my $escaped_f       = simple_enc($f);
-                my $escaped_display = simple_enc($mark->{'display_name'});
-                push(@links,
-                     "<a href=\"$protocol://$escaped_display:$mark->{'port'}/$escaped_f\">$escaped_f</a>"
-                     );
+        if (defined $item->{'nikto_id'} && $item->{'nikto_id'} == 740000) {
+            my $message = $item->{'message'} // '';
+            if ($message =~ /^(.*: )(.*)$/) {
+                $msg = simple_enc($1);
+                my @links;
+                my $link_host = html_url_host($mark->{'displayname'} || $base_host);
+                foreach my $f (parse_csv($2)) {
+                    $f =~ s/\s//g;
+                    next if $f eq '';
+                    my $escaped_f = simple_enc($f);
+                    my $path      = $root;
+                    $path =~ s{/$}{};
+                    $path .= '/' . $f;
+                    $path =~ s{//+}{/}g;
+                    push(@links,
+                             "<a href=\""
+                           . $protocol . "://"
+                           . simple_enc($link_host) . ":"
+                           . $port
+                           . simple_enc($path)
+                           . "\">$escaped_f</a>");
+                }
+                $msg .= join(", ", @links);
             }
-            $msg .= join(", ", @links);
         }
 
-        my $uri = $item->{'uri'};
-        if (($uri ne '') && ($uri !~ /^$mark->{'root'}/)) { $uri = $mark->{'root'} . $uri; }
+        my $uri = $item->{'uri'} // '';
+        if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+            $uri = $root . $uri;
+        }
         $variables{"#TEMPL_URI#"}         = simple_enc($uri);
         $variables{"#TEMPL_MSG#"}         = $msg;
         $variables{"#TEMPL_HTTP_METHOD#"} = simple_enc($item->{'method'});
 
-        # Reuse base_url for item links - prefer hostname, fall back to IP
         $variables{"#TEMPL_ITEM_NAME_LINK#"} =
-            $protocol . "://"
-          . simple_enc($base_host) . ":"
-          . $mark->{'port'}
+            $protocol . '://'
+          . simple_enc(html_url_host($base_host)) . ':'
+          . $port
           . $variables{"#TEMPL_URI#"};
     }
 
-    # Replace marker + row HTML in template with processed row HTML (or empty string)
-    # Template has: #TEMPL_SSL_SUBJECT_ROW#\n<tr>...</tr>
-    # Replace with: processed row HTML (or empty to hide)
-    # Do this BEFORE main variable substitution so we can match the template variable patterns
-    # Use /s flag to match newlines with .
-    $template =~
-      s/#TEMPL_SSL_SUBJECT_ROW#\s*<tr><td class="column-head">SSL Certificate Subject<\/td><td>#TEMPL_SSL_SUBJECT#<\/td><\/tr>/#TEMPL_SSL_SUBJECT_ROW_REPLACE#/s;
-    $template =~
-      s/#TEMPL_SSL_CN_ROW#\s*<tr><td class="column-head">SSL Certificate CN<\/td><td>#TEMPL_SSL_CN#<\/td><\/tr>/#TEMPL_SSL_CN_ROW_REPLACE#/s;
-    $template =~
-      s/#TEMPL_SSL_SAN_ROW#\s*<tr><td class="column-head">SSL Certificate SAN<\/td><td>#TEMPL_SSL_SAN#<\/td><\/tr>/#TEMPL_SSL_SAN_ROW_REPLACE#/s;
-    $template =~
-      s/#TEMPL_SSL_CIPHERS_ROW#\s*<tr><td class="column-head">SSL Ciphers<\/td><td>#TEMPL_SSL_CIPHERS#<\/td><\/tr>/#TEMPL_SSL_CIPHERS_ROW_REPLACE#/s;
-    $template =~
-      s/#TEMPL_SSL_ISSUER_ROW#\s*<tr><td class="column-head">SSL Certificate Issuer<\/td><td>#TEMPL_SSL_ISSUER#<\/td><\/tr>/#TEMPL_SSL_ISSUER_ROW_REPLACE#/s;
+    # Replace marker + next <tr>...</tr> with processed row (flexible; not hardcoded cell HTML)
+    $template =~ s/#TEMPL_SSL_SUBJECT_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_SUBJECT_ROW_REPLACE#/s;
+    $template =~ s/#TEMPL_SSL_CN_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_CN_ROW_REPLACE#/s;
+    $template =~ s/#TEMPL_SSL_SAN_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_SAN_ROW_REPLACE#/s;
+    $template =~ s/#TEMPL_SSL_CIPHERS_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_CIPHERS_ROW_REPLACE#/s;
+    $template =~ s/#TEMPL_SSL_ISSUER_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_ISSUER_ROW_REPLACE#/s;
 
-    # Replace References row marker + HTML with processed row HTML (or empty string)
-    # Template has: #TEMPL_REFERENCES_ROW#\n  <tr>...</tr> (multi-line with indentation)
-    # Match the exact format with spaces and newlines - use .*? to match across lines
     if ($template =~ /#TEMPL_REFERENCES_ROW#/) {
-        $template =~
-          s/#TEMPL_REFERENCES_ROW#\s*<tr>.*?<td class="column-head">References<\/td>.*?<td>#TEMPL_REFERENCES#<\/td>.*?<\/tr>/#TEMPL_REFERENCES_ROW_REPLACE#/s;
+        $template =~ s/#TEMPL_REFERENCES_ROW#\s*<tr>.*?<\/tr>/#TEMPL_REFERENCES_ROW_REPLACE#/s;
     }
 
-    # Now process main template with all variables (including processed SSL row replacements)
-    foreach my $var (keys %variables) {
-        my $replacement = $variables{$var};
-
-        # Escape $ in replacement to prevent backreference interpretation ($1, $&, etc.)
-        $replacement =~ s/\$/\$\$/g;
-        $template    =~ s/\Q$var\E/$replacement/g;
-    }
+    # Substitute variables in a SINGLE pass. A loop over keys %variables would
+    # re-scan text it had already substituted, so a value containing a marker
+    # name (banners, messages and cert fields are attacker-controlled, and
+    # simple_enc() does not escape '#') could expand into another variable's
+    # raw HTML -- and only on the runs where hash order happened to cooperate.
+    # The TEMPL_/ID prefix keeps CSS hex colours in the templates from matching.
+    $template =~ s/(#(?:TEMPL_[A-Z0-9_]+|ID)#)/exists $variables{$1} ? $variables{$1} : $1/ge;
 
     return $template;
 }
 ###############################################################################
 sub linkify_refs {
-    my $refs = $_[0] || return;
-    my @rs   = split(/ /, $refs);
+    my $refs = $_[0];
+    return '' unless defined $refs && $refs ne '';
+
+    my @rs = split(/ /, $refs);
     for (my $i = 0 ; $i <= $#rs ; $i++) {
-        $r = $rs[$i];
+        my $r         = $rs[$i];
         my $escaped_r = simple_enc($r);
         if ($r =~ /^OSVDB-(\d+)$/) {
             my $id = $1;
             $r = "<a href='https://vulners.com/osvdb/OSVDB:$id'>$escaped_r</a>";
         }
-        elsif ($r =~ /^CVE-\d{4}-\d{3,4}/) {
+        elsif ($r =~ /^CVE-\d{4}-\d{4,}/) {
             my $escaped_url_r = simple_enc($r);
             $r =
               "<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name=$escaped_url_r'>$escaped_r</a>";
@@ -435,25 +452,24 @@ sub linkify_refs {
             $r =
               "<a href='https://www.cert.org/historical/advisories/$escaped_ca.cfm'>$escaped_r</a>";
         }
-        elsif ($r =~ /^CWE-\d+/) {
-            my $escaped_url_r = simple_enc($r);
-            $r =
-              "<a href='https://cwe.mitre.org/data/definitions/$escaped_url_r.html'>$escaped_r</a>";
+        elsif ($r =~ /^CWE-(\d+)/) {
+            my $id = $1;
+            $r = "<a href='https://cwe.mitre.org/data/definitions/$id.html'>$escaped_r</a>";
         }
-        elsif ($r =~ /^http/) {
+        elsif ($r =~ /^https?:\/\//i) {
             my $escaped_url_r = simple_enc($r);
             $r = "<a href='$escaped_url_r'>$escaped_r</a>";
         }
         $rs[$i] = $r;
     }
-    my $out = join("</br>", @rs);
-    $out =~ s/<br>$//;
-    return $out;
+    return join("<br>", @rs);
 }
 
 ###############################################################################
 sub simple_enc {
-    my $var = $_[0] || return;
+    my ($var) = @_;
+    return '' unless defined $var;
+    $var = "$var";
     $var =~ s/&/&amp;/g;
     $var =~ s/</&lt;/g;
     $var =~ s/>/&gt;/g;
