@@ -125,6 +125,7 @@ sub parse_hostfile {
     my $in_fh;
     open($in_fh, "<", $file) || die "+ ERROR: Cannot open '$file':$!\n";
     while (<$in_fh>) {
+
         # Check whether this is a greppable nmap file
         chomp;
         $nmap = 1 if (/^# Nmap/);
@@ -154,10 +155,10 @@ sub parse_hostfile {
             $fields[1] =~ s/^Ports: //;
             my @ports = parse_csv($fields[1]);
             foreach my $nmp (@ports) {
-                unless (($nmp =~ /\/open\/tcp/)
-                    && (($nmp =~ /^(?:\s+)?(?:80|443)\//) || ($nmp =~ /(?:http|ssl)/i)))
-                {
-                    nprint("\tNon web port identified: $hostdesc:$nmp", "d", "fileops", ($hostdesc));
+                unless (   ($nmp =~ /\/open\/tcp/)
+                        && (($nmp =~ /^(?:\s+)?(?:80|443)\//) || ($nmp =~ /(?:http|ssl)/i))) {
+                    nprint("\tNon web port identified: $hostdesc:$nmp",
+                           "d", "fileops", ($hostdesc));
                     next;
                 }
                 $nmp =~ /^(?:\s+)?(\d+)\//;

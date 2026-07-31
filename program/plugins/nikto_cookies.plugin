@@ -25,11 +25,8 @@ sub nikto_cookies_postfetch {
     return unless ref($cookies) eq 'ARRAY' && @$cookies;
 
     # Dedup per cookie name + host + port (+ ident when present)
-    my $scope = join("\0",
-        $mark->{'hostname'} // '',
-        $mark->{'port'}     // '',
-        $mark->{'ident'}    // ''
-    );
+    my $scope =
+      join("\0", $mark->{'hostname'} // '', $mark->{'port'} // '', $mark->{'ident'} // '');
 
     foreach my $c (@$cookies) {
         my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]+)/);
@@ -90,8 +87,8 @@ sub nikto_cookies_postfetch {
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
                 if ($ip ne $mark->{'ip'}) {
-                    my $msg  = "";
-                    my $refs = "";
+                    my $msg     = "";
+                    my $refs    = "";
                     my $ip_disp = nikto_cookies_safe_str($ip);
 
                     if ($cname_key eq 'arpt') {

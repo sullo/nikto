@@ -18,7 +18,7 @@ sub nikto_msgs_init {
                description => "Checks the server version against known issues.",
                hooks       => {
                           start => { method => \&nikto_msgs_load, },
-                          scan => { method => \&nikto_msgs,
+                          scan  => {method => \&nikto_msgs,
                                     weight => 5,
                                     },
                             },
@@ -99,7 +99,8 @@ sub nikto_msgs {
             if ($line =~ /new ObjectIpAddresses/) {
                 my $ipaddr = $line;
                 $ipaddr =~ s#(^.*new ObjectIpAddresses\(")([\d\.]+)("\);.*$)#$2#;
-                nprint("$ipaddr", "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                nprint("$ipaddr", "", undef,
+                       ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
                 $ipaddrs .= " $ipaddr";
             }
         }

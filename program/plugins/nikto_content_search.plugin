@@ -35,10 +35,8 @@ sub nikto_content_search_load {
     foreach my $testid (@$CONTENTSEARCH) {
         my $compiled = eval { qr/$testid->{'matchstring'}/ };
         if ($@ || !defined $compiled) {
-            nprint(
-                "+ Invalid content search regex for test ID $testid->{'nikto_id'}; skipping.",
-                "d"
-                );
+            nprint("+ Invalid content search regex for test ID $testid->{'nikto_id'}; skipping.",
+                   "d");
             next;
         }
         $testid->{'compiled'} = $compiled;
@@ -59,9 +57,9 @@ sub nikto_content_search {
     my ($file) = LW2::uri_split($whisker->{'uri'});
     return ($request, $response) unless defined $file;
 
-    my $method  = $whisker->{'method'} // "GET";
-    my $host    = $mark->{'hostname'};
-    my $seen    = ($CSMATCHED{$host}{$file} ||= {});
+    my $method = $whisker->{'method'} // "GET";
+    my $host   = $mark->{'hostname'};
+    my $seen   = ($CSMATCHED{$host}{$file} ||= {});
 
     foreach my $testid (@$CONTENTSEARCH) {
 
@@ -69,11 +67,10 @@ sub nikto_content_search {
         next if $seen->{ $testid->{'nikto_id'} };
 
         if ($body =~ $testid->{'compiled'}) {
-            my @caps = grep { defined $_ } ($1, $2, $3, $4, $5, $6, $7, $8, $9);
-            my $msg = process_captured_groups($testid->{'message'}, \@caps);
+            my @caps       = grep { defined $_ } ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+            my $msg        = process_captured_groups($testid->{'message'}, \@caps);
             my $outmessage = "$file: $msg";
-            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'},
-                              $testid->{'references'},
+            add_vulnerability($mark, $outmessage, $testid->{'nikto_id'}, $testid->{'references'},
                               $method, $file, $request, $response);
             $seen->{ $testid->{'nikto_id'} } = 1;
         }

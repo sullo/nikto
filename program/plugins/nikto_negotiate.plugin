@@ -24,6 +24,7 @@ sub nikto_negotiate {
 
     return if $mark->{'terminate'};
     return if (defined $error && $error ne '');
+
     # Real MultiViews list responses are typically 300/406; allow 2xx/3xx too.
     # Exclude 401/403/404/5xx (stale Alternates on error pages).
     return unless (defined $res && $res =~ /^(?:[23]\d\d|406)$/);
@@ -61,21 +62,19 @@ sub nikto_negotiate {
 
     my $uri = $request->{'whisker'}->{'uri'} || '/index';
     my $message =
-        "$uri: Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: "
+      "$uri: Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. The following alternatives for 'index' were found: "
       . join(", ", @alts);
     $message .= ", ..." if $truncated;
 
-    add_vulnerability(
-        $mark, $message, "999965",
-        "https://exchange.xforce.ibmcloud.com/vulnerabilities/8275",
-        "GET", $uri, $request, $response
-    );
+    add_vulnerability($mark, $message, "999965",
+                      "https://exchange.xforce.ibmcloud.com/vulnerabilities/8275",
+                      "GET", $uri, $request, $response);
 }
 
 # Strip controls / limit length so Alternates data cannot bloat reports
 sub nikto_negotiate_safe_str {
     my ($s, $max_len) = @_;
-    $s = '' unless defined $s;
+    $s       = ''  unless defined $s;
     $max_len = 128 unless defined $max_len && $max_len > 0;
     $s =~ s/[\x00-\x1f\x7f]//g;
     return length($s) > $max_len ? substr($s, 0, $max_len) : $s;

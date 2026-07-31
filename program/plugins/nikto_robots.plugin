@@ -42,11 +42,11 @@ sub nikto_robots {
         }
 
         my (%DIRS, %RFILES);
-        my $DISCTR = 0;
-        my $positive_hits     = 0;
-        my $positive_hit_cap  = 25;
-        my $capped_positives  = 0;
-        my @DOC    = split(/\n/, $content);
+        my $DISCTR           = 0;
+        my $positive_hits    = 0;
+        my $positive_hit_cap = 25;
+        my $capped_positives = 0;
+        my @DOC              = split(/\n/, $content);
         my %tocheck;
         foreach my $line (@DOC) {
             $line =~ s/(?:^\s+|\s+$)//g;
@@ -102,7 +102,7 @@ sub nikto_robots {
             if (!defined($parameters->{'nocheck'})) {
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, $line, "GET", "", "", "", "Robots: Check for URI");
-                if (!is_404($mark, $line, $response)
+                if (   !is_404($mark, $line, $response)
                     && ($res !~ /^40[346]$/)
                     && ($res !~ /^30[21]$/)) {
                     add_vulnerability(
@@ -130,15 +130,15 @@ sub nikto_robots {
         my $msg =
             ($DISCTR == 1) ? "contains 1 entry which should be manually viewed."
           : ($DISCTR > 1)  ? "contains $DISCTR entries which should be manually viewed."
-          :   "retrieved but it does not contain any Allow/Disallow entries...";
+          :                  "retrieved but it does not contain any Allow/Disallow entries...";
         if ($capped_positives) {
             $msg .= " Capped at 25 positive results.";
         }
 
         if ($has_non_root_entries == 0) {
             add_vulnerability($mark, "/robots.txt: $msg",
-                              "999996", "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
-                             "GET",  "/robots.txt", $request, $response);
+                           "999996", "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
+                           "GET",    "/robots.txt", $request, $response);
         }
     }
 }

@@ -56,7 +56,7 @@ sub nikto_headers_postfetch {
           if exists $skip_headers{$header}
           || exists $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header};
 
-        my $raw = $response->{$header};
+        my $raw    = $response->{$header};
         my @values = (ref($raw) eq 'ARRAY') ? @$raw : ($raw);
 
         foreach my $header_value (@values) {
@@ -77,10 +77,12 @@ sub nikto_headers_postfetch {
                 # Is it what we scanned?
                 if (defined $header_value
                     && (   $header_value eq $mark->{'ip'}
-                        || (defined $mark->{'vhost'}       && $header_value eq $mark->{'vhost'})
-                        || (defined $mark->{'hostname'}    && $header_value eq $mark->{'hostname'})
-                        || (defined $mark->{'displayname'} && $header_value eq $mark->{'displayname'}))
-                        ) {
+                        || (defined $mark->{'vhost'}    && $header_value eq $mark->{'vhost'})
+                        || (defined $mark->{'hostname'} && $header_value eq $mark->{'hostname'})
+                        || (defined $mark->{'displayname'}
+                            && $header_value eq $mark->{'displayname'})
+                            )
+                    ) {
                     next;
                 }
                 next unless defined $header_value;
@@ -192,17 +194,16 @@ sub nikto_headers_postfetch {
         }
         if ($found == 0) {
             my $raw = $response->{$header};
-            my $x = (ref($raw) eq 'ARRAY') ? ($raw->[0] // '') : ($raw // '');
+            my $x   = (ref($raw) eq 'ARRAY') ? ($raw->[0] // '') : ($raw // '');
             if (!ref($x)) {
                 $x =~ s/\s+.*$//;
                 $mark->{'components'}->{$x} = 1
                   if $x ne ''
-                  && $x !~
-                  /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i
+                  && $x !~ /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i
                   && $x !~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
             }
             my $values = report_multiheaders($response->{$header});
-            my $vuln = $request->{'whisker'}{'uri'}
+            my $vuln   = $request->{'whisker'}{'uri'}
               . ": Uncommon header(s) '$header' found, with contents: $values.";
             add_vulnerability($mark, $vuln, "999100", "",
                               $request->{'whisker'}->{'method'},
@@ -237,7 +238,7 @@ sub nikto_headers_postfetch {
     if (!$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'alt-svc'}
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'alt-svc'}) {
-            my ($protocol, $msg);
+            my ($protocol,     $msg);
             my ($altsvc_proto, $endpoint) = $response->{'alt-svc'} =~ /.*(h2c|h2|h3)="([^"]+)"/;
             if ($altsvc_proto eq "h2") {
                 $protocol = "HTTP/2 over TLS";
@@ -274,17 +275,17 @@ sub nikto_headers_postfetch {
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'x-clacks-overhead'}) {
             add_vulnerability(
-                $mark,
-                $request->{'whisker'}{'uri'}
-                  . ": There appears to be Clacks Overhead on the server and the message is: "
-                  . report_multiheaders($response->{'x-clacks-overhead'}),
-                "999104",
-                "https://xclacksoverhead.org/home/about",
-                $request->{'whisker'}->{'method'},
-                $request->{'whisker'}->{'uri'},
-                $request,
-                $response
-                );
+                      $mark,
+                      $request->{'whisker'}{'uri'}
+                        . ": There appears to be Clacks Overhead on the server and the message is: "
+                        . report_multiheaders($response->{'x-clacks-overhead'}),
+                      "999104",
+                      "https://xclacksoverhead.org/home/about",
+                      $request->{'whisker'}->{'method'},
+                      $request->{'whisker'}->{'uri'},
+                      $request,
+                      $response
+                      );
             $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'x-clacks-overhead'} = 1;
         }
     }
@@ -438,7 +439,9 @@ sub nikto_headers {
         my ($res, $content, $errors, $request, $response) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
-        if (!$cl && defined $response->{'content-location'} && ($response->{'content-location'} ne "")) {
+        if (   !$cl
+            && defined $response->{'content-location'}
+            && ($response->{'content-location'} ne "")) {
             my @ips = get_ips($response->{'content-location'});
             my ($valid, $internal, $loopback) = is_ip($ips[0]);
             if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
@@ -476,7 +479,9 @@ sub nikto_headers {
             }
         }
 
-        if (!$wa && defined $response->{'www-authenticate'} && ($response->{'www-authenticate'} ne "")) {
+        if (   !$wa
+            && defined $response->{'www-authenticate'}
+            && ($response->{'www-authenticate'} ne "")) {
             my @ips = get_ips($response->{'www-authenticate'});
             my ($valid, $internal, $loopback) = is_ip($ips[0]);
             if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {

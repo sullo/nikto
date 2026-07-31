@@ -73,7 +73,9 @@ sub text_item {
             $line .= $mark->{'root'} . $uri . ": ";
         }
         $line .= $item->{message};
-        if (defined $item->{refs} && $item->{refs} ne "") { $line .= " See: " . $item->{refs} . ": " }
+        if (defined $item->{refs} && $item->{refs} ne "") {
+            $line .= " See: " . $item->{refs} . ": ";
+        }
         print $handle "$line\n";
     }
 }

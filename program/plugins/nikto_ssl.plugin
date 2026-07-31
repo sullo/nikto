@@ -20,9 +20,9 @@ sub nikto_ssl {
 
     my @cn_names;
     my @san_names;
-    my $match = 0;
+    my $match             = 0;
     my $wildcard_reported = 0;
-    my $hostname_cmp = lc($mark->{'hostname'} || '');
+    my $hostname_cmp      = lc($mark->{'hostname'} || '');
     $hostname_cmp =~ s/\.$//;
 
     # Extract CN from subject
@@ -62,11 +62,12 @@ sub nikto_ssl {
         # wildcard cert
         elsif ($cert_name_cmp =~ /^\*/) {
             if (!$wildcard_reported) {
-                add_vulnerability(
-                    $mark,
-                    "/: Server is using a wildcard certificate: " . nikto_ssl_safe_str($cert_name),
-                    "999992", "https://en.wikipedia.org/wiki/Wildcard_certificate"
-                );
+                add_vulnerability($mark,
+                                  "/: Server is using a wildcard certificate: "
+                                    . nikto_ssl_safe_str($cert_name),
+                                  "999992",
+                                  "https://en.wikipedia.org/wiki/Wildcard_certificate"
+                                  );
                 $wildcard_reported = 1;
             }
             $cert_name_cmp =~ s/^\*\.//;

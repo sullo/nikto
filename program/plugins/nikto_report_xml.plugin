@@ -221,11 +221,11 @@ sub xml_item {
                           );
 
     # Write item content as normal character data so XML::Writer handles escaping safely
-    $XML_WRITER->dataElement('description', $item->{'message'} || '');
-    $XML_WRITER->dataElement('uri',         $item->{'uri'} || '');
+    $XML_WRITER->dataElement('description', $item->{'message'}  || '');
+    $XML_WRITER->dataElement('uri',         $item->{'uri'}      || '');
     $XML_WRITER->dataElement('namelink',    $item->{'namelink'} || '');
-    $XML_WRITER->dataElement('iplink',      $item->{'iplink'} || '');
-    $XML_WRITER->dataElement('references',  $item->{'refs'} || '');
+    $XML_WRITER->dataElement('iplink',      $item->{'iplink'}   || '');
+    $XML_WRITER->dataElement('references',  $item->{'refs'}     || '');
 
     $XML_WRITER->endTag('item');
 }

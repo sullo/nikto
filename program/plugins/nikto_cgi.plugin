@@ -40,8 +40,9 @@ sub nikto_cgi {
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res",
                    "d", "cgi", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-            my $is_index = ($res eq "200" && $content =~ /(?:index of \/|directory listing (?:of|for))/i);
-            if (   ($res =~ /^40[135]$/ || $is_index)
+            my $is_index =
+              ($res eq "200" && $content =~ /(?:index of \/|directory listing (?:of|for))/i);
+            if (($res =~ /^40[135]$/ || $is_index)
                 && !is_404($mark, $possiblecgidir, $response)) {
                 $gotvalid++;
                 push @POSSIBLECGI, $possiblecgidir;

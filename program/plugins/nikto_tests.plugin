@@ -56,6 +56,7 @@ sub nikto_tests {
                 # Apply variable replacement to headers
                 my @header_lines = split /\r\n/, $header;
                 foreach my $h (@header_lines) {
+
                     # Optional whitespace after colon ("Name: value" or "Name:value")
                     my ($key, $value) = split(/:\s*/, $h, 2);
                     next unless defined $key && defined $value;
@@ -66,7 +67,8 @@ sub nikto_tests {
                     # Apply change_variables to the value part
                     my @replaced_values = change_variables($value, $mark, $checkid);
                     foreach my $replaced_value (@replaced_values) {
-                        # This could be a problem if there is more than one value for the same header (key)
+
+                 # This could be a problem if there is more than one value for the same header (key)
                         $headrs{$key} = $replaced_value;
                     }
                 }
@@ -141,7 +143,8 @@ sub nikto_tests {
                 # ERRSTRINGS from db_404_strings. DB patterns are heuristics for is_404() and must
                 # not suppress explicit BODY matches (e.g. reflected XSS on a 404 page). Only
                 # user-supplied -404code/-404string should be able to override a BODY match.
-                if (defined $VARIABLES{'ERRCODES_USER'} && ref($VARIABLES{'ERRCODES_USER'}) eq 'HASH') {
+                if (defined $VARIABLES{'ERRCODES_USER'}
+                    && ref($VARIABLES{'ERRCODES_USER'}) eq 'HASH') {
                     my $code_str = "$res";
                     if (exists $VARIABLES{'ERRCODES_USER'}->{$code_str}) {
                         next URI;    # Skip this test, it's a user-defined 404
@@ -153,15 +156,15 @@ sub nikto_tests {
                     }
                 }
 
-             # Lastly check for a false positive based on file extension or type.
-             # We check is_404 when the actual response code is 200, because 404 error pages
-             # can return 200 status codes. A test whose match depends on specific body
-             # content is exempt: that content is better evidence than the 404 heuristics.
-             #
-             # There is deliberately no test for the DSL carrying a non-200 CODE term here.
-             # Getting this far means the matcher already returned true for this response,
-             # so a code of 200 proves the DSL's code terms admit 200 -- an explicitly
-             # non-200 test cannot reach this point with $res eq '200' to begin with.
+                # Lastly check for a false positive based on file extension or type.
+                # We check is_404 when the actual response code is 200, because 404 error pages
+                # can return 200 status codes. A test whose match depends on specific body
+                # content is exempt: that content is better evidence than the 404 heuristics.
+                #
+                # There is deliberately no test for the DSL carrying a non-200 CODE term here.
+                # Getting this far means the matcher already returned true for this response,
+                # so a code of 200 proves the DSL's code terms admit 200 -- an explicitly
+                # non-200 test cannot reach this point with $res eq '200' to begin with.
                 if (   $res eq '200'
                     && !$TESTS{$checkid}{'requires_body_match'}
                     && is_404($mark, $mark->{'root'} . $uri, $response)) {

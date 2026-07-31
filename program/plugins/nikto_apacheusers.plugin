@@ -32,7 +32,8 @@ sub nikto_apacheusers {
                    && $parameters->{'enumerate'} == 1);
 
     # First ensure that the server is vulnerable
-    my ($res, $content, $error, $request, $response) = nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
+    my ($res, $content, $error, $request, $response) =
+      nfetch($mark, "/~bin", "GET", "", "", "", "apacheusers: known user");
 
     if ($content =~ /forbidden/i)    # good on "bin"
     {
@@ -176,7 +177,7 @@ sub nikto_user_enum_apache_dictionary {
         s/^~//;
         if ($_ eq "")          { next }
         if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v", "apacheusers"); }
-        my($res, $content, $errors, $request, $response) =
+        my ($res, $content, $errors, $request, $response) =
           nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
         my $user = nikto_user_enum_apache_check($res, $_);
         if ($user) {

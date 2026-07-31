@@ -31,7 +31,7 @@ sub nikto_ms10_070 {
         return if $mark->{'terminate'};
         my $string = $1;
         next if $string eq '';
-        my $scan_host = $mark->{'hostname'} // $mark->{'ip'} // 'unknown';
+        my $scan_host  = $mark->{'hostname'} // $mark->{'ip'} // 'unknown';
         my $dedupe_key = $scan_host . ":" . $mark->{'port'} . ":" . $string;
         next if $MS10070{$dedupe_key};
         $MS10070{$dedupe_key} = 1;

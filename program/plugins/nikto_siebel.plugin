@@ -27,7 +27,7 @@ sub nikto_siebel {
 
     # Check whether we have an application
     if (defined $parameters->{'enumerate'}) {
-        my @apps        = nikto_siebel_enumerate($mark, $parameters);
+        my @apps = nikto_siebel_enumerate($mark, $parameters);
         $application = $apps[0];
     }
 

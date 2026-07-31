@@ -74,6 +74,7 @@ sub validate_sqld_config {
         $errors = 1;
     }
     elsif ($CONFIGFILE{'DB_HOST'} !~ /^[\[\]A-Za-z0-9._:-]+$/) {
+
         # Reject DSN metacharacters (;= etc.) in host
         nprint("+ ERROR: Invalid DB_HOST: contains unsupported characters");
         $errors = 1;
@@ -93,9 +94,9 @@ sub validate_sqld_config {
             $errors = 1;
         }
     }
-    elsif ($CONFIGFILE{'DB_PORT'} !~ /^\d+$/
-        || $CONFIGFILE{'DB_PORT'} < 1
-        || $CONFIGFILE{'DB_PORT'} > 65535) {
+    elsif (   $CONFIGFILE{'DB_PORT'} !~ /^\d+$/
+           || $CONFIGFILE{'DB_PORT'} < 1
+           || $CONFIGFILE{'DB_PORT'} > 65535) {
         nprint("+ ERROR: Invalid DB_PORT: must be an integer 1-65535");
         $errors = 1;
     }
@@ -118,7 +119,8 @@ sub validate_sqld_config {
         $SQLD_TABLE_NAME = $CONFIGFILE{'DB_TABLE'};
     }
     else {
-        nprint("+ ERROR: Invalid DB_TABLE: must be a simple identifier (letters, digits, underscore)");
+        nprint(
+            "+ ERROR: Invalid DB_TABLE: must be a simple identifier (letters, digits, underscore)");
         $errors = 1;
     }
 
@@ -185,7 +187,8 @@ sub validate_sqld_config {
 
         if (!$driver_found) {
             nprint("+ ERROR: Neither DBD::MariaDB nor DBD::mysql could be loaded");
-            nprint("+        Install/rebuild with: cpan DBD::MariaDB (preferred) or cpan DBD::mysql");
+            nprint(
+                 "+        Install/rebuild with: cpan DBD::MariaDB (preferred) or cpan DBD::mysql");
             nprint("+        Use -Display V to see the underlying load error");
             $errors = 1;
         }
@@ -195,7 +198,7 @@ sub validate_sqld_config {
         if ($@) {
             my $err = $@;
             $err =~ s/\s+$//;
-        $err =~ s{\n}{\n+        }g;
+            $err =~ s{\n}{\n+        }g;
             nprint("+ ERROR: DBD::Pg module could not be loaded");
             nprint("+        $err");
             nprint("+        Install/rebuild with: cpan DBD::Pg");
@@ -283,7 +286,7 @@ sub sqld_open {
         # Use information_schema rather than SHOW TABLES LIKE: LIKE treats '_'
         # and '%' as wildcards, so 'nikto_table' would also match 'niktoXtable'
         my $table_check =
-          $SQLD_DBH->prepare("SELECT table_name FROM information_schema.tables "
+          $SQLD_DBH->prepare(  "SELECT table_name FROM information_schema.tables "
                              . "WHERE table_schema = DATABASE() AND table_name = ?");
         if ($table_check) {
             if ($table_check->execute($table_name) && $table_check->fetchrow_array()) {
@@ -395,9 +398,10 @@ sub sqld_host_start {
 
     return unless defined $SQLD_DBH;
 
-    my $banner   = $mark->{'banner'} || '';
+    my $banner = $mark->{'banner'} || '';
+
     # mark->{ssl} is set during port check; ssl_cipher is not available yet at host_start
-    my $ssl      = $mark->{'ssl'} ? 1 : 0;
+    my $ssl      = $mark->{'ssl'}   ? 1                : 0;
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     my $scanid   = $mark->{'scanid'} || '';
 
@@ -437,7 +441,7 @@ sub sqld_ssl_info {
     return unless defined $SQLD_DBH;
 
     my $hostname     = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
-    my $ssl          = $mark->{'ssl'} ? 1 : 0;
+    my $ssl          = $mark->{'ssl'}   ? 1                : 0;
     my $scanid       = $mark->{'scanid'}            || '';
     my $ssl_cipher   = $mark->{'ssl_cipher'}        || '';
     my $ssl_subject  = $mark->{'ssl_cert_subject'}  || '';
@@ -467,9 +471,8 @@ sub sqld_ssl_info {
     }
 
     # Single INSERT statement with all SSL info
-    if (!$SQLD_STMT_ITEM->execute($scanid,         '000137', $mark->{'ip'}, $hostname,
-                                  $mark->{'port'}, $ssl,     '0', 'GET', '/', $ssl_message, '', ''
-                                  )
+    if (!$SQLD_STMT_ITEM->execute($scanid, '000137', $mark->{'ip'}, $hostname,
+                                  $mark->{'port'}, $ssl, '0', 'GET', '/', $ssl_message, '', '')
         ) {
         my $error = $SQLD_DBH->errstr || "Unknown error";
         nprint("+ ERROR: Failed to insert SSL info record: $error", "d");

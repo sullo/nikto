@@ -40,9 +40,9 @@ sub nikto_springboot {
       /actuator/prometheus
       );
 
-    my $host     = $mark->{'hostname'};
-    my $port     = $mark->{'port'};
-    my $proto    = $mark->{'ssl'} ? 'https' : 'http';
+    my $host  = $mark->{'hostname'};
+    my $port  = $mark->{'port'};
+    my $proto = $mark->{'ssl'} ? 'https' : 'http';
 
     foreach my $ep (@endpoints) {
         return if $mark->{'terminate'};
@@ -140,10 +140,10 @@ sub nikto_springboot {
         # Other endpoints: report if valid, non-empty JSON
         if (ref($json) eq 'HASH' && scalar(keys %$json) > 0) {
             add_vulnerability(
-                       $mark,  "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
-                        "750004", "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                       "GET",  $path
-                       );
+                     $mark,    "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
+                     "750004", "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
+                     "GET",    $path
+                     );
         }
     }
 }

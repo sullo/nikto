@@ -43,6 +43,7 @@ sub nikto_put_del_test {
             # we were able to put it there--can we delete it?
             ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, "DELETE", "", "", "", "put_del_test: DELETE");
+
             # DELETE often returns 200 OK or 204 No Content
             if ($res == 200 || $res == 204) {
                 ($res, $content, $error, $request, $response) =

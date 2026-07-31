@@ -40,6 +40,7 @@ sub nikto_paths {
 
             # if not relative
             if (($link !~ /^\//) && ($link =~ /https?:/i)) {
+
                 # check host
                 my @uri = LW2::uri_split($link);
                 if (exists $valid_hosts{ $uri[2] }) {

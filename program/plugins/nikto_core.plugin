@@ -226,15 +226,14 @@ sub lfi_function {
 ###############################################################################
 sub unslash {
     my $line = $_[0] || return;    # $line is the slash-escaped variable
-    my %esc  = (
-                'a' => "\a",
-                'b' => "\b",
-                'e' => "\e",
-                'f' => "\f",
-                'n' => "\n",
-                'r' => "\r",
-                't' => "\t"
-                );
+    my %esc = ('a' => "\a",
+               'b' => "\b",
+               'e' => "\e",
+               'f' => "\f",
+               'n' => "\n",
+               'r' => "\r",
+               't' => "\t"
+               );
 
     # Early return for empty strings
     return $line if $line eq '';
@@ -744,13 +743,13 @@ sub dump_target_info {
         if ($request{'whisker'}->{'proxy_host'} ne '') {
             nprint(
                 "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}",
-                "", undef,
-                ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+                "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                 );
         }
 
         if ($mark->{ssl}) {
-            nprint($sslprint, "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+            nprint($sslprint, "", undef,
+                   ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
         if (defined $NIKTO{'anti_ids'} && defined $CLI{'evasion'}) {
@@ -928,7 +927,7 @@ sub general_config {
     # 404code — user-specified; stored in _USER variant so it can override BODY matches
     if ($CLI{'404code'} ne '') {
         foreach my $code (split(/\s?,\s?/, $CLI{'404code'})) {
-            $code =~ s/^\s+|\s+$//g;    # Trim whitespace
+            $code =~ s/^\s+|\s+$//g;                # Trim whitespace
             if ($code =~ /[^\d]/) {
                 nprint("+ ERROR: Invalid 404code, must be an integer");
                 exit 1;
@@ -1273,8 +1272,8 @@ sub general_config {
         if ($CLI{'mutate'} =~ /3/ || $CLI{'mutate'} =~ /4/) {
             my $parameters;
             $parameters = "enumerate";
-            $parameters .= ",home"    if ($CLI{'mutate'} =~ /3/);
-            $parameters .= ",cgiwrap" if ($CLI{'mutate'} =~ /4/);
+            $parameters     .= ",home"    if ($CLI{'mutate'} =~ /3/);
+            $parameters     .= ",cgiwrap" if ($CLI{'mutate'} =~ /4/);
             $CLI{'plugins'} .= ';apacheusers(' . $parameters . ')';
         }
         nprint(
@@ -1291,8 +1290,8 @@ sub general_config {
     $CLI{'timeout'} = $CLI{'timeout'} || 10;
 
     # SSL keep-alive: enabled by default; disable via -nosslkeepalive or SSLKEEPALIVE=0 in conf
-    if ($CLI{'nosslkeepalive'} ||
-        (defined $CONFIGFILE{'SSLKEEPALIVE'} && $CONFIGFILE{'SSLKEEPALIVE'} eq '0')) {
+    if ($CLI{'nosslkeepalive'}
+        || (defined $CONFIGFILE{'SSLKEEPALIVE'} && $CONFIGFILE{'SSLKEEPALIVE'} eq '0')) {
         $LW2::LW_SSL_KEEPALIVE = 0;
     }
 
@@ -1386,7 +1385,8 @@ sub safe_quit {
         report_summary($mark);
         report_close($mark);
     }
-    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'}) if ($^O !~ /MSWin32/ && defined $NIKTO{'POSIX'}{'term'});
+    $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'})
+      if ($^O !~ /MSWin32/ && defined $NIKTO{'POSIX'}{'term'});
     exit 1;
 }
 
@@ -1545,8 +1545,7 @@ sub resolve {
 
         if (   $ip !~ /^$LW2::IPv4_re$/
             && $ip !~ /^$LW2::IPv6_re$/) {
-            nprint("+ ERROR: Invalid IP: $ip\n\n",
-                   "", undef, ($ident, $ip, $ident));
+            nprint("+ ERROR: Invalid IP: $ip\n\n", "", undef, ($ident, $ip, $ident));
             exit 1;
         }
 
@@ -1634,7 +1633,8 @@ sub set_targets {
                 $hostdata[0] =~ s/\/$//;
                 $markhash->{'root'} = $hostdata[0];
                 nprint("- Added -root value of '$hostdata[0]' from URI",
-                       "v", "core", ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
+                       "v", "core",
+                       ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
             }
             push(@marks, $markhash);
         }
@@ -1647,7 +1647,8 @@ sub set_targets {
                 }
                 else {
                     nprint("- ERROR: Unrecognised target host format: $host",
-                           "", undef, ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
+                           "", undef,
+                           ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'}));
                 }
             }
             else {
@@ -1655,7 +1656,8 @@ sub set_targets {
                 if (scalar @h > 2 || $h[0] eq '') { # Possible invalid IPv6 format has been supplied
                     nprint(
                         "- ERROR: Target host '$host' contains more than one colon (:). If specifying an IPv6 target, use the [IPv6] format.",
-                        "", undef,
+                        "",
+                        undef,
                         ($markhash->{'ident'}, $markhash->{'ident'}, $markhash->{'ident'})
                         );
                 }
@@ -1846,7 +1848,7 @@ sub load_databases {
                 foreach my $l (@file) {
                     my @T = parse_csv($l);
                     next if $T[1] eq '';
-                    $T[1]                    = validate_and_fix_regex($T[1]);
+                    $T[1]                           = validate_and_fix_regex($T[1]);
                     $OVERS{ $T[1] }{ $T[2] }{'msg'} = $T[3];
                     $OVERS{ $T[1] }{ $T[2] }{'tid'} = $T[0];
                 }
@@ -2291,7 +2293,7 @@ sub check_dbs {
 
     # Suggest some open IDs
     my @open;
-    my $id   = '000001';
+    my $id = '000001';
     while ($#open < 6) {
         if (!exists($ALL_IDS{$id})) { push(@open, $id); }
         $id++;
@@ -2336,7 +2338,7 @@ sub strip_comment {
     my $len      = length($line);
     for (my $i = 0 ; $i < $len ; $i++) {
         my $c = substr($line, $i, 1);
-        if ($in_quote && $c eq '\\') { $i++; next; }    # escaped char in a quoted field
+        if    ($in_quote && $c eq '\\') { $i++; next; }             # escaped char in a quoted field
         if    ($c eq '"')               { $in_quote = !$in_quote; }
         elsif ($c eq '#' && !$in_quote) { return substr($line, 0, $i); }
     }
@@ -2406,14 +2408,16 @@ sub port_check {
                 # Some Apache servers are annoying and answer non-TLS requests on a TLS server.
                 if (defined $content
                     && ($content =~ /plain HTTP (?:to an SSL|request was sent to HTTPS)/)) {
-                    dump_var("Response Hash", $response, "port_check",
+                    dump_var("Response Hash",
+                             $response, "port_check",
                              ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'}));
                     next;
                 }
                 nprint("- $checkssl server found: "
                          . ($m->{'hostname'} || $m->{'ip'})
                          . ":$port \t$response->{server}",
-                       "d", "core",
+                       "d",
+                       "core",
                        ($m->{'hostname'}, $m->{'ip'}, $m->{'displayname'})
                        );
                 return $m->{'ssl'} + 1;
@@ -2594,11 +2598,8 @@ sub run_hooks {
             $run = eval($condition);
             if ($@) {
                 chomp($@);
-                nprint(
-                    "+ ERROR: Plugin condition eval failed for '$full_name' ($type): $@",
-                    "e",
-                    "Plugins"
-                    );
+                nprint("+ ERROR: Plugin condition eval failed for '$full_name' ($type): $@",
+                       "e", "Plugins");
                 next;
             }
             next unless $run;
@@ -2943,7 +2944,8 @@ sub proxy_check {
         $COUNTERS{'totalrequests'}++;
         dump_var("Request Hash", \%request, "proxy_check",
                  ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-        dump_var("Response Hash", \%response, "proxy_check",
+        dump_var("Response Hash",
+                 \%response, "proxy_check",
                  ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
         # First check that we can connect to the proxy
@@ -2981,7 +2983,8 @@ sub proxy_check {
             $COUNTERS{'totalrequests'}++;
             dump_var("Request Hash", \%request, "proxy_check",
                      ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            dump_var("Response Hash", \%response, "proxy_check",
+            dump_var("Response Hash",
+                     \%response, "proxy_check",
                      ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
             if ($response{'proxy-authenticate'} ne "") {
@@ -3040,8 +3043,11 @@ sub get_ua {
     if (   defined($VARIABLES{'@USERAGENTS'})
         && ref($VARIABLES{'@USERAGENTS'}) eq 'ARRAY'
         && @{ $VARIABLES{'@USERAGENTS'} }) {
-        my $idx = (defined $CLI{'evasion'} && $CLI{'evasion'} =~ /R/) ? int(rand(@{ $VARIABLES{'@USERAGENTS'} })) : 0;
-        my $ua  = $VARIABLES{'@USERAGENTS'}->[$idx];
+        my $idx =
+          (defined $CLI{'evasion'} && $CLI{'evasion'} =~ /R/)
+          ? int(rand(@{ $VARIABLES{'@USERAGENTS'} }))
+          : 0;
+        my $ua = $VARIABLES{'@USERAGENTS'}->[$idx];
         $ua =~ s/^"//;
         $ua =~ s/"$//;
         return $ua;
@@ -3212,11 +3218,10 @@ sub nfetch {
     # Default unobtrusive headers to help WAF evasion.
     # These must be top-level request keys; LW2::http_construct_headers
     # skips the 'whisker' key, so nesting them there would never send them.
-    $request{'Accept'} =
-      'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-    $request{'Accept-Language'}           = 'en-US,en;q=0.5';
-    $request{'Cache-Control'}             = 'max-age=0';
-    $request{'Connection'}                = 'keep-alive';
+    $request{'Accept'}          = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    $request{'Accept-Language'} = 'en-US,en;q=0.5';
+    $request{'Cache-Control'}   = 'max-age=0';
+    $request{'Connection'}      = 'keep-alive';
     $request{'Upgrade-Insecure-Requests'} = '1';
     $request{'Sec-Fetch-Dest'}            = 'document';
     $request{'Sec-Fetch-Mode'}            = 'navigate';
@@ -3242,12 +3247,12 @@ sub nfetch {
         }
     }
 
-    # Default Content-Length from the post-unescape body. 
+    # Default Content-Length from the post-unescape body.
     # Skip if CL or TE was already supplied
     if (length($data)) {
         my ($have_cl) = LW2::utils_find_lowercase_key(\%request, 'content-length');
         my ($have_te) = LW2::utils_find_lowercase_key(\%request, 'transfer-encoding');
-        if ((!defined $have_cl || $have_cl eq '')
+        if (   (!defined $have_cl || $have_cl eq '')
             && (!defined $have_te || $have_te eq '')) {
             $request{'Content-Length'} = length($data);
         }
@@ -3363,8 +3368,7 @@ sub nfetch {
             "+ ERROR: *** Error limit ($CONFIGFILE{'FAILURES'}) reached for host, giving up. Last error: "
               . $response{'whisker'}->{'error'}
               . ". ***\n+ ERROR: *** Consider using mitmproxy to avoid TLS fingerprinting. ***",
-            "", undef,
-            ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
+            "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
             );
         $mark->{'terminate'} = 1;
         status_report();
@@ -3373,8 +3377,8 @@ sub nfetch {
     if ($OUTPUT{'debug'}) {
         dump_var("Request Hash", \%request, $testid,
                  ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
-        dump_var("Response Hash", \%response, $testid,
-                 ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
+        dump_var("Response Hash",
+                 \%response, $testid, ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'}));
     }
 
     # Snarf what we can from the whisker hash and put in mark
@@ -3597,8 +3601,8 @@ sub set_scan_items {
 # Compare dotted release strings (e.g. 2.6.1 vs 2.6.0). Returns -1, 0, or 1.
 sub nikto_version_compare {
     my ($a, $b) = @_;
-    my @a = split(/\./, $a);
-    my @b = split(/\./, $b);
+    my @a   = split(/\./, $a);
+    my @b   = split(/\./, $b);
     my $len = @a > @b ? scalar(@a) : scalar(@b);
     for (my $i = 0 ; $i < $len ; $i++) {
         my $pa = ($i < @a) ? $a[$i] : 0;
@@ -3641,26 +3645,25 @@ sub read_update_check_cache {
     close($fh);
 
     return
-      unless defined $fields{'checked_at'}
+         unless defined $fields{'checked_at'}
       && $fields{'checked_at'} =~ /^\d+$/
       && defined $fields{'remote_version'}
       && $fields{'remote_version'} =~ /^[\w.\-+]+$/
       && defined $fields{'remote_epoch'}
       && $fields{'remote_epoch'} =~ /^\d+$/;
 
-    return {
-        checked_at     => int($fields{'checked_at'}),
-        remote_version => $fields{'remote_version'},
-        remote_epoch   => int($fields{'remote_epoch'}),
-    };
+    return { checked_at     => int($fields{'checked_at'}),
+             remote_version => $fields{'remote_version'},
+             remote_epoch   => int($fields{'remote_epoch'}),
+             };
 }
 
 #######################################################################
 # Write update-check cache after a successful fetch. Best-effort; ignore errors.
 sub write_update_check_cache {
     my ($path, $remote_version, $remote_epoch) = @_;
-    return unless defined $path;
-    return unless defined $remote_version && $remote_version =~ /^[\w.\-+]+$/;
+    return            unless defined $path;
+    return            unless defined $remote_version && $remote_version =~ /^[\w.\-+]+$/;
     $remote_epoch = 0 unless defined $remote_epoch && $remote_epoch =~ /^\d+$/;
 
     open(my $fh, '>', $path) or return;
@@ -3690,12 +3693,13 @@ sub report_outdated_install {
     # would misclassify a stable install run from inside an unrelated git repo
     # as a git checkout and reintroduce the false "out of date" warning.
     my $execdir = defined $CONFIGFILE{'EXECDIR'} ? $CONFIGFILE{'EXECDIR'} : '.';
-    my $is_git = (-d "$execdir/.git" || -d "$execdir/../.git");
+    my $is_git  = (-d "$execdir/.git" || -d "$execdir/../.git");
 
     # Dev/pre-release branches often bump version before publish; never warn then.
     return if ($ver_cmp > 0);
 
     if ($is_git) {
+
         # Git installations: use epoch comparison since we track commits
         return if ($remote_epoch > 0 && $local_epoch >= $remote_epoch);
         if ($remote_epoch > $local_epoch) {
@@ -3744,7 +3748,7 @@ sub check_updates {
 
     my $cache_path = update_check_cache_path();
     my $cache      = read_update_check_cache($cache_path);
-    my $interval   = 6 * 3600;    # hard-coded 6 hour throttle
+    my $interval   = 6 * 3600;                               # hard-coded 6 hour throttle
 
     # Fresh cache: skip network, still warn from cached remote values.
     if (defined $cache && (time() - $cache->{'checked_at'}) < $interval) {
@@ -3781,7 +3785,7 @@ sub check_updates {
     $request{'whisker'}->{'ssl'}     = $ssl;
     $request{'whisker'}->{'uri'}     = $uri;
     $request{'whisker'}->{'timeout'} = 5;
-    $request{'User-Agent'} = "Nikto/$VARIABLES{'version'}";
+    $request{'User-Agent'}           = "Nikto/$VARIABLES{'version'}";
 
     # Configure proxy if enabled
     if (length($CONFIGFILE{PROXYHOST}) && $CLI{'useproxy'}) {
@@ -3811,7 +3815,7 @@ sub check_updates {
     # Extract remote version and epoch (treat API data as untrusted)
     my $remote_version = $json_data->{'products'}->{'nikto'}->{'version'} || '';
     my $remote_epoch   = $json_data->{'products'}->{'nikto'}->{'epoch'}   || 0;
-    $remote_version = '' unless $remote_version =~ /^[\w.\-+]+$/;
+    $remote_version = '' unless $remote_version                        =~ /^[\w.\-+]+$/;
     $remote_epoch   = 0  unless defined $remote_epoch && $remote_epoch =~ /^\d+$/;
     $remote_epoch   = int($remote_epoch);
 
@@ -3943,7 +3947,7 @@ sub dsl_evaluate {
     }
     for my $h (@{ $parsed->{header_pos} }) {
         return (0, []) unless exists $headers->{ $h->{name} };
-        next unless $h->{regex};
+        next           unless $h->{regex};
         return (0, []) unless $headers->{ $h->{name} } =~ $h->{regex};
         push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
     }
@@ -3957,7 +3961,7 @@ sub dsl_evaluate {
     }
     for my $c (@{ $parsed->{cookie_pos} }) {
         return (0, []) unless exists $cookies->{ $c->{name} };
-        next unless $c->{regex};
+        next           unless $c->{regex};
         return (0, []) unless $cookies->{ $c->{name} } =~ $c->{regex};
         push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
     }
@@ -3976,8 +3980,7 @@ sub dsl_evaluate {
     foreach my $group (@{ $parsed->{or_groups} || [] }) {
         my $matched = 0;
         foreach my $alt (@$group) {
-            my ($alt_match, $alt_captures) =
-              dsl_evaluate($alt, $code, $body, $headers, $cookies);
+            my ($alt_match, $alt_captures) = dsl_evaluate($alt, $code, $body, $headers, $cookies);
             next unless $alt_match;
             $matched = 1;
             push @captured_groups, @$alt_captures if $alt_captures;
@@ -4215,7 +4218,7 @@ sub dsl_split_top_level {
             next;
         }
 
-        if ($char eq '(') { $depth++ }
+        if    ($char eq '(') { $depth++ }
         elsif ($char eq ')') { $depth-- if $depth > 0 }
         elsif ($depth == 0) {
             my $found;
@@ -4253,7 +4256,7 @@ sub dsl_is_group {
     my ($token) = @_;
 
     return 0 unless defined $token && length($token) > 1;
-    return 0 unless substr($token, 0,  1) eq '(';
+    return 0 unless substr($token,  0, 1) eq '(';
     return 0 unless substr($token, -1, 1) eq ')';
     return 0 if substr($token, 0, 2) eq '(?';
 
@@ -4270,7 +4273,7 @@ sub dsl_is_group {
             $i++;
             next;
         }
-        if ($char eq '[') { $in_class = 1 }
+        if    ($char eq '[') { $in_class = 1 }
         elsif ($char eq '(') { $depth++ }
         elsif ($char eq ')') {
             $depth--;
@@ -4358,7 +4361,7 @@ sub parse_dsl {
         # Check negation
         my $neg = 0;
         if ($token =~ /^!/) {
-            $neg = 1;
+            $neg   = 1;
             $token = substr($token, 1);
             $token =~ s/^\s+//;
         }
@@ -4612,10 +4615,11 @@ sub send_updates {
 
     nprint(
         "- Sending update to $CONFIGFILE{CIRT}: GET /nikto-updates.php?version=$upd_enc ($updated_version)",
-        "v", "update");
+        "v", "update"
+        );
     if ($OUTPUT{'debug'}) {
-        dump_var("Update Request", \%request, "update",
-                 ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
+        dump_var("Update Request",
+                 \%request, "update", ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
     }
 
     LW2::http_do_request_timeout(\%request, \%response);
@@ -4642,8 +4646,8 @@ sub send_updates {
         LW2::http_fixup_request(\%request);
         nprint("- Update request retry via fallback host $fallback_hostname", "v", "update");
         if ($OUTPUT{'debug'}) {
-            dump_var("Update Request (fallback)", \%request, "update",
-                     ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
+            dump_var("Update Request (fallback)",
+                     \%request, "update", ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
         }
         LW2::http_do_request_timeout(\%request, \%response);
         $code    = $response{'whisker'}->{'code'};
@@ -4651,15 +4655,16 @@ sub send_updates {
     }
 
     if ($OUTPUT{'debug'}) {
-        dump_var("Update Response", \%response, "update",
-                 ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
+        dump_var("Update Response",
+                 \%response, "update", ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'}));
     }
 
     if (($code != 200) || ($content !~ /SUCCESS/)) {
         nprint("+ ERROR: $code -> "
                  . $response{'location'}
                  . "\n+ ERROR: Update failed, please notify sullo\@cirt.net of the previous line.",
-               "", undef,
+               "",
+               undef,
                ($mark{'hostname'}, $mark{'ip'}, $mark{'displayname'})
                );
     }
@@ -5313,19 +5318,20 @@ sub gmt_offset {
 }
 ###############################################################################
 sub expand_range {
+
     # Expand "N-M" into N..M (numeric only; no string eval). Same idea as the old
     # eval('map {$_} ' . "@range") with local $", which produced "N..M" for two-part splits.
     sort { $a <=> $b }
-      map {
+    map {
         my $chunk = $_;
         map {
             my $tok = $_;
             my @r   = split /-/, $tok;
-            (   @r == 2
-                && $r[0] =~ /^\d+$/
-                && $r[1] =~ /^\d+$/ ) ? ( $r[0] .. $r[1] ) : $tok;
-          } split /\s+/, $chunk;
-      } @_;
+            (@r == 2 && $r[0] =~ /^\d+$/ && $r[1] =~ /^\d+$/)
+              ? ($r[0] .. $r[1])
+              : $tok;
+        } split /\s+/, $chunk;
+    } @_;
 }
 ###############################################################################
 sub check_ipv6 {

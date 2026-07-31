@@ -132,11 +132,11 @@ sub calculate_entropy {
     my $max_entropy_bytes = 16384;
     my $content_len       = length($content);
     if ($content_len > $max_entropy_bytes) {
-        my $chunk = int($max_entropy_bytes / 3);
-        my $start = substr($content, 0, $chunk);
+        my $chunk     = int($max_entropy_bytes / 3);
+        my $start     = substr($content, 0, $chunk);
         my $mid_start = int(($content_len - $chunk) / 2);
-        my $middle = substr($content, $mid_start, $chunk);
-        my $end    = substr($content, -$chunk);
+        my $middle    = substr($content, $mid_start, $chunk);
+        my $end       = substr($content, -$chunk);
         $content = $start . $middle . $end;
     }
 

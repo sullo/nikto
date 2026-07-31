@@ -116,7 +116,8 @@ sub nikto_httpoptions {
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
     if ($res == 207) {
-        if ($content =~ m{<a:href>https?://(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?(?:/[^<]*)?</a:href>}is) {
+        if ($content =~
+            m{<a:href>https?://(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?(?:/[^<]*)?</a:href>}is) {
             my $ipfound = $1;
             add_vulnerability(
                 $mark,

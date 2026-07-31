@@ -192,11 +192,11 @@ sub process_template {
     $variables{"#TEMPL_HOSTNAME#"}           = simple_enc($hostname);
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
     $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{'total_checks'} // '';
-    $variables{"#TEMPL_PORT#"}               = $mark->{'port'} // '';
-    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'} // '';
+    $variables{"#TEMPL_PORT#"}               = $mark->{'port'}           // '';
+    $variables{"#TEMPL_NIKTO_VER#"}          = $VARIABLES{'version'}     // '';
     $variables{"#TEMPL_BANNER#"}             = simple_enc($mark->{'banner'});
     $variables{"#TEMPL_NIKTO_CLI#"}          = simple_enc($CLI{'all_options'});
-    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'} // '';
+    $variables{"#TEMPL_CTR#"}                = $COUNTERS{'total_checks'}    // '';
     $variables{"#TEMPL_NIKTO_HOSTS_TESTED#"} = $COUNTERS{'hosts_completed'} // '';
 
     # Create base URL once - prefer hostname (vhost if set), fall back to IP if hostname empty
@@ -204,10 +204,7 @@ sub process_template {
     my $root      = $mark->{'root'} // '';
     my $port      = $mark->{'port'} // '';
     my $base_url =
-        $protocol . '://'
-      . simple_enc(html_url_host($base_host)) . ':'
-      . $port
-      . simple_enc($root);
+      $protocol . '://' . simple_enc(html_url_host($base_host)) . ':' . $port . simple_enc($root);
 
     # IP-specific link (for host header template)
     my $link_ip =
@@ -234,9 +231,9 @@ sub process_template {
       . " errors, "
       . ($mark->{'total_vulns'} // 0)
       . " findings";
-    $variables{"#TEMPL_START#"}   = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_START#"} = date_disp($mark->{'start_time'});
     $variables{"#TEMPL_ELAPSED#"} =
-      (defined $mark->{'end_time'} && defined $mark->{'start_time'})
+        (defined $mark->{'end_time'} && defined $mark->{'start_time'})
       ? ($mark->{'end_time'} - $mark->{'start_time'})
       : 0;
     my $references = linkify_refs($item->{'refs'}) || '';
@@ -379,15 +376,13 @@ sub process_template {
                     $path =~ s{/$}{};
                     $path .= '/' . $f;
                     $path =~ s{//+}{/}g;
-                    push(
-                        @links,
-                        "<a href=\""
-                          . $protocol . "://"
-                          . simple_enc($link_host) . ":"
-                          . $port
-                          . simple_enc($path)
-                          . "\">$escaped_f</a>"
-                    );
+                    push(@links,
+                             "<a href=\""
+                           . $protocol . "://"
+                           . simple_enc($link_host) . ":"
+                           . $port
+                           . simple_enc($path)
+                           . "\">$escaped_f</a>");
                 }
                 $msg .= join(", ", @links);
             }
@@ -416,8 +411,7 @@ sub process_template {
     $template =~ s/#TEMPL_SSL_ISSUER_ROW#\s*<tr>.*?<\/tr>/#TEMPL_SSL_ISSUER_ROW_REPLACE#/s;
 
     if ($template =~ /#TEMPL_REFERENCES_ROW#/) {
-        $template =~
-          s/#TEMPL_REFERENCES_ROW#\s*<tr>.*?<\/tr>/#TEMPL_REFERENCES_ROW_REPLACE#/s;
+        $template =~ s/#TEMPL_REFERENCES_ROW#\s*<tr>.*?<\/tr>/#TEMPL_REFERENCES_ROW_REPLACE#/s;
     }
 
     # Substitute variables in a SINGLE pass. A loop over keys %variables would
