@@ -183,7 +183,7 @@
       <varlistentry>
         <term><option>-mutate</option> <replaceable>options</replaceable></term>
         <listitem>
-          <para>Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap), 6 (Attempt to guess directory names from dictionary file).</para>
+          <para>Guess additional file names: 1 (Test all files with all root directories), 2 (Guess for password file names), 3 (Enumerate user names via Apache), 4 (Enumerate user names via cgiwrap).</para>
         </listitem>
       </varlistentry>
 
@@ -195,9 +195,9 @@
       </varlistentry>
 
       <varlistentry>
-        <term><option>-no404</option></term>
+        <term><option>-nocheck</option></term>
         <listitem>
-          <para>Disables nikto attempting to guess a 404 page.</para>
+          <para>Do not check for updates on startup. Successful version checks are otherwise cached for 6 hours in EXECDIR/.last_update_check; delete that file to force a fresh check.</para>
         </listitem>
       </varlistentry>
 
@@ -233,6 +233,13 @@
         <term><option>-nossl</option></term>
         <listitem>
           <para>Do not use SSL to connect to the server.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-nosslkeepalive</option></term>
+        <listitem>
+          <para>Disable TLS connection reuse (keep-alive is on by default). Useful for servers that misbehave with reused TLS sessions.</para>
         </listitem>
       </varlistentry>
 
