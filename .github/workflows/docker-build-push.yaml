@@ -6,6 +6,7 @@ on:
       - main
     tags:
       - 'v*'
+      - '*.*.*'   # e.g. 2.6.1 (Nikto release tags omit the leading v)
   workflow_dispatch:
 
 permissions:
@@ -49,13 +50,13 @@ jobs:
             # Every master commit → floating "rolling" (+ sha for pin-by-commit)
             type=raw,value=rolling,enable={{is_default_branch}}
             type=sha,enable={{is_default_branch}}
-            # Manual test runs (Actions → Run workflow) → "test" tag only
-            type=raw,value=test,enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
+            # Manual test runs on a branch → "test" tag only
+            type=raw,value=test,enable=${{ github.event_name == 'workflow_dispatch' && github.ref_type != 'tag' }}
+            type=sha,enable=${{ github.event_name == 'workflow_dispatch' && github.ref_type != 'tag' }}
             # Tagged releases → pinned versions (+ latest = newest release)
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
