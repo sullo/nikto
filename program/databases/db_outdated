@@ -1305,7 +1305,7 @@
 "601316","WAF/","2.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601317","WAVE/","6.0.5.41290","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601318","WebServer-Webs/","2.5.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
-"601319","websockets/","17.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
+"601319","websockets/","17.0.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601320","Windows-Azure-Web/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601321","Youcan.Private.DC/","2.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601322","RedStar","4.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
