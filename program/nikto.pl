@@ -398,7 +398,7 @@ sub setup_dirs {
 
     # First assume we get it from CONFIGFILE
     unless (defined $CONFIGFILE{'EXECDIR'}) {
-        if (-d "$ENV{'PWD'}/plugins") {
+        if (defined $ENV{'PWD'} && $ENV{'PWD'} ne '' && -d "$ENV{'PWD'}/plugins") {
             $CONFIGFILE{'EXECDIR'} = $ENV{'PWD'};
         }
         elsif (-d "$CURRENTDIR/plugins") {
