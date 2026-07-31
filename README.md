@@ -19,7 +19,10 @@ cd nikto/program
 perl nikto.pl -h http://www.example.com
 ~~~
 
-Run as a Docker container from ghcr.io:
+Run as a Docker container from Docker Hub:
+`docker pull hackllc/nikto:latest`
+
+Or from ghcr.io:
 `docker pull ghcr.io/sullo/nikto:latest`
 
 Run as a Docker container from Dockerfile:
@@ -27,13 +30,13 @@ Run as a Docker container from Dockerfile:
 ~~~bash
 git clone https://github.com/sullo/nikto.git
 cd nikto
-docker build -t sullo/nikto .
+docker build -t hackllc/nikto .
 # Call it without arguments to display the full help
-docker run --rm sullo/nikto
+docker run --rm hackllc/nikto
 # Basic usage
-docker run --rm sullo/nikto -h http://www.example.com
+docker run --rm hackllc/nikto -h http://www.example.com
 # To save the report in a specific format, mount /tmp as a volume:
-docker run --rm -v $(pwd):/tmp sullo/nikto -h http://www.example.com -o /tmp/out.json
+docker run --rm -v $(pwd):/tmp hackllc/nikto -h http://www.example.com -o /tmp/out.json
 ~~~
 
 Basic usage:

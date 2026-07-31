@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/nikto
+            hackllc/nikto
             ghcr.io/${{ github.repository_owner }}/nikto
           flavor: |
             latest=false
