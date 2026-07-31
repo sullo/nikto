@@ -34,6 +34,8 @@ UPDATES=yes
 # Update server names
 CIRT=cirt.net
 VERSION_API=https://telemetry.hack.llc/products.json
+# Successful VERSION_API checks are cached for 6 hours in EXECDIR/.last_update_check.
+# Delete that file to force a fresh check, or use -nocheck to skip entirely.
 
 # Proxy settings -- still must be enabled by -useproxy
 #PROXYHOST=127.0.0.1

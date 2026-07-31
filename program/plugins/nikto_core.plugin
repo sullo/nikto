@@ -3612,9 +3612,119 @@ sub nikto_version_compare {
 }
 
 #######################################################################
+# Path to the update-check cache (EXECDIR/.last_update_check).
+sub update_check_cache_path {
+    return defined $CONFIGFILE{'EXECDIR'}
+      ? "$CONFIGFILE{'EXECDIR'}/.last_update_check"
+      : 'program/.last_update_check';
+}
+
+#######################################################################
+# Read EXECDIR/.last_update_check. Returns hashref or undef if missing/invalid.
+# File format:
+#   checked_at=<unix epoch>
+#   remote_version=<string>
+#   remote_epoch=<int>
+sub read_update_check_cache {
+    my ($path) = @_;
+    return unless defined $path && -f $path;
+
+    open(my $fh, '<', $path) or return;
+    my %fields;
+    while (my $line = <$fh>) {
+        chomp($line);
+        next if $line eq '' || $line =~ /^\s*#/;
+        if ($line =~ /^(checked_at|remote_version|remote_epoch)=(.+)$/) {
+            $fields{$1} = $2;
+        }
+    }
+    close($fh);
+
+    return
+      unless defined $fields{'checked_at'}
+      && $fields{'checked_at'} =~ /^\d+$/
+      && defined $fields{'remote_version'}
+      && $fields{'remote_version'} =~ /^[\w.\-+]+$/
+      && defined $fields{'remote_epoch'}
+      && $fields{'remote_epoch'} =~ /^\d+$/;
+
+    return {
+        checked_at     => int($fields{'checked_at'}),
+        remote_version => $fields{'remote_version'},
+        remote_epoch   => int($fields{'remote_epoch'}),
+    };
+}
+
+#######################################################################
+# Write update-check cache after a successful fetch. Best-effort; ignore errors.
+sub write_update_check_cache {
+    my ($path, $remote_version, $remote_epoch) = @_;
+    return unless defined $path;
+    return unless defined $remote_version && $remote_version =~ /^[\w.\-+]+$/;
+    $remote_epoch = 0 unless defined $remote_epoch && $remote_epoch =~ /^\d+$/;
+
+    open(my $fh, '>', $path) or return;
+    print {$fh} "checked_at=" . time() . "\n";
+    print {$fh} "remote_version=$remote_version\n";
+    print {$fh} "remote_epoch=" . int($remote_epoch) . "\n";
+    close($fh);
+}
+
+#######################################################################
+# Compare local install to remote manifest values and warn if outdated.
+sub report_outdated_install {
+    my ($local_epoch, $remote_version, $remote_epoch) = @_;
+
+    my $local_version = $VARIABLES{'version'} || '';
+    my $ver_cmp       = 0;
+    if ($remote_version ne '' && $local_version ne '') {
+        $ver_cmp = nikto_version_compare($local_version, $remote_version);
+    }
+
+    # Compare against the manifest. Git checkouts track individual commits, so
+    # the epoch is a valid signal; stable/packaged releases only compare release
+    # versions to avoid false positives from git commit epochs.
+    #
+    # Detect the install type from EXECDIR (Nikto's install directory), not the
+    # process CWD: nikto.pl never chdir()s to EXECDIR, so a CWD-relative check
+    # would misclassify a stable install run from inside an unrelated git repo
+    # as a git checkout and reintroduce the false "out of date" warning.
+    my $execdir = defined $CONFIGFILE{'EXECDIR'} ? $CONFIGFILE{'EXECDIR'} : '.';
+    my $is_git = (-d "$execdir/.git" || -d "$execdir/../.git");
+
+    # Dev/pre-release branches often bump version before publish; never warn then.
+    return if ($ver_cmp > 0);
+
+    if ($is_git) {
+        # Git installations: use epoch comparison since we track commits
+        return if ($remote_epoch > 0 && $local_epoch >= $remote_epoch);
+        if ($remote_epoch > $local_epoch) {
+            my $defer = $VARIABLES{'deferout'};
+            $VARIABLES{'deferout'} = 0;
+            nprint(
+                "+ Your Nikto installation is out of date. Please run 'git pull' to update to the latest version of Nikto."
+                );
+            $VARIABLES{'deferout'} = $defer;
+        }
+    }
+    else {
+        # Stable releases: compare versions semantically
+        if ($ver_cmp < 0) {
+            my $defer = $VARIABLES{'deferout'};
+            $VARIABLES{'deferout'} = 0;
+            nprint("+ Your Nikto installation is out of date.");
+            $VARIABLES{'deferout'} = $defer;
+        }
+    }
+}
+
+#######################################################################
 # Check for updates to the program
 # Expects response like:
 # { "products": { "nikto": { "version": "2.6.0", "epoch": 1737935000 } } }
+#
+# Successful checks are cached for 6 hours in EXECDIR/.last_update_check so
+# frequent runs do not hammer VERSION_API. Delete that file to force a refresh.
 sub check_updates {
 
     # Get epoch from program/.timestamp || 0
@@ -3624,13 +3734,23 @@ sub check_updates {
     if (-f $timestamp_file) {
         if (open(my $fh, '<', $timestamp_file)) {
             $epoch = <$fh>;
-            chomp($epoch);
+            chomp($epoch) if defined $epoch;
             close($fh);
+            $epoch = (defined $epoch && $epoch =~ /^\d+$/) ? int($epoch) : 0;
         }
     }
 
-    # Request API to get manifest JSON using LibWhisker and configured proxy
     return unless defined $CONFIGFILE{'VERSION_API'} && $CONFIGFILE{'VERSION_API'} ne '';
+
+    my $cache_path = update_check_cache_path();
+    my $cache      = read_update_check_cache($cache_path);
+    my $interval   = 6 * 3600;    # hard-coded 6 hour throttle
+
+    # Fresh cache: skip network, still warn from cached remote values.
+    if (defined $cache && (time() - $cache->{'checked_at'}) < $interval) {
+        report_outdated_install($epoch, $cache->{'remote_version'}, $cache->{'remote_epoch'});
+        return;
+    }
 
     eval "require JSON::PP";
     return if $@;
@@ -3677,7 +3797,7 @@ sub check_updates {
     LW2::http_fixup_request(\%request);
     LW2::http_do_request_timeout(\%request, \%response);
 
-    # Check if request succeeded
+    # Check if request succeeded — do not update cache on failure (retry next run)
     if (($response{'whisker'}->{'code'} ne '200') || ($response{'whisker'}->{'data'} eq '')) {
         nprint("+ ERROR: Failed to check for updates: $response{'whisker'}->{'code'}");
         return;
@@ -3688,50 +3808,18 @@ sub check_updates {
     eval { $json_data = JSON::PP->new->utf8(1)->decode($response{'whisker'}->{'data'}); };
     return if $@ || !$json_data;
 
-    # Extract remote version and epoch
+    # Extract remote version and epoch (treat API data as untrusted)
     my $remote_version = $json_data->{'products'}->{'nikto'}->{'version'} || '';
     my $remote_epoch   = $json_data->{'products'}->{'nikto'}->{'epoch'}   || 0;
-    my $local_version  = $VARIABLES{'version'}                          || '';
-    my $ver_cmp        = 0;
-    if ($remote_version ne '' && $local_version ne '') {
-        $ver_cmp = nikto_version_compare($local_version, $remote_version);
-    }
+    $remote_version = '' unless $remote_version =~ /^[\w.\-+]+$/;
+    $remote_epoch   = 0  unless defined $remote_epoch && $remote_epoch =~ /^\d+$/;
+    $remote_epoch   = int($remote_epoch);
 
-    # Compare against the manifest. Git checkouts track individual commits, so
-    # the epoch is a valid signal; stable/packaged releases only compare release
-    # versions to avoid false positives from git commit epochs.
-    #
-    # Detect the install type from EXECDIR (Nikto's install directory), not the
-    # process CWD: nikto.pl never chdir()s to EXECDIR, so a CWD-relative check
-    # would misclassify a stable install run from inside an unrelated git repo
-    # as a git checkout and reintroduce the false "out of date" warning.
-    my $execdir = defined $CONFIGFILE{'EXECDIR'} ? $CONFIGFILE{'EXECDIR'} : '.';
-    my $is_git = (-d "$execdir/.git" || -d "$execdir/../.git");
+    # Stamp only on success so failures do not suppress retries
+    write_update_check_cache($cache_path, $remote_version, $remote_epoch)
+      if $remote_version ne '';
 
-    # Dev/pre-release branches often bump version before publish; never warn then.
-    return if ($ver_cmp > 0);
-
-    if ($is_git) {
-        # Git installations: use epoch comparison since we track commits
-        return if ($remote_epoch > 0 && $epoch >= $remote_epoch);
-        if ($remote_epoch > $epoch) {
-            my $defer = $VARIABLES{'deferout'};
-            $VARIABLES{'deferout'} = 0;
-            nprint(
-                "+ Your Nikto installation is out of date. Please run 'git pull' to update to the latest version of Nikto."
-                );
-            $VARIABLES{'deferout'} = $defer;
-        }
-    }
-    else {
-        # Stable releases: compare versions semantically
-        if ($ver_cmp < 0) {
-            my $defer = $VARIABLES{'deferout'};
-            $VARIABLES{'deferout'} = 0;
-            nprint("+ Your Nikto installation is out of date.");
-            $VARIABLES{'deferout'} = $defer;
-        }
-    }
+    report_outdated_install($epoch, $remote_version, $remote_epoch);
 }
 #######################################################################
 # Expand @LFI() in DSL with platform-specific matchers
