@@ -152,7 +152,7 @@ foreach my $mark (@MARKS) {
     my $open =
       port_check(time(), $mark->{'hostname'}, $mark->{'ip'}, $mark->{'port'}, $CLI{'key'},
                  $CLI{'cert'}, $mark->{'vhost'});
-    if (($open != 1) && ($open != 2)) {
+    if (($open ne '1') && ($open ne '2')) {
         $mark->{'test'}   = 0;
         $mark->{'errmsg'} = $open;
         next;
