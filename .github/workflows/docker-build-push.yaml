@@ -55,7 +55,6 @@ jobs:
             type=sha,enable=${{ github.event_name == 'workflow_dispatch' && github.ref_type != 'tag' }}
             # Tagged releases → pinned versions (+ latest = newest release)
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
 
       - name: Build and push Docker image
