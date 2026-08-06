@@ -5215,13 +5215,33 @@ sub _stream_socket_open {
                 connect( $xr->{sock}, $xr->{iaton} ) :
                 connect( $xr->{sock}, sockaddr_in( $xr->{cport}, $xr->{iaton} ) ) ;
             
-            if ( !$R ) {
-                return _stream_err( $xr, 1, 'can\'t connect (connect error)' )
-                  if ( $! != EINPROGRESS && $! != EWOULDBLOCK );
-                vec( $vin, fileno( $xr->{sock} ), 1 ) = 1;
-                return _stream_err( $xr, 1, 'can\'t connect (timeout)' )
-                  if ( !select( undef, $vin, $vin, $xr->{timeout} )
-                    || !getpeername( $xr->{sock} ) );
+            if (!$R) {
+                my $errno    = 0 + $!;
+                my $os_error = 0 + $^E;
+
+                my $connect_pending =
+                     $errno == EINPROGRESS
+                  || $errno == EWOULDBLOCK
+                  || (
+                       $^O eq 'MSWin32'
+                       && (
+                            $os_error == EINPROGRESS
+                            || $os_error == EWOULDBLOCK
+                       )
+                     );
+
+                return _stream_err($xr, 1, 'can\'t connect (connect error)')
+                  if !$connect_pending;
+
+                my ($vout, $vex) = ('', '');
+                vec($vout, fileno($xr->{'sock'}), 1) = 1;
+                vec($vex,  fileno($xr->{'sock'}), 1) = 1;
+
+                return _stream_err($xr, 1, 'can\'t connect (timeout)')
+                  if (
+                       !select(undef, $vout, $vex, $xr->{'timeout'})
+                       || !getpeername($xr->{'sock'})
+                     );
             }
 
             # leave in nonblock for normal TCP
