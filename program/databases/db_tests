@@ -83,7 +83,7 @@
 "000036","","3","@CGIDIRSwrap.cgi","GET","CODE:200","Allows viewing of directories.","",""
 "000037","","3","/./","GET","BODY:include\(\"","Appending '/./' to a directory may reveal PHP source code.","",""
 "000038","CVE-2001-1013","23","/~root/","GET","CODE:200&&!BODY:rtsptext","Allowed to browse root's home directory.","",""
-"000039","","3","/cgi-bin/wrap","GET","CODE:200","Allows viewing of directories.","",""
+"000039","https://www.exploit-db.com/exploits/19298","3","/cgi-bin/wrap?/../../../../../etc","GET","CODE:200&&BODY:hosts&&BODY:passwd","Allows viewing of directories.","",""
 "000040","","3","/forums/@ADMINconfig.php","GET","CODE:200","PHP Config file may contain database IDs and passwords.","",""
 "000041","","3","/forums/config.php","GET","CODE:200","PHP Config file may contain database IDs and passwords.","",""
 "000042","","3","/ganglia/","GET","BODY:Cluster","Ganglia Cluster reports reveal detailed information.","",""
