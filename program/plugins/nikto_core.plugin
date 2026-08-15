@@ -3813,8 +3813,14 @@ sub check_updates {
     return if $@ || !$json_data;
 
     # Extract remote version and epoch (treat API data as untrusted)
-    my $remote_version = $json_data->{'products'}->{'nikto'}->{'version'} || '';
-    my $remote_epoch   = $json_data->{'products'}->{'nikto'}->{'epoch'}   || 0;
+    unless (ref($json_data) eq 'HASH'
+         && ref($json_data->{'products'}) eq 'HASH'
+         && ref($json_data->{'products'}{'nikto'}) eq 'HASH') {
+        nprint("+ ERROR: Failed to check for updates: unexpected JSON shape");
+        return;
+    }
+    my $remote_version = $json_data->{'products'}{'nikto'}{'version'} || '';
+    my $remote_epoch   = $json_data->{'products'}{'nikto'}{'epoch'}   || 0;
     $remote_version = '' unless $remote_version                        =~ /^[\w.\-+]+$/;
     $remote_epoch   = 0  unless defined $remote_epoch && $remote_epoch =~ /^\d+$/;
     $remote_epoch   = int($remote_epoch);
