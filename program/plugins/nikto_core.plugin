@@ -1691,8 +1691,8 @@ sub set_targets {
 ###############################################################################
 sub platform_profiler {
     if (defined $CLI{'platform'}) {
-        if ($CLI{'platform'} =~ /(nix|win|all)/i) {
-            return $CLI{'platform'};
+        if ($CLI{'platform'} =~ /^(nix|win|all)$/i) {
+            return lc $1;
         }
         else {
             $VARIABLES{'deferout'} = 0;
