@@ -3357,15 +3357,38 @@ sub nfetch {
             }
         }
 
-        # Cache whisker reference to avoid repeated hash access
-        my $whisker = $request{'whisker'};
-        $whisker->{'uri'} = $newlocation;
+        # Same-host only: follow paths on this connection. An absolute
+        # cross-host Location must not be sent as request-URI to the
+        # original target (wrong host/SSL; broken with proxies).
+        if ($newlocation =~ m{^/}) {
+            my $whisker = $request{'whisker'};
+            $whisker->{'uri'} = $newlocation;
 
-        # Make redirect request
-        LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
-        sleeper();
-        LW2::http_do_request_timeout(\%request, \%response);
-        $COUNTERS{'totalrequests'}++;
+            # Send cookies collected from the 30x (and earlier) on the follow-up
+            if (!$CLI{'nocookies'} && defined $mark->{'cookiejar'}) {
+                LW2::cookie_write($mark->{'cookiejar'}, \%request, 1);
+            }
+
+            # Make redirect request
+            LW2::http_fixup_request(\%request) unless ($flags->{'noclean'});
+            sleeper();
+            LW2::http_do_request_timeout(\%request, \%response);
+            $COUNTERS{'totalrequests'}++;
+
+            # Merge cookies from the followed response into the jar
+            if (!$CLI{'nocookies'}) {
+                my $tmpjar = LW2::cookie_new_jar();
+                LW2::cookie_read(\%tmpjar, \%response, \%request);
+                my $cookiejar = $mark->{'cookiejar'};
+                foreach my $c (keys %tmpjar) {
+                    my $cookie_data = $tmpjar{$c};
+                    $cookiejar->{$c} = [
+                        $cookie_data->[0], $cookie_data->[1],
+                        $cookie_data->[2], undef, $cookie_data->[4]
+                    ];
+                }
+            }
+        }
     }
 
     # Check failures
