@@ -4792,47 +4792,43 @@ sub init_db {
     return if $dbname eq "";
     my $filename = "$CONFIGFILE{'DBDIR'}/" . $dbname;
     my (@dbarray, @headers);
-    my $hashref = {};
+    my $skip_main_data =
+      (defined $CLI{'userdbs'} && $CLI{'userdbs'} eq 'all') ? 1 : 0;
 
-    if ($CLI{'userdbs'} ne 'all') {
-
-        # Check that the database exists
-        my $db_main_fh;
-        unless (open($db_main_fh, '<', $filename)) {
-            nprint("+ ERROR: Unable to open database file $dbname: $!.");
-            return $dbarray;
-        }
-
-        # Now read the header values
-        while (<$db_main_fh>) {
-            $_ = db_preprocess($dbname, $_);
-            if     ($_ eq "") { next }
-            unless (@headers) {
-                @headers = parse_csv($_);
-            }
-            else {
-
-                # contents; so split them up and apply to hash
-                my @contents = parse_csv($_);
-                my $hashref  = {};
-                for (my $i = 0 ; $i <= $#contents ; $i++) {
-                    $hashref->{ $headers[$i] } = $contents[$i];
-                }
-                push(@dbarray, $hashref);
-            }
-        }
-        close($db_main_fh);
+    # Always read the main DB for the schema (header row). With -Userdbs all,
+    # skip stock data rows but still need headers so udb_* columns map correctly.
+    my $db_main_fh;
+    unless (open($db_main_fh, '<', $filename)) {
+        nprint("+ ERROR: Unable to open database file $dbname: $!.");
+        return \@dbarray;
     }
 
-    # And the udb_* file
+    while (<$db_main_fh>) {
+        $_ = db_preprocess($dbname, $_);
+        next if $_ eq '';
+        unless (@headers) {
+            @headers = parse_csv($_);
+            next;
+        }
+        next if $skip_main_data;
+
+        my @contents = parse_csv($_);
+        my $hashref  = {};
+        for (my $i = 0 ; $i <= $#contents ; $i++) {
+            $hashref->{ $headers[$i] } = $contents[$i];
+        }
+        push(@dbarray, $hashref);
+    }
+    close($db_main_fh);
+
+    # And the udb_* file (data rows only; same schema as main)
     $filename = "$CONFIGFILE{'DBDIR'}/u" . $dbname;
     my $db_udb_fh;
-    if (open($db_udb_fh, '<', $filename)) {
+    if (@headers && open($db_udb_fh, '<', $filename)) {
         while (<$db_udb_fh>) {
             $_ = db_preprocess($dbname, $_);
-            if ($_ eq "") { next; }
+            next if $_ eq '';
 
-            # contents; so split them up and apply to hash
             my @contents = parse_csv($_);
             my $hashref  = {};
             for (my $i = 0 ; $i <= $#contents ; $i++) {
