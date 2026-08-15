@@ -3294,13 +3294,20 @@ sub nfetch {
         running_average(tv_interval($time, [gettimeofday]), $mark);
     }
 
-    # If we got an error, do 1 retry - optimized
+    # If we got an error, do 1 retry. Count a failure only if the retry
+    # also fails -- a transient blip that recovers must not burn FAILURES.
     if (my $whisker = $response{'whisker'}) {
         if (defined $whisker->{'error'} || $whisker->{'code'} eq '') {
-            $mark->{'failures'}++;
             sleeper();
             LW2::http_do_request_timeout(\%request, \%response);
             $COUNTERS{'totalrequests'}++;
+            $whisker = $response{'whisker'};
+            if (  !$whisker
+                || defined $whisker->{'error'}
+                || !defined $whisker->{'code'}
+                || $whisker->{'code'} eq '') {
+                $mark->{'failures'}++;
+            }
         }
     }
 
