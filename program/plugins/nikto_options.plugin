@@ -24,14 +24,24 @@ sub nikto_httpoptions {
     my ($mark) = @_;
     return if $mark->{'terminate'};
     my ($aoptions, $poptions, $allow_methods, $public_methods);
+    $allow_methods  = '';
+    $public_methods = '';
     my ($junk_status, $junk_md5);
     my $dbarray = init_db("db_options");
     my $txt     = "";
 
     my ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "OPTIONS", "", "", "", "httpoptions: OPTIONS /");
-    $aoptions = $response->{'allow'};
-    $poptions = $response->{'public'};
+
+    # Duplicate headers become ARRAY refs (ignore_duplicate_headers=0 in nfetch).
+    $aoptions =
+      ref($response->{'allow'}) eq 'ARRAY'
+      ? join(', ', grep { defined $_ && $_ ne '' } @{ $response->{'allow'} })
+      : ($response->{'allow'} // '');
+    $poptions =
+      ref($response->{'public'}) eq 'ARRAY'
+      ? join(', ', grep { defined $_ && $_ ne '' } @{ $response->{'public'} })
+      : ($response->{'public'} // '');
 
     foreach my $o (split(/\s*,\s*/, $aoptions)) {
         $allow_methods .= ", $o" unless ($allow_methods =~ /\b\Q$o\E\b/ || $o eq '');
@@ -44,7 +54,9 @@ sub nikto_httpoptions {
     $public_methods =~ s/^[ ]?, //;
 
     # proxy can impose its methods... should actually check this not just warn
-    if ($CLI{'useproxy'} ne "") { $txt = "(May be proxy's methods, not server's)"; }
+    if (defined $CLI{'useproxy'} && $CLI{'useproxy'} ne "") {
+        $txt = "(May be proxy's methods, not server's)";
+    }
 
     my %davmethods = ();
     if ($allow_methods ne "") {
@@ -116,7 +128,7 @@ sub nikto_httpoptions {
         my $protocol =
              (defined $content)
           && (   $content =~ /^\s*OK\s*$/i
-              || $content =~ /Error Code\s*=\s*0x[0-9A-Fa-f]+/i);
+              || $content =~ /^\s*Error Code\s*=\s*0x[0-9A-Fa-f]+\s*$/i);
 
         if ($res == 200 && $differs && $protocol) {
             add_vulnerability(
@@ -178,7 +190,7 @@ sub nikto_httpoptions {
                         "Content match"
                         );
 
-                    # now we know its vulnerable stop testing
+                    # Found for this method; skip remaining HTTP versions
                     last;
                 }
             }
