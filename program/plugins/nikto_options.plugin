@@ -23,7 +23,8 @@ sub nikto_options_init {
 sub nikto_httpoptions {
     my ($mark) = @_;
     return if $mark->{'terminate'};
-    my ($aoptions, $poptions, $allow_methods, $public_methods, $junkmethodresp);
+    my ($aoptions, $poptions, $allow_methods, $public_methods);
+    my ($junk_status, $junk_md5);
     my $dbarray = init_db("db_options");
     my $txt     = "";
 
@@ -77,36 +78,58 @@ sub nikto_httpoptions {
     my $junkmethod = LW2::utils_randstr(8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
-    if ($res == 200) {
-        add_vulnerability(
-            $mark,
-            "/: Web Server returns a valid response with junk HTTP methods which may cause false positives.",
-            "999967",
-            "",
-            $junkmethod,
-            '/',
-            $request,
-            $response
-            );
-        $junkmethodresp = LW2::md5($content);
+
+    # Baseline for DEBUG: record status+MD5 for every completed junk response.
+    # Empty/missing $res means the probe did not complete.
+    if (defined $res && $res ne '') {
+        $junk_status = $res;
+        $junk_md5    = LW2::md5($content // '');
+        if ($res == 200) {
+            add_vulnerability(
+                $mark,
+                "/: Web Server returns a valid response with junk HTTP methods which may cause false positives.",
+                "999967",
+                "",
+                $junkmethod,
+                '/',
+                $request,
+                $response
+                );
+        }
     }
 
-    # Check for other weirdness
-    # IIS Debug
+    # Check for IIS Debug -- require baseline + status/body difference + protocol marker
     return if $mark->{'terminate'};
-    ($res, $content, $errors, $request, $response) =
-      nfetch($mark, "/", "DEBUG", "", "", "", "httpoptions: DEBUG");
-    if ($res == 200 && (LW2::md5($content) ne $junkmethodresp)) {
-        add_vulnerability(
-            $mark,
-            "/: DEBUG HTTP verb may show server debugging information.",
-            "999972",
-            "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017",
-            "DEBUG",
-            '/',
-            $request,
-            $response
+    if (defined $junk_status) {
+        my %debug_headers = (
+            "Command"         => "stop-debug",
+            "Content-Length"  => "0",
             );
+        ($res, $content, $errors, $request, $response) =
+          nfetch($mark, "/", "DEBUG", "", \%debug_headers, { noclean => 1 },
+                 "httpoptions: DEBUG");
+
+        my $debug_md5 = LW2::md5($content // '');
+        my $differs =
+             (defined $res && $res ne '' && $res != $junk_status)
+          || ($debug_md5 ne $junk_md5);
+        my $protocol =
+             (defined $content)
+          && (   $content =~ /^\s*OK\s*$/i
+              || $content =~ /Error Code\s*=\s*0x[0-9A-Fa-f]+/i);
+
+        if ($res == 200 && $differs && $protocol) {
+            add_vulnerability(
+                $mark,
+                "/: DEBUG HTTP verb may show server debugging information.",
+                "999972",
+                "https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017",
+                "DEBUG",
+                '/',
+                $request,
+                $response
+                );
+        }
     }
 
     # IIS PROPFIND HEADER
