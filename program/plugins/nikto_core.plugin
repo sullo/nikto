@@ -356,6 +356,13 @@ sub is_404 {
         ($err_res, $err_content, $err_error, $err_request, $err_response) =
           nfetch($mark, $nf_path, "GET", "", "", "", "is_404");
 
+        # Incomplete baseline (transport error / empty status): do not poison
+        # nf_cache -- leave unset so a later is_404 can retry.
+        if (!defined $err_res || $err_res eq '') {
+            print "404: Baseline probe failed, not caching\n" if $debug_404;
+            return 0;
+        }
+
         # Determine mode, type, match, and location
         my %response_map = (200 => "OK",
                             300 => "REDIR",
