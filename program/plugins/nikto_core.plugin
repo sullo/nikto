@@ -418,9 +418,14 @@ sub is_404 {
     my $actual_content  = $response->{'whisker'}{'data'} || "";
     my $actual_location = $response->{'location'}        || "";
 
-    # Check STD mode first (most common case - fastest check)
+    # Check STD mode first (most common case - fastest check).
+    # Require the same status as the junk baseline -- a site-wide 401/403
+    # must not make every later 4xx look like "not found".
     if ($nf_mode eq "STD") {
-        if ($actual_code =~ /^4\d\d$/) {
+        if (defined $nf_entry->{'code'}
+            && defined $actual_code
+            && $actual_code ne ''
+            && $actual_code == $nf_entry->{'code'}) {
             print "404: 4\n" if $debug_404;
             return 1;
         }
