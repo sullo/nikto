@@ -197,10 +197,10 @@ sub nikto_tests {
 
 sub passchecks {
     my ($mark) = @_;
-    my @DIRS = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDDIRS"}));
+    my @DIRS = grep { $_ ne "" } (split(/ /, get_catalog_var($mark, '@PASSWORDDIRS')));
 
     # Empty entries are dropped up front so the counter math matches reality
-    my @PFILES = grep { $_ ne "" } (split(/ /, $VARIABLES{"\@PASSWORDFILES"}));
+    my @PFILES = grep { $_ ne "" } (split(/ /, get_catalog_var($mark, '@PASSWORDFILES')));
     my @EXTS   = qw(asp bak dat data dbc dbf exe htm html htx ini lst txt xml php php3);
 
     nprint("- Performing passfiles mutation.", "v", "tests");

@@ -73,7 +73,7 @@ sub nikto_paths {
         }
 
         # Use shared path matching logic
-        path_matcher(\%FILES, \%DIRS, \%FULL_LINKS);
+        path_matcher($mark, \%FILES, \%DIRS, \%FULL_LINKS);
 
     }
 }

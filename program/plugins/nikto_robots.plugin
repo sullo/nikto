@@ -125,7 +125,7 @@ sub nikto_robots {
         }
 
         # Use shared path matching logic
-        path_matcher(\%RFILES, \%DIRS, undef);
+        path_matcher($mark, \%RFILES, \%DIRS, undef);
 
         my $msg =
             ($DISCTR == 1) ? "contains 1 entry which should be manually viewed."
