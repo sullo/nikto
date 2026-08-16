@@ -17,7 +17,8 @@ sub nikto_cgi {
     my ($mark) = @_;
     my $gotvalid = 0;
     my @POSSIBLECGI;
-    my @CFGCGI = split(' ', $VARIABLES{'@CGIDIRS'});
+    # Baseline catalog (global / prior path learning on this mark)
+    my @CFGCGI = grep { $_ ne '' } split(' ', get_catalog_var($mark, '@CGIDIRS'));
 
     # @CGIDIRS already set from -Cgidirs in nikto.pl; only log / probe here
     if (defined $CLI{'forcecgi'}) {
@@ -58,18 +59,18 @@ sub nikto_cgi {
             nprint(
                 "+ No CGI Directories found (use '-Cgidirs all' to force check all possible dirs). CGI tests skipped."
                 );
-            $VARIABLES{'@CGIDIRS'} = "";
+            set_catalog_var($mark, '@CGIDIRS', '');
         }
         elsif (scalar(@CFGCGI) == scalar(@POSSIBLECGI)) {
             nprint("+ All CGI directories 'found', use '-Cgidirs none' to test none");
-            $VARIABLES{'@CGIDIRS'} = join(" ", @CFGCGI);
+            set_catalog_var($mark, '@CGIDIRS', join(" ", @CFGCGI));
         }
         else {
-            $VARIABLES{'@CGIDIRS'} = join(" ", @POSSIBLECGI);
+            set_catalog_var($mark, '@CGIDIRS', join(" ", @POSSIBLECGI));
         }
     }
 
-    nprint("- Checking for CGI in: $VARIABLES{'@CGIDIRS'}", "v", "cgi");
+    nprint("- Checking for CGI in: " . get_catalog_var($mark, '@CGIDIRS'), "v", "cgi");
 }
 
 1;

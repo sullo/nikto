@@ -4112,13 +4112,22 @@ sub append_catalog_var {
     $mark->{'vars'}{$name} = length($cur) ? "$cur $value" : $value;
 }
 
+# Replace the mark overlay for a catalog var (e.g. cgi probe result).
+sub set_catalog_var {
+    my ($mark, $name, $value) = @_;
+    return unless ref($mark) eq 'HASH';
+    return unless defined $name && $name ne '';
+    $mark->{'vars'} ||= {};
+    $mark->{'vars'}{$name} = defined $value ? $value : '';
+}
+
 #######################################################################
 sub path_matcher {
     my ($mark, $files_ref, $dirs_ref, $links_ref) = @_;
 
     # Host-learned values for these catalogs go on $mark->{'vars'}
-    # (@CGIDIRS still global until cgi + path learning are moved together)
     my %mark_catalog = map { $_ => 1 } qw(
+      @CGIDIRS
       @PASSWORDFILES
       @PASSWORDDIRS
       @STRUTSACTIONS

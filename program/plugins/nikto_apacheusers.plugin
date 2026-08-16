@@ -63,7 +63,7 @@ sub nikto_apacheusers {
     # Now we can attempt to enumerate the users
     my ($url, $dictfile, $size);
     my @cgiwraps;
-    my @CFGCGI = split(/ /, $VARIABLES{"\@CGIDIRS"});
+    my @CFGCGI = split(/ /, get_catalog_var($mark, '@CGIDIRS'));
 
     if (defined $parameters->{'dictionary'}) {
         $dictfile = $parameters->{'dictionary'};
