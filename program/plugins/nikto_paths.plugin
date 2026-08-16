@@ -34,8 +34,9 @@ sub nikto_paths {
         # get links
         my @links = LW2::html_link_extractor($content);
         my %FULL_LINKS;
-        my %valid_hosts =
-          map { $_ => 1 } ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'});
+        my %valid_hosts = map { lc($_) => 1 }
+          grep { defined $_ && $_ ne '' }
+          ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'});
         foreach my $link (@links) {
 
             # Absolute http(s) or protocol-relative (//host/...): keep path
@@ -44,7 +45,7 @@ sub nikto_paths {
             if ($link =~ m{^//} || ($link !~ /^\// && $link =~ m{^https?://}i)) {
                 my $abs = ($link =~ m{^//} ? "http:$link" : $link);
                 my @uri = LW2::uri_split($abs);
-                if (defined $uri[2] && exists $valid_hosts{ $uri[2] }) {
+                if (defined $uri[2] && exists $valid_hosts{ lc($uri[2]) }) {
                     $link = $uri[0] // '';
                 }
                 else {
