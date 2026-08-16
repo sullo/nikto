@@ -37,8 +37,13 @@ sub nikto_cgi {
             return if $mark->{'terminate'};
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $possiblecgidir, "GET", "", "", "", "CGI");
+            $res     = '' unless defined $res;
+            $content = '' unless defined $content;
             nprint("Checked for CGI dir\t$possiblecgidir\tgot:$res",
                    "d", "cgi", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+
+            # Failed / incomplete probe -- do not treat as a CGI directory
+            next if $res eq '';
 
             my $is_index =
               ($res eq "200" && $content =~ /(?:index of \/|directory listing (?:of|for))/i);
