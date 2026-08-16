@@ -206,7 +206,7 @@ sub passchecks {
     nprint("- Performing passfiles mutation.", "v", "tests");
 
     # Update total requests for status reports
-    my @CGIS = grep { $_ ne "" } map { s/\/$//; $_ } split(/ /, $VARIABLES{'@CGIDIRS'});
+    my @CGIS = grep { $_ ne "" } map { s/\/$//; $_ } split(/ /, get_catalog_var($mark, '@CGIDIRS'));
     $COUNTERS{'total_checks'} =
       $COUNTERS{'total_checks'} +
       (scalar(@DIRS) * scalar(@PFILES)) +

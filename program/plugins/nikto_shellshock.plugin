@@ -28,7 +28,7 @@ sub nikto_shellshock {
     my %headers;
     $headers{'User-Agent'} = '() { :; }; echo 93e4r0-cve-2014-6271: true;echo;echo;';
     $headers{'Referer'}    = '() { _; } >_[$($())] { echo 93e4r0-cve-2014-6278: true; echo;echo; }';
-    my @dirs = split(/ /, $VARIABLES{'@CGIDIRS'});
+    my @dirs = split(/ /, get_catalog_var($mark, '@CGIDIRS'));
     push(@dirs, "/");
 
     #check for FP... error in page
