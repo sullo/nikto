@@ -54,13 +54,16 @@ sub nikto_paths {
 
             # normalize
             $link = LW2::uri_normalize($link);
+            next unless defined $link && $link ne '';
             $FULL_LINKS{$link} = 1;
 
             # split dirs / files
             my $dir = LW2::uri_get_dir($link);
-            $dir = validate_and_fix_regex($dir);
+            $dir = '' unless defined $dir;
             my $file = $link;
-            $file =~ s/^$dir//;
+            if ($dir ne '' && index($file, $dir) == 0) {
+                substr($file, 0, length($dir)) = '';
+            }
 
             if ($file ne '') {
                 $file =~ s/\\//g;
