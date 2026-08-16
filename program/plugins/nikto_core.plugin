@@ -40,7 +40,8 @@ sub change_variables {
             if ($line =~ /\Q$varname\E/) {
 
                 # Expand this variable: split by whitespace and recursively process each value
-                foreach my $value (split(/\s+/, $VARIABLES{$varname})) {
+                foreach my $value (split(/\s+/, get_catalog_var($mark, $varname))) {
+                    next if $value eq '';
                     my $cooked = $line;
                     $cooked =~ s/\Q$varname\E/$value/g;
 
@@ -4081,8 +4082,62 @@ sub build_matcher {
     };
 }
 #######################################################################
+# Catalog vars (@CGIDIRS, @PASSWORDFILES, …) live in %VARIABLES as the
+# shared baseline. Host-learned additions belong on $mark->{'vars'} so
+# multi-host scans do not leak. Prefer mark overlay when present.
+sub get_catalog_var {
+    my ($mark, $name) = @_;
+    return '' unless defined $name && $name ne '';
+    if (   ref($mark) eq 'HASH'
+        && ref($mark->{'vars'}) eq 'HASH'
+        && exists $mark->{'vars'}{$name}) {
+        return $mark->{'vars'}{$name} // '';
+    }
+    return $VARIABLES{$name} // '';
+}
+
+# Copy baseline onto the mark on first write, then append if not already present.
+sub append_catalog_var {
+    my ($mark, $name, $value) = @_;
+    return unless ref($mark) eq 'HASH';
+    return unless defined $name && $name ne '';
+    return unless defined $value && $value ne '';
+
+    $mark->{'vars'} ||= {};
+    unless (exists $mark->{'vars'}{$name}) {
+        $mark->{'vars'}{$name} = $VARIABLES{$name} // '';
+    }
+    my $cur = $mark->{'vars'}{$name} // '';
+    return if index(lc($cur), lc($value)) >= 0;
+    $mark->{'vars'}{$name} = length($cur) ? "$cur $value" : $value;
+}
+
+#######################################################################
 sub path_matcher {
-    my ($files_ref, $dirs_ref, $links_ref) = @_;
+    my ($mark, $files_ref, $dirs_ref, $links_ref) = @_;
+
+    # Host-learned values for these catalogs go on $mark->{'vars'}
+    # (@CGIDIRS still global until cgi + path learning are moved together)
+    my %mark_catalog = map { $_ => 1 } qw(
+      @PASSWORDFILES
+      @PASSWORDDIRS
+      @STRUTSACTIONS
+      @SYMPHONY
+      @NUKE
+      @VBULLETIN
+      @ADMIN
+      @PHPMYADMIN
+      @FCKEDITOR
+      @CRYSTALREPORTS
+      @WORDPRESS
+      @PHPINFODIRS
+      @PHPINFOFILES
+      @MANTIS
+      @DOKUWIKI
+      @ROCKMONGO
+      @MAGENTO
+      @JENKINS
+    );
 
     # Map file patterns to variable names
     # var can be a string or array ref for multiple variables
@@ -4098,7 +4153,10 @@ sub path_matcher {
                 if ($file =~ $check->{pattern}) {
                     my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
                     foreach my $var (@vars) {
-                        if (index(lc($VARIABLES{$var}), lc($file)) < 0) {
+                        if ($mark_catalog{$var} && ref($mark) eq 'HASH') {
+                            append_catalog_var($mark, $var, $raw);
+                        }
+                        elsif (index(lc($VARIABLES{$var} // ''), lc($file)) < 0) {
                             $VARIABLES{$var} .= " $raw";
                         }
                     }
@@ -4139,7 +4197,10 @@ sub path_matcher {
                 if ($dir =~ $check->{pattern}) {
                     my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
                     foreach my $var (@vars) {
-                        if (index(lc($VARIABLES{$var}), lc($dir)) < 0) {
+                        if ($mark_catalog{$var} && ref($mark) eq 'HASH') {
+                            append_catalog_var($mark, $var, $dir);
+                        }
+                        elsif (index(lc($VARIABLES{$var} // ''), lc($dir)) < 0) {
                             $VARIABLES{$var} .= " $dir";
                         }
                     }
@@ -4160,7 +4221,10 @@ sub path_matcher {
                 if ($link =~ $check->{pattern}) {
                     my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
                     foreach my $var (@vars) {
-                        if ($VARIABLES{$var} !~ /$link/i) {
+                        if ($mark_catalog{$var} && ref($mark) eq 'HASH') {
+                            append_catalog_var($mark, $var, $link);
+                        }
+                        elsif (($VARIABLES{$var} // '') !~ /$link/i) {
                             $VARIABLES{$var} .= " $link";
                         }
                     }
