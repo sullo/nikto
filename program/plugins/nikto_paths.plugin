@@ -38,13 +38,14 @@ sub nikto_paths {
           map { $_ => 1 } ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'});
         foreach my $link (@links) {
 
-            # if not relative
-            if (($link !~ /^\//) && ($link =~ /https?:/i)) {
-
-                # check host
-                my @uri = LW2::uri_split($link);
-                if (exists $valid_hosts{ $uri[2] }) {
-                    $link = $uri[0];
+            # Absolute http(s) or protocol-relative (//host/...): keep path
+            # only when host is this target. Protocol-relative must not skip
+            # the host check just because the string starts with '/'.
+            if ($link =~ m{^//} || ($link !~ /^\// && $link =~ m{^https?://}i)) {
+                my $abs = ($link =~ m{^//} ? "http:$link" : $link);
+                my @uri = LW2::uri_split($abs);
+                if (defined $uri[2] && exists $valid_hosts{ $uri[2] }) {
+                    $link = $uri[0] // '';
                 }
                 else {
                     next;
