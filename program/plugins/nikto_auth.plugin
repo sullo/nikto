@@ -194,35 +194,32 @@ sub nikto_auth {
         if (   $response->{'whisker'}->{'code'} !~ /40[13]/
             && $response->{'whisker'}->{'code'} ne "500"
             && !defined $response->{'whisker'}->{'error'}) {
-            unless ($entry->{'checked'}) {
-                my $message;
-                my $ref;
-                if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
-                    $message =
-                      "Successfully authenticated to realm '$realm' with user-supplied credentials.";
-                }
-                elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
-                    $message =
-                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
-                    $ref = "CWE-16";
-                }
-                else {
-                    $message = $request->{'whisker'}->{'uri'}
-                      . ": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
-                    $ref = "CWE-16";
-                }
-
-                add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
-                                  $request->{'whisker'}->{'uri'},
-                                  $request, $response);
-
-                # Mark it successful
-                $success                            = 1;
-                $entry->{'checked'}                 = 1;
-                $mark->{'realms'}{$realm}{'status'} = 1;
-                $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
-                last;
+            my $message;
+            my $ref;
+            if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
+                $message =
+                  "Successfully authenticated to realm '$realm' with user-supplied credentials.";
             }
+            elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
+                $message =
+                  "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
+                $ref = "CWE-16";
+            }
+            else {
+                $message = $request->{'whisker'}->{'uri'}
+                  . ": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
+                $ref = "CWE-16";
+            }
+
+            add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
+                              $request->{'whisker'}->{'uri'},
+                              $request, $response);
+
+            # Per-mark only — do not mutate global $REALMS entries
+            $success                            = 1;
+            $mark->{'realms'}{$realm}{'status'} = 1;
+            $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
+            last;
         }
         else {
             # set this back
