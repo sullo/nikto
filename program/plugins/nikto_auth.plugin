@@ -200,40 +200,63 @@ sub nikto_auth {
         $mark->{'realms'}{$realm}{'password'} = $entry->{'password'};
         $mark->{'realms'}{$realm}{'authtype'} = $authtype;
 
-        if (   $response->{'whisker'}->{'code'} !~ /40[13]/
-            && $response->{'whisker'}->{'code'} ne "500"
-            && !defined $response->{'whisker'}->{'error'}) {
-            my $message;
-            my $ref;
-            if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
-                $message =
-                  "Successfully authenticated to realm '$realm' with user-supplied credentials.";
-            }
-            elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
-                $message =
-                  "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
-                $ref = "CWE-16";
-            }
-            else {
-                $message = $request->{'whisker'}->{'uri'}
-                  . ": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
-                $ref = "CWE-16";
-            }
+        my $code = $response->{'whisker'}->{'code'} // '';
+        if (   ($code !~ /^40[13]$/)
+            && !defined $response->{'whisker'}->{'error'}
+            && !_www_authenticate_present($response))
+        {
+            # Snapshot the authenticated exchange before the unauthenticated recheck
+            my %auth_whisker  = %{ $response->{'whisker'} };
+            my %auth_response = %{$response};
+            $auth_response{'whisker'} = \%auth_whisker;
 
-            add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
-                              $request->{'whisker'}->{'uri'},
-                              $request, $response);
+            # Recheck without credentials: FP if URI is open anyway
+            LW2::auth_unset($request);
+            LW2::http_fixup_request($request);
+            sleeper();
+            LW2::http_do_request_timeout($request, $response);
+            $COUNTERS{'totalrequests'}++;
 
-            # Per-mark only — do not mutate global $REALMS entries
-            $success                            = 1;
-            $mark->{'realms'}{$realm}{'status'} = 1;
-            $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
-            last;
+            my $vcode = $response->{'whisker'}->{'code'} // '';
+            if ($vcode =~ /^40[13]$/ || _www_authenticate_present($response)) {
+
+                # Restore authenticated exchange for reporting / default creds
+                %{$response} = %auth_response;
+                $response->{'whisker'} = \%auth_whisker;
+                LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
+
+                my $message;
+                my $ref;
+                if (($entry->{'message'} // '') eq "Credentials provided via CLI.") {
+                    $message =
+                      "Successfully authenticated to realm '$realm' with user-supplied credentials.";
+                }
+                elsif ($entry->{'id'} eq '' && $entry->{'password'} eq '') {
+                    $message =
+                      "Blank credentials found at $request->{'whisker'}->{uri}, $entry->{'realm'}: $entry->{'message'}.";
+                    $ref = "CWE-16";
+                }
+                else {
+                    $message = $request->{'whisker'}->{'uri'}
+                      . ": Default account found for '$realm' at (ID '$entry->{'id'}', PW '$entry->{'password'}'). $entry->{message}.";
+                    $ref = "CWE-16";
+                }
+
+                add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
+                                  $request->{'whisker'}->{'uri'},
+                                  $request, $response);
+
+                # Per-mark only — do not mutate global $REALMS entries
+                $success                            = 1;
+                $mark->{'realms'}{$realm}{'status'} = 1;
+                $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
+                last;
+            }
+            nprint("- Auth success looked like a false positive (URI open without credentials)",
+                   "v", "auth",
+                   ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
-        else {
-            # set this back
-            $response->{'www-authenticate'} = $save_auth;
-        }
+        $response->{'www-authenticate'} = $save_auth;
     }
     LW2::auth_unset($request);
 
@@ -247,6 +270,17 @@ sub nikto_auth {
     }
 
     return $request, $response;
+}
+
+# True if WWW-Authenticate is present (string or ARRAY from duplicate headers).
+sub _www_authenticate_present {
+    my ($response) = @_;
+    my $h = $response->{'www-authenticate'};
+    return 0 unless defined $h;
+    if (ref($h) eq 'ARRAY') {
+        return scalar(grep { defined $_ && $_ ne '' } @{$h}) ? 1 : 0;
+    }
+    return $h ne '' ? 1 : 0;
 }
 
 1;
