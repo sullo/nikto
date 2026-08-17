@@ -150,6 +150,15 @@ sub nikto_auth {
            "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
       if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$root\E\/?$/);
 
+    # LW2::auth_set does not support digest — skip rather than probe without Authorization
+    if (lc($authtype) eq 'digest') {
+        nprint("+ Digest authentication for realm '$realm' is not supported; skipping credential tests",
+               "v", "auth", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+        $mark->{'realms'}{$realm}{'status'}   = 0;
+        $mark->{'realms'}{$realm}{'authtype'} = $authtype;
+        return $request, $response;
+    }
+
     # Save to revert (preserve original ARRAY or string shape)
     my $save_auth = $raw_auth;
 
