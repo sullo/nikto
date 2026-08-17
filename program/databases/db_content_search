@@ -48,3 +48,4 @@
 "750535","https://makeawebsitehub.com/parked-domains/","sedoparking\.com\/frmpark","Domain is parked at Sedo."
 "750536","https://makeawebsitehub.com/parked-domains/","parking-lander","Domain is parked."
 "750537","https://www.iis.net/","IIS\sWindows\sServer","Default IIS server content."
+"750538","https://webmachinelearning.github.io/webmcp/","(?i)<script\b[^>]*(?:webmcp|>(?:(?!</script>)[\s\S])*webmcp)","WebMCP script tag found."
