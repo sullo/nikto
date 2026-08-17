@@ -108,13 +108,35 @@ sub split_auth_header {
 sub nikto_auth {
     my ($mark, $parameters, $request, $response) = @_;
 
-    unless (defined $response->{'www-authenticate'}) {
+    # Duplicate WWW-Authenticate headers become ARRAY refs
+    # (ignore_duplicate_headers=0 in nfetch).
+    my $raw_auth = $response->{'www-authenticate'};
+    my @auth_hdrs =
+      ref($raw_auth) eq 'ARRAY'
+      ? grep { defined $_ && $_ ne '' } @{$raw_auth}
+      : (defined $raw_auth && $raw_auth ne '' ? ($raw_auth) : ());
+
+    unless (@auth_hdrs) {
         nprint("+ ERROR: No authentication header defined: $response->{'whisker'}->{'uri'}",
                "v", "auth", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         return $request, $response;
     }
 
-    my ($realm, $authtype) = split_auth_header($response->{'www-authenticate'});
+    # Prefer schemes LW2::auth_set can send when multiple challenges exist
+    my ($realm, $authtype);
+    for my $pref (qw(basic ntlm digest)) {
+        for my $h (@auth_hdrs) {
+            my ($r, $a) = split_auth_header($h);
+            next unless defined $a && lc($a) eq $pref;
+            ($realm, $authtype) = ($r, $a);
+            last;
+        }
+        last if defined $authtype;
+    }
+    unless (defined $authtype) {
+        ($realm, $authtype) = split_auth_header($auth_hdrs[0]);
+    }
+
     $authtype = 'basic' if (!defined $authtype || $authtype eq '');
     $realm    = ''      if (!defined $realm);
 
@@ -123,12 +145,13 @@ sub nikto_auth {
         return $request, $response;
     }
 
+    my $root = $mark->{'root'} // '';
     nprint("+ $response->{'whisker'}->{'uri'} - Requires Authentication for realm '$realm'",
            "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}))
-      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$CLI{'root'}\E\/?$/);
+      if ($OUTPUT{'show_auth'} || $response->{'whisker'}->{'uri'} =~ /^\Q$root\E\/?$/);
 
-    # Save to revert
-    my $save_auth = $response->{'www-authenticate'};
+    # Save to revert (preserve original ARRAY or string shape)
+    my $save_auth = $raw_auth;
 
     # Now we can try the passwords
     nprint("Testing creds for '$realm'",
