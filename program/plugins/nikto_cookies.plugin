@@ -3,7 +3,6 @@
 # PURPOSE: General HTTP cookie checks
 ###############################################################################
 sub nikto_cookies_init {
-    use vars qw/%CFOUND/;
     my $id = {
          name        => "cookies",
          full_name   => "HTTP Cookie Internal IP",
@@ -13,8 +12,6 @@ sub nikto_cookies_init {
          copyright   => "2010 Chris Sullo"
          };
 
-    # Store cookies to ensure we don't report multiple times.
-    %CFOUND = ();
     return $id;
 }
 
@@ -24,9 +21,8 @@ sub nikto_cookies_postfetch {
     my $cookies = $response->{'whisker'}->{'cookies'};
     return unless ref($cookies) eq 'ARRAY' && @$cookies;
 
-    # Dedup per cookie name + host + port (+ ident when present)
-    my $scope =
-      join("\0", $mark->{'hostname'} // '', $mark->{'port'} // '', $mark->{'ident'} // '');
+    # Per-mark dedup by cookie name
+    my $found = ($mark->{'cfound'} ||= {});
 
     foreach my $c (@$cookies) {
         my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]+)/);
@@ -36,7 +32,7 @@ sub nikto_cookies_postfetch {
         next if ($cname eq '' || $cname =~ /^;/);
 
         my $cname_key = lc($cname);
-        next if ($CFOUND{$cname_key}{$scope});
+        next if ($found->{$cname_key});
 
         my $cname_disp = nikto_cookies_safe_str($cname);
 
@@ -111,7 +107,7 @@ sub nikto_cookies_postfetch {
                 }
             }
         }
-        $CFOUND{$cname_key}{$scope} = 1;
+        $found->{$cname_key} = 1;
     }
 }
 
