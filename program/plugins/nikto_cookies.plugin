@@ -21,23 +21,24 @@ sub nikto_cookies_postfetch {
     my $cookies = $response->{'whisker'}->{'cookies'};
     return unless ref($cookies) eq 'ARRAY' && @$cookies;
 
-    # Per-mark dedup by cookie name
+    # Per-mark, per-cookie-name, per-finding-type dedup
     my $found = ($mark->{'cfound'} ||= {});
 
     foreach my $c (@$cookies) {
-        my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]+)/);
-        next if (!defined $cname || !defined $cvalue);
+        # Allow empty values (name= or name=; HttpOnly)
+        my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]*)/);
+        next unless defined $cname;
+        $cvalue = '' unless defined $cvalue;
 
         $cname =~ s/^\s+|\s+$//g;
         next if ($cname eq '' || $cname =~ /^;/);
 
-        my $cname_key = lc($cname);
-        next if ($found->{$cname_key});
-
+        my $cname_key  = lc($cname);
         my $cname_disp = nikto_cookies_safe_str($cname);
+        my $cf         = ($found->{$cname_key} ||= {});
 
         # secure flag
-        if ($c !~ /(?:^|;\s*)secure(?:\s*;|\s*$)/i && $mark->{ssl}) {
+        if (!$cf->{'secure'} && $mark->{ssl} && $c !~ /(?:^|;\s*)secure(?:\s*;|\s*$)/i) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
                                 . ": Cookie $cname_disp created without the secure flag",
@@ -48,10 +49,11 @@ sub nikto_cookies_postfetch {
                               $request,
                               $response
                               );
+            $cf->{'secure'} = 1;
         }
 
         # httponly flag
-        if ($c !~ /(?:^|;\s*)httponly(?:\s*;|\s*$)/i) {
+        if (!$cf->{'httponly'} && $c !~ /(?:^|;\s*)httponly(?:\s*;|\s*$)/i) {
             add_vulnerability($mark,
                               $request->{'whisker'}->{'uri'}
                                 . ": Cookie $cname_disp created without the httponly flag",
@@ -62,6 +64,7 @@ sub nikto_cookies_postfetch {
                               $request,
                               $response
                               );
+            $cf->{'httponly'} = 1;
         }
 
         my @ips = get_ips($c);
@@ -72,8 +75,10 @@ sub nikto_cookies_postfetch {
             }
         }
 
+        my $ip_found = ($cf->{'ip'} ||= {});
         foreach my $ip (@ips) {
             next unless defined $ip && length($ip);
+            next if $ip_found->{$ip};
 
             # This often contains an IP-like string
             if ($ip eq '1.0.1.1' && $cname_key eq '__cf_bm') {
@@ -104,10 +109,10 @@ sub nikto_cookies_postfetch {
                                       $request->{'whisker'}->{'method'},
                                       $request->{'whisker'}->{'uri'},
                                       $request, $response);
+                    $ip_found->{$ip} = 1;
                 }
             }
         }
-        $found->{$cname_key} = 1;
     }
 }
 
