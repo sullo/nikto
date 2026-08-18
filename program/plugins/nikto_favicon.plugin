@@ -35,6 +35,8 @@ sub nikto_favicon {
               nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
             if (($res eq "200") && ($content ne "")) {
+                # HTML error pages aren't favicons; cheap sniff, no is_404
+                next if $content =~ /html|body|href/i;
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
                 nprint("Got $path/favicon.$ext hash:$hash", "d");
@@ -59,6 +61,7 @@ sub nikto_favicon {
             ($res, $content, $error, $request, $response) =
               nfetch($mark, $icon, "GET", "", "", "", "favicon");
             if (($res eq "200") && ($content ne "")) {
+                next if $content =~ /html|body|href/i;
                 my $hash = LW2::md5($content);
                 $hash =~ s/^.*://;
                 nprint("Got $icon hash:$hash", "d");
