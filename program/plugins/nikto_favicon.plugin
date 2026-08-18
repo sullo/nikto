@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: Get a favicon file & MD5 fingerprint
 ###############################################################################
-use vars qw/$FAVICONDB %LINKICONS/;
+use vars qw/$FAVICONDB/;
 
 sub nikto_favicon_init {
     my $id = { name        => "favicon",
@@ -25,7 +25,7 @@ sub nikto_favicon_load {
 sub nikto_favicon {
     my ($mark) = @_;
     return if $mark->{'terminate'};
-    %LINKICONS = ();
+    my %linkicons;
     my ($res, $content, $error, $request, $response);
 
     # Check /favicon.ico
@@ -52,8 +52,10 @@ sub nikto_favicon {
         ) {
         my %tags;
         $tags{'link'} = 1;
-        LW2::html_find_tags(\$content, \&favicon_checkhash, '', '', \%tags);
-        foreach my $icon (keys %LINKICONS) {
+        LW2::html_find_tags(\$content,
+            sub { favicon_checkhash($_[0], $_[1], \%linkicons) },
+            '', '', \%tags);
+        foreach my $icon (keys %linkicons) {
             ($res, $content, $error, $request, $response) =
               nfetch($mark, $icon, "GET", "", "", "", "favicon");
             if (($res eq "200") && ($content ne "")) {
@@ -67,13 +69,14 @@ sub nikto_favicon {
 }
 
 sub favicon_checkhash {
-    my ($tag, $elements) = @_;
+    my ($tag, $elements, $linkicons) = @_;
+    return unless ref($linkicons) eq 'HASH';
     while ((my ($e, $v)) = each(%{$elements})) {
         if ($e ne 'href') { next; }
         if ($v =~ /\.(ico|png|gif)(?:\?.*)?$/i
             && ($v =~ m{^/} || $v =~ m{^https?://}i)) {
             my @url = LW2::uri_split($v);
-            $LINKICONS{ $url[0] } = 1;
+            $linkicons->{ $url[0] } = 1 if defined $url[0] && $url[0] ne '';
         }
     }
     return;
