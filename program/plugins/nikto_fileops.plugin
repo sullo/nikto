@@ -17,7 +17,8 @@ sub nikto_fileops_init {
 sub save_item {
     require JSON::PP;
     my ($resulthash, $message, $request, $response) = @_;
-    return if $resulthash->{'mark'}->{'save_prefix'} eq '';
+    return unless defined $resulthash->{'mark'}
+      && ($resulthash->{'mark'}->{'save_prefix'} // '') ne '';
     my $fn =
         $resulthash->{'mark'}->{'save_dir'} . "/"
       . $resulthash->{'mark'}->{'save_prefix'}
@@ -101,7 +102,7 @@ sub save_createdir {
     }
     elsif (-f $savedir) {
         nprint("+ ERROR: Directory from -Savedir is a file.");
-        exit 1;
+        return '';
     }
 
     # create?
@@ -109,7 +110,7 @@ sub save_createdir {
         if (!mkdir($savedir)) {
             nprint("+ ERROR: Unable to create -Save directory '$savedir': $!",
                    "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-            exit 1;
+            return '';
         }
     }
     return $savedir;
@@ -152,6 +153,7 @@ sub parse_hostfile {
 
             # Parse the ports list from:
             # Host: 1.0.0.0 ()  Ports: 80/open/tcp//http///, 8000/open/tcp//http-alt///
+            next unless defined $fields[1] && $fields[1] ne '';
             $fields[1] =~ s/^Ports: //;
             my @ports = parse_csv($fields[1]);
             foreach my $nmp (@ports) {
