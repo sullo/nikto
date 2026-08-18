@@ -31,6 +31,7 @@ sub nikto_favicon {
     # Check /favicon.ico
     foreach my $ext (split(/,/, "ico,gif,png")) {
         foreach my $path (split /,/, ",/favicons") {
+            return if $mark->{'terminate'};
             ($res, $content, $error, $request, $response) =
               nfetch($mark, "$path/favicon.$ext", "GET", "", "", "", "favicon");
 
@@ -46,6 +47,7 @@ sub nikto_favicon {
     }
 
     # Check for a <link> favicon (lookaheads so rel/href order does not matter)
+    return if $mark->{'terminate'};
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", "", "favicon");
     if ($content =~
@@ -57,6 +59,7 @@ sub nikto_favicon {
             sub { favicon_checkhash($_[0], $_[1], \%linkicons, $mark) },
             '', '', \%tags);
         foreach my $icon (keys %linkicons) {
+            return if $mark->{'terminate'};
             ($res, $content, $error, $request, $response) =
               nfetch($mark, $icon, "GET", "", "", "", "favicon");
             if (($res eq "200") && ($content ne "")) {
