@@ -44,11 +44,11 @@ sub nikto_favicon {
         }
     }
 
-    # Check for a <link> favicon
+    # Check for a <link> favicon (lookaheads so rel/href order does not matter)
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", "", "favicon");
     if ($content =~
-        /<link\b[^>]*\brel\s*=\s*["'][^"']*\bicon\b[^"']*["'][^>]*\bhref\s*=\s*["'][^"']+\.(?:ico|png|gif)(?:\?[^"']*)?["']/i
+        /<link\b(?=[^>]*\brel\s*=\s*["'][^"']*\bicon\b[^"']*["'])(?=[^>]*\bhref\s*=\s*["'][^"']+\.(?:ico|png|gif)(?:\?[^"']*)?["'])/i
         ) {
         my %tags;
         $tags{'link'} = 1;
