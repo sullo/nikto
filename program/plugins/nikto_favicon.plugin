@@ -38,7 +38,6 @@ sub nikto_favicon {
                 # HTML error pages aren't favicons; cheap sniff, no is_404
                 next if $content =~ /html|body|href/i;
                 my $hash = LW2::md5($content);
-                $hash =~ s/^.*://;
                 nprint("Got $path/favicon.$ext hash:$hash", "d");
                 favicon_matchhash($mark, $hash, $mark->{'root'} . "$path/favicon.$ext",
                                   $request, $response);
@@ -63,7 +62,6 @@ sub nikto_favicon {
             if (($res eq "200") && ($content ne "")) {
                 next if $content =~ /html|body|href/i;
                 my $hash = LW2::md5($content);
-                $hash =~ s/^.*://;
                 nprint("Got $icon hash:$hash", "d");
                 favicon_matchhash($mark, $hash, $icon, $request, $response);
             }
@@ -107,6 +105,9 @@ sub favicon_checkhash {
 sub favicon_matchhash {
     my ($mark, $hash, $icon, $request, $response) = @_;
     return if (($hash eq "") || ($icon eq ""));
+    # Same image via /favicon.ico and <link> should only report once
+    return if $mark->{'favicon_seen'}{$hash}++;
+
     foreach my $item (@$FAVICONDB) {
         if ($item->{'md5hash'} eq $hash) {
             add_vulnerability($mark,
