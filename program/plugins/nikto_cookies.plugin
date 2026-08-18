@@ -25,10 +25,11 @@ sub nikto_cookies_postfetch {
     my $found = ($mark->{'cfound'} ||= {});
 
     foreach my $c (@$cookies) {
-        # Allow empty values (name= or name=; HttpOnly)
-        my ($cname, $cvalue) = ($c =~ /([^=]+)=([^;]*)/);
+        # Allow empty and quoted values (name= / name="a;b"; HttpOnly)
+        my ($cname, $quoted, $plain) =
+          ($c =~ /([^=]+)=\s*(?:"([^"]*)"|([^;]*))/);
         next unless defined $cname;
-        $cvalue = '' unless defined $cvalue;
+        my $cvalue = defined $quoted ? $quoted : ($plain // '');
 
         $cname =~ s/^\s+|\s+$//g;
         next if ($cname eq '' || $cname =~ /^;/);
@@ -79,11 +80,6 @@ sub nikto_cookies_postfetch {
         foreach my $ip (@ips) {
             next unless defined $ip && length($ip);
             next if $ip_found->{$ip};
-
-            # This often contains an IP-like string
-            if ($ip eq '1.0.1.1' && $cname_key eq '__cf_bm') {
-                next;
-            }
 
             my ($valid, $internal, $loopback) = is_ip($ip);
             if ($valid && !$loopback) {
