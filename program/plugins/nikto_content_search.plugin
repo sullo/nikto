@@ -4,7 +4,7 @@
 ###############################################################################
 
 sub nikto_content_search_init {
-    use vars qw/$CONTENTSEARCH %CSMATCHED/;
+    use vars qw/$CONTENTSEARCH/;
     my $id = { name        => "content_search",
                full_name   => "Content Search",
                author      => "Sullo",
@@ -28,7 +28,6 @@ sub nikto_content_search_load {
     # Load up the database as soon as we can
 
     $CONTENTSEARCH = init_db("db_content_search");
-    %CSMATCHED     = ();
     my @valid_tests = ();
 
     # to try and speed it up - precompile the regular expressions
@@ -58,8 +57,8 @@ sub nikto_content_search {
     return ($request, $response) unless defined $file;
 
     my $method = $whisker->{'method'} // "GET";
-    my $host   = $mark->{'hostname'};
-    my $seen   = ($CSMATCHED{$host}{$file} ||= {});
+    # Per-mark dedup so hosts/ports don't share match state
+    my $seen = ($mark->{'csmatched'}{$file} ||= {});
 
     foreach my $testid (@$CONTENTSEARCH) {
 
