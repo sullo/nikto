@@ -635,6 +635,7 @@ sub nikto_headers {
       nfetch($mark, '/', "GET", "", \%hdrs, { force_close => 1 }, "Headers", "1.1");
 
     while (my ($header, $ref) = each %{ $VARIABLES->{'SUGGESTED_HEADERS'} }) {
+        next if $header eq 'strict-transport-security' && !$mark->{'ssl'};
         if (!exists $response->{$header}) {
             add_vulnerability($mark,
                    $request->{'whisker'}{'uri'} . ": Suggested security header missing: " . $header,
