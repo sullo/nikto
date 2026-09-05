@@ -23,38 +23,40 @@ sub save_item {
         $resulthash->{'mark'}->{'save_dir'} . "/"
       . $resulthash->{'mark'}->{'save_prefix'}
       . $resulthash->{'nikto_id'} . ".txt";
-    my $json_request    = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($request);
-    my $json_response   = JSON::PP->new->utf8(1)->allow_nonref(1)->encode($response);
-    my $cookies_written = 0;
 
     my $save_fh;
     unless (open($save_fh, ">>", $fn)) {
         nprint("+ ERROR: Unable to open savefile '$fn': $!");
         return;
     }
+
+    my $has_request =
+      ref($request) eq 'HASH' && (($request->{'whisker'}{'method'} // '') ne '');
+    my $has_response =
+      ref($response) eq 'HASH' && (($response->{'whisker'}{'protocol'} // '') ne '');
+
     print $save_fh $VARIABLES{'DIV'} . "\n";
     print $save_fh "			  Information\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
-    print $save_fh "Test ID:  \t" . $resulthash->{'nikto_id'} . "\n";
-    print $save_fh "References: \t" . $resulthash->{'refs'} . "\n";
-    print $save_fh "Message:  \t" . $message . "\n";
-    print $save_fh "Reason:   \t" . $resulthash->{'reason'} . "\n";
+    print $save_fh "Test ID:  \t" . save_safe_line($resulthash->{'nikto_id'}) . "\n";
+    print $save_fh "References: \t" . save_safe_line($resulthash->{'refs'}) . "\n";
+    print $save_fh "Message:  \t" . save_safe_line($message) . "\n";
+    print $save_fh "Reason:   \t" . save_safe_line($resulthash->{'reason'}) . "\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
     print $save_fh "			  Request\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
 
-    if ($request->{'whisker'}{'method'} eq '') {
+    if (!$has_request) {
         print $save_fh "Not Applicable\n";
     }
     else {
-        my $request_string = rebuild_request($request);
-        print $save_fh $request_string;
+        print $save_fh rebuild_request($request);
     }
     print $save_fh "\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
     print $save_fh "			  Response\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
-    if ($response->{'whisker'}{'protocol'} eq '') {
+    if (!$has_response) {
         print $save_fh "Not Applicable\n";
     }
     else {
@@ -64,13 +66,24 @@ sub save_item {
     print $save_fh $VARIABLES{'DIV'} . "\n";
     print $save_fh "			  Data Objects\n";
     print $save_fh $VARIABLES{'DIV'} . "\n";
-    if ($request->{'whisker'}{'method'} ne '') {
-        print $save_fh "REQUEST:$json_request\n";
+    my $json = JSON::PP->new->utf8(1)->allow_nonref(1);
+    if ($has_request) {
+        print $save_fh "REQUEST:" . $json->encode($request) . "\n";
     }
-    if ($response->{'whisker'}{'protocol'} ne '') {
-        print $save_fh "RESPONSE:$json_response\n";
+    if ($has_response) {
+        print $save_fh "RESPONSE:" . $json->encode($response) . "\n";
     }
     close($save_fh);
+}
+
+# Collapse controls/newlines so Information fields stay single-line
+sub save_safe_line {
+    my ($s) = @_;
+    $s = '' unless defined $s;
+    $s =~ s/[\x00-\x1f\x7f]+/ /g;
+    $s =~ s/ +/ /g;
+    $s =~ s/^ | $//g;
+    return $s;
 }
 
 ###############################################################################
