@@ -37,9 +37,11 @@ sub nikto_msgs {
     my $dbarray = $MSGS_DB || init_db("db_server_msgs");
 
     foreach my $item (@$dbarray) {
-        $item->{'server'} = validate_and_fix_regex($item->{'server'});
-        if ($mark->{'banner'} =~ /($item->{'server'})\b/i) {
-            add_vulnerability($mark, "/: $1 - $item->{'message'}",
+        # Do not mutate the shared DB entry
+        my $server_re = validate_and_fix_regex($item->{'server'});
+        if ($mark->{'banner'} =~ /($server_re)\b/i) {
+            my $matched = $1;
+            add_vulnerability($mark, "/: $matched - $item->{'message'}",
                               $item->{'nikto_id'}, $item->{'refs'});
         }
     }
@@ -47,73 +49,74 @@ sub nikto_msgs {
     # Special stuff to pull information from results
     # McAfee ePO
     if ($mark->{'banner'} =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
+        return if $mark->{'terminate'};
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/_LOGFILENAME_", "GET", "", "", "", "msgs: Agent-ListenServer-HttpSvr");
-        next unless ($res == 200);
 
-        # Computer name
-        return if $mark->{'terminate'};
-        if ($content =~ /ComputerName/) {
-            my $name = $content;
-            $name =~ s#(^.*<ComputerName>)([^<]+)(</ComputerName>.*$)#$2#;
-            my $eposerver = $content;
-            $eposerver =~ s#(^.*<ePOServerName>)([^<]+)(</ePOServerName>.*$)#$2#;
-            add_vulnerability(
-                $mark,
-                "/_LOGFILENAME_: Web server is a McAfee ePO agent and showing the hostname as '$name' and the ePO server(s) as '$eposerver'.",
-                "980100",
-                "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
-                "GET",
-                "/_LOGFILENAME_",
-                $request,
-                $response
-                );
-        }
-        else {
-            add_vulnerability(
-                $mark,
-                "/_LOGFILENAME_: Web server is a McAfee ePO agent.",
-                "000435",
-                "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
-                "GET",
-                "/_LOGFILENAME_",
-                $request,
-                $response
-                );
+        if (($res // '') eq '200') {
+            my ($name)       = $content =~ /<ComputerName>([^<]+)<\/ComputerName>/;
+            my ($eposerver) = $content =~ /<ePOServerName>([^<]+)<\/ePOServerName>/;
+            if (defined $name && $name ne '') {
+                $eposerver = '' unless defined $eposerver;
+                add_vulnerability(
+                    $mark,
+                    "/_LOGFILENAME_: Web server is a McAfee ePO agent and showing the hostname as '$name' and the ePO server(s) as '$eposerver'.",
+                    "980100",
+                    "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
+                    "GET",
+                    "/_LOGFILENAME_",
+                    $request,
+                    $response
+                    );
+            }
+            else {
+                add_vulnerability(
+                    $mark,
+                    "/_LOGFILENAME_: Web server is a McAfee ePO agent.",
+                    "000435",
+                    "https://www.mcafee.com/enterprise/en-us/downloads/trials/epo-mcafee-agent-deployment.html",
+                    "GET",
+                    "/_LOGFILENAME_",
+                    $request,
+                    $response
+                    );
+            }
         }
     }
 
     # HP WBEM
     if ($mark->{'banner'} =~ /CompaqHTTPServer/i) {
-        ($res, $content, $error, $request, $response) =
-          nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
-        next unless ($res == 200);
         return if $mark->{'terminate'};
-        my $ipaddrs = "";
-        my $name;
-        foreach my $line (split(/\n/, $content)) {
-            if ($line =~ /System Management Homepage for /) {
-                $name = $line;
-                $name =~ s#(^.*System Management Homepage for )([a-zA-Z0-9]*)(</font>.*$)#$2#;
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
+
+        if (($res // '') eq '200') {
+            my $ipaddrs = "";
+            my $name;
+            foreach my $line (split(/\n/, $content)) {
+                if ($line =~ /System Management Homepage for ([a-zA-Z0-9]+)/) {
+                    $name = $1;
+                }
+                if ($line =~ /new ObjectIpAddresses\("([\d\.]+)"\)/) {
+                    my $ipaddr = $1;
+                    nprint("$ipaddr", "", undef,
+                           ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
+                    $ipaddrs .= " $ipaddr";
+                }
             }
-            if ($line =~ /new ObjectIpAddresses/) {
-                my $ipaddr = $line;
-                $ipaddr =~ s#(^.*new ObjectIpAddresses\(")([\d\.]+)("\);.*$)#$2#;
-                nprint("$ipaddr", "", undef,
-                       ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
-                $ipaddrs .= " $ipaddr";
+            if (defined $name && $name ne '' && $ipaddrs ne '') {
+                add_vulnerability(
+                    $mark,
+                    "/cpqlogin.htm: Web server is an HP WBEM agent and showing the hostname is $name and the IP addresses are $ipaddrs.",
+                    "801010",
+                    "",
+                    "GET",
+                    "/cpqlogin.htm",
+                    $request,
+                    $response
+                    );
             }
         }
-        add_vulnerability(
-            $mark,
-            "/cpqlogin.htm: Web server is an HP WBEM agent and showing the hostname is $name and the IP addresses are $ipaddrs.",
-            "801010",
-            "",
-            "GET",
-            "/cpqlogin.htm",
-            $request,
-            $response
-            );
     }
 }
 
