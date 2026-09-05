@@ -30,11 +30,10 @@ sub nikto_negotiate {
     return unless (defined $res && $res =~ /^(?:[23]\d\d|406)$/);
 
     my $raw = $response->{'alternates'};
-    return unless defined $raw && $raw ne '';
-
+    return unless defined $raw;
     my $alternates =
       ref($raw) eq 'ARRAY' ? join(', ', grep { defined $_ && $_ ne '' } @$raw) : $raw;
-    return unless (defined $alternates && $alternates =~ /\{\s*"/);
+    return unless (defined $alternates && $alternates ne '' && $alternates =~ /\{\s*"/);
 
     # Extract names in list context (no /g pos state). Cap count and length.
     my @raw_alts = ($alternates =~ /\{\s*"([^"]+)"/g);

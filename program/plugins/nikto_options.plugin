@@ -2,19 +2,27 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: HTTP options check
 ###############################################################################
+use vars qw/$OPTIONS_DB/;
+
 sub nikto_options_init {
     my $id = { name        => "httpoptions",
                full_name   => "HTTP Options",
                author      => "Sullo",
                description =>
                  "Performs a variety of checks against the HTTP options returned from the server.",
-               hooks => { scan => { method => \&nikto_httpoptions,
-                                    weight => 20,
-                                    },
+               hooks => {
+                          start => { method => \&nikto_options_load, },
+                          scan  => { method => \&nikto_httpoptions,
+                                     weight => 20,
+                                     },
                             },
                copyright => "2008 Chris Sullo"
                };
     return $id;
+}
+
+sub nikto_options_load {
+    $OPTIONS_DB = init_db("db_options");
 }
 
 # This just gets the HTTP options & checks 'em out.
@@ -27,7 +35,7 @@ sub nikto_httpoptions {
     $allow_methods  = '';
     $public_methods = '';
     my ($junk_status, $junk_md5);
-    my $dbarray = init_db("db_options");
+    my $dbarray = $OPTIONS_DB || init_db("db_options");
     my $txt     = "";
 
     my ($res, $content, $errors, $request, $response) =
@@ -44,12 +52,14 @@ sub nikto_httpoptions {
       : ($response->{'public'} // '');
 
     foreach my $o (split(/\s*,\s*/, $aoptions)) {
-        $allow_methods .= ", $o" unless ($allow_methods =~ /\b\Q$o\E\b/ || $o eq '');
+        next if $o eq '';
+        $allow_methods .= ", $o" unless ($allow_methods =~ /\b\Q$o\E\b/i);
     }
 
     $allow_methods =~ s/^[ ]?, //;
     foreach my $o (split(/\s*,\s*/, $poptions)) {
-        $public_methods .= ", $o" unless ($public_methods =~ /\b\Q$o\E\b/ || $o eq '');
+        next if $o eq '';
+        $public_methods .= ", $o" unless ($public_methods =~ /\b\Q$o\E\b/i);
     }
     $public_methods =~ s/^[ ]?, //;
 
@@ -87,6 +97,7 @@ sub nikto_httpoptions {
     }
 
     # Check to see what the web server does on out of standard headers
+    return if $mark->{'terminate'};
     my $junkmethod = LW2::utils_randstr(8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", $junkmethod, "", "", "", "httpoptions: Junk HTTP method");
@@ -96,7 +107,7 @@ sub nikto_httpoptions {
     if (defined $res && $res ne '') {
         $junk_status = $res;
         $junk_md5    = LW2::md5($content // '');
-        if ($res == 200) {
+        if ($res eq '200') {
             add_vulnerability(
                 $mark,
                 "/: Web Server returns a valid response with junk HTTP methods which may cause false positives.",
@@ -114,8 +125,8 @@ sub nikto_httpoptions {
     return if $mark->{'terminate'};
     if (defined $junk_status) {
         my %debug_headers = (
-            "Command"         => "stop-debug",
-            "Content-Length"  => "0",
+            "Command"        => "stop-debug",
+            "Content-Length" => "0",
             );
         ($res, $content, $errors, $request, $response) =
           nfetch($mark, "/", "DEBUG", "", \%debug_headers, { noclean => 1 },
@@ -123,14 +134,14 @@ sub nikto_httpoptions {
 
         my $debug_md5 = LW2::md5($content // '');
         my $differs =
-             (defined $res && $res ne '' && $res != $junk_status)
+             (defined $res && $res ne '' && $res ne $junk_status)
           || ($debug_md5 ne $junk_md5);
         my $protocol =
              (defined $content)
           && (   $content =~ /^\s*OK\s*$/i
               || $content =~ /^\s*Error Code\s*=\s*0x[0-9A-Fa-f]+\s*$/i);
 
-        if ($res == 200 && $differs && $protocol) {
+        if (($res // '') eq '200' && $differs && $protocol) {
             add_vulnerability(
                 $mark,
                 "/: DEBUG HTTP verb may show server debugging information.",
@@ -150,20 +161,26 @@ sub nikto_httpoptions {
                    "Content-Length" => "0",);
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, "/", "PROPFIND", "", \%headers, { noclean => 1 }, "httpoptions: PROPFIND");
-    if ($res == 207) {
-        if ($content =~
-            m{<a:href>https?://(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?(?:/[^<]*)?</a:href>}is) {
-            my $ipfound = $1;
-            add_vulnerability(
-                $mark,
-                "/: PROPFIND HTTP verb may show the server's internal IP address: $ipfound",
-                "999973",
-                "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)",
-                "PROPFIND",
-                "/",
-                $request,
-                $response
-                );
+    if (($res // '') eq '207' && defined $content) {
+      HREF:
+        while ($content =~ m{<a:href>(https?://[^<]+)</a:href>}isg) {
+            my $href = $1;
+            foreach my $ip (get_ips($href)) {
+                my ($valid, $internal, $loopback) = is_ip($ip);
+                if ($valid && !$loopback && $ip ne ($mark->{'ip'} // '')) {
+                    add_vulnerability(
+                        $mark,
+                        "/: PROPFIND HTTP verb may show the server's internal IP address: $ip",
+                        "999973",
+                        "https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2003/aa142960(v%3Dexchg.65)",
+                        "PROPFIND",
+                        "/",
+                        $request,
+                        $response
+                        );
+                    last HREF;
+                }
+            }
         }
     }
 
@@ -176,7 +193,7 @@ sub nikto_httpoptions {
             return if $mark->{'terminate'};
             ($res, $content, $errors, $request, $response) =
               nfetch($mark, "/", $method, "", \%headers, {}, "httpoptions: $method", $version);
-            if ($res == 200) {
+            if (($res // '') eq '200' && defined $content) {
                 if ($content =~ /Trace-Test: Nikto/) {
                     add_vulnerability(
                         $mark,
@@ -197,8 +214,6 @@ sub nikto_httpoptions {
         }
     }
 
-    # Now release memory for the dbarray
-    undef @$dbarray;
     return;
 }
 
@@ -210,17 +225,19 @@ sub eval_methods {
     my $message;
     $method = uc($method);
 
+    # WebDAV methods — treat as DAV regardless of DB row order
+    if (   $method eq "PROPPATCH"
+        || $method eq "SEARCH"
+        || $method eq "PROPFIND"
+        || $method eq "COPY"
+        || $method eq "LOCK"
+        || $method eq "UNLOCK"
+        || $method eq "MKCOL") {
+        return $method;
+    }
+
     # Now search database for the method.
     foreach my $item (@$dbarray) {
-        if (   $method eq "PROPPATCH"
-            || $method eq "SEARCH"
-            || $method eq "PROPFIND"
-            || $method eq "COPY"
-            || $method eq "LOCK"
-            || $method eq "UNLOCK") {
-            return $method;
-        }
-
         if ($item->{'method'} eq $method) {
             if ($item->{'nikto_id'} eq "0") {
 
