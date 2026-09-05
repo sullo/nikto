@@ -2,22 +2,34 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: Look for multiple unique index files
 ###############################################################################
+use vars qw/$MULTIPLE_INDEX_DB/;
+
 sub nikto_multiple_index_init {
     my $id = { name        => "multiple_index",
                full_name   => "Multiple Index",
                author      => "Tautology",
                description => "Checks for multiple index files",
-               hooks       => { scan => { method => \&nikto_multiple_index, }, },
-               copyright   => "2009 Chris Sullo"
+               hooks       => {
+                          start => { method => \&nikto_multiple_index_load, },
+                          scan  => { method => \&nikto_multiple_index, },
+                            },
+               copyright => "2009 Chris Sullo"
                };
 
     return $id;
 }
 
+sub nikto_multiple_index_load {
+    $MULTIPLE_INDEX_DB = init_db("db_multiple_index");
+}
+
 sub nikto_multiple_index {
     my ($mark) = @_;
-    my $dbarray = init_db("db_multiple_index");
+    return if $mark->{'terminate'};
+    my $dbarray = $MULTIPLE_INDEX_DB || init_db("db_multiple_index");
+    my $root    = $mark->{'root'} // '';
     my (%found, %hashes);
+
     foreach my $item (@$dbarray) {
         return if $mark->{'terminate'};
 
@@ -25,10 +37,11 @@ sub nikto_multiple_index {
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
-        if ($res == 200) {
-            $content = rm_active_content($content, "$mark->{'root'}/$item->{'index'}");
+        if (($res // '') eq '200' && defined $content) {
+            $content = rm_active_content($content, "$root/$item->{'index'}");
             my $hash = LW2::md5($content);
-            $found{"$mark->{'root'}/$item->{'index'}"} = $hash;
+            next unless defined $hash && $hash ne '';
+            $found{"$root/$item->{'index'}"} = $hash;
             $hashes{$hash}++;
         }
 
@@ -53,7 +66,8 @@ sub nikto_multiple_index {
         else {
             $msg .= " (all unique)";
         }
-        add_vulnerability($mark, "$msg: $file_list", "740000", "", "GET", "/", $request, $response);
+        # Aggregate finding — no single request/response represents all files
+        add_vulnerability($mark, "$msg: $file_list", "740000", "", "GET", "/");
     }
 }
 
