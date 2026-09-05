@@ -18,9 +18,6 @@ sub nikto_headers_init {
         copyright => "2008 Chris Sullo"
         };
 
-    # some global variables
-    use vars qw/%ETAGS %BREACH %HEADERS_FOUND/;
-
     return $id;
 }
 
@@ -54,7 +51,7 @@ sub nikto_headers_postfetch {
     foreach my $header (keys %$response) {
         next
           if exists $skip_headers{$header}
-          || exists $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header};
+          || exists $mark->{'headers_found'}{$header};
 
         my $raw    = $response->{$header};
         my @values = (ref($raw) eq 'ARRAY') ? @$raw : ($raw);
@@ -108,7 +105,7 @@ sub nikto_headers_postfetch {
                             $request,
                             $response
                             );
-                        $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{$header} = 1;
+                        $mark->{'headers_found'}{$header} = 1;
                     }
                 }
             }
@@ -116,7 +113,7 @@ sub nikto_headers_postfetch {
     }
 
     # look for inode in etag header
-    if (  !defined $ETAGS{ $mark->{hostname} }{ $mark->{port} }
+    if (  !$mark->{'headers_etag'}
         && defined $response->{'etag'}
         && $response->{'etag'} =~ m/-/) {
         my $etag = $response->{'etag'};
@@ -160,12 +157,12 @@ sub nikto_headers_postfetch {
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
                               $request, $response);
-            $ETAGS{ $mark->{hostname} }{ $mark->{port} } = 1;
+            $mark->{'headers_etag'} = 1;
         }
     }
 
     if (defined $response->{'link'}
-        && !$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'link'}) {
+        && !$mark->{'headers_found'}{'link'}) {
         my $values = report_multiheaders($response->{'link'});
         add_vulnerability(
                     $mark,
@@ -177,13 +174,13 @@ sub nikto_headers_postfetch {
                     $request,
                     $response
                     );
-        $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'link'} = 1;
+        $mark->{'headers_found'}{'link'} = 1;
     }
 
     # Look for any uncommon headers
     foreach my $header (keys %$response) {
         next
-          if defined $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }{"uncommon-$header"};
+          if defined $mark->{'headers_found'}{"uncommon-$header"};
 
         my $found = 0;
         foreach my $st_header (@$HEADERSDB) {
@@ -209,13 +206,13 @@ sub nikto_headers_postfetch {
                               $request->{'whisker'}->{'method'},
                               $request->{'whisker'}->{'uri'},
                               $request, $response);
-            $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }{"uncommon-$header"} = 1;
+            $mark->{'headers_found'}{"uncommon-$header"} = 1;
         }
     }
 
     # Strict-Transport-Security
     if (   $mark->{'ssl'}
-        && !$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'strict-transport-security'}
+        && !$mark->{'headers_found'}{'strict-transport-security'}
         && defined $response) {
         if ($response->{'strict-transport-security'} =~ /max-age\s*=\s*"?0"?(?!\d)/i) {
             add_vulnerability(
@@ -231,11 +228,11 @@ sub nikto_headers_postfetch {
                 );
         }
 
-        $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'strict-transport-security'} = 1;
+        $mark->{'headers_found'}{'strict-transport-security'} = 1;
     }
 
     # Alt-Svc (HTTP/3)
-    if (!$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'alt-svc'}
+    if (!$mark->{'headers_found'}{'alt-svc'}
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'alt-svc'}) {
             my ($protocol,     $msg);
@@ -266,12 +263,12 @@ sub nikto_headers_postfetch {
                 $request,
                 $response
                 );
-            $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'alt-svc'} = 1;
+            $mark->{'headers_found'}{'alt-svc'} = 1;
         }
     }
 
     # x-clacks-overhead
-    if (!$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'x-clacks-overhead'}
+    if (!$mark->{'headers_found'}{'x-clacks-overhead'}
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'x-clacks-overhead'}) {
             add_vulnerability(
@@ -286,12 +283,12 @@ sub nikto_headers_postfetch {
                       $request,
                       $response
                       );
-            $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'x-clacks-overhead'} = 1;
+            $mark->{'headers_found'}{'x-clacks-overhead'} = 1;
         }
     }
 
     # CSP Report URLs
-    if (!$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'report-uri'}
+    if (!$mark->{'headers_found'}{'report-uri'}
         && defined $response->{'whisker'}->{'code'}) {
         if (defined $response->{'report-uri'}) {
             add_vulnerability(
@@ -306,12 +303,12 @@ sub nikto_headers_postfetch {
                 $request,
                 $response
                 );
-            $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'report-uri'} = 1;
+            $mark->{'headers_found'}{'report-uri'} = 1;
         }
     }
 
     # Cloudflare
-    if (   !$HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'cf-ray'}
+    if (   !$mark->{'headers_found'}{'cf-ray'}
         && defined $response->{'cf-ray'}
         && !$CLI{'useproxy'}) {
         add_vulnerability(
@@ -325,7 +322,7 @@ sub nikto_headers_postfetch {
             $request,
             $response
             );
-        $HEADERS_FOUND{ $mark->{hostname} }{ $mark->{port} }{'cf-ray'} = 1;
+        $mark->{'headers_found'}{'cf-ray'} = 1;
     }
 
     return $request, $response;
@@ -353,8 +350,7 @@ sub nikto_headers_check {
 
     foreach my $header (@interesting_headers) {
         if (exists $response->{$header}) {
-            if (!exists $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }
-                {"interesting-$header"}) {
+            if (!exists $mark->{'headers_found'}{"interesting-$header"}) {
                 my $value = "";
                 if (ref($response->{$header}) eq 'ARRAY') {
                     $value = join(', ', @{ $response->{$header} });
@@ -364,7 +360,7 @@ sub nikto_headers_check {
                 }
                 $value = validate_and_fix_regex($value);
                 $value =~ s/[\r\n]+/ /g;
-                $HEADERS_FOUND{ $mark->{'hostname'} }{ $mark->{'port'} }{"interesting-$header"} = 1;
+                $mark->{'headers_found'}{"interesting-$header"} = 1;
                 add_vulnerability(
                                 $mark,
                                 $request->{'whisker'}{'uri'} . ": Retrieved $header header: $value",
@@ -574,11 +570,11 @@ sub nikto_headers {
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, '/', "GET", "", \%locheaders, \%locflags, "Headers", "1.1");
 
-    if (!$BREACH{ $mark->{hostname} }{ $mark->{port} } && defined $response && $mark->{'ssl'}) {
+    if (!$mark->{'headers_breach'} && defined $response && $mark->{'ssl'}) {
         if (defined $response->{'content-encoding'}) {
             if ($response->{'content-encoding'} =~ /(deflate|gzip)/i) {
                 my $encoding = lc($1);
-                $BREACH{ $mark->{hostname} }{ $mark->{port} } = 1;
+                $mark->{'headers_breach'} = 1;
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
