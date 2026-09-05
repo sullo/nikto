@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: General HTTP headers checks
 ###############################################################################
-use vars qw/$HEADERSDB/;
+use vars qw/%HEADERS_COMMON/;
 
 sub nikto_headers_init {
     my $id = {
@@ -22,7 +22,12 @@ sub nikto_headers_init {
 }
 
 sub nikto_headers_load {
-    $HEADERSDB = init_db("db_headers_common");
+    my $db = init_db("db_headers_common");
+    %HEADERS_COMMON = ();
+    foreach my $item (@$db) {
+        next unless defined $item->{'header'} && $item->{'header'} ne '';
+        $HEADERS_COMMON{ lc($item->{'header'}) } = 1;
+    }
 }
 
 sub nikto_headers_postfetch {
@@ -180,33 +185,25 @@ sub nikto_headers_postfetch {
     foreach my $header (keys %$response) {
         next
           if defined $mark->{'headers_found'}{"uncommon-$header"};
+        next if exists $HEADERS_COMMON{ lc($header) };
 
-        my $found = 0;
-        foreach my $st_header (@$HEADERSDB) {
-            if ($header eq $st_header->{'header'}) {
-                $found = 1;
-                last;
-            }
+        my $raw = $response->{$header};
+        my $x   = (ref($raw) eq 'ARRAY') ? ($raw->[0] // '') : ($raw // '');
+        if (!ref($x)) {
+            $x =~ s/\s+.*$//;
+            $mark->{'components'}->{$x} = 1
+              if $x ne ''
+              && $x !~ /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i
+              && $x !~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
         }
-        if ($found == 0) {
-            my $raw = $response->{$header};
-            my $x   = (ref($raw) eq 'ARRAY') ? ($raw->[0] // '') : ($raw // '');
-            if (!ref($x)) {
-                $x =~ s/\s+.*$//;
-                $mark->{'components'}->{$x} = 1
-                  if $x ne ''
-                  && $x !~ /^(?:ARRAY|HASH|CODE|REF|GLOB|SCALAR)\(0x[0-9a-f]+\)\z/i
-                  && $x !~ /^(?:\(?Win(?:32|64)\)?|Linux-Mandrake)$/i;
-            }
-            my $values = report_multiheaders($response->{$header});
-            my $vuln   = $request->{'whisker'}{'uri'}
-              . ": Uncommon header(s) '$header' found, with contents: $values.";
-            add_vulnerability($mark, $vuln, "999100", "",
-                              $request->{'whisker'}->{'method'},
-                              $request->{'whisker'}->{'uri'},
-                              $request, $response);
-            $mark->{'headers_found'}{"uncommon-$header"} = 1;
-        }
+        my $values = report_multiheaders($response->{$header});
+        my $vuln   = $request->{'whisker'}{'uri'}
+          . ": Uncommon header(s) '$header' found, with contents: $values.";
+        add_vulnerability($mark, $vuln, "999100", "",
+                          $request->{'whisker'}->{'method'},
+                          $request->{'whisker'}->{'uri'},
+                          $request, $response);
+        $mark->{'headers_found'}{"uncommon-$header"} = 1;
     }
 
     # Strict-Transport-Security
