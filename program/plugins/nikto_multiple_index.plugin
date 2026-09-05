@@ -38,10 +38,12 @@ sub nikto_multiple_index {
           nfetch($mark, "/$item->{'index'}", "GET", "", "", "", "multiple_index");
 
         if (($res // '') eq '200' && defined $content) {
-            $content = rm_active_content($content, "$root/$item->{'index'}");
+            my $uri = "$root/$item->{'index'}";
+            next if is_404($mark, $uri, $response);
+            $content = rm_active_content($content, $uri);
             my $hash = LW2::md5($content);
             next unless defined $hash && $hash ne '';
-            $found{"$root/$item->{'index'}"} = $hash;
+            $found{$uri} = $hash;
             $hashes{$hash}++;
         }
 
