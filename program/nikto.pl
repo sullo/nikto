@@ -203,8 +203,11 @@ foreach my $mark (@MARKS) {
 
     # Saving responses
     if (($CLI{'saveresults'} // '') ne '') {
-        $mark->{'save_dir'}    = save_createdir($CLI{'saveresults'}, $mark);
-        $mark->{'save_prefix'} = save_getprefix($mark);
+        my $save_dir = save_createdir($CLI{'saveresults'}, $mark);
+        if ($save_dir ne '') {
+            $mark->{'save_dir'}    = $save_dir;
+            $mark->{'save_prefix'} = save_getprefix($mark);
+        }
     }
 
     my ($res, $content, $error, $request, $response) =
