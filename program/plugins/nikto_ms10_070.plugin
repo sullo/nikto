@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # PURPOSE: Determine if site is vulnerable to MS10-070
 ###############################################################################
-use vars qw/%MS10070/;
-
 sub nikto_ms10_070_init {
     my $id = { name        => "ms10_070",
                full_name   => "ms10-070 Check",
@@ -23,18 +21,16 @@ sub nikto_ms10_070_init {
 sub nikto_ms10_070 {
     my ($mark, $parameters, $request, $response) = @_;
     return if $mark->{'terminate'};
-    return if $mark->{'ms100707'};
+    return if $mark->{'ms10070'};
     return if !defined $response->{'whisker'} || !defined $response->{'whisker'}->{'data'};
-    my $method = $response->{'whisker'}->{'method'} // "GET";
+    my $method = $request->{'whisker'}->{'method'} // "GET";
+    my $seen   = ($mark->{'ms10070_seen'} ||= {});
 
     while ($response->{'whisker'}->{'data'} =~ /\.axd\?d=([^\?;&\s"']+)/ig) {
         return if $mark->{'terminate'};
         my $string = $1;
         next if $string eq '';
-        my $scan_host  = $mark->{'hostname'} // $mark->{'ip'} // 'unknown';
-        my $dedupe_key = $scan_host . ":" . $mark->{'port'} . ":" . $string;
-        next if $MS10070{$dedupe_key};
-        $MS10070{$dedupe_key} = 1;
+        next if $seen->{$string}++;
         $string =~ s/\-/\+/g;
         $string =~ s/\_/\//g;
         next if $string eq '';
@@ -45,7 +41,7 @@ sub nikto_ms10_070 {
         next if !defined $string;
 
         if ((length($string) % 8) == 0) {
-            $mark->{'ms100707'} = 1;
+            $mark->{'ms10070'} = 1;
             add_vulnerability(
                 $mark,
                 "Server may be vulnerable to MS10-070 (based on numeric calculation) and thus may allow a cryptographic padding oracle. This vulnerability must be manually validated.",
@@ -56,6 +52,7 @@ sub nikto_ms10_070 {
                 $request,
                 $response
                 );
+            last;
         }
     }
 
