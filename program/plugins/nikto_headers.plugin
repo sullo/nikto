@@ -48,6 +48,10 @@ sub nikto_headers_postfetch {
     nikto_headers_check($mark, $response, "000287", $request);
 
     # look for internal IPs
+    my %valid_hosts = map { lc($_) => 1 }
+      grep { defined $_ && $_ ne '' }
+      ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'displayname'}, $mark->{'ident'});
+
     foreach my $header (keys %$response) {
         next
           if exists $skip_headers{$header}
@@ -59,30 +63,22 @@ sub nikto_headers_postfetch {
         foreach my $header_value (@values) {
             next unless defined $header_value;
 
-            # Do not check the Location header's path target for internal IPs
+            # Location: only the redirect host can disclose IPs (not the path)
             if ($header eq 'location') {
-                if ($header_value =~ /^\//) {
+                # Path-only (/foo) — no host
+                if ($header_value =~ m{^/} && $header_value !~ m{^//}) {
                     next;
                 }
-                else {
-                    my @uri_parts = LW2::uri_split($header_value);
 
-                    # reconstruct without path/query/fragment
-                    $header_value = $uri_parts[2];
-                }
+                # Absolute or protocol-relative (//host/...)
+                my $abs =
+                  ($header_value =~ m{^//} ? "http:$header_value" : $header_value);
+                my @uri_parts = LW2::uri_split($abs);
+                $header_value = $uri_parts[2];
+                next unless defined $header_value && $header_value ne '';
 
-                # Is it what we scanned?
-                if (defined $header_value
-                    && (   $header_value eq $mark->{'ip'}
-                        || (defined $mark->{'vhost'}    && $header_value eq $mark->{'vhost'})
-                        || (defined $mark->{'hostname'} && $header_value eq $mark->{'hostname'})
-                        || (defined $mark->{'displayname'}
-                            && $header_value eq $mark->{'displayname'})
-                            )
-                    ) {
-                    next;
-                }
-                next unless defined $header_value;
+                # Same host we scanned — not a disclosure
+                next if exists $valid_hosts{ lc($header_value) };
             }
 
             foreach my $ip (get_ips($header_value)) {
@@ -113,51 +109,54 @@ sub nikto_headers_postfetch {
     }
 
     # look for inode in etag header
-    if (  !$mark->{'headers_etag'}
-        && defined $response->{'etag'}
-        && $response->{'etag'} =~ m/-/) {
+    if (!$mark->{'headers_etag'} && defined $response->{'etag'}) {
         my $etag = $response->{'etag'};
-        $etag =~ s/"//g;
-        my @fields = split("-", $etag);
 
-        # Only report ETags which actually leak inodes...
-        if (scalar(@fields) == 3) {
-            my $message =
-                $request->{'whisker'}{'uri'}
-              . ": Server may leak inodes via ETags, header found with file "
-              . $request->{'whisker'}->{'uri'};
+        # Duplicate ETag headers become ARRAY refs
+        $etag = (grep { defined $_ && $_ ne '' } @$etag)[0] if ref($etag) eq 'ARRAY';
+        if (defined $etag && !ref($etag) && $etag =~ m/-/) {
+            $etag =~ s/"//g;
+            my @fields = split("-", $etag);
 
-            # check for numbers that are too large
-            my $ishex = 1;
-            for (my $i = 0 ; $i < 3 ; $i++) {
-                if ((length($fields[$i]) > 14) || ($fields[$i] !~ /^[0-9A-F]+$/i)) {
-                    $ishex = 0;
+            # Only report ETags which actually leak inodes...
+            if (scalar(@fields) == 3) {
+                my $message =
+                    $request->{'whisker'}{'uri'}
+                  . ": Server may leak inodes via ETags, header found with file "
+                  . $request->{'whisker'}->{'uri'};
+
+                # check for numbers that are too large
+                my $ishex = 1;
+                for (my $i = 0 ; $i < 3 ; $i++) {
+                    if ((length($fields[$i]) > 14) || ($fields[$i] !~ /^[0-9A-F]+$/i)) {
+                        $ishex = 0;
+                    }
                 }
-            }
-            use bignum;
-            my ($inode, $size, $mtime, $ltime);
-            if ($ishex) {
-                $inode = "0x$fields[0]";
-                $size  = "0x$fields[1]";
-                $mtime = "0x$fields[2]";
-                $ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
-            }
-            else {
-                $inode = $fields[0];
-                $size  = $fields[1];
-                $mtime = $ltime = $fields[2];
-            }
+                use bignum;
+                my ($inode, $size, $mtime, $ltime);
+                if ($ishex) {
+                    $inode = "0x$fields[0]";
+                    $size  = "0x$fields[1]";
+                    $mtime = "0x$fields[2]";
+                    $ltime = substr(sprintf("%s", hex($mtime)), 0, 10);
+                }
+                else {
+                    $inode = $fields[0];
+                    $size  = $fields[1];
+                    $mtime = $ltime = $fields[2];
+                }
 
-            $message .=
-              ($ishex == 1)
-              ? sprintf(", inode: %d, size: %d, mtime: %s",
-                        hex($inode), hex($size), scalar(localtime($ltime)))
-              : sprintf(", inode: %s, size: %s, mtime: %s", $inode, $size, $mtime);
-            add_vulnerability($mark, $message, "999984", "CVE-2003-1418",
-                              $request->{'whisker'}->{'method'},
-                              $request->{'whisker'}->{'uri'},
-                              $request, $response);
-            $mark->{'headers_etag'} = 1;
+                $message .=
+                  ($ishex == 1)
+                  ? sprintf(", inode: %d, size: %d, mtime: %s",
+                            hex($inode), hex($size), scalar(localtime($ltime)))
+                  : sprintf(", inode: %s, size: %s, mtime: %s", $inode, $size, $mtime);
+                add_vulnerability($mark, $message, "999984", "CVE-2003-1418",
+                                  $request->{'whisker'}->{'method'},
+                                  $request->{'whisker'}->{'uri'},
+                                  $request, $response);
+                $mark->{'headers_etag'} = 1;
+            }
         }
     }
 
@@ -213,8 +212,11 @@ sub nikto_headers_postfetch {
     # Strict-Transport-Security
     if (   $mark->{'ssl'}
         && !$mark->{'headers_found'}{'strict-transport-security'}
-        && defined $response) {
-        if ($response->{'strict-transport-security'} =~ /max-age\s*=\s*"?0"?(?!\d)/i) {
+        && defined $response
+        && defined $response->{'strict-transport-security'}) {
+        my $sts = $response->{'strict-transport-security'};
+        $sts = join(', ', @$sts) if ref($sts) eq 'ARRAY';
+        if ($sts =~ /max-age\s*=\s*"?0"?(?!\d)/i) {
             add_vulnerability(
                 $mark,
                 $request->{'whisker'}{'uri'}
@@ -228,15 +230,19 @@ sub nikto_headers_postfetch {
                 );
         }
 
+        # Only mark seen once the header is actually present
         $mark->{'headers_found'}{'strict-transport-security'} = 1;
     }
 
     # Alt-Svc (HTTP/3)
     if (!$mark->{'headers_found'}{'alt-svc'}
-        && defined $response->{'whisker'}->{'code'}) {
-        if (defined $response->{'alt-svc'}) {
-            my ($protocol,     $msg);
-            my ($altsvc_proto, $endpoint) = $response->{'alt-svc'} =~ /.*(h2c|h2|h3)="([^"]+)"/;
+        && defined $response->{'whisker'}->{'code'}
+        && defined $response->{'alt-svc'}) {
+        my $altsvc = $response->{'alt-svc'};
+        $altsvc = join(', ', @$altsvc) if ref($altsvc) eq 'ARRAY';
+        my ($altsvc_proto, $endpoint) = $altsvc =~ /.*(h2c|h2|h3)="([^"]+)"/;
+        if (defined $altsvc_proto && defined $endpoint) {
+            my ($protocol, $msg);
             if ($altsvc_proto eq "h2") {
                 $protocol = "HTTP/2 over TLS";
             }
@@ -244,12 +250,10 @@ sub nikto_headers_postfetch {
                 $protocol = "HTTP/2 over TCP";
                 $msg      = " Unencrypted.";
             }
-            elsif ($altsvc_proto eq "h3") {
+            else {
+                # h3
                 $protocol = "HTTP/3";
                 $msg      = " Nikto cannot test HTTP/3 over QUIC.";
-            }
-            else {
-                $protocol = "an unknown protocol";
             }
 
             add_vulnerability(
@@ -263,8 +267,8 @@ sub nikto_headers_postfetch {
                 $request,
                 $response
                 );
-            $mark->{'headers_found'}{'alt-svc'} = 1;
         }
+        $mark->{'headers_found'}{'alt-svc'} = 1;
     }
 
     # x-clacks-overhead
@@ -535,6 +539,7 @@ sub nikto_headers {
     }
     $locheaders{'User-Agent'} = get_ua();
 
+    return if $mark->{'terminate'};
     my ($res, $content, $errors, $request, $response) =
       nfetch($mark, '.', "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
@@ -567,6 +572,7 @@ sub nikto_headers {
 
     $locheaders{'User-Agent'}      = get_ua();
     $locheaders{'Accept-Encoding'} = "deflate, gzip";
+    return if $mark->{'terminate'};
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, '/', "GET", "", \%locheaders, \%locflags, "Headers", "1.1");
 
@@ -598,6 +604,7 @@ sub nikto_headers {
     $locheaders{'User-Agent'} = get_ua();
     $locheaders{'Nikto'}      = "\x1f";
 
+    return if $mark->{'terminate'};
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, '/', "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
@@ -627,6 +634,7 @@ sub nikto_headers {
         $ua =~ s/"$//;
         $hdrs{'User-Agent'} = $ua;
     }
+    return if $mark->{'terminate'};
     ($res, $content, $errors, $request, $response) =
       nfetch($mark, '/', "GET", "", \%hdrs, { force_close => 1 }, "Headers", "1.1");
 
