@@ -17,18 +17,19 @@ sub nikto_outdated {
     my ($mark) = @_;
     return if $mark->{'terminate'};
 
-    # Process banner to populate @BUILDITEMS for later eval
+    # Local copy — never mutate $mark->{'banner'} (banner-change FP otherwise)
+    my $banner = $mark->{'banner'} // '';
 
     # If banner has nothing that can be a version... return
-    if ($mark->{'banner'} !~ /(?:\d|\/|\.)/) { return; }
+    return if $banner !~ /(?:\d|\/|\.)/;
 
     # Platform tags are not part of product/version (e.g. IIS "Microsoft-IIS/10.0 (Win64)")
-    $mark->{'banner'} =~ s/\s*\(Win(?:32|64)\)//gi;
+    $banner =~ s/\s*\(Win(?:32|64)\)//gi;
 
     # If Apache, split on space...
-    if (   ($mark->{'banner'} =~ /apache/i)
-        || (($mark->{'banner'} =~ /\s/) && ($mark->{'banner'} =~ /\//))) {
-        foreach my $item (split(/ /, $mark->{'banner'})) {
+    if (   ($banner =~ /apache/i)
+        || (($banner =~ /\s/) && ($banner =~ /\//))) {
+        foreach my $item (split(/ /, $banner)) {
             next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
@@ -36,30 +37,35 @@ sub nikto_outdated {
 
     # Some specific (and common) banner processing
     # WebLogic: strip all the date info...
-    elsif ($mark->{'banner'} =~ /weblogic/i) {
-        my @T = split(/ /, $mark->{'banner'});
-        $mark->{'components'}->{ $T[0] . '\/' . $T[1] } = 1;
+    elsif ($banner =~ /weblogic/i) {
+        my @T = split(/ /, $banner);
+        if (defined $T[0] && $T[0] ne '' && defined $T[1] && $T[1] ne '') {
+            $mark->{'components'}->{ $T[0] . '/' . $T[1] } = 1;
+        }
     }
 
     # SiteScope: strip all the date info...
-    elsif ($mark->{'banner'} =~ /sitescope/i) {
-        my @T = split(/ /, $mark->{'banner'});
-        $mark->{'components'}->{ $T[0] } = 1;
+    elsif ($banner =~ /sitescope/i) {
+        my @T = split(/ /, $banner);
+        if (defined $T[0] && $T[0] ne '') {
+            $mark->{'components'}->{ $T[0] } = 1;
+        }
     }
 
     # Jetty: strip the ( ) away:
-    elsif ($mark->{'banner'} =~ /jetty\(/i) {
-        $mark->{'banner'} =~ /Jetty\(([0-9a-zA-Z.\-]+)\)/i;
-        $mark->{'components'}->{ 'Jetty/' . $1 } = 1;
+    elsif ($banner =~ /jetty\(/i) {
+        if ($banner =~ /Jetty\(([0-9a-zA-Z.\-]+)\)/i) {
+            $mark->{'components'}->{ 'Jetty/' . $1 } = 1;
+        }
     }
 
     # Some, like WEBrick, have multiple items but no spaces
-    elsif (   ($mark->{'banner'} !~ /\s/)
-           && ($mark->{'banner'} =~ /\/.*\//)
-           && ($mark->{'banner'} =~ /\(/)) {
+    elsif (   ($banner !~ /\s/)
+           && ($banner =~ /\/.*\//)
+           && ($banner =~ /\(/)) {
 
         # try converting () to spaces
-        foreach my $item (split(/[\(\)]/, $mark->{'banner'})) {
+        foreach my $item (split(/[\(\)]/, $banner)) {
             next if $item eq '' || is_platform_component($item);
             $mark->{'components'}->{$item} = 1;
         }
@@ -69,8 +75,8 @@ sub nikto_outdated {
     # (e.g. nginx/1.29.4, Microsoft-IIS/10.0). Store the whole banner so
     # the DB regex (which anchors on the trailing separator) can match
     # and vereval can extract the version from the last token.
-    elsif ($mark->{'banner'} =~ /\//) {
-        $mark->{'components'}->{ $mark->{'banner'} } = 1;
+    elsif ($banner =~ /\//) {
+        $mark->{'components'}->{$banner} = 1;
     }
 
     # Finally, unknown banners (no slash; fall back to messy-separator heuristic)
@@ -78,16 +84,16 @@ sub nikto_outdated {
         my $MATCHSTRING = "";
 
         # use the last non 0-9 . a-z char as a sepr (' ', '-', '_' etc)
-        my $sepr = $mark->{'banner'};
+        my $sepr = $banner;
         $sepr =~ s/[a-zA-Z0-9\.\(\)]//gi;
         if ($sepr eq '') {
-            $MATCHSTRING = $mark->{'banner'};
+            $MATCHSTRING = $banner;
         }
         else {
             $sepr = substr($sepr, (length($sepr) - 1), 1);
 
             # break up ID string on $sepr
-            my @T = split(/\Q$sepr\E/, $mark->{'banner'});
+            my @T = split(/\Q$sepr\E/, $banner);
 
             # assume last is version...
             for (my $i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
@@ -154,14 +160,15 @@ sub is_platform_component {
 #	3: mark hash
 sub vereval {
     my $mark = $_[3];
+    return 0 unless defined $_[2] && length($_[2]);
 
     # split both by last char of $_[2], as it is the name to version separator
     my $sepr = substr($_[2], (length($_[2]) - 1), 1);
     nprint("nikto_outdated.plugin: verstring: $_[2], sepr:$sepr",
            "d", "outdated", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
-    my $CURRENT      = lc($_[0]);
-    my $RUNNING      = lc($_[1]);
+    my $CURRENT      = lc($_[0] // '');
+    my $RUNNING      = lc($_[1] // '');
     my $CURRENT_ORIG = $CURRENT;
     my $RUNNING_ORIG = $RUNNING;
 
@@ -198,11 +205,14 @@ sub vereval {
 
     # start with 0... eval each in turn...
     for (my $i = 0 ; $i <= $#CUR ; $i++) {
-        nprint("nikto_outdated.plugin: major compare: \$CUR[$i]:$CUR[$i]: \$RUN[$i]:$RUN[$i]:",
+        my $c = $CUR[$i] // '';
+        my $r = $RUN[$i] // '';
+        nprint("nikto_outdated.plugin: major compare: \$CUR[$i]:$c: \$RUN[$i]:$r:",
                "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
-        if ($CUR[$i] > $RUN[$i])                  { return 1; }    # running is older
-        if (($CUR[$i] ne "") && ($RUN[$i] eq "")) { return 1; }    # running is older
-        if ($CUR[$i] < $RUN[$i])                                   # running is newer
+        if (($c ne "") && ($r eq "")) { return 1; }    # running is older (shorter)
+        if ($r eq "")                 { next; }
+        if ($c > $r)                  { return 1; }    # running is older
+        if ($c < $r)                                   # running is newer
         {
             my $string = $_[1];
             $string =~ s/\s/\%20/g;
