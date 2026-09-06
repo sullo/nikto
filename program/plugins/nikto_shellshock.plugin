@@ -15,27 +15,51 @@ sub nikto_shellshock_init {
     return $id;
 }
 
+# First non-empty value of a response header (ARRAY if duplicates).
+sub shellshock_header {
+    my ($response, $name) = @_;
+    return '' unless ref($response) eq 'HASH' && defined $name;
+    my $v = $response->{$name};
+    return '' unless defined $v;
+    if (ref($v) eq 'ARRAY') {
+        for my $x (@$v) {
+            return $x if defined $x && $x ne '';
+        }
+        return '';
+    }
+    return $v;
+}
+
 sub nikto_shellshock {
     my ($mark, $parameters) = @_;
-    my ($found, @names,);
+    return if $mark->{'terminate'};
+
     my $found_6271 = 0;
     my $found_6278 = 0;
 
     # This would be better coming from live scan results and not db_variables
-    my @files = split(/ /, $VARIABLES{"\@SHELLSHOCK"});
-
+    my @files = grep { defined $_ && $_ ne '' } split(/ /, $VARIABLES{"\@SHELLSHOCK"} // '');
     push(@files, "");
+
     my %headers;
     $headers{'User-Agent'} = '() { :; }; echo 93e4r0-cve-2014-6271: true;echo;echo;';
     $headers{'Referer'}    = '() { _; } >_[$($())] { echo 93e4r0-cve-2014-6278: true; echo;echo; }';
-    my @dirs = split(/ /, get_catalog_var($mark, '@CGIDIRS'));
-    push(@dirs, "/");
+
+    my @dirs;
+    my %seen_dirs;
+    foreach my $d (split(/ /, get_catalog_var($mark, '@CGIDIRS')), "/") {
+        next unless defined $d && $d ne '';
+        # Ensure a single trailing slash so $dir$file joins correctly
+        $d .= '/' unless $d =~ m{/$};
+        next if $seen_dirs{$d}++;
+        push @dirs, $d;
+    }
 
     #check for FP... error in page
     my $checkcontent = 1;
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", \%headers, "", "shellshock");
-    if ($content =~ /93e4r0-cve/) {
+    if (defined $content && $content =~ /93e4r0-cve/) {
         $checkcontent = 0;
         nprint(
               "Content seems to contain error headers, ignoring content match in shellshock plugin",
@@ -45,9 +69,11 @@ sub nikto_shellshock {
     if (defined $parameters->{'uri'}) {
 
         # request by hostname
-        my ($res, $content, $error, $request, $response) =
+        return if $mark->{'terminate'};
+        ($res, $content, $error, $request, $response) =
           nfetch($mark, "$parameters->{'uri'}", "GET", "", \%headers, "", "shellshock");
-        if (   ($response->{'93e4r0-cve-2014-6271'} eq 'true')
+        $content //= '';
+        if (   (shellshock_header($response, '93e4r0-cve-2014-6271') eq 'true')
             || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/))) {
             add_vulnerability(
                  $mark,
@@ -60,7 +86,7 @@ sub nikto_shellshock {
                  $response
                  );
         }
-        if (   ($response->{'93e4r0-cve-2014-6278'} eq 'true')
+        if (   (shellshock_header($response, '93e4r0-cve-2014-6278') eq 'true')
             || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/))) {
             add_vulnerability(
                  $mark,
@@ -81,10 +107,11 @@ sub nikto_shellshock {
                 last   if ($found_6271 && $found_6278);
 
                 # request by hostname
-                my ($res, $content, $error, $request, $response) =
+                ($res, $content, $error, $request, $response) =
                   nfetch($mark, "$cgidir$file", "GET", "", \%headers, "", "shellshock");
+                $content //= '';
                 if (!$found_6271
-                    && ($response->{'93e4r0-cve-2014-6271'} eq 'true'
+                    && (shellshock_header($response, '93e4r0-cve-2014-6271') eq 'true'
                         || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6271: true/)))
                         ) {
                     add_vulnerability(
@@ -100,7 +127,7 @@ sub nikto_shellshock {
                     $found_6271 = 1;
                 }
                 if (!$found_6278
-                    && ($response->{'93e4r0-cve-2014-6278'} eq 'true'
+                    && (shellshock_header($response, '93e4r0-cve-2014-6278') eq 'true'
                         || ($checkcontent && ($content =~ /(?<!echo )93e4r0-cve-2014-6278: true/)))
                         ) {
                     add_vulnerability(
