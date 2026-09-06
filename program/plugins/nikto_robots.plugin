@@ -26,20 +26,24 @@ sub nikto_robots {
     my ($code, $content, $errors, $request, $response) =
       nfetch($mark, "/robots.txt", "GET", "", "", "", "robots");
     my $has_non_root_entries = 1;
+    my $robots_uri = ($mark->{'root'} // '') . '/robots.txt';
 
     # Validate content-type: should be text/* or not present
-    if (defined($response->{'content-type'})) {
-        if (   $response->{'content-type'} !~ /^text\//i
-            || $response->{'content-type'} =~ /^text\/html/i) {
+    if (ref($response) eq 'HASH' && defined $response->{'content-type'}) {
+        my $ct = $response->{'content-type'};
+        $ct = join(', ', grep { defined $_ && $_ ne '' } @$ct) if ref($ct) eq 'ARRAY';
+        if ($ct !~ /^text\//i || $ct =~ /^text\/html/i) {
             return;    # Not a text type, or is HTML - skip processing
         }
     }
 
-    # Accept any 2xx success code (except 204 No Content) or custom "okay" response
-    if ($code =~ /^2\d\d$/) {
-        if (is_404($mark, "/robots.txt", $response)) {
+    # Accept 2xx success except 204 No Content
+    if (defined $code && $code =~ /^2\d\d$/ && $code ne '204') {
+        if (is_404($mark, $robots_uri, $response)) {
             return;
         }
+
+        return unless defined $content;
 
         my (%DIRS, %RFILES);
         my $DISCTR           = 0;
@@ -59,20 +63,32 @@ sub nikto_robots {
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
                 $line =~ s/^(?:dis)?allow\s*:?\s*//i;
-                $line =~ s/\/+/\//g;
                 $line =~ s/\\//g;
 
                 if ($line eq "") { next; }
 
+                # Absolute / protocol-relative / schemes are not site paths
+                next if $line =~ m{^(?:[a-z][a-z0-9+.-]*:|//)}i;
+
                 # try to figure out file vs dir... just guess...
                 if (($line !~ /\./) && ($line !~ /\/$/)) { $line .= "/"; }
 
+                $line = "/$line" unless $line =~ m{^/};
                 $line = LW2::uri_normalize($line);
+                next unless defined $line && $line =~ m{\A/(?!/)};
 
-                # figure out dirs/files...
-                my $realdir  = validate_and_fix_regex(LW2::uri_get_dir($line));
-                my $realfile = validate_and_fix_regex($line);
-                $realfile =~ s/^$realdir//;
+                $DISCTR++;
+
+                # Wildcards — note in entry count, but do not learn or probe
+                next if $line =~ /\*/;
+
+                # figure out dirs/files (literal prefix strip — path, not regex)
+                my $realdir = LW2::uri_get_dir($line);
+                $realdir = '' unless defined $realdir;
+                my $realfile = $line;
+                if ($realdir ne '' && index($realfile, $realdir) == 0) {
+                    substr($realfile, 0, length($realdir)) = '';
+                }
 
                 nprint("- robots.txt entry dir:$realdir -- file:$realfile",
                        "d", "robots", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
@@ -84,14 +100,11 @@ sub nikto_robots {
                     $realfile =~ s/\\//g;
                     $RFILES{$realfile} = 1;
                 }
-                $DISCTR++;
 
                 if (($realdir ne "") && ($realdir ne "/")) { $has_non_root_entries = 0; }
                 next
                   if (   ($realdir eq "/" && $realfile eq "")
                       || ($realfile eq "/" && $realdir eq ""));
-                next if ($line =~ /\*/);    # Wildcards
-                $line = "/$line" unless $line =~ /^\//;
                 $tocheck{$line} = 1;
             }    # end if $line =~ allow
         }    # end foreach my $line (@DOC)
@@ -100,11 +113,14 @@ sub nikto_robots {
         foreach my $line (keys %tocheck) {
             return if $mark->{'terminate'};
             if (!defined($parameters->{'nocheck'})) {
+                my $check_uri = ($mark->{'root'} // '') . $line;
                 my ($res, $content, $error, $request, $response) =
                   nfetch($mark, $line, "GET", "", "", "", "Robots: Check for URI");
-                if (   !is_404($mark, $line, $response)
+                if (   defined $res
+                    && $res ne ''
+                    && !is_404($mark, $check_uri, $response)
                     && ($res !~ /^40[346]$/)
-                    && ($res !~ /^30[21]$/)) {
+                    && ($res !~ /^30[12378]$/)) {
                     add_vulnerability(
                         $mark,
                         "/robots.txt: Entry '$line' is returned a non-forbidden or redirect HTTP code ($res)",
