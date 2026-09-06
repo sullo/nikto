@@ -22,12 +22,9 @@ sub nikto_paths {
     return if $mark->{'terminate'};
     my (%DIRS, %FILES);
 
-    # Follow redirects by temporarily by setting $CLI{'followredirects'} to 1
-    # Request the root path to follow redirects if needed
-    my $followredirects = $CLI{'followredirects'};
-    $CLI{'followredirects'} = 1;
+    # Follow redirects for this probe only
+    local $CLI{'followredirects'} = 1;
     my ($res, $content) = nfetch($mark, "/", "GET", "", "", "", "Paths");
-    $CLI{'followredirects'} = $followredirects;
 
     if (defined $content && length $content) {
 
@@ -52,10 +49,16 @@ sub nikto_paths {
                     next;
                 }
             }
+            elsif ($link !~ m{^/}) {
+                # Document was fetched as "/"; resolve relative hrefs from root
+                $link = "/$link";
+            }
 
             # normalize
             $link = LW2::uri_normalize($link);
-            next unless defined $link && $link ne '';
+            # Path-only (single leading /) — reject schemes, //host, etc.
+            next unless defined $link && $link =~ m{\A/(?!/)};
+
             $FULL_LINKS{$link} = 1;
 
             # split dirs / files
