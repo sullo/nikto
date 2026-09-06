@@ -18,9 +18,9 @@ sub nikto_springboot_init {
 
 sub nikto_springboot {
     my ($mark) = @_;
-    my $root = $mark->{'root'} || '';
-    $root =~ s/\/$//;    # Remove trailing slash if present
+    return if $mark->{'terminate'};
 
+    # Paths are root-relative; nfetch prepends $mark->{'root'}
     my @endpoints = qw(
       /actuator
       /actuator/health
@@ -40,34 +40,45 @@ sub nikto_springboot {
       /actuator/prometheus
       );
 
-    my $host  = $mark->{'hostname'};
-    my $port  = $mark->{'port'};
+    my $port  = $mark->{'port'} // '';
     my $proto = $mark->{'ssl'} ? 'https' : 'http';
+    my $host_re =
+      join('|', map { quotemeta($_) }
+          grep { defined $_ && $_ ne '' }
+          ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'}));
+    my $port_re = ($port ne '' && $port ne '80' && $port ne '443')
+      ? '(?::' . quotemeta($port) . ')?'
+      : '(?::(?:80|443))?';
 
     foreach my $ep (@endpoints) {
         return if $mark->{'terminate'};
-        my $path = $root . $ep;
-        nprint("Checking $path", "v", "springboot");
+        nprint("Checking $ep", "v", "springboot");
         my ($res, $content, $error, $request, $response) =
-          nfetch($mark, $path, 'GET', '', '', undef, 'springboot');
-        my $ct = $response->{'content-type'} || '';
+          nfetch($mark, $ep, 'GET', '', '', undef, 'springboot');
+        $content //= '';
+
+        my $ct = '';
+        if (ref($response) eq 'HASH' && defined $response->{'content-type'}) {
+            $ct = $response->{'content-type'};
+            $ct = join(', ', grep { defined $_ && $_ ne '' } @$ct) if ref($ct) eq 'ARRAY';
+        }
 
         # Quick exits
-        if ($res == 404) {
+        if (($res // '') eq '404') {
             next;
         }
-        elsif ($res != 200 && $res != 404) {
-            nprint("$path: Non-200 ($res) - possibly restricted endpoint", "v", "springboot");
+        elsif (($res // '') ne '200') {
+            nprint("$ep: Non-200 ($res) - possibly restricted endpoint", "v", "springboot");
             next;
         }
 
-        # resposnes should be JSON
+        # responses should be JSON
         next unless ($ct =~ /application\/json/i || $content =~ /^\s*[\{\[]/);
 
         my $json;
         eval { $json = decode_json($content); };
         if ($@ || !$json) {
-            nprint("$path: 200 but invalid JSON", "v", "springboot");
+            nprint("$ep: 200 but invalid JSON", "v", "springboot");
             next;
         }
 
@@ -75,27 +86,25 @@ sub nikto_springboot {
         if ($ep eq '/actuator') {
             if (exists $json->{'_links'} && ref($json->{'_links'}) eq 'HASH') {
                 my $links = $json->{'_links'};
-                my @found;
                 foreach my $k (keys %$links) {
                     my $href = $links->{$k}{'href'};
-                    next unless $href;
-                    my $report_val;
+                    next unless defined $href && $href ne '';
+                    my $report_val = $href;
 
                     # If on same host, report only the path; otherwise, report full URL
-                    if ($href =~ m{^$proto://$host(?::$port)?(/.*)$}) {
+                    if ($host_re ne ''
+                        && $href =~ m{^$proto://(?:$host_re)$port_re(/.*)$}i) {
                         $report_val = $1;
                     }
-                    else {
-                        $report_val = $href;
-                    }
-                    push @found, $report_val;
                     add_vulnerability(
                         $mark,
                         "$report_val: Spring Boot Actuator endpoint discovered via /actuator _links.",
                         "750001",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
                         "GET",
-                        $report_val
+                        $report_val,
+                        $request,
+                        $response
                         );
                 }
             }
@@ -107,14 +116,16 @@ sub nikto_springboot {
 
         # /actuator/health
         if ($ep eq '/actuator/health') {
-            if (exists $json->{'status'} && $json->{'status'} eq 'UP') {
+            if (exists $json->{'status'} && ($json->{'status'} // '') eq 'UP') {
                 add_vulnerability(
                         $mark,
-                        "$path: Spring Boot Actuator health endpoint exposed",
+                        "$ep: Spring Boot Actuator health endpoint exposed",
                         "750002",
                         "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#health",
                         "GET",
-                        $path
+                        $ep,
+                        $request,
+                        $response
                         );
             }
             next;
@@ -125,13 +136,16 @@ sub nikto_springboot {
             if (   exists $json->{'build'}
                 && ref($json->{'build'}) eq 'HASH'
                 && exists $json->{'build'}{'version'}) {
+                my $ver = $json->{'build'}{'version'} // '';
                 add_vulnerability(
                     $mark,
-                    "$path: Spring Boot Actuator info endpoint exposed (build version: $json->{'build'}{'version'})",
+                    "$ep: Spring Boot Actuator info endpoint exposed (build version: $ver)",
                     "750003",
                     "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#info",
                     "GET",
-                    $path
+                    $ep,
+                    $request,
+                    $response
                     );
             }
             next;
@@ -140,9 +154,10 @@ sub nikto_springboot {
         # Other endpoints: report if valid, non-empty JSON
         if (ref($json) eq 'HASH' && scalar(keys %$json) > 0) {
             add_vulnerability(
-                     $mark,    "$path: Spring Boot Actuator endpoint exposed (valid JSON response)",
+                     $mark,  "$ep: Spring Boot Actuator endpoint exposed (valid JSON response)",
                      "750004", "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/",
-                     "GET",    $path
+                     "GET",    $ep,
+                     $request, $response
                      );
         }
     }
