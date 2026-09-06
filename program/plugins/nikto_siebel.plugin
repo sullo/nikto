@@ -23,36 +23,40 @@ sub nikto_siebel_init {
 sub nikto_siebel {
     my ($mark, $parameters) = @_;
     return if $mark->{'terminate'};
-    my $application;
+    my $application = '';
 
     # Check whether we have an application
     if (defined $parameters->{'enumerate'}) {
         my @apps = nikto_siebel_enumerate($mark, $parameters);
-        $application = $apps[0];
+        $application = $apps[0] // '';
     }
 
-    if ($application eq "" && defined $parameters->{'application'}) {
-        $application = $parameters->{'application'};
+    if ($application eq '' && defined $parameters->{'application'}) {
+        $application = $parameters->{'application'} // '';
     }
 
-    if ($application eq "") {
+    # Ensure leading slash; nfetch prepends $mark->{'root'}
+    $application =~ s{^/*}{/};
+    $application =~ s{/$}{};
+
+    if ($application eq '' || $application eq '/') {
         nprint("No Siebel Application defined", "v", "siebel");
         return;
     }
 
     # Now we have an application time to perform some tests
-    my $path = $application . "/base.txt";
+    my $path = "$application/base.txt";
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-    if ($res eq "200") {
+    if (($res // '') eq '200') {
         my ($siebelver, $appver, $hotfix);
-        $siebelver = $content;
+        $siebelver = $content // '';
         $siebelver =~ s/([ \t]*)([0-9.]*)( .*\n.*)/$2/;
         chomp($siebelver);
-        $appver = $content;
+        $appver = $content // '';
         $appver =~ s/(.*\[)(.*)(\].*\n.*)/$2/;
         chomp($appver);
-        $hotfix = $content;
+        $hotfix = $content // '';
         $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
         add_vulnerability(
             $mark,
@@ -66,12 +70,13 @@ sub nikto_siebel {
             );
     }
 
-    $path = $application . "/_stats.swe";
+    return if $mark->{'terminate'};
+    $path = "$application/_stats.swe";
     ($res, $content, $error, $request, $response) =
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-    if ($res == 200) {
+    if (($res // '') eq '200') {
         add_vulnerability(
-                        $mark, "/_stats.swe: Siebel stats page found",
+                        $mark, "$path: Siebel stats page found",
                         "999902",
                         "https://docs.oracle.com/cd/E14004_01/books/SysDiag/SysDiagSWSEstats7.html",
                         "GET", $path, $request, $response
@@ -82,10 +87,10 @@ sub nikto_siebel {
       my $page (split(/ /, "About_Siebel.htm files/ images/ help/ siebstarthelp.htm siebindex.htm"))
     {
         return if $mark->{'terminate'};
-        $path = $application . "/$page";
+        $path = "$application/$page";
         ($res, $content, $error, $request, $response) =
           nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-        if ($res eq "200") {
+        if (($res // '') eq '200') {
             add_vulnerability($mark, "$path: Siebel default file found",
                               "999903", "", "GET", $path, $request, $response);
         }
@@ -115,11 +120,12 @@ sub nikto_siebel_enumerate {
 
     foreach my $language (split(/ /, $langs)) {
         foreach my $application (split(/ /, $apps)) {
+            return @foundapps if $mark->{'terminate'};
             my $appname   = $application . "_" . $language;
-            my $startname = $appname . "/start.swe";
+            my $startname = "/" . $appname . "/start.swe";
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $startname, "GET", "", "", "", "Siebel: enumerate application");
-            if ($res eq "200") {
+            if (($res // '') eq '200') {
 
                 # We've found an app
                 add_vulnerability($mark, "$startname: Enumerated Siebel application: " . $appname,
