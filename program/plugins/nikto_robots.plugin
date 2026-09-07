@@ -57,8 +57,7 @@ sub nikto_robots {
             if ($line =~ /allow/i) {
                 chomp($line);
 
-                # Report if Allow
-                $has_non_root_entries = 0 if ($line =~ /^allow/i);
+                my $is_allow = ($line =~ /^allow/i);
                 $line =~ s/\#.*$//;
                 $line =~ s/\s+/ /g;
                 $line =~ s/\t/ /g;
@@ -66,6 +65,9 @@ sub nikto_robots {
                 $line =~ s/\\//g;
 
                 if ($line eq "") { next; }
+
+                # An Allow with a real value is always worth a look
+                $has_non_root_entries = 0 if $is_allow;
 
                 # Absolute / protocol-relative / schemes are not site paths
                 next if $line =~ m{^(?:[a-z][a-z0-9+.-]*:|//)}i;
@@ -151,7 +153,9 @@ sub nikto_robots {
             $msg .= " Capped at 25 positive results.";
         }
 
-        if ($has_non_root_entries == 0) {
+        # Report when there are interesting entries, or none at all (the "no
+        # entries" message). Only a bare "Disallow: /" file stays silent.
+        if ($DISCTR == 0 || $has_non_root_entries == 0) {
             add_vulnerability($mark, "/robots.txt: $msg",
                            "999996", "https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt",
                            "GET",    "/robots.txt", $request, $response);
