@@ -74,7 +74,7 @@ sub text_item {
     my $line = "+ ";
     if ($item->{method}) { $line .= $item->{method} . " " }
     if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
-        $line .= $root . $uri . ": ";
+        $line .= $root . $uri;
     }
     $line .= $item->{message} // '';
     if (defined $item->{refs} && $item->{refs} ne "") {
