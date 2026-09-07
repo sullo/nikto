@@ -28,6 +28,16 @@ sub detect_file_type {
     # Return early for empty content
     return 'empty' if $content_length == 0;
 
+    # ZIP-based formats (egg, war) — must run before generic ZIP signature
+    if ($first_bytes =~ /^PK\x03\x04/) {
+        if ($uri =~ /\.egg$/i) {
+            return 'egg';
+        }
+        if ($uri =~ /\.war$/i) {
+            return 'war';
+        }
+    }
+
     # File signatures (Magic Numbers)
     my %signatures = (
 
@@ -58,16 +68,6 @@ sub detect_file_type {
         my $tar_magic = substr($content, 257, 8);
         if ($tar_magic =~ /^ustar(?:\x00\x00|\x00|  )?/) {
             return 'tar';
-        }
-    }
-
-    # Special handling for ZIP-based formats (egg, war) - check BEFORE generic ZIP
-    if ($first_bytes =~ /^PK\x03\x04/) {
-        if ($uri =~ /\.egg$/i) {
-            return 'egg';
-        }
-        if ($uri =~ /\.war$/i) {
-            return 'war';
         }
     }
 
@@ -177,6 +177,7 @@ sub validate_file_content {
                     'egg'      => [ 'egg',  'zip', 'binary' ],    # egg files can be detected as zip
                     'war'      => [ 'war',  'zip', 'binary' ],    # war files can be detected as zip
                     'pem'      => [ 'pem',  'text' ],
+                    'cer'      => [ 'pem',  'binary', 'text' ],   # PEM or DER
                     'jks'      => [ 'jks',  'binary' ],
                     'sql'      => [ 'sql',  'text' ],
                     'tar.gz'   => [ 'gz',   'binary' ],           # gz signature for tar.gz
@@ -217,7 +218,7 @@ sub is_likely_real_file {
     elsif ($uri =~ /\.(tar\.lzma)$/i) {
         $expected_type = 'tar.lzma';
     }
-    elsif ($uri =~ /\.(zip|tar|gz|bz2|lzma|egg|war|pem|jks|sql)$/i) {
+    elsif ($uri =~ /\.(zip|tar|gz|bz2|lzma|egg|war|pem|cer|jks|sql)$/i) {
         $expected_type = lc($1);
     }
 
