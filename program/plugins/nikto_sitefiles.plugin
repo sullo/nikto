@@ -38,28 +38,30 @@ sub detect_file_type {
         }
     }
 
-    # File signatures (Magic Numbers)
-    my %signatures = (
-
-        # Archive formats
-        'zip'  => qr/^PK\x03\x04|PK\x05\x06|PK\x07\x08/,
-        'gz'   => qr/^\x1f\x8b/,
-        'bz2'  => qr/^BZh/,
-        'lzma' => qr/^\x5d\x00\x00/,
+    # File signatures (Magic Numbers). Ordered: specific/unambiguous first,
+    # weak text heuristics (sql) last so they cannot shadow a real match.
+    my @signatures = (
 
         # Certificate/Key formats
-        'pem' =>
-          qr/^-----BEGIN (CERTIFICATE|RSA PRIVATE KEY|DSA PRIVATE KEY|EC PRIVATE KEY|PRIVATE KEY|PUBLIC KEY)-----/,
-        'jks' => qr/^\xfe\xed\xfe\xed/,    # Java KeyStore magic
+        [ 'pem',
+          qr/^-----BEGIN (CERTIFICATE|RSA PRIVATE KEY|DSA PRIVATE KEY|EC PRIVATE KEY|PRIVATE KEY|PUBLIC KEY)-----/
+        ],
+        [ 'jks', qr/^\xfe\xed\xfe\xed/ ],    # Java KeyStore magic
 
-        # Database formats
-        'sql' => qr/^(CREATE|INSERT|UPDATE|DELETE|SELECT|DROP|ALTER|--|\/\*|select)/i,
+        # Archive formats
+        [ 'zip',  qr/^PK\x03\x04|PK\x05\x06|PK\x07\x08/ ],
+        [ 'gz',   qr/^\x1f\x8b/ ],
+        [ 'bz2',  qr/^BZh/ ],
+        [ 'lzma', qr/^\x5d\x00\x00/ ],
+
+        # Database formats: "--(?!-)" is a SQL comment, not a PEM "-----" banner
+        [ 'sql', qr/^(CREATE|INSERT|UPDATE|DELETE|SELECT|DROP|ALTER|--(?!-)|\/\*)/i ],
         );
 
-    # Check signatures
-    foreach my $type (keys %signatures) {
-        if ($first_bytes =~ $signatures{$type}) {
-            return $type;
+    # Check signatures in order
+    foreach my $sig (@signatures) {
+        if ($first_bytes =~ $sig->[1]) {
+            return $sig->[0];
         }
     }
 
