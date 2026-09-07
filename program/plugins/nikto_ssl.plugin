@@ -15,7 +15,7 @@ sub nikto_ssl_init {
 
 sub nikto_ssl {
     my ($mark) = @_;
-
+    return if $mark->{'terminate'};
     return unless $mark->{ssl};
 
     my @cn_names;
@@ -59,8 +59,8 @@ sub nikto_ssl {
             $match = 1;
         }
 
-        # wildcard cert
-        elsif ($cert_name_cmp =~ /^\*/) {
+        # wildcard cert (must be *.domain — not a bare * prefix)
+        elsif ($cert_name_cmp =~ /^\*\./) {
             if (!$wildcard_reported) {
                 add_vulnerability($mark,
                                   "/: Server is using a wildcard certificate: "
