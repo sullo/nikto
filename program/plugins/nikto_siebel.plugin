@@ -48,33 +48,38 @@ sub nikto_siebel {
     my $path = "$application/base.txt";
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-    if (($res // '') eq '200') {
-        my ($siebelver, $appver, $hotfix);
-        $siebelver = $content // '';
-        $siebelver =~ s/([ \t]*)([0-9.]*)( .*\n.*)/$2/;
-        chomp($siebelver);
-        $appver = $content // '';
-        $appver =~ s/(.*\[)(.*)(\].*\n.*)/$2/;
-        chomp($appver);
-        $hotfix = $content // '';
-        $hotfix =~ s/(.*\n)(.*HOTFIX )(.*)/$3/;
-        add_vulnerability(
-            $mark,
-            "$path: Siebel version $siebelver found application version $appver and applied hotfixes are $hotfix",
-            "999901",
-            "https://www.oracle.com/applications/siebel/",
-            "GET",
-            $path,
-            $request,
-            $response
-            );
+    if (($res // '') eq '200' && !is_404($mark, $mark->{'root'} . $path, $response)) {
+
+        # base.txt looks like: "8.1.1.11 [23030] LANG_INDEPENDENT\n... HOTFIX 12345"
+        # Capture with bounded classes; never fall back to the raw body.
+        my ($siebelver, $appver) =
+          ($content // '') =~ /^[ \t]*([0-9][0-9.]{0,30})[ \t]+\[([^\]\r\n]{0,64})\]/m;
+        my ($hotfix) = ($content // '') =~ /HOTFIX[ \t]+([^\r\n]{1,128})/i;
+        if (defined $siebelver) {
+            $appver = '' unless defined $appver;
+            $hotfix = 'none' unless defined $hotfix;
+            s/[^\x20-\x7e]//g for ($siebelver, $appver, $hotfix);
+            add_vulnerability(
+                $mark,
+                "$path: Siebel version $siebelver found application version $appver and applied hotfixes are $hotfix",
+                "999901",
+                "https://www.oracle.com/applications/siebel/",
+                "GET",
+                $path,
+                $request,
+                $response
+                );
+        }
+        else {
+            nprint("$path: 200 but not a Siebel base.txt", "v", "siebel");
+        }
     }
 
     return if $mark->{'terminate'};
     $path = "$application/_stats.swe";
     ($res, $content, $error, $request, $response) =
       nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-    if (($res // '') eq '200') {
+    if (($res // '') eq '200' && !is_404($mark, $mark->{'root'} . $path, $response)) {
         add_vulnerability(
                         $mark, "$path: Siebel stats page found",
                         "999902",
@@ -90,7 +95,7 @@ sub nikto_siebel {
         $path = "$application/$page";
         ($res, $content, $error, $request, $response) =
           nfetch($mark, $path, "GET", "", "", "", "siebel: find default pages");
-        if (($res // '') eq '200') {
+        if (($res // '') eq '200' && !is_404($mark, $mark->{'root'} . $path, $response)) {
             add_vulnerability($mark, "$path: Siebel default file found",
                               "999903", "", "GET", $path, $request, $response);
         }
@@ -110,6 +115,12 @@ sub nikto_siebel_enumerate {
 
     my @foundapps;
 
+    # Soft-404 circuit breaker: if the first probes all "hit", the host answers
+    # 200 for anything and enumeration would just be a finding storm.
+    my $probes    = 0;
+    my $hits200   = 0;
+    my $max_probe = 5;
+
     if ($params->{applications}) {
         $apps = $params->{applications};
     }
@@ -125,7 +136,14 @@ sub nikto_siebel_enumerate {
             my $startname = "/" . $appname . "/start.swe";
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $startname, "GET", "", "", "", "Siebel: enumerate application");
-            if (($res // '') eq '200') {
+            $probes++;
+            $hits200++ if (($res // '') eq '200');
+            if ($probes == $max_probe && $hits200 == $max_probe) {
+                nprint("Siebel: first $max_probe app probes all returned 200; host looks like soft-404, aborting enumeration",
+                       "v", "siebel");
+                return ();
+            }
+            if (($res // '') eq '200' && !is_404($mark, $mark->{'root'} . $startname, $response)) {
 
                 # We've found an app
                 add_vulnerability($mark, "$startname: Enumerated Siebel application: " . $appname,
