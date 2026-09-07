@@ -121,31 +121,30 @@ sub csv_ssl_info {
 # print an item
 sub csv_item {
     my ($handle, $mark, $item) = @_;
-    foreach my $uri (split(' ', $item->{'uri'} // '')) {
-        my $line = '';
-        my $hostname =
-          $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
-        $line .= "\"" . csv_safecell($hostname) . "\",";
-        $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
-        $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
-        $line .= "\"" . csv_safecell($item->{'refs'}) . "\",";
-        $line .= "\"" . csv_safecell($item->{'method'}) . "\",";
+    my $uri      = $item->{'uri'} // '';
+    my $line     = '';
+    my $hostname =
+      $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
+    $line .= "\"" . csv_safecell($hostname) . "\",";
+    $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
+    $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
+    $line .= "\"" . csv_safecell($item->{'refs'}) . "\",";
+    $line .= "\"" . csv_safecell($item->{'method'}) . "\",";
 
-        my $root     = $mark->{'root'} // '';
-        my $full_uri = $uri;
-        if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
-            $full_uri = $root . $uri;
-        }
-        $line .= "\"" . csv_safecell($full_uri) . "\",";
-
-        my $msg          = $item->{'message'} // '';
-        my $uri_escaped  = quotemeta($uri);
-        my $root_escaped = quotemeta($root);
-        $msg =~ s/^$uri_escaped:\s//;
-        $msg =~ s/^$root_escaped$uri_escaped:\s//;
-        $line .= "\"" . csv_safecell($msg) . "\"";
-        print $handle "$line\n";
+    my $root     = $mark->{'root'} // '';
+    my $full_uri = $uri;
+    if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+        $full_uri = $root . $uri;
     }
+    $line .= "\"" . csv_safecell($full_uri) . "\",";
+
+    my $msg          = $item->{'message'} // '';
+    my $uri_escaped  = quotemeta($uri);
+    my $root_escaped = quotemeta($root);
+    $msg =~ s/^$uri_escaped:\s//;
+    $msg =~ s/^$root_escaped$uri_escaped:\s//;
+    $line .= "\"" . csv_safecell($msg) . "\"";
+    print $handle "$line\n";
 }
 
 ###############################################################################
