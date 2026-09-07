@@ -22,7 +22,7 @@ sub nikto_ssl {
     my @san_names;
     my $match             = 0;
     my $wildcard_reported = 0;
-    my $hostname_cmp      = lc($mark->{'hostname'} || '');
+    my $hostname_cmp      = nikto_ssl_idna_to_ascii($mark->{'hostname'} || '');
     $hostname_cmp =~ s/\.$//;
 
     # Extract CN from subject
@@ -51,7 +51,7 @@ sub nikto_ssl {
     my $san_list = @san_names ? join(", ", map { nikto_ssl_safe_str($_) } @san_names) : "none";
 
     foreach my $cert_name (@all_names) {
-        my $cert_name_cmp = lc($cert_name);
+        my $cert_name_cmp = nikto_ssl_idna_to_ascii($cert_name);
         $cert_name_cmp =~ s/\.$//;
 
         # straight up match
@@ -98,6 +98,141 @@ sub nikto_ssl_safe_str {
     $s = '' unless defined $s;
     $s =~ s/[\x00-\x1f\x7f]//g;
     return length($s) > 256 ? substr($s, 0, 256) : $s;
+}
+
+###############################################################################
+# Minimal IDNA ToASCII (per-label Punycode). No CPAN — RFC 3492 encode only.
+# Skips full IDNA2008 validation; good enough for hostname/cert matching.
+###############################################################################
+sub nikto_ssl_idna_to_ascii {
+    my ($name) = @_;
+    return '' unless defined $name && $name ne '';
+
+    # Already pure ASCII — just lowercase (DNS case-insensitive)
+    return lc($name) unless $name =~ /[^\x00-\x7F]/;
+
+    # Ensure character semantics (UTF-8 octets → Unicode string)
+    unless (utf8::is_utf8($name)) {
+        my $copy = $name;
+        utf8::decode($copy) or return lc($name);    # leave as-is if not valid UTF-8
+        $name = $copy;
+    }
+
+    # NFC when Unicode::Normalize is available (core module)
+    eval {
+        require Unicode::Normalize;
+        $name = Unicode::Normalize::NFC($name);
+        1;
+    };
+
+    my @out;
+    foreach my $label (split(/\./, $name, -1)) {
+        if ($label eq '' || $label !~ /[^\x00-\x7F]/) {
+            push @out, lc($label);
+            next;
+        }
+
+        # Already ACE
+        if ($label =~ /^xn--/i && $label !~ /[^\x00-\x7F]/) {
+            push @out, lc($label);
+            next;
+        }
+
+        my $encoded = eval { nikto_ssl_punycode_encode($label) };
+        if (!defined $encoded || $@) {
+            # Fall back to lowercase original so matching can still proceed
+            push @out, lc($label);
+            next;
+        }
+        push @out, 'xn--' . $encoded;
+    }
+    return join('.', @out);
+}
+
+# RFC 3492 Punycode encode (Bootstring parameters for Punycode)
+sub nikto_ssl_punycode_encode {
+    my ($input) = @_;
+    my @input = unpack('U*', $input);
+    return '' unless @input;
+
+    my $base         = 36;
+    my $tmin         = 1;
+    my $tmax         = 26;
+    my $skew         = 38;
+    my $damp         = 700;
+    my $initial_bias = 72;
+    my $initial_n    = 0x80;
+    my $delimiter    = '-';
+
+    my $encode_digit = sub {
+        my ($d) = @_;
+        return chr($d + 0x61) if $d < 26;    # a-z
+        return chr($d - 26 + 0x30);          # 0-9
+    };
+
+    my $adapt = sub {
+        my ($delta, $numpoints, $firsttime) = @_;
+        $delta = $firsttime ? int($delta / $damp) : int($delta / 2);
+        $delta += int($delta / $numpoints);
+        my $k = 0;
+        while ($delta > int((($base - $tmin) * $tmax) / 2)) {
+            $delta = int($delta / ($base - $tmin));
+            $k += $base;
+        }
+        return $k + int((($base - $tmin + 1) * $delta) / ($delta + $skew));
+    };
+
+    my @output;
+    foreach my $c (@input) {
+        if ($c < 0x80) {
+            push @output, chr(($c >= 0x41 && $c <= 0x5A) ? $c + 0x20 : $c);
+        }
+    }
+    my $h = my $b = scalar @output;
+    push @output, $delimiter if $b > 0 && $h < scalar @input;
+
+    my $n     = $initial_n;
+    my $delta = 0;
+    my $bias  = $initial_bias;
+
+    while ($h < scalar @input) {
+        my $m = undef;
+        foreach my $c (@input) {
+            $m = $c if $c >= $n && (!defined $m || $c < $m);
+        }
+        die "punycode: overflow" if !defined $m;
+
+        my $incr = ($m - $n) * ($h + 1);
+        die "punycode: overflow" if $delta > (~0 >> 1) - $incr;
+        $delta += $incr;
+        $n = $m;
+
+        foreach my $c (@input) {
+            if ($c < $n) {
+                die "punycode: overflow" if ++$delta == 0;
+            }
+            if ($c == $n) {
+                my $q = $delta;
+                for (my $k = $base ; ; $k += $base) {
+                    my $t =
+                        ($k <= $bias + $tmin) ? $tmin
+                      : ($k >= $bias + $tmax) ? $tmax
+                      :                         $k - $bias;
+                    last if $q < $t;
+                    push @output, $encode_digit->($t + (($q - $t) % ($base - $t)));
+                    $q = int(($q - $t) / ($base - $t));
+                }
+                push @output, $encode_digit->($q);
+                $bias  = $adapt->($delta, $h + 1, ($h == $b));
+                $delta = 0;
+                $h++;
+            }
+        }
+        $delta++;
+        $n++;
+    }
+
+    return join('', @output);
 }
 
 1;
