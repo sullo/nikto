@@ -194,13 +194,6 @@ foreach my $mark (@MARKS) {
         next;
     }
 
-    if (defined $CLI{'vhost'}) {
-        $mark->{'vhost'} = $CLI{'vhost'};
-    }
-
-    # Update vhost flag after potential vhost assignment
-    $mark->{'has_vhost'} = (defined($mark->{'vhost'}) && $mark->{'vhost'} ne '');
-
     # Saving responses
     if (($CLI{'saveresults'} // '') ne '') {
         my $save_dir = save_createdir($CLI{'saveresults'}, $mark);
