@@ -42,8 +42,7 @@ sub csv_open {
 # start output
 sub csv_host_start {
     my ($handle, $mark) = @_;
-    my $banner = $mark->{'banner'} // '';
-    $banner =~ s/"/\\"/g;
+    my $banner   = $mark->{'banner'} // '';
     my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     print $handle "\""
       . csv_safecell($hostname) . "\"," . "\""
@@ -86,7 +85,7 @@ sub csv_ssl_info {
     }
 
     # SSL SAN if present
-    if ($mark->{'ssl_cert_altnames'} ne '') {
+    if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
         print $handle "\""
           . csv_safecell($ssl_hostname) . "\"," . "\""
           . csv_safecell($mark->{'ip'}) . "\"," . "\""
@@ -122,45 +121,46 @@ sub csv_ssl_info {
 # print an item
 sub csv_item {
     my ($handle, $mark, $item) = @_;
-    foreach my $uri (split(' ', $item->{'uri'})) {
+    foreach my $uri (split(' ', $item->{'uri'} // '')) {
         my $line = '';
         my $hostname =
           $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
         $line .= "\"" . csv_safecell($hostname) . "\",";
         $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
         $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
+        $line .= "\"" . csv_safecell($item->{'refs'}) . "\",";
+        $line .= "\"" . csv_safecell($item->{'method'}) . "\",";
 
-        $line .= "\"";
-        if ($item->{'refs'} ne '') { $line .= csv_safecell($item->{'refs'}); }
-        $line .= "\",";
-
-        $line .= "\"";
-        if ($item->{'method'} ne '') { $line .= csv_safecell($item->{'method'}); }
-        $line .= "\",";
-
-        $line .= "\"";
-        if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/)) {
-            $line .= csv_safecell($mark->{'root'}) . $uri;
+        my $root     = $mark->{'root'} // '';
+        my $full_uri = $uri;
+        if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+            $full_uri = $root . $uri;
         }
-        else { $line .= csv_safecell($uri); }
-        $line .= "\",";
+        $line .= "\"" . csv_safecell($full_uri) . "\",";
 
-        my $msg = $item->{'message'};
-        $uri = quotemeta($uri);
-        my $root = quotemeta($mark->{'root'});
-        $msg =~ s/^$uri:\s//;
-        $msg =~ s/^$root$uri:\s//;
-        $msg =~ s/"/\\"/g;
+        my $msg          = $item->{'message'} // '';
+        my $uri_escaped  = quotemeta($uri);
+        my $root_escaped = quotemeta($root);
+        $msg =~ s/^$uri_escaped:\s//;
+        $msg =~ s/^$root_escaped$uri_escaped:\s//;
         $line .= "\"" . csv_safecell($msg) . "\"";
         print $handle "$line\n";
     }
 }
 
 ###############################################################################
-# prevent CSV injection attacks
+# RFC 4180 quote escaping + CSV formula injection guard.
+# Undef becomes empty; 0 and "" are kept (they are valid cell values).
 sub csv_safecell {
-    my $celldata = $_[0] || return;
-    if ($celldata =~ /^[=+@-]/) { $celldata = "'" . $celldata; }
+    my ($celldata) = @_;
+    $celldata = '' unless defined $celldata;
+
+    # Excel/LibreOffice treat leading = + - @ TAB CR LF as formulas even in quoted CSV
+    if ($celldata =~ /^[=+@\t\r\n-]/) {
+        $celldata = "'" . $celldata;
+    }
+
+    $celldata =~ s/"/""/g;
     return $celldata;
 }
 
