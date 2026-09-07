@@ -59,11 +59,11 @@ sub nikto_auth_load {
 # the postfetch method will keep changing default...
 sub nikto_auth_pre {
     my ($mark, $parameters, $request, $response) = @_;
-    if ($mark->{'realms'}{'default'}{'status'}) {
-        LW2::auth_set($mark->{'realms'}{'default'}{'authtype'},
+    if ($mark->{'auth_default'}{'status'}) {
+        LW2::auth_set($mark->{'auth_default'}{'authtype'},
                       $request,
-                      $mark->{'realms'}{'default'}{'id'},
-                      $mark->{'realms'}{'default'}{'password'});
+                      $mark->{'auth_default'}{'id'},
+                      $mark->{'auth_default'}{'password'});
         $request->{'whisker'}->{'allow_short_reads'} = 1;
         LW2::http_fixup_request($request);
     }
@@ -249,7 +249,7 @@ sub nikto_auth {
                 # Per-mark only — do not mutate global $REALMS entries
                 $success                            = 1;
                 $mark->{'realms'}{$realm}{'status'} = 1;
-                $mark->{'realms'}{'default'}        = $mark->{'realms'}{$realm};
+                $mark->{'auth_default'}        = $mark->{'realms'}{$realm};
                 last;
             }
             nprint("- Auth success looked like a false positive (URI open without credentials)",
