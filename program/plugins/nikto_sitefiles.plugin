@@ -20,6 +20,8 @@ sub nikto_sitefiles_init {
 
 sub detect_file_type {
     my ($content, $uri) = @_;
+    $content //= '';
+    $uri     //= '';
     my $first_bytes    = substr($content, 0, 64);    # Check first 64 bytes
     my $content_length = length($content) || 0;
 
@@ -127,6 +129,7 @@ sub detect_file_type {
 
 sub calculate_entropy {
     my ($content) = @_;
+    $content //= '';
 
     # Bound entropy work for large responses: sample up to 16KB total
     my $max_entropy_bytes = 16384;
@@ -197,6 +200,8 @@ sub validate_file_content {
 
 sub is_likely_real_file {
     my ($content, $uri) = @_;
+    $content //= '';
+    $uri     //= '';
 
     # Quick size check
     return 0 if length($content) < 20;
@@ -230,6 +235,8 @@ sub is_likely_real_file {
 
 sub analyze_file_details {
     my ($content, $uri) = @_;
+    $content //= '';
+    $uri     //= '';
 
     my $detected_type  = detect_file_type($content, $uri);
     my $content_length = length($content);
@@ -284,14 +291,17 @@ sub analyze_file_details {
 
 sub nikto_sitefiles {
     my ($mark) = @_;
+    return if $mark->{'terminate'};
     my (%flags, %files, %names);
     my %files_ci_seen;
 
     # Minimum confidence required to report a file
     my $confidence_threshold = 60;
 
-    $names{ $mark->{'hostname'} } = 1;
-    $names{ $mark->{'vhost'} }    = 1;
+    for my $n (grep { defined $_ && $_ ne '' }
+               ($mark->{'hostname'}, $mark->{'vhost'}, $mark->{'ip'})) {
+        $names{$n} = 1;
+    }
 
     foreach my $n (keys %names) {
         my $nn = $n;
@@ -301,7 +311,7 @@ sub nikto_sitefiles {
         $nn =~ s/\./_/g;
         $names{$nn} = 1;
         my @bits = split(/\./, $n);
-        my ($temp1, $temp2) = '';
+        my ($temp1, $temp2) = ('', '');
 
         for (my $i = 0 ; $i <= $#bits ; $i++) {
             $names{ $bits[$i] } = 1;
@@ -312,12 +322,11 @@ sub nikto_sitefiles {
             $names{$temp2} = 1;
         }
     }
-    $names{'backup'}        = 1;
-    $names{'site'}          = 1;
-    $names{'archive'}       = 1;
-    $names{'database'}      = 1;
-    $names{'dump'}          = 1;
-    $names{ $mark->{'ip'} } = 1;
+    $names{'backup'}   = 1;
+    $names{'site'}     = 1;
+    $names{'archive'}  = 1;
+    $names{'database'} = 1;
+    $names{'dump'}     = 1;
 
     foreach my $item (keys %names) {
         next if $item eq '';
@@ -347,15 +356,21 @@ sub nikto_sitefiles {
             # request. flags passed will determine if hostname is used or not
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, "/$f", "GET", "", "", \%flags, "sitefiles");
+            $content //= '';
 
-            my $condition1 = defined($response->{'content-type'})
-              && $response->{'content-type'} =~ /^application\//i;
+            my $ct = '';
+            if (ref($response) eq 'HASH' && defined $response->{'content-type'}) {
+                $ct = $response->{'content-type'};
+                $ct = join(', ', grep { defined $_ && $_ ne '' } @$ct) if ref($ct) eq 'ARRAY';
+            }
+
+            my $check_uri = ($mark->{'root'} // '') . "/$f";
+            my $condition1 = ($ct ne '' && $ct =~ /^application\//i);
             my $condition2 =
-                 ($res == 200)
+                 (($res // '') eq '200')
               && (length($content) > 0)
-              && (!defined($response->{'content-type'})
-                  || $response->{'content-type'} !~ /^text\//i)
-              && (!is_404($mark, "/$f", $response));
+              && ($ct eq '' || $ct !~ /^text\//i)
+              && (!is_404($mark, $check_uri, $response));
 
             if ($condition1 || $condition2) {
 
