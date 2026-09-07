@@ -148,10 +148,13 @@ sub xml_host_start {
 sub xml_ssl_info {
     my ($handle, $mark) = @_;
 
-    # Extract CN from subject for separate reporting
+    # Extract CN from subject. RDNs are separated by ',' or '/', and a CN may
+    # legitimately contain spaces, so only those two are terminators.
     my $cn = '';
-    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'}
+        && $mark->{'ssl_cert_subject'} =~ /\bCN\s*=\s*([^,\/]+)/i) {
         $cn = $1;
+        $cn =~ s/^\s+|\s+$//g;
     }
 
     # Store SSL info in current host report

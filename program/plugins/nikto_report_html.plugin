@@ -268,9 +268,13 @@ sub process_template {
         my $ssl_altnames = simple_enc($mark->{'ssl_cert_altnames'} || '');
         my $ssl_cn       = '';
 
+        # RDNs are separated by ',' or '/', and a CN may legitimately contain
+        # spaces, so only those two are terminators.
         if (defined $mark->{'ssl_cert_subject'}
-            && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
-            $ssl_cn = simple_enc($1);
+            && $mark->{'ssl_cert_subject'} =~ /\bCN\s*=\s*([^,\/]+)/i) {
+            my $cn = $1;
+            $cn =~ s/^\s+|\s+$//g;
+            $ssl_cn = simple_enc($cn);
         }
 
         $variables{"#TEMPL_SSL_SUBJECT#"} = $ssl_subject;
