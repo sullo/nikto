@@ -3274,7 +3274,7 @@ sub nfetch {
     }
 
     # Set auth
-    if (my $realm = $mark->{'realms'}{'default'}) {
+    if ((my $realm = $mark->{'auth_default'}) && $mark->{'auth_default'}{'status'}) {
         if (length($realm->{'authtype'})) {
             LW2::auth_set($realm->{'authtype'}, \%request, $realm->{'id'}, $realm->{'password'});
         }
