@@ -510,11 +510,9 @@ sub sqld_item {
         $full_uri = $root . $uri;
     }
 
-    # Clean message - remove URI prefix if present
-    my $uri_escaped  = quotemeta($uri);
-    my $root_escaped = quotemeta($root);
-    $msg =~ s/^$uri_escaped:\s//;
-    $msg =~ s/^$root_escaped$uri_escaped:\s//;
+    # Clean message — strip the stored URI (path-boundary full_uri) and the raw item URI
+    $msg =~ s/^\Q$full_uri\E:\s//;
+    $msg =~ s/^\Q$uri\E:\s// if $uri ne $full_uri;
 
     # Rebuild the request from the hash
     my $request_string = rebuild_request($item->{'request'});
