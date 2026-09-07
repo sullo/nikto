@@ -756,9 +756,11 @@ sub dump_target_info {
                    "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
 
-        if ($request{'whisker'}->{'proxy_host'} ne '') {
+        # Proxy lives in %CONFIGFILE (CLI -useproxy overrides nikto.conf); the
+        # per-request hash is lexical to nfetch and never visible here.
+        if ($CLI{'useproxy'} && ($CONFIGFILE{'PROXYHOST'} // '') ne '') {
             nprint(
-                "+ Proxy:              $request{'whisker'}->{'proxy_host'}:$request{'whisker'}->{'proxy_port'}",
+                "+ Proxy:              $CONFIGFILE{'PROXYHOST'}:" . ($CONFIGFILE{'PROXYPORT'} // ''),
                 "", undef, ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'})
                 );
         }
