@@ -189,6 +189,8 @@ foreach my $mark (@MARKS) {
                               "Failed to scan");
         }
 
+        $mark->{'end_time'} = time();
+        $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
         report_host_end($mark);
         $VARIABLES{'deferout'} = 1;
         next;

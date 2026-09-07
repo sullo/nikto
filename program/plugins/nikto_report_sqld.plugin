@@ -490,101 +490,96 @@ sub sqld_item {
 
     return unless defined $SQLD_DBH;
 
-    foreach my $uri (split(' ', $item->{'uri'})) {
-        my $hostname   = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
-        my $httpmethod = $item->{'method'}  || 'GET';
-        my $msg        = $item->{'message'} || '';
-        my $root       = $mark->{'root'}    || '';
-        my $ssl        = $mark->{'ssl'} ? 1 : 0;
-        my $scanid     = $mark->{'scanid'} || '';
+    my $uri        = $item->{'uri'}     // '';
+    my $hostname   = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
+    my $httpmethod = $item->{'method'}  || 'GET';
+    my $msg        = $item->{'message'} || '';
+    my $root       = $mark->{'root'}    || '';
+    my $ssl        = $mark->{'ssl'} ? 1 : 0;
+    my $scanid     = $mark->{'scanid'} || '';
 
-        # testid is NOT NULL in the schema, so never pass an undef/empty id
-        my $testid =
-          (defined $item->{'nikto_id'} && $item->{'nikto_id'} ne '')
-          ? $item->{'nikto_id'}
-          : '000000';
+    # testid is NOT NULL in the schema, so never pass an undef/empty id
+    my $testid =
+      (defined $item->{'nikto_id'} && $item->{'nikto_id'} ne '')
+      ? $item->{'nikto_id'}
+      : '000000';
 
-        # Build URI with root if needed (path-boundary match, not bare prefix)
-        my $full_uri = $uri;
-        if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
-            $full_uri = $root . $uri;
-        }
-
-        # Clean message - remove URI prefix if present
-        my $uri_escaped  = quotemeta($uri);
-        my $root_escaped = quotemeta($root);
-        $msg =~ s/^$uri_escaped:\s//;
-        $msg =~ s/^$root_escaped$uri_escaped:\s//;
-
-        # Rebuild the request from the hash
-        my $request_string = rebuild_request($item->{'request'});
-
-        # Limit request data size for database compatibility and performance
-        # MySQL/MariaDB: BLOB is 64KB limit
-        # PostgreSQL: bytea can be larger, but we cap at same limit for consistency
-        # Base64 encoding increases size by ~33%, so we limit raw data to ~48KB
-        # to ensure encoded fits in MySQL BLOB (64KB) and for performance
-
-        my $max_request_size = 48000;    # ~48KB raw data (becomes ~64KB when base64 encoded)
-        if (length($request_string) > $max_request_size) {
-            my $original_size = length($request_string);
-            $request_string = substr($request_string, 0, $max_request_size);
-            $request_string .= "\n[Request truncated - original size: $original_size bytes]";
-            nprint(
-                "- WARNING: Request data truncated for testid $testid (original: $original_size bytes)",
-                "v", "report_sqld"
-                );
-        }
-
-        # Base64 encode request data for consistent storage format
-        my $request_data = length($request_string) ? LW2::encode_base64($request_string, '') : '';
-
-        # Rebuild the response content
-        my $response_string = rebuild_response($item->{'response'}, 1);
-
-        my $max_response_size = 12000000;    # ~12MB raw data (becomes ~16MB when base64 encoded)
-        if (length($response_string) > $max_response_size) {
-            my $original_size = length($response_string);
-            $response_string = substr($response_string, 0, $max_response_size);
-            $response_string .= "\n[Response truncated - original size: $original_size bytes]";
-            nprint(
-                "- WARNING: Response data truncated for testid $testid (original: $original_size bytes)",
-                "v", "report_sqld"
-                );
-        }
-
-        my $response_data =
-          length($response_string) ? LW2::encode_base64($response_string, '') : '';
-
-        # Use pre-prepared statement
-        if (!$SQLD_STMT_ITEM) {
-            nprint("+ ERROR: Item statement not prepared");
-            next;
-        }
-
-        # Execute with parameters - handle errors if connection is lost
-        if (!$SQLD_STMT_ITEM->execute($scanid,               $testid,
-                                      $mark->{'ip'},         $hostname,
-                                      $mark->{'port'},       $ssl,
-                                      $item->{'refs'} || '', $httpmethod,
-                                      $full_uri,             $msg,
-                                      $request_data,         $response_data
-                                      )
-            ) {
-            my $error = $SQLD_DBH->errstr || "Unknown error";
-            nprint("+ ERROR: Failed to insert item record (testid: $testid): $error");
-
-            # If connection lost, mark handle as invalid and exit loop
-            if (sqld_conn_lost($error)) {
-                $SQLD_DBH = undef;
-                last;    # Exit the foreach loop
-            }
-            next;
-        }
-
-        nprint("- Inserted item record (testid: $testid, scanid: $scanid)", "d");
+    # Build URI with root if needed (path-boundary match, not bare prefix)
+    my $full_uri = $uri;
+    if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+        $full_uri = $root . $uri;
     }
 
+    # Clean message - remove URI prefix if present
+    my $uri_escaped  = quotemeta($uri);
+    my $root_escaped = quotemeta($root);
+    $msg =~ s/^$uri_escaped:\s//;
+    $msg =~ s/^$root_escaped$uri_escaped:\s//;
+
+    # Rebuild the request from the hash
+    my $request_string = rebuild_request($item->{'request'});
+
+    # Limit request data size for database compatibility and performance
+    # MySQL/MariaDB: BLOB is 64KB limit
+    # PostgreSQL: bytea can be larger, but we cap at same limit for consistency
+    # Base64 encoding increases size by ~33%, so we limit raw data to ~48KB
+    # to ensure encoded fits in MySQL BLOB (64KB) and for performance
+
+    my $max_request_size = 48000;    # ~48KB raw data (becomes ~64KB when base64 encoded)
+    if (length($request_string) > $max_request_size) {
+        my $original_size = length($request_string);
+        $request_string = substr($request_string, 0, $max_request_size);
+        $request_string .= "\n[Request truncated - original size: $original_size bytes]";
+        nprint(
+            "- WARNING: Request data truncated for testid $testid (original: $original_size bytes)",
+            "v", "report_sqld"
+            );
+    }
+
+    # Base64 encode request data for consistent storage format
+    my $request_data = length($request_string) ? LW2::encode_base64($request_string, '') : '';
+
+    # Rebuild the response content
+    my $response_string = rebuild_response($item->{'response'}, 1);
+
+    my $max_response_size = 12000000;    # ~12MB raw data (becomes ~16MB when base64 encoded)
+    if (length($response_string) > $max_response_size) {
+        my $original_size = length($response_string);
+        $response_string = substr($response_string, 0, $max_response_size);
+        $response_string .= "\n[Response truncated - original size: $original_size bytes]";
+        nprint(
+            "- WARNING: Response data truncated for testid $testid (original: $original_size bytes)",
+            "v", "report_sqld"
+            );
+    }
+
+    my $response_data = length($response_string) ? LW2::encode_base64($response_string, '') : '';
+
+    # Use pre-prepared statement
+    if (!$SQLD_STMT_ITEM) {
+        nprint("+ ERROR: Item statement not prepared");
+        return;
+    }
+
+    # Execute with parameters - handle errors if connection is lost
+    if (!$SQLD_STMT_ITEM->execute($scanid,               $testid,
+                                  $mark->{'ip'},         $hostname,
+                                  $mark->{'port'},       $ssl,
+                                  $item->{'refs'} || '', $httpmethod,
+                                  $full_uri,             $msg,
+                                  $request_data,         $response_data
+                                  )
+        ) {
+        my $error = $SQLD_DBH->errstr || "Unknown error";
+        nprint("+ ERROR: Failed to insert item record (testid: $testid): $error");
+
+        if (sqld_conn_lost($error)) {
+            $SQLD_DBH = undef;
+        }
+        return;
+    }
+
+    nprint("- Inserted item record (testid: $testid, scanid: $scanid)", "d");
     return;
 }
 

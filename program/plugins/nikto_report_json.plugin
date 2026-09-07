@@ -98,14 +98,14 @@ sub json_ssl_info {
 # end output for a host
 sub json_host_end {
     my ($handle, $mark) = @_;
-    my $end_time;
+    return unless defined $JSONRPT_CURR;
 
-    if ($mark->{'end_time'} eq '') {
-        $end_time = localtime;
-    }
-    else {
-        $end_time = localtime($mark->{'end_time'});
-    }
+    # end_time may be unset on incomplete marks; use now rather than
+    # comparing undef with eq '' (warning) or localtime(undef) (epoch).
+    my $end_time =
+      (defined $mark->{'end_time'} && $mark->{'end_time'} ne '')
+      ? localtime($mark->{'end_time'})
+      : localtime;
 
     $JSONRPT_CURR->{'end_time'} = $end_time->strftime('%Y-%m-%d %H:%M:%S %z');
     return;
@@ -126,23 +126,26 @@ sub json_close {
 # print an item
 sub json_item {
     my ($handle, $mark, $item) = @_;
+    return unless defined $JSONRPT_CURR;
 
-    my $uri = $item->{'uri'};
-    if (($uri ne '') && ($mark->{'root'} ne '') && ($uri !~ /^$mark->{'root'}/)) {
-        $uri = $mark->{'root'} . $uri;
+    my $uri  = $item->{'uri'}  // '';
+    my $root = $mark->{'root'} // '';
+    my $full_uri = $uri;
+    if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+        $full_uri = $root . $uri;
     }
 
-    my $msg  = $item->{'message'};
-    my $uri2 = quotemeta($uri);
-    my $root = quotemeta($mark->{'root'});
-    $msg =~ s/^$uri2:\s//;
-    $msg =~ s/^$root$uri2:\s//;
+    my $msg          = $item->{'message'} // '';
+    my $uri_escaped  = quotemeta($uri);
+    my $root_escaped = quotemeta($root);
+    $msg =~ s/^$uri_escaped:\s//;
+    $msg =~ s/^$root_escaped$uri_escaped:\s//;
 
     push @{ $JSONRPT_CURR->{'vulnerabilities'} },
       { id         => $item->{'nikto_id'},
         references => $item->{'refs'},
         method     => $item->{'method'},
-        url        => $uri,
+        url        => $full_uri,
         msg        => $msg
         };
 }
