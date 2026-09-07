@@ -98,19 +98,22 @@ sub nikto_tests {
                 status_report();
             }
 
-            # DSL matcher expects response headers as a hashref
-            my $response_string = rebuild_response($response, 0);
+            # DSL matcher expects response headers as a hashref.
+            # Build from $response directly — rebuild_response only emits headers
+            # listed in header_order, so a missing/empty order silently drops all
+            # HEADER: DSL matches.
             my %response_headers;
-            foreach my $line (split(/\r?\n/, $response_string)) {
-                next if $line =~ /^HTTP\//;    # Skip status line
-                last if $line =~ /^\s*$/;      # Stop at blank line (end of headers)
-                if ($line =~ /^([^:]+):\s*(.*)$/) {
-                    my ($name, $value) = (lc($1), $2);
-                    if (exists $response_headers{$name}) {
-                        $response_headers{$name} .= ', ' . $value;
+            if (ref($response) eq 'HASH') {
+                while (my ($name, $value) = each %{$response}) {
+                    next if $name eq 'whisker';
+                    next unless defined $value;
+                    my $key = lc($name);
+                    if (ref($value) eq 'ARRAY') {
+                        $response_headers{$key} =
+                          join(', ', grep { defined $_ && $_ ne '' } @$value);
                     }
                     else {
-                        $response_headers{$name} = $value;
+                        $response_headers{$key} = $value;
                     }
                 }
             }
