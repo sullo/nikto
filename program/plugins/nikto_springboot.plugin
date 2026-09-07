@@ -77,8 +77,8 @@ sub nikto_springboot {
 
         my $json;
         eval { $json = decode_json($content); };
-        if ($@ || !$json) {
-            nprint("$ep: 200 but invalid JSON", "v", "springboot");
+        if ($@ || ref($json) ne 'HASH') {
+            nprint("$ep: 200 but not a JSON object", "v", "springboot");
             next;
         }
 
@@ -87,6 +87,7 @@ sub nikto_springboot {
             if (exists $json->{'_links'} && ref($json->{'_links'}) eq 'HASH') {
                 my $links = $json->{'_links'};
                 foreach my $k (keys %$links) {
+                    next unless ref($links->{$k}) eq 'HASH';
                     my $href = $links->{$k}{'href'};
                     next unless defined $href && $href ne '';
                     my $report_val = $href;
