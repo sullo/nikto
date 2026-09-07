@@ -4164,6 +4164,13 @@ sub path_matcher {
                 if ($file =~ $check->{pattern}) {
                     my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
                     foreach my $var (@vars) {
+
+                        # -Cgidirs none/<dir> is the user's choice; never let
+                        # learned paths (robots.txt, links) override it.
+                        next
+                          if $var eq '@CGIDIRS'
+                          && defined $CLI{'forcecgi'}
+                          && $CLI{'forcecgi'} ne 'all';
                         if ($mark_catalog{$var} && ref($mark) eq 'HASH') {
                             append_catalog_var($mark, $var, $raw);
                         }
@@ -4208,6 +4215,13 @@ sub path_matcher {
                 if ($dir =~ $check->{pattern}) {
                     my @vars = ref($check->{var}) eq 'ARRAY' ? @{ $check->{var} } : ($check->{var});
                     foreach my $var (@vars) {
+
+                        # -Cgidirs none/<dir> is the user's choice; never let
+                        # learned paths (robots.txt, links) override it.
+                        next
+                          if $var eq '@CGIDIRS'
+                          && defined $CLI{'forcecgi'}
+                          && $CLI{'forcecgi'} ne 'all';
                         if ($mark_catalog{$var} && ref($mark) eq 'HASH') {
                             append_catalog_var($mark, $var, $dir);
                         }
