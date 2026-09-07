@@ -32,26 +32,30 @@ sub nikto_put_del_test {
     my $put_response = $response;
     my $put_confirmed = 0;
 
-    return if $mark->{'terminate'};
-    ($res, $content, $error, $request, $response) =
-      nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
-    if (defined $content && $content =~ /\Q$marker\E/) {
-        $put_confirmed = 1;
-        add_vulnerability(
-            $mark,
-            "$uri: HTTP method 'PUT' allows clients to save files on the web server.",
-            "999995",
-            "https://portswigger.net/kb/issues/00100900_http-put-method-is-enabled",
-            "PUT",
-            $uri,
-            $put_request,
-            $put_response
-            );
+    # Verify the upload landed. Skipped on terminate, but DELETE below still
+    # runs so we never leave our test file on the target.
+    if (!$mark->{'terminate'}) {
+        ($res, $content, $error, $request, $response) =
+          nfetch($mark, $uri, "GET", "", "", "", "put_del_test: GET");
+        if (defined $content && $content =~ /\Q$marker\E/) {
+            $put_confirmed = 1;
+            add_vulnerability(
+                $mark,
+                "$uri: HTTP method 'PUT' allows clients to save files on the web server.",
+                "999995",
+                "https://portswigger.net/kb/issues/00100900_http-put-method-is-enabled",
+                "PUT",
+                $uri,
+                $put_request,
+                $put_response
+                );
+        }
     }
 
-    # Always attempt DELETE after a successful PUT status so we do not leave
-    # an orphaned upload when GET verify fails (auth, delay, soft deny).
-    return if $mark->{'terminate'};
+    # ALWAYS attempt DELETE after a successful PUT status, even when
+    # terminate is set (maxtime, keypress, error limit): nfetch does not
+    # refuse requests on terminate, and an orphaned upload is worse than
+    # one extra request.
     ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "DELETE", "", "", "", "put_del_test: DELETE");
     my $del_request  = $request;
