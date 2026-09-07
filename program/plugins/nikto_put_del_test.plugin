@@ -24,8 +24,8 @@ sub nikto_put_del_test {
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, $uri, "PUT", $marker, "", "", "put_del_test: PUT");
 
-    # PUT may return 200 OK, 201 Created, or 204 No Content
-    my $put_ok = (($res // '') eq '200' || ($res // '') eq '201' || ($res // '') eq '204');
+    # PUT may return 200 OK, 201 Created, 202 Accepted (async store), or 204 No Content
+    my $put_ok = ($res // '') =~ /^(?:200|201|202|204)$/;
     return unless $put_ok;
 
     my $put_request  = $request;
