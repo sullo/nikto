@@ -116,15 +116,15 @@ foreach my $mark (@MARKS) {
         push(@{ $mark->{'messages'} }, $msgs);
     }
 
-    # Start hook to allow plugins to load databases etc
-    run_hooks($mark, "start");
-
     # Skip if we can't resolve the host - we'll error later
     if (!defined $mark->{'ip'} || $mark->{'ip'} eq "") {
         $mark->{'errmsg'} = $msgs;
         $mark->{'test'}   = 0;
         next;
     }
+
+    # Start hook to allow plugins to load databases etc
+    run_hooks($mark, "start");
 
     # Read cookies from conf & set into the cookie jar
     if (defined $CONFIGFILE{'STATIC-COOKIE'}) {
@@ -205,6 +205,24 @@ foreach my $mark (@MARKS) {
 
     my ($res, $content, $error, $request, $response) =
       nfetch($mark, "/", "GET", "", "", { noprefetch => 1, nopostfetch => 1 }, "Init");
+
+    # Port was open at check time, but the init fetch can still fail (reset, timeout, …).
+    # Do not run recon/scan against a host we cannot speak HTTP with.
+    if (!defined $res || $res eq '') {
+        my $host = $mark->{'hostname'} || $mark->{'ip'} || $mark->{'ident'} || '';
+        my $msg  = "Unable to fetch / from $host:$mark->{'port'}";
+        $msg .= ": $error" if defined $error && $error ne '';
+        $VARIABLES{'deferout'} = 0;
+        add_vulnerability($mark, $msg, "FAIL", "", "GET", "/", $request, $response,
+                          "Failed to scan");
+        $mark->{'end_time'} = time();
+        $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+        report_host_end($mark);
+        $VARIABLES{'deferout'} = 1;
+        $COUNTERS{'hosts_completed'}++;
+        next;
+    }
+
     $mark->{'platform'} = platform_profiler($mark);
 
     # SSL info is now available - report it to all formats
