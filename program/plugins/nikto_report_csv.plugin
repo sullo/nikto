@@ -69,9 +69,12 @@ sub csv_ssl_info {
       . "\"/\"," . "\""
       . csv_safecell("SSL Certificate Subject: " . ($mark->{'ssl_cert_subject'} || '')) . "\"\n";
 
-    # SSL CN if present
-    if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    # SSL CN if present. RDNs are separated by ',' or '/', and a CN may
+    # legitimately contain spaces, so only those two are terminators.
+    if (defined $mark->{'ssl_cert_subject'}
+        && $mark->{'ssl_cert_subject'} =~ /\bCN\s*=\s*([^,\/]+)/i) {
         my $cn = $1;
+        $cn =~ s/^\s+|\s+$//g;
         print $handle "\""
           . csv_safecell($ssl_hostname) . "\"," . "\""
           . csv_safecell($mark->{'ip'}) . "\"," . "\""

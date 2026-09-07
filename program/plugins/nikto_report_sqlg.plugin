@@ -96,10 +96,12 @@ sub sqlg_ssl_info {
     my $ssl_altnames = $mark->{'ssl_cert_altnames'} || '';
     my $ssl          = defined $mark->{'ssl_cipher'} ? 1 : 0;
 
-    # Extract CN from subject
+    # Extract CN from subject. RDNs are separated by ',' or '/', and a CN may
+    # legitimately contain spaces, so only those two are terminators.
     my $ssl_cn = '';
-    if ($ssl_subject =~ /CN=([^$ \/]+)/) {
+    if ($ssl_subject =~ /\bCN\s*=\s*([^,\/]+)/i) {
         $ssl_cn = $1;
+        $ssl_cn =~ s/^\s+|\s+$//g;
     }
 
     # Build combined SSL info message

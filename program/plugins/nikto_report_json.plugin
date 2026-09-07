@@ -77,10 +77,13 @@ sub json_ssl_info {
     # Update the current host report with SSL info
     return unless defined $JSONRPT_CURR;
 
-    # Extract CN from subject
+    # Extract CN from subject. RDNs are separated by ',' or '/', and a CN may
+    # legitimately contain spaces, so only those two are terminators.
     my $cn = '';
-    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+    if (defined $mark->{'ssl_cert_subject'}
+        && $mark->{'ssl_cert_subject'} =~ /\bCN\s*=\s*([^,\/]+)/i) {
         $cn = $1;
+        $cn =~ s/^\s+|\s+$//g;
     }
 
     $JSONRPT_CURR->{'ssl_info'} = { ciphers  => $mark->{'ssl_cipher'}       || '',

@@ -716,10 +716,13 @@ sub dump_target_info {
         $sslprint = "$VARIABLES{'DIV'}\n";
         $sslprint .= "+ SSL Info:           Subject:  $mark->{'ssl_cert_subject'}\n";
 
-        # Extract and display CN separately
+        # Extract and display CN separately. RDNs are separated by ',' or '/',
+        # and a CN may legitimately contain spaces, so only those two are terminators.
         my $cn = '';
-        if ($mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
+        if (defined $mark->{'ssl_cert_subject'}
+            && $mark->{'ssl_cert_subject'} =~ /\bCN\s*=\s*([^,\/]+)/i) {
             $cn = $1;
+            $cn =~ s/^\s+|\s+$//g;
             $sslprint .= "                      CN:       $cn\n";
         }
 
