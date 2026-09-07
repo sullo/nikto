@@ -60,7 +60,7 @@ sub nikto_headers_postfetch {
     foreach my $header (keys %$response) {
         next
           if exists $skip_headers{$header}
-          || exists $mark->{'headers_found'}{$header};
+          || exists $mark->{'headers_found'}{"ip-$header"};
 
         my $raw    = $response->{$header};
         my @values = (ref($raw) eq 'ARRAY') ? @$raw : ($raw);
@@ -106,7 +106,7 @@ sub nikto_headers_postfetch {
                             $request,
                             $response
                             );
-                        $mark->{'headers_found'}{$header} = 1;
+                        $mark->{'headers_found'}{"ip-$header"} = 1;
                     }
                 }
             }
