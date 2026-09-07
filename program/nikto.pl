@@ -193,6 +193,7 @@ foreach my $mark (@MARKS) {
         $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
         report_host_end($mark);
         $VARIABLES{'deferout'} = 1;
+        $COUNTERS{'hosts_completed'}++;
         next;
     }
 
