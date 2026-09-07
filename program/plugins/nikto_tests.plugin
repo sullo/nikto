@@ -120,9 +120,13 @@ sub nikto_tests {
             my %cookies = ();
             if (ref $response->{'whisker'}->{'cookies'} eq 'ARRAY') {
                 foreach my $cookie (@{ $response->{'whisker'}->{'cookies'} }) {
-                    if ($cookie =~ /^([^=]+)=([^;]*)/) {
-                        $cookies{ lc($1) } = $2;
-                    }
+                    # Quoted values may contain ';' (name="a;b"; Path=/)
+                    my ($cname, $quoted, $plain) =
+                      ($cookie =~ /([^=]+)=\s*(?:"([^"]*)"|([^;]*))/);
+                    next unless defined $cname;
+                    $cname =~ s/^\s+|\s+$//g;
+                    next if $cname eq '';
+                    $cookies{ lc($cname) } = defined $quoted ? $quoted : ($plain // '');
                 }
             }
 
