@@ -25,10 +25,9 @@ sub nikto_ssl {
     my $hostname_cmp      = nikto_ssl_idna_to_ascii($mark->{'hostname'} || '');
     $hostname_cmp =~ s/\.$//;
 
-    # Extract CN from subject
-    if (defined $mark->{'ssl_cert_subject'} && $mark->{'ssl_cert_subject'} =~ /CN=([^$ \/]+)/) {
-        push(@cn_names, $1);
-    }
+    # Extract CN from subject (oneline /CN=…/ or comma DN; optional spaces)
+    push @cn_names, nikto_ssl_extract_cn($mark->{'ssl_cert_subject'})
+      if defined $mark->{'ssl_cert_subject'};
 
     # Extract SAN names
     if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
@@ -98,6 +97,22 @@ sub nikto_ssl_safe_str {
     $s = '' unless defined $s;
     $s =~ s/[\x00-\x1f\x7f]//g;
     return length($s) > 256 ? substr($s, 0, 256) : $s;
+}
+
+# Pull CN values from an X.509 subject string.
+# Handles OpenSSL oneline (/CN=host/O=…), comma DNs (CN=host, O=…), and "CN = host".
+sub nikto_ssl_extract_cn {
+    my ($subject) = @_;
+    return () unless defined $subject && $subject ne '';
+
+    my @cns;
+    while ($subject =~ /\bCN\s*=\s*([^,\/]+)/gi) {
+        my $cn = $1;
+        $cn =~ s/^\s+|\s+$//g;
+        $cn =~ s/^"(.*)"$/$1/;
+        push @cns, $cn if length($cn);
+    }
+    return @cns;
 }
 
 ###############################################################################
