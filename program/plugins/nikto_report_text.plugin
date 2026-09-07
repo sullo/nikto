@@ -45,7 +45,7 @@ sub text_host {
 
 sub text_ssl_info {
     my ($handle, $mark) = @_;
-    print $handle "+ SSL Info:           Subject:  $mark->{'ssl_cert_subject'}\n";
+    print $handle "+ SSL Info:           Subject:  " . ($mark->{'ssl_cert_subject'} // '') . "\n";
 
     # Extract and display CN separately. RDNs are separated by ',' or '/',
     # and a CN may legitimately contain spaces, so only those two are terminators.
@@ -62,8 +62,8 @@ sub text_ssl_info {
         print $handle "                      SAN:      $mark->{'ssl_cert_altnames'}\n";
     }
 
-    print $handle "                      Ciphers:  $mark->{'ssl_cipher'}\n";
-    print $handle "                      Issuer:   $mark->{'ssl_cert_issuer'}\n";
+    print $handle "                      Ciphers:  " . ($mark->{'ssl_cipher'} // '') . "\n";
+    print $handle "                      Issuer:   " . ($mark->{'ssl_cert_issuer'} // '') . "\n";
 }
 
 sub text_item {
@@ -74,7 +74,7 @@ sub text_item {
     my $line = "+ ";
     if ($item->{method}) { $line .= $item->{method} . " " }
     if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
-        $line .= $root . $uri;
+        $line .= $root . $uri . ": ";
     }
     $line .= $item->{message} // '';
     if (defined $item->{refs} && $item->{refs} ne "") {
