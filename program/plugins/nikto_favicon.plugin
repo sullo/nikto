@@ -66,7 +66,7 @@ sub nikto_favicon {
                 next if $content =~ /html|body|href/i;
                 my $hash = LW2::md5($content);
                 nprint("Got $icon hash:$hash", "d");
-                favicon_matchhash($mark, $hash, $icon, $request, $response);
+                favicon_matchhash($mark, $hash, $mark->{'root'} . $icon, $request, $response);
             }
         }
     }
@@ -100,6 +100,13 @@ sub favicon_checkhash {
         next unless defined $v && $v ne '';
         # Path only — drop query left by normalize
         $v =~ s/\?.*//;
+
+        # nfetch prepends $mark->{'root'}; strip it here so the path is not doubled
+        my $root = $mark->{'root'} // '';
+        if ($root ne '' && index($v, $root) == 0) {
+            $v = substr($v, length($root));
+            $v = "/$v" if $v !~ m{^/};
+        }
         $linkicons->{$v} = 1 if $v =~ m{^/};
     }
     return;
