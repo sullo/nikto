@@ -15,7 +15,7 @@
   scanstart CDATA #REQUIRED
   version NMTOKEN #REQUIRED>
 
-<!ELEMENT scandetails (item+,statistics)>
+<!ELEMENT scandetails (ssl?, item*, statistics)>
 <!ATTLIST scandetails
   xmlns CDATA #FIXED ''
   checks CDATA #REQUIRED
@@ -42,6 +42,15 @@
   endtime CDATA #REQUIRED
   itemsfound CDATA #REQUIRED
   itemstested CDATA #REQUIRED>
+
+<!ELEMENT ssl EMPTY>
+<!ATTLIST ssl
+  xmlns CDATA #FIXED ''
+  ciphers CDATA #IMPLIED
+  issuers CDATA #IMPLIED
+  info CDATA #IMPLIED
+  cn CDATA #IMPLIED
+  altnames CDATA #IMPLIED>
 
 <!ELEMENT description (#PCDATA)>
 <!ATTLIST description
