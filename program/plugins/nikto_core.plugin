@@ -2536,7 +2536,7 @@ sub load_plugins {
                 $name   = $torun_plugin;
                 $suffix = "";
             }
-            if ($plugin->{'name'} =~ /$name/i) {
+            if ($plugin->{'name'} =~ /\Q$name\E/i) {
                 $plugin->{'run'} = 1;
 
                 # Create parameters
@@ -3562,7 +3562,7 @@ sub set_scan_items {
 
     foreach my $tune (split(//, $CLI{'tuning'})) {
         next if ($tune eq "x");
-        if ($CLI{'tuning'} !~ /(?<![x])$tune/gi) {
+        if ($CLI{'tuning'} !~ /(?<![x])\Q$tune\E/gi) {
             $excludes .= $tune;
         }
         else {
@@ -3585,7 +3585,7 @@ sub set_scan_items {
                 # Work out the required tuning from the CLI string
                 if ($includes ne "") {
                     foreach $tune (split(//, $includes)) {
-                        if ($item[2] =~ /$tune/i) {
+                        if ($item[2] =~ /\Q$tune\E/i) {
                             $add = 1;
                             last;
                         }
@@ -3595,7 +3595,7 @@ sub set_scan_items {
 
                     # if includes is null and excludes is not null, add all but excludes
                     foreach $tune (split(//, $excludes)) {
-                        if ($item[2] =~ /$tune/i) {
+                        if ($item[2] =~ /\Q$tune\E/i) {
                             $add = 0;
                             last;
                         }
