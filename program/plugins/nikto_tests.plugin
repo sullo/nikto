@@ -77,7 +77,10 @@ sub nikto_tests {
                 $flags{'noclean'} = 1;
             }
             if (defined $TESTS{$checkid}{'data'} && $TESTS{$checkid}{'data'} ne '') {
-                $data = unslash($TESTS{$checkid}{'data'});
+                # Expand @vars then take the first expansion (body is singular)
+                my @data_expanded =
+                  change_variables(unslash($TESTS{$checkid}{'data'}), $mark, $checkid);
+                $data = $data_expanded[0] // '';
             }
 
             my ($res, $content, $error, $request, $response) =
@@ -255,7 +258,7 @@ sub allchecks {
         my @uris = change_variables($TESTS{$checkid}{'uri'}, $mark, $checkid);
 
         foreach my $uri (@uris) {
-            my $dir  = LW2::uri_get_dir($uri);
+            my $dir  = LW2::uri_get_dir($uri) // '';
             my $file = $uri;
 
             if ($dir ne "") {
@@ -293,9 +296,10 @@ sub testfile {
            "v", "tests", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
 
     # Mutations only care about the response code, so an error w/code is real hit
-    if ($res eq '200') {
-        add_vulnerability($mark, "$uri: file found during $name mutation",
-                          $tid, "", "GET", $uri, $request, $response);
+    my $full_uri = ($mark->{'root'} // '') . $uri;
+    if ($res eq '200' && !is_404($mark, $full_uri, $response)) {
+        add_vulnerability($mark, "$full_uri: file found during $name mutation",
+                          $tid, "", "GET", $full_uri, $request, $response);
     }
 }
 
