@@ -176,9 +176,14 @@ sub parse_hostfile {
                            "d", "fileops", ($hostdesc));
                     next;
                 }
-                $nmp =~ /^(?:\s+)?(\d+)\//;
-                nprint("+ Nmap Input Queued: $hostdesc:$1");
-                push(@results, $hostdesc . ":" . $1);
+                # Capture only if parsing succeeded, so stale $1 is never reused
+                my ($port) = $nmp =~ /^(?:\s+)?(\d+)\//;
+                if (!defined $port) {
+                    nprint("\tUnable to parse Nmap port field: $nmp", "d");
+                    next;
+                }
+                nprint("+ Nmap Input Queued: $hostdesc:$port");
+                push(@results, $hostdesc . ":" . $port);
             }
         }
         else {
