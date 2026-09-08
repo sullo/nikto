@@ -2154,6 +2154,7 @@ sub check_dbs {
         }
         elsif ($file =~ /u?db_headers_common/) {
             my $ctr = 0;
+            my $seen_schema = 0;
             my %HEADERS;
             foreach $line (<$db_fh>) {
                 $line = db_preprocess($file, $line);
@@ -2162,6 +2163,10 @@ sub check_dbs {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
                     next;
                 }
+
+                # The first line names the column ("header") not a header value
+                if (!$seen_schema) { $seen_schema = 1; next; }
+
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
@@ -2175,6 +2180,7 @@ sub check_dbs {
         }
         elsif ($file =~ /u?db_multiple_index/) {
             my $ctr = 0;
+            my $seen_schema = 0;
             foreach $line (<$db_fh>) {
                 chomp($line);
                 next if $line =~ /^\#/ || $line eq '';
@@ -2182,6 +2188,10 @@ sub check_dbs {
                     nprint("\t+ ERROR: Unquoted or malformed CSV field(s): $line");
                     next;
                 }
+
+                # As above: the first line is the column name
+                if (!$seen_schema) { $seen_schema = 1; next; }
+
                 if ((count_fields($line) ne 0) && (count_fields($line) ne '')) {
                     nprint("\t+ ERROR: Invalid syntax: $line");
                 }
