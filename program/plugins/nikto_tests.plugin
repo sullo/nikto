@@ -86,10 +86,13 @@ sub nikto_tests {
             my ($res, $content, $error, $request, $response) =
               nfetch($mark, $uri, $TESTS{$checkid}{'method'}, $data, \%headrs, \%flags, $checkid);
 
-            # An errored request is still matched as long as something came back.
+            # An errored request (short read, etc.) is still matched as long as a
+            # status line was parsed. With no code at all the bytes are not HTTP
+            # (LW2 'invalid HTTP response' stores the raw stream in data); the DSL
+            # and the 200-only is_404 gate cannot judge that, so skip it.
             $res     = '' unless defined $res;
             $content = '' unless defined $content;
-            next URI if $res eq '' && $content eq '';
+            next URI if $res eq '';
 
             # Percentages
             if (   $OUTPUT{'progress'}
