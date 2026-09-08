@@ -10,6 +10,8 @@
 # interest in the data to Chris Sullo so it can modified, incorporated into this product
 # relicensed or reused.
 #######################################################################
+# Not duplicates: first one is column name
+"index"
 "index"
 "index.php"
 "index.php3"
