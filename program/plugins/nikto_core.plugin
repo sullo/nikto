@@ -4527,6 +4527,39 @@ sub dsl_parse_alternatives {
 }
 
 #######################################################################
+# Split a HEADER/COOKIE term's payload into (name, value) at the first
+# UNESCAPED colon.
+#
+# Splitting on the first colon of any kind cut a name containing "\:" in half:
+# "HEADER:x\:y:v" produced the name "x\" and the value "y:v", so the term could
+# never match. The escapes the DSL recognises are then removed from the name,
+# which is looked up as a literal header name rather than compiled as a regex.
+#
+# Returns the value as undef when there is no colon at all, so the caller can
+# tell "name only" (an existence check) from "name with an empty value".
+sub dsl_split_name_value {
+    my ($payload) = @_;
+
+    my ($name, $value);
+    my $len = length($payload);
+    for (my $i = 0 ; $i < $len ; $i++) {
+        my $c = substr($payload, $i, 1);
+        if ($c eq '\\') { $i++; next }    # an escape and what it escapes travel together
+        if ($c eq ':') {
+            $name  = substr($payload, 0, $i);
+            $value = substr($payload, $i + 1);
+            last;
+        }
+    }
+    $name = $payload unless defined $name;
+
+    $name =~ s/^\s+|\s+$//g;
+    $name =~ s/\\([!:])/$1/g;
+
+    return ($name, $value);
+}
+
+#######################################################################
 # Parse a DSL expression into a compiled structure.
 #
 # Grammar, loosest binding first:
@@ -4612,9 +4645,8 @@ sub parse_dsl {
 
         }
         elsif ($type eq 'HEADER') {
-            my ($hname, $hval) = split /:/, $pattern, 2;
-            die "Missing HEADER name: $token" unless defined $hname && length $hname;
-            $hname =~ s/^\s+|\s+$//g;
+            my ($hname, $hval) = dsl_split_name_value($pattern);
+            die "Missing HEADER name: $token" unless length $hname;
             $hval = '' unless defined $hval;
             $hval =~ s/^\s+//;
             my $re = length($hval) ? compile_regex($hval) : undef;
@@ -4625,9 +4657,8 @@ sub parse_dsl {
 
         }
         elsif ($type eq 'COOKIE') {
-            my ($cname, $cval) = split /:/, $pattern, 2;
-            die "Missing COOKIE name: $token" unless defined $cname && length $cname;
-            $cname =~ s/^\s+|\s+$//g;
+            my ($cname, $cval) = dsl_split_name_value($pattern);
+            die "Missing COOKIE name: $token" unless length $cname;
             $cval = '' unless defined $cval;
             $cval =~ s/^\s+//;
             my $re = length($cval) ? compile_regex($cval) : undef;
