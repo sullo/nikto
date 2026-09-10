@@ -144,8 +144,20 @@ sub nikto_tests {
 
             # Use the DSL matcher - now returns (match_status, captured_groups)
             my ($positive, $reason, $captures) = (0, '', []);
+
+            # A DSL naming @HOSTNAME or @IP has to be compiled against THIS host:
+            # the matcher cached at load time still holds the literal placeholder.
+            # build_matcher caches per expanded string, so this compiles once per
+            # host, and only for the handful of tests that reference a host var.
+            my $matcher = $TESTS{$checkid}{'matcher'};
+            if (index($TESTS{$checkid}{'dsl'} // '', '@') >= 0) {
+                my $host_dsl = expand_host_dsl($TESTS{$checkid}{'dsl'}, $mark);
+                $matcher = build_matcher($host_dsl, $checkid)
+                  if $host_dsl ne $TESTS{$checkid}{'dsl'};
+            }
+
             my @matcher_result =
-              $TESTS{$checkid}{'matcher'}->($res, $content, $response_headers, \%cookies);
+              $matcher->($res, $content, $response_headers, \%cookies);
 
             my ($match_status, $captured_groups) = @matcher_result;
             if ($match_status) {
