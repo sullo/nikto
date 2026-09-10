@@ -111,9 +111,15 @@ sub nikto_tests {
                     next if $name eq 'whisker';
                     next unless defined $value;
                     my $key = lc($name);
+                    # A repeated header keeps its values as a list. They used to
+                    # be joined with ", " and matched as one string, which let a
+                    # pattern span two headers the server never sent together and
+                    # is illegal for Set-Cookie (RFC 7230 forbids combining it
+                    # with a comma, since its own syntax contains commas).
+                    # dsl_evaluate matches each value separately.
                     if (ref($value) eq 'ARRAY') {
-                        $response_headers{$key} =
-                          join(', ', grep { defined $_ && $_ ne '' } @$value);
+                        my @vals = grep { defined $_ } @$value;
+                        $response_headers{$key} = @vals == 1 ? $vals[0] : \@vals;
                     }
                     else {
                         $response_headers{$key} = $value;

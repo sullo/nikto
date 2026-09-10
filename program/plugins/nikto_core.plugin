@@ -3975,6 +3975,16 @@ sub _parsed_requires_body_match {
 }
 
 #######################################################################
+# A header value is a plain string, or an arrayref when the response repeated
+# that header (WWW-Authenticate, Set-Cookie, Via, ...). Return it as a list so
+# callers match each value on its own.
+sub header_values {
+    my ($value) = @_;
+    return () unless defined $value;
+    return ref($value) eq 'ARRAY' ? (grep { defined } @$value) : ($value);
+}
+
+#######################################################################
 # Evaluate a parsed DSL against one response.
 #
 # Returns ($matched, \@captures). Captures are the $1..$9 of every
@@ -4000,19 +4010,33 @@ sub dsl_evaluate {
     }
 
     # --- HEADERS ---
+    # A header repeated in the response arrives as an arrayref and every value is
+    # matched on its own. Joining them into one string let a pattern bridge two
+    # headers the server never sent together, and is illegal for Set-Cookie.
     for my $h (@{ $parsed->{header_neg} }) {
-        if (exists $headers->{ $h->{name} }) {
+        next unless exists $headers->{ $h->{name} };
 
-            # With a regex the header must not match, without one it must not exist
-            return (0, []) if $h->{regex} && $headers->{ $h->{name} } =~ $h->{regex};
-            return (0, []) unless $h->{regex};
+        # Without a regex the header must not be present at all
+        return (0, []) unless $h->{regex};
+
+        # With one, no value may match
+        for my $v (header_values($headers->{ $h->{name} })) {
+            return (0, []) if $v =~ $h->{regex};
         }
     }
     for my $h (@{ $parsed->{header_pos} }) {
         return (0, []) unless exists $headers->{ $h->{name} };
         next           unless $h->{regex};
-        return (0, []) unless $headers->{ $h->{name} } =~ $h->{regex};
-        push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+
+        # At least one value must match; the first that does supplies the captures
+        my $matched = 0;
+        for my $v (header_values($headers->{ $h->{name} })) {
+            next unless $v =~ $h->{regex};
+            $matched = 1;
+            push @captured_groups, $1, $2, $3, $4, $5, $6, $7, $8, $9;
+            last;
+        }
+        return (0, []) unless $matched;
     }
 
     # --- COOKIES ---
