@@ -3975,6 +3975,35 @@ sub _parsed_requires_body_match {
 }
 
 #######################################################################
+# Expand the host dependent variables in a DSL.
+#
+# The matcher built by init_db cannot carry these: it is compiled once when the
+# database loads, long before any host is known, so "@HOSTNAME" sat in the
+# pattern as a literal and the test could never fire. Tests that probe for a
+# server echoing our own hostname back -- sloppy CORS Origin validation, for
+# instance -- need the real name to match against, so expand per host at match
+# time instead. build_matcher caches on the expanded string, so each distinct
+# expansion is compiled once.
+#
+# The value is substituted into a regex, so its metacharacters are escaped
+# first: an unescaped hostname's dots would match any character, turning
+# "www.target.com" into a pattern that also accepts "wwwXtargetYcom".
+#
+# @LFI() is deliberately left alone -- build_matcher expands that itself.
+sub expand_host_dsl {
+    my ($dsl, $mark) = @_;
+    return $dsl unless defined $dsl && index($dsl, '@') >= 0;
+
+    my $host = $mark->{'hostname'} || $mark->{'ip'} || '';
+    my $ip   = $mark->{'ip'}       || '';
+    for ($host, $ip) { s/([\\^\$.|?*+()\[\]{}])/\\$1/g }
+
+    $dsl =~ s/\@HOSTNAME/$host/g;
+    $dsl =~ s/\@IP/$ip/g;
+    return $dsl;
+}
+
+#######################################################################
 # A header value is a plain string, or an arrayref when the response repeated
 # that header (WWW-Authenticate, Set-Cookie, Via, ...). Return it as a list so
 # callers match each value on its own.
