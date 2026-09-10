@@ -4437,13 +4437,25 @@ sub dsl_is_group {
 }
 
 #######################################################################
-# An OR alternative with no TYPE: prefix is shorthand for a BODY pattern
+# Every OR alternative must carry an explicit TYPE: prefix.
+#
+# This used to treat a bare alternative as shorthand for a BODY pattern, but a
+# top level term with no prefix has always been fatal ("Invalid DSL token"), so
+# the same text meant a body match inside a group and a syntax error outside one.
+# Requiring the prefix in both places makes a missing or misspelled type fail
+# loudly wherever it appears, instead of silently becoming a body regex.
 sub dsl_default_alternative_type {
     my ($alt) = @_;
 
     return $alt if $alt =~ /^!?(CODE|BODY|HEADER|COOKIE):/i;
     return $alt if substr($alt, 0, 1) eq '(' || substr($alt, 0, 2) eq '!(';
-    return "BODY:$alt";
+
+    # Unexpanded @LFI() placeholder: parse_dsl skips these, so leave it alone.
+    # Reachable when the DSL is validated before db_variables has been loaded.
+    return $alt if $alt =~ /^@?LFI\(\)$/;
+
+    die "DSL alternative has no TYPE: prefix "
+      . "(expected CODE:, BODY:, HEADER: or COOKIE:): $alt";
 }
 
 #######################################################################
@@ -4504,7 +4516,6 @@ sub parse_dsl {
 
     foreach my $token (@{ dsl_split_top_level($dsl, ['&&']) }) {
         $token =~ s/^\s+|\s+$//g;                     # trim whitespace
-        $token =~ s/,\s*$// if length($token) > 1;    # trim trailing comma
         next unless $token;
 
         # Check negation
@@ -4537,6 +4548,7 @@ sub parse_dsl {
         $type = uc($type);
 
         if ($type eq 'CODE') {
+            die "Empty CODE pattern in DSL" if $pattern eq '';
             push @{ $neg ? $compiled{code_neg} : $compiled{code_pos} }, compile_regex($pattern);
 
         }
