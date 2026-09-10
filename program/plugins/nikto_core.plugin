@@ -4596,42 +4596,35 @@ sub parse_dsl {
 sub compile_regex {
     my ($pattern) = @_;
 
-    # Remove escapes for our delimiters (but preserve other escapes like \. \d etc)
-    # However, don't unescape pipes inside escaped parentheses \( \) as those are literal
-    # Protect pipes inside \( \) blocks by temporarily replacing them
-    my @protected_blocks = ();
-    my $block_idx        = 0;
-    while ($pattern =~ /(\\\([^)]*\\\))/g) {
-        my $block       = $1;
-        my $placeholder = "___PROTECTED_BLOCK_${block_idx}___";
-        $protected_blocks[$block_idx] = $block;
-        $pattern =~ s/\Q$block\E/$placeholder/;
-        $block_idx++;
-    }
-
-    # Now unescape delimiters outside protected blocks
-    $pattern =~ s/\\([|!&:])/$1/g;
-
-    # Restore protected blocks (with their escaped pipes intact)
-    for (my $i = 0 ; $i < @protected_blocks ; $i++) {
-        my $placeholder = "___PROTECTED_BLOCK_${i}___";
-        $pattern =~ s/\Q$placeholder\E/$protected_blocks[$i]/;
-    }
+    # Unescape the DSL delimiters that are NOT regex metacharacters.
+    #
+    # Only \! and \: are unescaped. "!" and ":" carry no meaning to the regex
+    # engine, so a rule author escaping them past the DSL parser wants the bare
+    # character. "|" and "&" are different: stripping the backslash from \| turned
+    # an intended-literal pipe into live alternation, so "BODY:a\|b" matched a body
+    # containing nothing but "b". A pattern that wants alternation says so with an
+    # unescaped pipe inside a group -- "(?:a|b)" -- which survives the top level
+    # splitter because it is parenthesised.
+    #
+    # This also retires the old "___PROTECTED_BLOCK_n___" machinery, which existed
+    # only to hide pipes inside \( \) from that unescape. It was itself a bug: a
+    # pattern containing that literal placeholder text collided with it and was
+    # silently reordered.
+    $pattern =~ s/\\([!:])/$1/g;
 
     # Fix escaped quotes - convert \" to " (escaped quotes in CSV become literal quotes in regex)
     # This prevents "Trailing \ in regex" errors when patterns end with \"
     $pattern =~ s/\\"/"/g;
 
-    # Fix trailing backslashes - if pattern ends with \ (not part of an escape sequence), double it
-    # This prevents "Trailing \ in regex" errors (e.g., "c:\" becomes "c:\\")
-    # Only do this if the backslash is not already escaped (not "\\")
-    if ($pattern =~ /[^\\]\\$/) {
-        $pattern =~ s/([^\\])\\$/$1\\\\/;    # Double the trailing backslash
-    }
-    elsif ($pattern =~ /^\\$/) {
-
-        # Pattern is just a single backslash
-        $pattern = '\\\\';
+    # Repair an unpaired trailing backslash, which is a fatal regex syntax error
+    # ("Trailing \ in regex"), so a hand written rule such as "BODY:c:\" means a
+    # literal backslash instead of failing to load.
+    #
+    # Only an ODD run is unpaired: "c:\" -> "c:\\", "c:\\\" -> "c:\\\\", while an
+    # even run is already a well formed sequence of escaped backslashes and is
+    # left alone.
+    if ($pattern =~ /(\\+)$/ && length($1) % 2) {
+        $pattern .= '\\';
     }
 
     # Handle case-insensitive flag
