@@ -194,14 +194,9 @@ sub vereval {
            "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
 
     my (@CUR, @RUN);
-    if (($CURRENT !~ /[a-z]/) && ($RUNNING !~ /[a-z]/)) {
-        @CUR = split(/\./, $CURRENT);
-        @RUN = split(/\./, $RUNNING);
-    }
-    else {
-        @CUR = split(//, $CURRENT);
-        @RUN = split(//, $RUNNING);
-    }
+    # Letters were already converted to ordinals above; always compare numerically.
+    @CUR = split(/\./, $CURRENT);
+    @RUN = split(/\./, $RUNNING);
 
     # start with 0... eval each in turn...
     for (my $i = 0 ; $i <= $#CUR ; $i++) {
@@ -209,10 +204,11 @@ sub vereval {
         my $r = $RUN[$i] // '';
         nprint("nikto_outdated.plugin: major compare: \$CUR[$i]:$c: \$RUN[$i]:$r:",
                "d", "outdated", $mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'});
-        if (($c ne "") && ($r eq "")) { return 1; }    # running is older (shorter)
-        if ($r eq "")                 { next; }
-        if ($c > $r)                  { return 1; }    # running is older
-        if ($c < $r)                                   # running is newer
+        # Running banner has fewer components (Apache/2.4 vs DB 2.4.62).
+        # Truncation is not evidence of being outdated.
+        if ($r eq "") { return 0; }
+        if ($c > $r)  { return 1; }    # running is older
+        if ($c < $r)                   # running is newer
         {
             my $string = $_[1];
             $string =~ s/\s/\%20/g;

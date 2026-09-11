@@ -140,6 +140,11 @@ sub nikto_ssl_idna_to_ascii {
         1;
     };
 
+    # IDNA ToASCII case-folds before Punycode. Ü and ü are distinct code
+    # points; encoding uppercase as-is yields a different ACE label than
+    # the cert (MÜNCHEN → xn--mnchen-psa vs münchen → xn--mnchen-3ya).
+    $name = lc($name);
+
     my @out;
     foreach my $label (split(/\./, $name, -1)) {
         if ($label eq '' || $label !~ /[^\x00-\x7F]/) {
