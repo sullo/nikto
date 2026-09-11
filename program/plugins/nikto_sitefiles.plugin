@@ -368,14 +368,11 @@ sub nikto_sitefiles {
             }
 
             my $check_uri = ($mark->{'root'} // '') . "/$f";
-            my $condition1 = ($ct ne '' && $ct =~ /^application\//i);
-            my $condition2 =
-                 (($res // '') eq '200')
-              && (length($content) > 0)
-              && ($ct eq '' || $ct !~ /^text\//i)
-              && (!is_404($mark, $check_uri, $response));
-
-            if ($condition1 || $condition2) {
+            # application/* is interesting, but never a bypass of 200 / is_404
+            if (   (($res // '') eq '200')
+                && (length($content) > 0)
+                && ($ct eq '' || $ct !~ /^text\//i)
+                && (!is_404($mark, $check_uri, $response))) {
 
                 # Enhanced content analysis to reduce false positives
                 if (is_likely_real_file($content, "/$f")) {
