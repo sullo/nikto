@@ -133,26 +133,28 @@ sub nikto_user_enum_apache_brute {
     my $text    = "a";
     my $ctr     = 0;
     my $message = "Valid users found via Apache enumeration: ";
-    my ($response, $content);
     my @foundusers = ();
+    my ($save_request, $save_response);
     while (length($text) <= $size) {
         return if $mark->{'terminate'};
         if (($ctr % 500) == 0) {
             nprint("- User enumeration guess $ctr ($text)", "v", "apacheusers");
         }
-        my ($res, $content, $errors, $request, $response) =
+        my ($res, $content, $error, $request, $response) =
           nfetch($mark, $url . $text, "HEAD", "", "", "", "user_enum_apache: enumeration");
         my $user = nikto_user_enum_apache_check($res, $text);
         if (defined $user && $user ne "") {
             push(@foundusers, $user);
+            ($save_request, $save_response) = ($request, $response);
         }
         $text++;
         $ctr++;
     }
     if (scalar(@foundusers)) {
-        my $u = join(', ', @foundusers);
+        my $u   = join(', ', @foundusers);
+        my $uri = $url . $foundusers[-1];
         add_vulnerability($mark, $message . $u,
-                          "000479", "CVE-2001-1013", "HEAD", "/", $request, $response);
+                          "000479", "CVE-2001-1013", "HEAD", $uri, $save_request, $save_response);
     }
 }
 
@@ -160,7 +162,7 @@ sub nikto_user_enum_apache_dictionary {
     my ($url, $mark, $filename) = @_;
     my $message    = "Valid users found via Apache enumeration: ";
     my @foundusers = ();
-    my ($response, $content);
+    my ($save_request, $save_response);
     my $ctr = 0;
 
     nprint("- Enumerating Apache users (using dictionary $filename).", "v", "apacheusers");
@@ -177,19 +179,21 @@ sub nikto_user_enum_apache_dictionary {
         s/^~//;
         if ($_ eq "")          { next }
         if (($ctr % 500) == 0) { nprint("- User enumeration guess $ctr ($_)", "v", "apacheusers"); }
-        my ($res, $content, $errors, $request, $response) =
+        my ($res, $content, $error, $request, $response) =
           nfetch($mark, $url . $_, "HEAD", "", "", "", "user_enum_apache: dictionary");
         my $user = nikto_user_enum_apache_check($res, $_);
         if ($user) {
             push(@foundusers, $user);
+            ($save_request, $save_response) = ($request, $response);
         }
         $ctr++;
     }
     close($fh);
     if (scalar(@foundusers)) {
-        my $u = join(', ', @foundusers);
+        my $u   = join(', ', @foundusers);
+        my $uri = $url . $foundusers[-1];
         add_vulnerability($mark, $message . $u,
-                          "000478", "CVE-2001-1013", "HEAD", "/", $request, $response);
+                          "000478", "CVE-2001-1013", "HEAD", $uri, $save_request, $save_response);
     }
 }
 
