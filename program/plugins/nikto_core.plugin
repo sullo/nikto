@@ -3506,17 +3506,9 @@ sub nfetch {
             $mark->{'ssl_cert_subject'} = $whisker->{'ssl_cert_subject'};
 
             # Process altnames correctly - Net::SSLeay::X509_get_subjectAltNames returns
-            # an array where even indices are type codes and odd indices are the actual names
+            # (type, value) pairs. Type 2 = dNSName, type 7 = iPAddress (RFC 5280).
             if ($altnames && @$altnames) {
-                my @valid_names;
-                for (my $i = 1 ; $i < @$altnames ; $i += 2) {
-                    my $name = $altnames->[$i];
-
-                    # Only include DNS names (type 2) and skip numeric-only names
-                    if ($altnames->[ $i - 1 ] == 2 && $name !~ /^[\d]+$/ && $name ne '') {
-                        push(@valid_names, $name);
-                    }
-                }
+                my @valid_names = ssl_format_altnames($altnames);
                 $mark->{'ssl_cert_altnames'} = join(', ', @valid_names);
             }
         }
@@ -5541,9 +5533,64 @@ sub process_captured_groups {
     return $message;
 }
 ###############################################################################
+# Format Net::SSLeay subjectAltName pairs for matching and reports.
+# Type 2 (dNSName): keep textual DNS, skip numeric-only.
+# Type 7 (iPAddress): packed 4/16-byte addresses become dotted/colon text.
+sub ssl_format_altnames {
+    my ($altnames) = @_;
+    return () unless $altnames && ref($altnames) eq 'ARRAY' && @$altnames;
+
+    my @valid_names;
+    for (my $i = 1 ; $i < @$altnames ; $i += 2) {
+        my $type = $altnames->[ $i - 1 ];
+        my $name = $altnames->[$i];
+        next unless defined $name && $name ne '';
+
+        if ($type == 2) {
+            next if $name =~ /^[\d]+$/;
+            push @valid_names, $name;
+        }
+        elsif ($type == 7) {
+            my $ip = ssl_format_ip_san($name);
+            push @valid_names, $ip if defined $ip && $ip ne '';
+        }
+    }
+    return @valid_names;
+}
+
+# Decode a type-7 iPAddress SAN (packed bytes or already-text).
+sub ssl_format_ip_san {
+    my ($raw) = @_;
+    return unless defined $raw && $raw ne '';
+    my $len = length($raw);
+
+    if ($len == 4) {
+        return join('.', unpack('C4', $raw));
+    }
+    if ($len == 16) {
+        my $text;
+        eval {
+            require Socket;
+            $text = Socket::inet_ntop(Socket::AF_INET6(), $raw);
+            1;
+        };
+        return $text if defined $text && $text ne '';
+        return join(':', map { sprintf('%x', $_) } unpack('n8', $raw));
+    }
+
+    # Some Net::SSLeay builds already stringify the address
+    if ($raw =~ /^$LW2::IPv4_re$/ || $raw =~ /^$LW2::IPv6_re_inc_zoneid$/) {
+        return $raw;
+    }
+    return;
+}
+
+###############################################################################
 sub rquote {
-    my $string = $_[0] || return;
-    $string =~ s/([^A-Za-z_0-9 "'\\])/\\$1/g;
+    return unless defined $_[0];
+    my $string = $_[0];
+    # Escape backslash too — leaving it in the keep-class turns \w into a class.
+    $string =~ s/([^A-Za-z_0-9 "'])/\\$1/g;
     return $string;
 }
 ###############################################################################
