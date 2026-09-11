@@ -25,9 +25,10 @@ sub nikto_cookies_postfetch {
     my $found = ($mark->{'cfound'} ||= {});
 
     foreach my $c (@$cookies) {
-        # Allow empty and quoted values (name= / name="a;b"; HttpOnly)
+        # Cookie-name is a token: no ";", and the name=value pair starts the
+        # header. Unanchored [^=]+ ate "; Path=" from "foo; Path=/; HttpOnly".
         my ($cname, $quoted, $plain) =
-          ($c =~ /([^=]+)=\s*(?:"([^"]*)"|([^;]*))/);
+          ($c =~ /\A\s*([^\s,;="]+)(?:=\s*(?:"([^"]*)"|([^;]*)))?/);
         next unless defined $cname;
         my $cvalue = defined $quoted ? $quoted : ($plain // '');
 
