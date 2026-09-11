@@ -3202,6 +3202,27 @@ sub running_average_print {
 }
 
 #######################################################################
+# If Location is an absolute URL for this scan's host (and port), return
+# the path so nfetch can follow it on the same connection. Otherwise
+# return the original string (relative paths pass through).
+sub same_host_redirect_path {
+    my ($location, $mark) = @_;
+    return $location unless defined $location && ref($mark) eq 'HASH';
+
+    my $port = $mark->{'port'};
+    my $host_re = join '|',
+      map { quotemeta $_ } ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'});
+
+    # Optional :port for this scan, including default 80/443 (Location often
+    # includes them; omitting the alternative left those redirects unfollowed).
+    my $port_re = $port ? '(?:\:' . quotemeta($port) . ')?' : '';
+    if ($location =~ /^https?:\/\/($host_re)$port_re\//i) {
+        $location =~ s{^https?:\/\/(?:$host_re)$port_re/}{/}i;
+    }
+    return $location;
+}
+
+#######################################################################
 sub nfetch {
     my ($mark, $uri, $method, $data, $headers_send, $flags, $testid, $httpver) = @_;
     my (%request, %response);
@@ -3362,27 +3383,7 @@ sub nfetch {
         && ($response{'whisker'}->{'code'} =~ /^30[1278]/)
         && defined $response{'location'}
         && $response{'location'} ne '') {
-        my $newlocation = $response{'location'};
-        my $port        = $mark->{'port'};
-
-        # Is a full URL redirect the same host?
-        # Pre-compute host alternatives for better performance
-        my $host_re = join '|',
-          map { quotemeta $_ } ($mark->{'ip'}, $mark->{'hostname'}, $mark->{'displayname'});
-
-        # Only build port regex if port is specified
-        if ($port && $port != 80 && $port != 443) {
-            my $port_re = '(?:\:' . quotemeta($port) . ')?';
-            if ($response{'location'} =~ /^https?:\/\/($host_re)$port_re\//i) {
-                $newlocation =~ s{^https?:\/\/(?:$host_re)$port_re/}{/}i;
-            }
-        }
-        else {
-            # No port needed in regex for standard ports
-            if ($response{'location'} =~ /^https?:\/\/($host_re)\//i) {
-                $newlocation =~ s{^https?:\/\/(?:$host_re)/}{/}i;
-            }
-        }
+        my $newlocation = same_host_redirect_path($response{'location'}, $mark);
 
         # Same-host only: follow paths on this connection. An absolute
         # cross-host Location must not be sent as request-URI to the
