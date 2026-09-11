@@ -329,6 +329,18 @@ sub nikto_headers_postfetch {
     return $request, $response;
 }
 
+# Flatten scalar-or-ARRAY header values and return IPs found in them.
+# Duplicate Location/WWW-Authenticate (Exchange/CAS) arrive as ARRAY refs.
+sub header_ips {
+    my ($raw) = @_;
+    my @ips;
+    for my $val (header_values($raw)) {
+        next unless defined $val && !ref($val) && $val ne '';
+        push @ips, get_ips($val);
+    }
+    return @ips;
+}
+
 # If multiple headers were sent with the same name, turn the array into a string for reporting
 sub report_multiheaders {
     my $header = $_[0] || return;
@@ -436,17 +448,16 @@ sub nikto_headers {
         my ($res, $content, $errors, $request, $response) =
           nfetch($mark, $uri, "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
-        if (   !$cl
-            && defined $response->{'content-location'}
-            && ($response->{'content-location'} ne "")) {
-            my @ips = get_ips($response->{'content-location'});
-            my ($valid, $internal, $loopback) = is_ip($ips[0]);
-            if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
+        if (!$cl && defined $response->{'content-location'}) {
+            my @ips = header_ips($response->{'content-location'});
+            my $ip  = $ips[0] // '';
+            my ($valid, $internal, $loopback) = is_ip($ip);
+            if ($ip ne '' && $ip ne $mark->{'ip'}) {
                 $cl = 1;
                 add_vulnerability(
                     $mark,
                     $uri
-                      . ": IIS may reveal its internal or real IP in the Content-Location header via a request with HTTP/1.0. The value is \"$ips[0]\".",
+                      . ": IIS may reveal its internal or real IP in the Content-Location header via a request with HTTP/1.0. The value is \"$ip\".",
                     "999989",
                     "CVE-2000-0649",
                     "GET",
@@ -457,15 +468,16 @@ sub nikto_headers {
             }
         }
 
-        if (!$l && defined $response->{'location'} && ($response->{'location'} ne "")) {
-            my @ips = get_ips($response->{'location'});
-            my ($valid, $internal, $loopback) = is_ip($ips[0]);
-            if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
+        if (!$l && defined $response->{'location'}) {
+            my @ips = header_ips($response->{'location'});
+            my $ip  = $ips[0] // '';
+            my ($valid, $internal, $loopback) = is_ip($ip);
+            if ($ip ne '' && $ip ne $mark->{'ip'}) {
                 $l = 1;
                 add_vulnerability(
                     $mark,
                     $uri
-                      . ": The web server may reveal its internal or real IP in the Location header via a request to with HTTP/1.0. The value is \"$ips[0]\".",
+                      . ": The web server may reveal its internal or real IP in the Location header via a request to with HTTP/1.0. The value is \"$ip\".",
                     "999988",
                     "CVE-2000-0649",
                     "GET",
@@ -476,17 +488,16 @@ sub nikto_headers {
             }
         }
 
-        if (   !$wa
-            && defined $response->{'www-authenticate'}
-            && ($response->{'www-authenticate'} ne "")) {
-            my @ips = get_ips($response->{'www-authenticate'});
-            my ($valid, $internal, $loopback) = is_ip($ips[0]);
-            if (($ips[0] ne '') && ($ips[0] ne $mark->{'ip'})) {
+        if (!$wa && defined $response->{'www-authenticate'}) {
+            my @ips = header_ips($response->{'www-authenticate'});
+            my $ip  = $ips[0] // '';
+            my ($valid, $internal, $loopback) = is_ip($ip);
+            if ($ip ne '' && $ip ne $mark->{'ip'}) {
                 $wa = 1;
                 add_vulnerability(
                     $mark,
                     $request->{'whisker'}{'uri'}
-                      . ": Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ips[0]\".",
+                      . ": Microsoft Exchange Systems (CAS and OWA) may reveal the internal or real IP in the WWW-Authenticate header via a request to $uri over HTTP/1.0. The value is \"$ip\".",
                     "999986",
                     "CVE-2000-0649",
                     "GET",
@@ -540,14 +551,15 @@ sub nikto_headers {
     my ($res, $content, $errors, $request, $response) =
       nfetch($mark, '.', "GET", "", \%locheaders, \%locflags, "Headers", "1.0");
 
-    my @ips = get_ips($response->{'location'});
-    if ($ips[0] ne '') {
-        my ($valid, $internal, $loopback) = is_ip($ips[0]);
-        if ($valid && !$loopback && ($ips[0] ne $mark->{'ip'})) {
+    my @ips = header_ips($response->{'location'});
+    my $ip  = $ips[0] // '';
+    if ($ip ne '') {
+        my ($valid, $internal, $loopback) = is_ip($ip);
+        if ($valid && !$loopback && ($ip ne $mark->{'ip'})) {
             my $msg = $request->{'whisker'}{'uri'} . ": WebLogic may reveal ";
             if   ($internal) { $msg .= "an RFC-1918 IP address. "; }
             else             { $msg .= "a different IP address in the Location header."; }
-            $msg .= "The IP is \"$ips[0]\".";
+            $msg .= "The IP is \"$ip\".";
             add_vulnerability(
                 $mark,
                 $msg,
