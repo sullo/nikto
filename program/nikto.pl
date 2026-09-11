@@ -180,6 +180,7 @@ foreach my $mark (@MARKS) {
     $mark->{'total_vulns'}  = 0;
     $mark->{'total_errors'} = 0;
     $mark->{'start_time'}   = time();
+    my $req_start = $COUNTERS{'totalrequests'} || 0;
     report_host_start($mark);
 
     if (!$mark->{'test'}) {
@@ -189,8 +190,9 @@ foreach my $mark (@MARKS) {
                               "Failed to scan");
         }
 
-        $mark->{'end_time'} = time();
-        $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+        $mark->{'end_time'}       = time();
+        $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+        $mark->{'total_requests'} = ($COUNTERS{'totalrequests'} || 0) - $req_start;
         report_host_end($mark);
         $VARIABLES{'deferout'} = 1;
         $COUNTERS{'hosts_completed'}++;
@@ -218,8 +220,9 @@ foreach my $mark (@MARKS) {
         $VARIABLES{'deferout'} = 0;
         add_vulnerability($mark, $msg, "FAIL", "", "GET", "/", $request, $response,
                           "Failed to scan");
-        $mark->{'end_time'} = time();
-        $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+        $mark->{'end_time'}       = time();
+        $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+        $mark->{'total_requests'} = ($COUNTERS{'totalrequests'} || 0) - $req_start;
         report_host_end($mark);
         $VARIABLES{'deferout'} = 1;
         $COUNTERS{'hosts_completed'}++;
@@ -249,8 +252,9 @@ foreach my $mark (@MARKS) {
     run_hooks($mark, "recon");
     run_hooks($mark, "scan");
 
-    $mark->{'end_time'} = time();
-    $mark->{'elapsed'}  = $mark->{'end_time'} - $mark->{'start_time'};
+    $mark->{'end_time'}       = time();
+    $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+    $mark->{'total_requests'} = ($COUNTERS{'totalrequests'} || 0) - $req_start;
 
     # Use singular/plural based on count
     my $error_word = ($mark->{'total_errors'} == 1) ? "error" : "errors";
@@ -258,7 +262,7 @@ foreach my $mark (@MARKS) {
 
     if (!$mark->{'terminate'}) {
         nprint(
-            "+ $COUNTERS{'totalrequests'} requests: $mark->{'total_errors'} $error_word and $mark->{'total_vulns'} $item_word reported on the remote host"
+            "+ $mark->{'total_requests'} requests: $mark->{'total_errors'} $error_word and $mark->{'total_vulns'} $item_word reported on the remote host"
             );
     }
     else {

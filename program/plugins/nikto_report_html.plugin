@@ -230,7 +230,7 @@ sub process_template {
     $variables{"#TEMPL_SCAN_END#"}     = localtime($COUNTERS{'scan_end'}   || 0);
     $variables{"#TEMPL_SCAN_ELAPSED#"} = ($COUNTERS{'scan_elapsed'} // 0) . " seconds";
     $variables{"#TEMPL_STATISTICS#"} =
-        ($COUNTERS{'totalrequests'} // 0)
+        ($mark->{'total_requests'} // 0)
       . " requests, "
       . ($mark->{'total_errors'} // 0)
       . " errors, "
