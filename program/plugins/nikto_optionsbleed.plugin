@@ -38,12 +38,13 @@ sub nikto_optionsbleed {
             last;
         }
 
-        # Should only be uppercase letters and commas, spaces between
-        if ($allow =~ /[^A-Z, ]/ || $allow =~ /,,+/) {
+        # Allow is 1#method; method is a token (RFC 7230 tchar) or *. OPTIONSBLEED
+        # leaks memory (controls, ':', garbage) — not WebDAV/UPnP/CORS methods.
+        if ($allow =~ /[^\t !#\$%&'*+\-.0-9A-Za-z^_`|~,]/ || $allow =~ /,,+/) {
             add_vulnerability($mark,
                        "$path: Potential OPTIONSBLEED vulnerability detected. Allow header: $allow",
                        "740002", "CVE-2017-9798", 'OPTIONS', $path, $request, $response,
-                       "Allow header value contains [^A-Z, ] or ,,");
+                       "Allow header value is not a comma-separated method list");
             return;
         }
     }
