@@ -279,6 +279,7 @@ $COUNTERS{'scan_end'}     = time();
 $COUNTERS{'scan_elapsed'} = ($COUNTERS{'scan_end'} - $COUNTERS{'scan_start'});
 report_summary();
 report_close();
+$NIKTO{'current_mark'} = undef;
 
 nprint("+ $COUNTERS{'hosts_completed'} host(s) tested");
 nprint("+ $COUNTERS{'totalrequests'} requests made in $COUNTERS{'scan_elapsed'} seconds",

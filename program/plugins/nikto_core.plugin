@@ -623,8 +623,8 @@ sub status_report {
 }
 ###############################################################################
 sub date_disp {
-    my $t      = $_[0] || return;
-    my @time   = localtime($t);
+    return '' unless defined $_[0] && $_[0] ne '';
+    my @time   = localtime($_[0]);
     my $result = sprintf("%d-%02d-%02d %02d:%02d:%02d",
                          $time[5] + 1900,
                          $time[4] + 1,
@@ -1396,13 +1396,16 @@ sub safe_quit {
     }
 
     if (ref($mark)) {
-        $mark->{'end_time'}       = time();
-        $mark->{'elapsed'}        = $mark->{'end_time'} - $mark->{'start_time'};
+        $mark->{'end_time'} = time();
+        $mark->{'elapsed'} =
+          $mark->{'end_time'} - ($mark->{'start_time'} // $mark->{'end_time'});
         $COUNTERS{'scan_elapsed'} = (time() - $COUNTERS{'scan_start'});
         report_host_end($mark);
         report_summary($mark);
-        report_close($mark);
     }
+
+    # Always close reports — they are opened before current_mark is set
+    report_close();
     $NIKTO{'POSIX'}{'term'}->setlflag($NIKTO{'POSIX'}{'oterm'})
       if ($^O !~ /MSWin32/ && defined $NIKTO{'POSIX'}{'term'});
     exit 1;
@@ -2806,6 +2809,8 @@ sub report_host_end {
 ###############################################################################
 sub report_summary {
     my ($mark) = @_;
+    return if $NIKTO{'reports_summarized'};
+    $NIKTO{'reports_summarized'} = 1;
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {
@@ -2847,6 +2852,10 @@ sub report_ssl_info {
 
 ###############################################################################
 sub report_close {
+
+    # Re-entry from SIGINT after a normal close must be a no-op
+    return if $NIKTO{'reports_closed'};
+    $NIKTO{'reports_closed'} = 1;
 
     # Go through all reporting modules
     foreach my $reporter (@REPORTS) {

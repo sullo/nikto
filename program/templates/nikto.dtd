@@ -20,13 +20,13 @@
   xmlns CDATA #FIXED ''
   checks CDATA #REQUIRED
   errors CDATA #REQUIRED
-  hostheader NMTOKEN #REQUIRED
+  hostheader CDATA #REQUIRED
   siteip CDATA #REQUIRED
   sitename CDATA #REQUIRED
   starttime CDATA #REQUIRED
   targetbanner CDATA #REQUIRED
-  targethostname NMTOKEN #REQUIRED
-  targetip NMTOKEN #REQUIRED
+  targethostname CDATA #REQUIRED
+  targetip CDATA #REQUIRED
   targetport CDATA #REQUIRED>
 
 <!ELEMENT item (description,uri,namelink,iplink,references)>
