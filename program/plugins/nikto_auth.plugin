@@ -159,15 +159,19 @@ sub nikto_auth {
         return $request, $response;
     }
 
-    # Save to revert (preserve original ARRAY or string shape)
-    my $save_auth = $raw_auth;
+    # Snapshot the original 401. Probes overwrite $response in place;
+    # later postfetch hooks and nfetch's return value must still see it.
+    my $orig_response = _nikto_auth_clone_response($response);
 
     # Now we can try the passwords
     nprint("Testing creds for '$realm'",
            "v", "auth", ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
     my $success = 0;
     foreach my $entry (@{$REALMS}) {
-        return if $mark->{'terminate'};
+        if ($mark->{'terminate'}) {
+            _nikto_auth_restore_response($response, $orig_response);
+            return $request, $response;
+        }
         my $entry_realm   = defined $entry->{'realm'} ? $entry->{'realm'} : '';
         my $realm_matches = ($entry_realm eq '@ANY')
           || (defined $realm && $realm =~ /\Q$entry_realm\E/i);
@@ -206,9 +210,7 @@ sub nikto_auth {
             && !_www_authenticate_present($response))
         {
             # Snapshot the authenticated exchange before the unauthenticated recheck
-            my %auth_whisker  = %{ $response->{'whisker'} };
-            my %auth_response = %{$response};
-            $auth_response{'whisker'} = \%auth_whisker;
+            my $auth_response = _nikto_auth_clone_response($response);
 
             # Recheck without credentials: FP if URI is open anyway
             LW2::auth_unset($request);
@@ -220,9 +222,8 @@ sub nikto_auth {
             my $vcode = $response->{'whisker'}->{'code'} // '';
             if ($vcode =~ /^40[13]$/ || _www_authenticate_present($response)) {
 
-                # Restore authenticated exchange for reporting / default creds
-                %{$response} = %auth_response;
-                $response->{'whisker'} = \%auth_whisker;
+                # Report the authenticated exchange; do not leave it in
+                # $response (add_vulnerability stores that hash by reference).
                 LW2::auth_set($authtype, $request, $entry->{'id'}, $entry->{'password'});
 
                 my $message;
@@ -244,20 +245,20 @@ sub nikto_auth {
 
                 add_vulnerability($mark, $message, $entry->{'nikto_id'}, $ref, "GET",
                                   $request->{'whisker'}->{'uri'},
-                                  $request, $response);
+                                  $request, $auth_response);
 
                 # Per-mark only — do not mutate global $REALMS entries
                 $success                            = 1;
                 $mark->{'realms'}{$realm}{'status'} = 1;
-                $mark->{'auth_default'}        = $mark->{'realms'}{$realm};
+                $mark->{'auth_default'}             = $mark->{'realms'}{$realm};
                 last;
             }
             nprint("- Auth success looked like a false positive (URI open without credentials)",
                    "v", "auth",
                    ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'displayname'}));
         }
-        $response->{'www-authenticate'} = $save_auth;
     }
+    _nikto_auth_restore_response($response, $orig_response);
     LW2::auth_unset($request);
 
     # Record that we've processed this realm even when nothing matched, so a
@@ -281,6 +282,28 @@ sub _www_authenticate_present {
         return scalar(grep { defined $_ && $_ ne '' } @{$h}) ? 1 : 0;
     }
     return $h ne '' ? 1 : 0;
+}
+
+# Shallow-copy response + whisker + ARRAY headers so probes cannot alias us.
+sub _nikto_auth_clone_response {
+    my ($src) = @_;
+    return {} unless ref($src) eq 'HASH';
+    my %dst = %{$src};
+    if (ref($src->{'whisker'}) eq 'HASH') {
+        $dst{'whisker'} = { %{ $src->{'whisker'} } };
+    }
+    foreach my $k (keys %dst) {
+        next if $k eq 'whisker';
+        $dst{$k} = [ @{ $dst{$k} } ] if ref($dst{$k}) eq 'ARRAY';
+    }
+    return \%dst;
+}
+
+sub _nikto_auth_restore_response {
+    my ($dst, $src) = @_;
+    return unless ref($dst) eq 'HASH' && ref($src) eq 'HASH';
+    my $clone = _nikto_auth_clone_response($src);
+    %{$dst} = %{$clone};
 }
 
 1;
