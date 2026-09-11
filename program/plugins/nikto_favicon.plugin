@@ -91,6 +91,10 @@ sub favicon_checkhash {
             next unless defined $url[2] && exists $valid_hosts{ lc($url[2]) };
             $v = $url[0] // '';
         }
+        elsif ($v =~ m{^[a-z][a-z0-9+.-]*:}i) {
+            # mailto:, javascript:, ftp://, data:, ... — not a site path
+            next;
+        }
         elsif ($v !~ m{^/}) {
             # Document was fetched as "/"; resolve relative hrefs from root
             $v = "/$v";
