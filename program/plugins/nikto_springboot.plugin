@@ -40,8 +40,7 @@ sub nikto_springboot {
       /actuator/prometheus
       );
 
-    my $port  = $mark->{'port'} // '';
-    my $proto = $mark->{'ssl'} ? 'https' : 'http';
+    my $port = $mark->{'port'} // '';
     my $host_re =
       join('|', map { quotemeta($_) }
           grep { defined $_ && $_ ne '' }
@@ -72,7 +71,37 @@ sub nikto_springboot {
             next;
         }
 
-        # responses should be JSON
+        # heapdump is application/octet-stream (HPROF), not JSON
+        if ($ep eq '/actuator/heapdump') {
+            if ($ct =~ /octet-stream/i || $content =~ /\AJAVA PROFILE/) {
+                add_vulnerability(
+                    $mark,
+                    "$ep: Spring Boot Actuator heapdump endpoint exposed",
+                    "750004",
+                    "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#heapdump",
+                    "GET", $ep, $request, $response
+                );
+            }
+            next;
+        }
+
+        # prometheus exposition format is text/plain, not JSON
+        if ($ep eq '/actuator/prometheus') {
+            if (   $ct =~ /openmetrics|prometheus/i
+                || $content =~ /(?:^|\n)#\s*(?:HELP|TYPE)\s/)
+            {
+                add_vulnerability(
+                    $mark,
+                    "$ep: Spring Boot Actuator prometheus endpoint exposed",
+                    "750004",
+                    "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/#prometheus",
+                    "GET", $ep, $request, $response
+                );
+            }
+            next;
+        }
+
+        # remaining responses should be JSON
         next unless ($ct =~ /application\/json/i || $content =~ /^\s*[\{\[]/);
 
         my $json;
@@ -90,12 +119,25 @@ sub nikto_springboot {
                     next unless ref($links->{$k}) eq 'HASH';
                     my $href = $links->{$k}{'href'};
                     next unless defined $href && $href ne '';
-                    my $report_val = $href;
+                    my $report_val;
 
-                    # If on same host, report only the path; otherwise, report full URL
+                    # Same-host http(s) → path only. Off-host / other schemes:
+                    # name the link, never echo the attacker-controlled href.
                     if ($host_re ne ''
-                        && $href =~ m{^$proto://(?:$host_re)$port_re(/.*)$}i) {
+                        && $href =~ m{^https?://(?:$host_re)$port_re(/.*)$}i) {
                         $report_val = $1;
+                    }
+                    elsif ($href =~ m{^/}) {
+                        $report_val = $href;
+                    }
+                    else {
+                        $report_val = $k;
+                    }
+                    $report_val = nikto_springboot_safe_str($report_val);
+                    next unless length($report_val);
+                    if ($report_val =~ m{^[a-z][a-z0-9+.-]*:}i || $report_val =~ /\s/) {
+                        $report_val = nikto_springboot_safe_str($k);
+                        next unless length($report_val);
                     }
                     add_vulnerability(
                         $mark,
@@ -162,6 +204,14 @@ sub nikto_springboot {
                      );
         }
     }
+}
+
+# Strip controls / limit length so untrusted actuator JSON cannot break reports
+sub nikto_springboot_safe_str {
+    my ($s) = @_;
+    $s = '' unless defined $s;
+    $s =~ s/[\x00-\x1f\x7f]//g;
+    return length($s) > 256 ? substr($s, 0, 256) : $s;
 }
 
 1;
