@@ -69,14 +69,21 @@ sub text_ssl_info {
 sub text_item {
     my ($handle, $mark, $item) = @_;
 
-    my $uri  = $item->{uri}        // '';
-    my $root = $mark->{'root'}     // '';
+    my $uri  = $item->{uri}    // '';
+    my $root = $mark->{'root'} // '';
+    my $full_uri = $uri;
+    if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
+        $full_uri = $root . $uri;
+    }
+
     my $line = "+ ";
     if ($item->{method}) { $line .= $item->{method} . " " }
-    if ($uri ne '' && $root ne '' && $uri !~ /^\Q$root\E(?:\/|$)/) {
-        $line .= $root . $uri . ": ";
-    }
-    $line .= $item->{message} // '';
+    $line .= "$full_uri: " if $full_uri ne '';
+
+    my $msg = $item->{message} // '';
+    $msg =~ s/^\Q$full_uri\E:\s*// if $full_uri ne '';
+    $msg =~ s/^\Q$uri\E:\s*//      if $uri ne '' && $uri ne $full_uri;
+    $line .= $msg;
     if (defined $item->{refs} && $item->{refs} ne "") {
         $line .= " See: " . $item->{refs} . ": ";
     }

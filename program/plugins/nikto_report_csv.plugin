@@ -123,11 +123,10 @@ sub csv_item {
     my ($handle, $mark, $item) = @_;
     my $uri      = $item->{'uri'} // '';
     my $line     = '';
-    my $hostname =
-      $item->{'mark'}->{'vhost'} ? $item->{'mark'}->{'vhost'} : $item->{'mark'}->{'hostname'};
+    my $hostname = $mark->{'vhost'} ? $mark->{'vhost'} : $mark->{'hostname'};
     $line .= "\"" . csv_safecell($hostname) . "\",";
-    $line .= "\"" . csv_safecell($item->{'mark'}->{'ip'}) . "\",";
-    $line .= "\"" . csv_safecell($item->{'mark'}->{'port'}) . "\",";
+    $line .= "\"" . csv_safecell($mark->{'ip'}) . "\",";
+    $line .= "\"" . csv_safecell($mark->{'port'}) . "\",";
     $line .= "\"" . csv_safecell($item->{'refs'}) . "\",";
     $line .= "\"" . csv_safecell($item->{'method'}) . "\",";
 

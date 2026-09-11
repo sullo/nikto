@@ -113,8 +113,13 @@ sub json_host_end {
 
 ###############################################################################
 # close output file
+our $JSON_CLOSED = 0;
+
 sub json_close {
     my ($handle, $mark) = @_;
+    return if $JSON_CLOSED;
+    $JSON_CLOSED = 1;
+    return unless defined $handle;
     my $json_encoder = JSON::PP->new->utf8->canonical->pretty->convert_blessed;
     my $json_output  = $json_encoder->encode($JSONRPT_ALL);
     print $handle $json_output;

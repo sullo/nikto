@@ -43,8 +43,13 @@ sub html_head {
     return $fh;
 }
 ###############################################################################
+our $HTML_CLOSED = 0;
+
 sub html_close {
     my ($handle, $mark) = @_;
+    return if $HTML_CLOSED;
+    $HTML_CLOSED = 1;
+    return unless defined $handle;
     my $html = process_template($TEMPLATES{'htm_close'}, $mark);
     print $handle "$html\n";
 
@@ -188,7 +193,7 @@ sub process_template {
     $hostname = '' unless defined $hostname;
 
     $variables{"#TEMPL_HCTR#"}               = $VARIABLES{'TEMPL_HCTR'} // '';
-    $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'});
+    $variables{"#TEMPL_END#"}                = date_disp($mark->{'end_time'}) // '';
     $variables{"#TEMPL_HOSTNAME#"}           = simple_enc($hostname);
     $variables{"#TEMPL_IP#"}                 = simple_enc($mark->{'ip'});
     $variables{"#TEMPL_ITEMS_TESTED#"}       = $COUNTERS{'total_checks'} // '';
@@ -231,7 +236,7 @@ sub process_template {
       . " errors, "
       . ($mark->{'total_vulns'} // 0)
       . " findings";
-    $variables{"#TEMPL_START#"} = date_disp($mark->{'start_time'});
+    $variables{"#TEMPL_START#"} = date_disp($mark->{'start_time'}) // '';
     $variables{"#TEMPL_ELAPSED#"} =
         (defined $mark->{'end_time'} && defined $mark->{'start_time'})
       ? ($mark->{'end_time'} - $mark->{'start_time'})
