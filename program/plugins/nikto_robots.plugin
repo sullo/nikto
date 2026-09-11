@@ -49,7 +49,9 @@ sub nikto_robots {
         my $DISCTR           = 0;
         my $positive_hits    = 0;
         my $positive_hit_cap = 25;
+        my $unique_path_cap  = 25;
         my $capped_positives = 0;
+        my $capped_paths     = 0;
         my @DOC              = split(/\n/, $content);
         my %tocheck;
         foreach my $line (@DOC) {
@@ -83,6 +85,12 @@ sub nikto_robots {
 
                 # Wildcards — note in entry count, but do not learn or probe
                 next if $line =~ /\*/;
+
+                # Hostile robots.txt: bound unique paths learned and fetched
+                if (!exists $tocheck{$line} && scalar(keys %tocheck) >= $unique_path_cap) {
+                    $capped_paths = 1;
+                    next;
+                }
 
                 # figure out dirs/files (literal prefix strip — path, not regex)
                 my $realdir = LW2::uri_get_dir($line);
@@ -149,6 +157,9 @@ sub nikto_robots {
             ($DISCTR == 1) ? "contains 1 entry which should be manually viewed."
           : ($DISCTR > 1)  ? "contains $DISCTR entries which should be manually viewed."
           :                  "retrieved but it does not contain any Allow/Disallow entries...";
+        if ($capped_paths) {
+            $msg .= " Probing capped at $unique_path_cap unique paths.";
+        }
         if ($capped_positives) {
             $msg .= " Capped at 25 positive results.";
         }
