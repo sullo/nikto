@@ -35,11 +35,14 @@ sub nikto_msgs {
     my ($mark) = @_;
     return if $mark->{'terminate'};
     my $dbarray = $MSGS_DB || init_db("db_server_msgs");
+    my $banner  = $mark->{'banner'} // '';
 
     foreach my $item (@$dbarray) {
         # Do not mutate the shared DB entry
         my $server_re = validate_and_fix_regex($item->{'server'});
-        if ($mark->{'banner'} =~ /($server_re)\b/i) {
+        # \b after the DB regex breaks patterns that end on a non-word char
+        # (Ews/, [^0-9], .*). Require a boundary only when the match ends on \w.
+        if ($banner =~ /($server_re)(?(?<=\w)\b)/i) {
             my $matched = $1;
             add_vulnerability($mark, "/: $matched - $item->{'message'}",
                               $item->{'nikto_id'}, $item->{'refs'});
@@ -48,7 +51,7 @@ sub nikto_msgs {
 
     # Special stuff to pull information from results
     # McAfee ePO
-    if ($mark->{'banner'} =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
+    if ($banner =~ /Agent-ListenServer-HttpSvr\/1\.0\b/i) {
         return if $mark->{'terminate'};
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/_LOGFILENAME_", "GET", "", "", "", "msgs: Agent-ListenServer-HttpSvr");
@@ -85,7 +88,7 @@ sub nikto_msgs {
     }
 
     # HP WBEM
-    if ($mark->{'banner'} =~ /CompaqHTTPServer/i) {
+    if ($banner =~ /CompaqHTTPServer/i) {
         return if $mark->{'terminate'};
         my ($res, $content, $error, $request, $response) =
           nfetch($mark, "/cpqlogin.htm", "GET", "", "", "", "msgs: CompaqHTTPServer");
