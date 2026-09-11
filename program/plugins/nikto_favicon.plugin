@@ -75,44 +75,46 @@ sub nikto_favicon {
 sub favicon_checkhash {
     my ($tag, $elements, $linkicons, $mark) = @_;
     return unless ref($linkicons) eq 'HASH' && ref($mark) eq 'HASH';
+    return unless ref($elements) eq 'HASH';
 
     my %valid_hosts = map { lc($_) => 1 }
       grep { defined $_ && $_ ne '' }
       ($mark->{'hostname'}, $mark->{'ip'}, $mark->{'vhost'}, $mark->{'ident'});
 
-    while ((my ($e, $v)) = each(%{$elements})) {
-        next if $e ne 'href';
-        next unless defined $v && $v =~ /\.(ico|png|gif)(?:\?.*)?$/i;
+    # html_find_tags keeps attribute names as authored
+    my %attr = map { lc($_) => $elements->{$_} } keys %{$elements};
+    return unless defined $attr{'rel'} && $attr{'rel'} =~ /\bicon\b/i;
+    my $v = $attr{'href'};
+    return unless defined $v && $v =~ /\.(ico|png|gif)(?:\?.*)?$/i;
 
-        # Absolute or protocol-relative: keep path only for this host
-        if ($v =~ m{^//} || $v =~ m{^https?://}i) {
-            my $abs = ($v =~ m{^//} ? "http:$v" : $v);
-            my @url = LW2::uri_split($abs);
-            next unless defined $url[2] && exists $valid_hosts{ lc($url[2]) };
-            $v = $url[0] // '';
-        }
-        elsif ($v =~ m{^[a-z][a-z0-9+.-]*:}i) {
-            # mailto:, javascript:, ftp://, data:, ... — not a site path
-            next;
-        }
-        elsif ($v !~ m{^/}) {
-            # Document was fetched as "/"; resolve relative hrefs from root
-            $v = "/$v";
-        }
-
-        $v = LW2::uri_normalize($v);
-        next unless defined $v && $v ne '';
-        # Path only — drop query left by normalize
-        $v =~ s/\?.*//;
-
-        # nfetch prepends $mark->{'root'}; strip it here so the path is not doubled
-        my $root = $mark->{'root'} // '';
-        if ($root ne '' && index($v, $root) == 0) {
-            $v = substr($v, length($root));
-            $v = "/$v" if $v !~ m{^/};
-        }
-        $linkicons->{$v} = 1 if $v =~ m{^/};
+    # Absolute or protocol-relative: keep path only for this host
+    if ($v =~ m{^//} || $v =~ m{^https?://}i) {
+        my $abs = ($v =~ m{^//} ? "http:$v" : $v);
+        my @url = LW2::uri_split($abs);
+        return unless defined $url[2] && exists $valid_hosts{ lc($url[2]) };
+        $v = $url[0] // '';
     }
+    elsif ($v =~ m{^[a-z][a-z0-9+.-]*:}i) {
+        # mailto:, javascript:, ftp://, data:, ... — not a site path
+        return;
+    }
+    elsif ($v !~ m{^/}) {
+        # Document was fetched as "/"; resolve relative hrefs from root
+        $v = "/$v";
+    }
+
+    $v = LW2::uri_normalize($v);
+    return unless defined $v && $v ne '';
+    # Path only — drop query left by normalize
+    $v =~ s/\?.*//;
+
+    # nfetch prepends $mark->{'root'}; strip it here so the path is not doubled
+    my $root = $mark->{'root'} // '';
+    if ($root ne '' && index($v, $root) == 0) {
+        $v = substr($v, length($root));
+        $v = "/$v" if $v !~ m{^/};
+    }
+    $linkicons->{$v} = 1 if $v =~ m{^/};
     return;
 }
 
