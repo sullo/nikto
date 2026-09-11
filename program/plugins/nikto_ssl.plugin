@@ -49,16 +49,23 @@ sub nikto_ssl {
     my $cn_list  = @cn_names  ? join(", ", map { nikto_ssl_safe_str($_) } @cn_names)  : "none";
     my $san_list = @san_names ? join(", ", map { nikto_ssl_safe_str($_) } @san_names) : "none";
 
+    # IPv6 targets are stored as [::1]; SANs are unbracketed
+    my $hostname_ip = $hostname_cmp;
+    $hostname_ip =~ s/^\[(.*)\]\z/$1/;
+    my ($hostname_is_ip) = is_ip($hostname_ip);
+
     foreach my $cert_name (@all_names) {
         my $cert_name_cmp = nikto_ssl_idna_to_ascii($cert_name);
         $cert_name_cmp =~ s/\.$//;
 
-        # straight up match
-        if ($hostname_cmp eq $cert_name_cmp) {
+        # straight up match (DNS or IP SAN, including bracketed IPv6 host)
+        if ($hostname_cmp eq $cert_name_cmp || $hostname_ip eq $cert_name_cmp) {
             $match = 1;
         }
 
-        # wildcard cert (must be *.domain — not a bare * prefix)
+        # RFC 6125 6.4.3: leftmost * only, suffix has ≥2 labels (not *.com),
+        # never against an IP reference identifier. Label/string compare —
+        # do not compile untrusted SAN text as a regex.
         elsif ($cert_name_cmp =~ /^\*\./) {
             if (!$wildcard_reported) {
                 add_vulnerability($mark,
@@ -69,13 +76,14 @@ sub nikto_ssl {
                                   );
                 $wildcard_reported = 1;
             }
-            $cert_name_cmp =~ s/^\*\.//;
-            next unless length($cert_name_cmp);
-            $cert_name_cmp = rquote($cert_name_cmp);
-
-            # Require the separating dot; exactly one label (no dots in prefix).
-            # Apex (example.com) must not match *.example.com.
-            if ($hostname_cmp =~ /^[^.]+\.$cert_name_cmp\z/) {
+            my $suffix = $cert_name_cmp;
+            $suffix =~ s/^\*\.//;
+            if (  !$hostname_is_ip
+                && length($suffix)
+                && index($suffix, '.') >= 0
+                && $hostname_cmp =~ /^([^.]+)\.(.+)\z/
+                && $2 eq $suffix)
+            {
                 $match = 1;
             }
         }
