@@ -1300,7 +1300,7 @@
 "601311","Roku/","15.2.4","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601312","salt-api/","3008.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601313","ttyd/","1.7.3-a2312cb","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
-"601314","libwebsockets/","5.0.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
+"601314","libwebsockets/","4.5.8","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601315","uIP/","1.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601316","WAF/","2.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601317","WAVE/","6.0.5.41290","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
