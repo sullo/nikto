@@ -26,122 +26,139 @@ sub nikto_outdated {
     # Platform tags are not part of product/version (e.g. IIS "Microsoft-IIS/10.0 (Win64)")
     $banner =~ s/\s*\(Win(?:32|64)\)//gi;
 
-    # If Apache, split on space...
-    if (   ($banner =~ /apache/i)
-        || (($banner =~ /\s/) && ($banner =~ /\//))) {
-        foreach my $item (split(/ /, $banner)) {
-            next if $item eq '' || is_platform_component($item);
-            $mark->{'components'}->{$item} = 1;
-        }
-    }
+    # Normalize a few vendors whose banners are not "Name/ver" tokens, then
+    # match db_outdated keys against whole haystacks. Do not space-split
+    # first: that turns "Alpha Anywhere Application Server/12.0" into
+    # "Server/12.0" and lets a short key steal a multi-word product.
+    my @haystacks;
 
-    # Some specific (and common) banner processing
-    # WebLogic: strip all the date info...
-    elsif ($banner =~ /weblogic/i) {
+    if ($banner =~ /weblogic/i) {
         my @T = split(/ /, $banner);
         if (defined $T[0] && $T[0] ne '' && defined $T[1] && $T[1] ne '') {
-            $mark->{'components'}->{ $T[0] . '/' . $T[1] } = 1;
+            push @haystacks, $T[0] . '/' . $T[1];
         }
     }
-
-    # SiteScope: strip all the date info...
     elsif ($banner =~ /sitescope/i) {
         my @T = split(/ /, $banner);
         if (defined $T[0] && $T[0] ne '') {
-            $mark->{'components'}->{ $T[0] } = 1;
+            push @haystacks, $T[0];
         }
     }
-
-    # Jetty: strip the ( ) away:
     elsif ($banner =~ /jetty\(/i) {
         if ($banner =~ /Jetty\(([0-9a-zA-Z.\-]+)\)/i) {
-            $mark->{'components'}->{ 'Jetty/' . $1 } = 1;
+            push @haystacks, 'Jetty/' . $1;
         }
     }
-
-    # Some, like WEBrick, have multiple items but no spaces
     elsif (   ($banner !~ /\s/)
            && ($banner =~ /\/.*\//)
            && ($banner =~ /\(/)) {
 
-        # try converting () to spaces
-        foreach my $item (split(/[\(\)]/, $banner)) {
-            next if $item eq '' || is_platform_component($item);
-            $mark->{'components'}->{$item} = 1;
-        }
+        # WEBrick-style: "WEBrick/1.3.1(Ruby/1.8.7/...)" → spaces, then match
+        my $h = $banner;
+        $h =~ tr/()/  /;
+        push @haystacks, $h;
     }
-
-    # Single "name/version" banner that didn't match any specific branch
-    # (e.g. nginx/1.29.4, Microsoft-IIS/10.0). Store the whole banner so
-    # the DB regex (which anchors on the trailing separator) can match
-    # and vereval can extract the version from the last token.
-    elsif ($banner =~ /\//) {
-        $mark->{'components'}->{$banner} = 1;
-    }
-
-    # Finally, unknown banners (no slash; fall back to messy-separator heuristic)
     else {
-        my $MATCHSTRING = "";
-
-        # use the last non 0-9 . a-z char as a sepr (' ', '-', '_' etc)
-        my $sepr = $banner;
-        $sepr =~ s/[a-zA-Z0-9\.\(\)]//gi;
-        if ($sepr eq '') {
-            $MATCHSTRING = $banner;
-        }
-        else {
-            $sepr = substr($sepr, (length($sepr) - 1), 1);
-
-            # break up ID string on $sepr
-            my @T = split(/\Q$sepr\E/, $banner);
-
-            # assume last is version...
-            for (my $i = 0 ; $i < $#T ; $i++) { $MATCHSTRING .= "$T[$i] "; }
-        }
-        $MATCHSTRING =~ s/\s+$//;
-        $mark->{'components'}->{$MATCHSTRING} = 1;
-        nprint("Server Version String:$MATCHSTRING", "d");
+        push @haystacks, $banner;
     }
 
-    my ($v, $V, $BI) = "";
+    # Headers / X-Powered-By may already have planted extra component strings.
+    # Skip any that are already inside a banner haystack (the matcher covers them).
+    foreach my $c (keys %{ $mark->{'components'} || {} }) {
+        next if $c eq '' || is_platform_component($c) || $c =~ /^cache-/i;
+        my $cl = lc($c);
+        my $covered = 0;
+        foreach my $h (@haystacks) {
+            if (index(lc($h), $cl) >= 0) {
+                $covered = 1;
+                last;
+            }
+        }
+        push @haystacks, $c unless $covered;
+    }
 
-    # For each running component
-    foreach $BI (keys %{ $mark->{'components'} }) {
-        my $have_match = 0;
+    foreach my $hay (@haystacks) {
+        next if $hay eq '' || $hay =~ /^cache-/i || is_platform_component($hay);
 
-        # Skip noisy upstream/CDN cache identifiers that aren't real components
-        next if $BI =~ /^cache-/i;
+        my @matches = outdated_find_matches($hay);
+        if (!@matches) {
+            $mark->{'components'}->{$hay} = 2;
+            next;
+        }
 
-        # Platform tags (may also arrive via headers) are not version strings
-        next if is_platform_component($BI);
+        foreach my $m (@matches) {
+            my $BI = $m->{'running'};
+            my $V  = $m->{'key'};
+            $mark->{'components'}->{$BI} = 1;
 
-        # Check it against each value from db_outdated
-        foreach $V (sort keys %OVERS) {
-            next if $V eq '';
-            if ($BI =~ /^$V/i)    # software name matched
-            {
-                $have_match = 1;
-
-                # check every known version for this component; the DB may
-                # contain multiple entries per server (e.g. AuthMySQL/, Zope/)
-                foreach $v (keys %{ $OVERS{$V} }) {
-                    next if $v eq "";
-
-                    # do version check (return true if we should alert)
-                    if (vereval($v, $BI, $V, $mark)) {
-                        my $msg = $OVERS{$V}{$v}{'msg'};
-                        $msg =~ s/\@RUNNING_VER/$BI/g;
-                        $msg =~ s/\@CURRENT_VER/$v/g;
-                        chomp($msg);
-                        add_vulnerability($mark, $msg, $OVERS{$V}{$v}{'tid'},
-                                          "", "HEAD", "/", "", "", "Content match");
-                    }
+            foreach my $v (keys %{ $OVERS{$V} }) {
+                next if $v eq "";
+                if (vereval($v, $BI, $V, $mark)) {
+                    my $msg = $OVERS{$V}{$v}{'msg'};
+                    $msg =~ s/\@RUNNING_VER/$BI/g;
+                    $msg =~ s/\@CURRENT_VER/$v/g;
+                    chomp($msg);
+                    add_vulnerability($mark, $msg, $OVERS{$V}{$v}{'tid'},
+                                      "", "HEAD", "/", "", "", "Content match");
                 }
             }
         }
-        if (!$have_match) { $mark->{'components'}->{$BI} = 2; }
     }
     return;
+}
+
+# Match db_outdated keys against one banner/header string.
+# Keys must start at a token boundary (string start, whitespace, (, ;, ,).
+# When two matches overlap, the longer key wins (Apache Tomcat/ vs Apache/,
+# Alpha Anywhere Application Server/... vs Server/).
+sub outdated_find_matches {
+    my ($haystack) = @_;
+    return () unless defined $haystack && length($haystack);
+
+    my @keys =
+      sort { length($b) <=> length($a) || $a cmp $b } grep { $_ ne '' } keys %OVERS;
+    my @spans;
+    my @found;
+
+  KEY: foreach my $key (@keys) {
+        my $re;
+        eval { $re = qr/$key/i };
+        next KEY if $@ || !defined $re;
+
+        my $search = $haystack;
+        while ($search =~ /$re/g) {
+            my $start   = $-[0];
+            my $key_end = $+[0];
+
+            if ($start > 0) {
+                my $prev = substr($search, $start - 1, 1);
+                next unless $prev =~ /[\s(;,]/;
+            }
+
+            my $ver_len = 0;
+            my $after   = substr($search, $key_end);
+            if ($after =~ /^([^\s]+)/) {
+                $ver_len = length($1);
+            }
+            my $end = $key_end + $ver_len;
+
+            my $overlap = 0;
+            foreach my $sp (@spans) {
+                if ($start < $sp->[1] && $end > $sp->[0]) {
+                    $overlap = 1;
+                    last;
+                }
+            }
+            next if $overlap;
+
+            push @spans, [ $start, $end ];
+            push @found,
+              { key     => $key,
+                running => substr($search, $start, $end - $start),
+              };
+        }
+    }
+    return @found;
 }
 
 # True for OS/platform tokens that must not become update candidates
