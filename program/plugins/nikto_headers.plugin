@@ -308,6 +308,36 @@ sub nikto_headers_postfetch {
         }
     }
 
+    # CORS: Access-Control-Allow-Origin
+    if (!$mark->{'headers_found'}{'access-control-allow-origin'}
+        && defined $response->{'access-control-allow-origin'}) {
+        # Display value: don't run through report_multiheaders, which regex-escapes
+        my $raw_acao = $response->{'access-control-allow-origin'};
+        my $acao = (ref($raw_acao) eq 'ARRAY') ? join(',', @$raw_acao) : $raw_acao;
+        $acao =~ s/[\r\n]+/ /g if defined $acao;
+        if (defined $acao && $acao ne '') {
+            my ($msg, $tid);
+            if ($acao =~ /^\s*\*\s*$/) {
+                $tid = "999107";
+                $msg =
+                    $request->{'whisker'}{'uri'}
+                  . ": Retrieved access-control-allow-origin header wildcard CORS policy (*); verify no sensitive or internal data is served here, otherwise allowlist origins.";
+            }
+            else {
+                $tid = "999108";
+                $msg =
+                    $request->{'whisker'}{'uri'}
+                  . ": Retrieved access-control-allow-origin header with value: $acao";
+            }
+            add_vulnerability($mark, $msg, $tid,
+                        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin",
+                        $request->{'whisker'}->{'method'},
+                        $request->{'whisker'}->{'uri'},
+                        $request, $response);
+            $mark->{'headers_found'}{'access-control-allow-origin'} = 1;
+        }
+    }
+
     # Cloudflare
     if (   !$mark->{'headers_found'}{'cf-ray'}
         && defined $response->{'cf-ray'}
