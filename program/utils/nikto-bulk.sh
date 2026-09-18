@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Don't run as root
+# Running as root is not recommended, but not fatal
 if [[ "$(id -u)" -eq 0 ]]; then
-  echo "ERROR: Do not run this script as root." >&2
-  exit 1
+  echo "WARNING: Running this script as root is not recommended." >&2
 fi
 
 ############################
@@ -17,13 +16,6 @@ fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 : "${NIKTO_BIN:="${SCRIPT_DIR}/../nikto.pl"}"
 
-# Nikto flags (customize here)
-#  "-S ."
-NIKTO_FLAGS=(
-  "-ask" "no"
-  "-F" "html"
-)
-
 # Where Nikto writes scan results (must be "." per your requirement)
 NIKTO_OUT_DIR="."
 # Where this script writes logs (also "." per your requirement)
@@ -32,14 +24,66 @@ LOG_DIR="."
 ############################
 # Runner configuration
 ############################
-INPUT="${1:-}"
-MAX_CONCURRENT="${2:-5}"
+INPUT=""
+MAX_CONCURRENT=""
+FORMAT="html"
+
+usage() {
+  cat >&2 <<EOF
+Usage: $0 [-l <targets.txt>] [-F <format>] [-c <max_concurrent>] [targets.txt] [max_concurrent]
+
+  -l <file>    File containing target list (one per line, # for comments)
+  -F <format>  Output format passed through to Nikto's -Format (default: html)
+  -c <n>       Maximum concurrent scans (default: 5, warns above 10)
+  -h           Show this help
+
+The target file and max concurrent may also be given positionally:
+  $0 targets.txt
+  $0 targets.txt 10
+EOF
+  exit 1
+}
+
+while getopts ":l:F:c:h" opt; do
+  case "$opt" in
+    l) INPUT="$OPTARG" ;;
+    F) FORMAT="$OPTARG" ;;
+    c) MAX_CONCURRENT="$OPTARG" ;;
+    h) usage ;;
+    :) echo "ERROR: -$OPTARG requires an argument." >&2; usage ;;
+    \?) echo "ERROR: Unknown option -$OPTARG" >&2; usage ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+# Positional fallbacks: <targets.txt> [max_concurrent]
+[[ -z "$INPUT" && $# -ge 1 ]] && { INPUT="$1"; shift; }
+[[ -z "$MAX_CONCURRENT" && $# -ge 1 ]] && { MAX_CONCURRENT="$1"; shift; }
+: "${MAX_CONCURRENT:=5}"
+
+# Nikto flags (customize here)
+#  "-S ."
+NIKTO_FLAGS=(
+  "-ask" "no"
+  "-F" "$FORMAT"
+)
 
 ############################
 # Safety checks
 ############################
 if [[ -z "${INPUT}" || ! -f "${INPUT}" ]]; then
-  echo "Usage: $0 <targets.txt> [max_concurrent]" >&2
+  [[ -n "${INPUT}" ]] && echo "ERROR: target file not found: ${INPUT}" >&2
+  usage
+fi
+if ! [[ "$MAX_CONCURRENT" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: max concurrent must be a positive integer, got: $MAX_CONCURRENT" >&2
+  exit 1
+fi
+if [[ "$MAX_CONCURRENT" -gt 10 ]]; then
+  echo "WARNING: ${MAX_CONCURRENT} concurrent scans is a lot; expect heavy CPU, memory and network load." >&2
+fi
+if ! [[ "$FORMAT" =~ ^[A-Za-z0-9,._-]+$ ]]; then
+  echo "ERROR: invalid format string: $FORMAT" >&2
   exit 1
 fi
 command -v screen >/dev/null 2>&1 || { echo "Error: 'screen' not found." >&2; exit 1; }
