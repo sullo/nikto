@@ -6952,7 +6952,7 @@
 "007339","CVE-2021-21234,https://github.com/pyn3rd/Spring-Boot-Vulnerability?tab=readme-ov-file","7","/manage/log/view?filename=@LFI(nix,abs)&base=../../../../../","GET","CODE:200&&@LFI()","SpringBoot JMX enabled.","",""
 "007340","CVE-2006-3918","4","/","GET","BODY:<script>alert\(xss\)<\/script>","Apache Expect header XSS.","","Expect: <script>alert(xss)</script>"
 "007341","CVE-2017-7240","7","/../../../../../../../../../../../../etc/shadow","GET","BODY:root:\$1","Miele Professional PST10 directory traversal","",""
-"007342","https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options","2","/","GET","!HEADER:x-frame-options","X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive.","",""
+"007342","https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options","2","/","GET","HEADER:x-frame-options","X-Frame-Options header is deprecated and replaced with Content-Security-Policy frame-ancestors directive.","",""
 "007343","https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expect-CT","2","/","GET","HEADER:expect-ct: [^1]","The Expect-CT header is deprecated and was replaced with Signed Certificate Timestamps (SCTs).","",""
 "007344","https://www.imperva.com/products/web-application-firewall-waf/","2","/","GET","HEADER:x-cdn: Incapsula","Incapsula (Imperva) WAF is in use.","",""
 "007345","https://www.netiq.com/documentation/netiqaccessmanager32/accessgatewayhelp/data/agsglobaladv.html","2","/","GET","HEADER:x-mag","NetIQ debug information is enabled.","",""
