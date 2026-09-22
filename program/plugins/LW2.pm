@@ -512,7 +512,7 @@ sub cookie_parse {
 
 		$C[4]=1 if(exists $seen{secure});
 
-		return if($R && !_is_valid_cookie_match($C[1], $C[2], $Dd, $Dp));
+		return if($R && (index($Dp, $C[2]) != 0 || !_cookie_domain_matches($Dd, $C[1])));
     $$jarref{$n} = \@C;
 }
 
@@ -524,18 +524,20 @@ sub _is_ip_address {
 	return 0;
 }
 
-sub _is_valid_cookie_match {
-	my ($cd, $cp, $td, $tp) = @_;
-	return 0 if(index($tp,$cp)!=0);
-	if(substr($cd,0,1) eq '.'){
-		if( $td =~ /(.+)$cd$/ ){
-			return 1 if(index($1,'.') == -1);
-		}
-		return 0;
-	} else {
-		return 0 if($cd ne $td);
+sub _cookie_domain_matches {
+	my ($host, $domain) = @_;
+	return 1 if(!defined $domain || $domain eq '');
+	return 0 if(!defined $host || $host eq '');
+	$host = lc($host);
+	$domain = lc($domain);
+	if(substr($domain, 0, 1) eq '.'){
+		$domain = substr($domain, 1);
+		return 1 if($host eq $domain);
+		return 0 if(length($host) <= length($domain));
+		return substr($host, -length($domain)) eq $domain
+			&& substr($host, -length($domain) - 1, 1) eq '.';
 	}
-	return 1;
+	return $host eq $domain;
 }
 
 ########################################################################
@@ -573,7 +575,7 @@ sub cookie_write {
             next;
         }
         next if ( $$hin{'whisker'}->{'ssl'} == 0 && $$jarref{$name}->[4] > 0 );
-        if ( $$hin{'whisker'}->{'host'} =~ /$$jarref{$name}->[1]$/i
+        if ( _cookie_domain_matches($$hin{'whisker'}->{'host'}, $$jarref{$name}->[1])
                 && $$hin{'whisker'}->{'uri'} =~ /^$$jarref{$name}->[2]/ )
         {
             $out .= "$name=$$jarref{$name}->[0];";
@@ -666,7 +668,7 @@ sub cookie_get_valid_names {
     foreach $name ( keys %$jarref ) {
         next if ( $name eq '' );
         next if ( $$jarref{$name}->[4] > 0 && $ssl == 0 );
-        if ( $domain =~ /$$jarref{$name}->[1]$/i
+        if ( _cookie_domain_matches($domain, $$jarref{$name}->[1])
                 && $url =~ /^$$jarref{$name}->[2])/i ) {
             push @r, $name;
         }
