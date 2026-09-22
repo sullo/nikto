@@ -148,3 +148,4 @@
 "x-varnish"
 "x-webkit-csp"
 "x-xss-protection"
+"x-markdown-tokens"
