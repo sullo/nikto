@@ -5587,10 +5587,16 @@ sub uri_split {
     if ( $uri =~ s/^([-+.a-z0-9A-Z]+):// ) {
         $res[1] = lc($1);
         if ( substr( $uri, 0, 2 ) eq '//' ) {
+            # The authority ends at either the path or query.  A URL such as
+            # https://example.com?check=1 has no path delimiter, so looking
+            # only for '/' would incorrectly include the query in the host.
             my $w = index( $uri, '/', 2 );
+            my $q = index( $uri, '?', 2 );
+            $w = $q if ( $q >= 0 && ( $w < 0 || $q < $w ) );
             if ( $w >= 0 ) {
                 $net_loc = substr( $uri, 2, $w - 2 );
                 $uri = substr( $uri, $w, length($uri) - $w );
+                $uri = '/' . $uri if ( substr( $uri, 0, 1 ) eq '?' );
             }
             else {
                 ( $net_loc = $uri ) =~ tr#/##d;
