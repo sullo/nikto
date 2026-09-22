@@ -6871,7 +6871,7 @@
 "007258","RFC-5785","3","/.well-known/assetlinks.json","GET","CODE:200&&BODY:relation","Android App Links.","",""
 "007259","","be","/","GET","BODY:share\.router&&BODY:router\.copyright&&BODY:image\/cisco_logo_about\.png","Cisco (RV) router login page detected.","",""
 "007260","CVE-2019-1898 https://www.tenable.com/security/research/tra-2019-29","235","/_syslog.txt","GET","BODY:[0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9:]+\sRV[0-9]+W&&CODE:200","Cisco RV110W/RV130W/RV215W router allows remote access to the syslog.","",""
-"007261","","be","/remote/login?lang=en","GET","BODY:(<span>Launch\sFortiClient<\/span>|launchFortiClient\(\)|/remote/fgt_lang)&&CODE:200","FortiOS SSL VPN login page detected.","",""
+"007261","https://docs.fortinet.com/product/fortigate","be","/remote/login?lang=en","GET","BODY:(<span>Launch\sFortiClient<\/span>|launchFortiClient\(\)|/remote/fgt_lang|top\.location=.?/remote/login)&&CODE:200","FortiOS SSL VPN login page detected.","",""
 "007262","CVE-2018-13379","2357","/remote/fgt_lang?lang=/../../../..//////////dev/cmdb/sslvpn_websession","GET","BODY:var\sfgt_lang\s=&&CODE:200","FortiOS SSL VPN is vulnerable to a local file inclusion (LFI) vulnerability.","",""
 "007263","","be","/dana-na/auth/url_default/welcome.cgi","GET","BODY:<title>Pulse\sConnect\sSecure&&BODY:<b>Welcome\sto<\/b>","Pulse Connect Secure login page detected.","",""
 "007264","CVE-2019-11510 https://exploit-db.com/exploits/47297","2357","/dana-na/../dana/html5acc/guacamole/@LFI(nix)?/dana/html5acc/guacamole/","GET","@LFI()","Pulse Connect Secure is vulnerable to a local file inclusion (LFI) vulnerability.","",""
@@ -7286,3 +7286,4 @@
 "007674","CVE-2023-29298","3ae","//CFIDE/wizards/common/utils.cfc?method=wizardHash&inPassword=abc&_cfclient=true&returnFormat=wddx","GET","CODE:200&&BODY:\b[A-Z0-9]{40}\b","ColdFusion admin password hash retrieved.","",""
 "007675","CVE-2023-44352","4","/3ea4dgae%22%3E%3Cimg%20src=a%20onerror=alert%28document.cookie%29%3E/..CFIDE/wizards/common/_authenticatewizarduser.cfm","GET","CODE:200&&BODY:onerror=alert\(document\.cookie\)","ColdFusion vulnerable to XSS.","",""
 "007676","https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs?tabs=microsoft-entra-id","3","@MSBLOBS?restype=container&comp=list","GET","CODE:200&&BODY:ContainerName","Microsot Azure blob storage list available.","",""
+"007677","https://docs.fortinet.com/product/fortigate","e","/","GET","CODE:200&&BODY:top\.location=.?/login\?redir","FortiGate administrative web interface found.","",""
