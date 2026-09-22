@@ -42,7 +42,7 @@ nprint("T:" . localtime($COUNTERS{'scan_start'}) . ": Starting", "d");
 
 # Set SSL engine and warn if Net::SSL is used
 LW2::init_ssl_engine($CONFIGFILE{'LW_SSL_ENGINE'});
-if ($LW2::_SSL_LIBRARY eq 'Net::SSL') {
+if (defined $LW2::_SSL_LIBRARY && $LW2::_SSL_LIBRARY eq 'Net::SSL') {
     nprint("+ WARNING: Net::SSL does not support SAN extraction. Use Net::SSLeay instead.");
 }
 
