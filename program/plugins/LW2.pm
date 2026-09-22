@@ -395,7 +395,8 @@ sub cookie_read {
 		if(defined $hrq && ref($hrq)){
 			push @opt, $hrq->{whisker}->{host};
 			my $u = $hrq->{whisker}->{uri};
-			$u=~s#/.*?$##;
+			$u =~ s/[?#].*$//;
+			$u =~ s#/[^/]*$##;
 			$u='/' if($u eq '');
 			push @opt, $u, $rej;
 		}
