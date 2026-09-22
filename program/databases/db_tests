@@ -7287,3 +7287,4 @@
 "007675","CVE-2023-44352","4","/3ea4dgae%22%3E%3Cimg%20src=a%20onerror=alert%28document.cookie%29%3E/..CFIDE/wizards/common/_authenticatewizarduser.cfm","GET","CODE:200&&BODY:onerror=alert\(document\.cookie\)","ColdFusion vulnerable to XSS.","",""
 "007676","https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs?tabs=microsoft-entra-id","3","@MSBLOBS?restype=container&comp=list","GET","CODE:200&&BODY:ContainerName","Microsot Azure blob storage list available.","",""
 "007677","https://docs.fortinet.com/product/fortigate","e","/","GET","CODE:200&&BODY:top\.location=.?/login\?redir","FortiGate administrative web interface found.","",""
+"007678","https://www.jaspersoft.com/","3","/jasperserver-pro/rest_v2/serverInfo","GET","CODE:200&&BODY:<build>([^<]+)</build>&&BODY:<features>([^<]+)</features>","JasperServer information disclosure. Version $1 with features $2.","",""
