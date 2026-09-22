@@ -29,6 +29,11 @@ sub nikto_ssl {
     push @cn_names, nikto_ssl_extract_cn($mark->{'ssl_cert_subject'})
       if defined $mark->{'ssl_cert_subject'};
 
+    # Appliance/vendor fingerprint from the certificate. Run before the
+    # checks which return early when the cert has no name or program exits
+    # due to no HTTP response
+    nikto_ssl_appliance_check($mark);
+
     # Extract SAN names
     if (defined $mark->{'ssl_cert_altnames'} && $mark->{'ssl_cert_altnames'} ne '') {
         foreach my $n (split(/\s*,\s*/, $mark->{'ssl_cert_altnames'})) {
@@ -105,6 +110,68 @@ sub nikto_ssl_safe_str {
     $s = '' unless defined $s;
     $s =~ s/[\x00-\x1f\x7f]//g;
     return length($s) > 256 ? substr($s, 0, 256) : $s;
+}
+
+# Identify known appliances from the certificate subject/issuer.
+my @NIKTO_SSL_APPLIANCES = (
+    { vendor      => 'Fortinet',
+      product     => 'FortiGate',
+      o           => qr/^Fortinet$/i,
+      ou          => qr/^FortiGate$/i,
+      # FG100FTK20019263 -> model 100F; FGT60FTK... -> model 60F
+      serial      => qr/^FGT?([0-9]{2,4}[A-Z]{0,2})[A-Z]{2}[0-9]{8,}$/i,
+      factory_ca  => qr/fortinet\-(?:sub)?ca/i,
+    },
+);
+
+sub nikto_ssl_appliance_check {
+    my ($mark) = @_;
+    return unless defined $mark->{'ssl_cert_subject'};
+
+    my $subject = $mark->{'ssl_cert_subject'};
+    my $issuer  = defined $mark->{'ssl_cert_issuer'} ? $mark->{'ssl_cert_issuer'} : '';
+
+    my $o  = nikto_ssl_extract_dn_field($subject, 'O');
+    my $ou = nikto_ssl_extract_dn_field($subject, 'OU');
+    return unless defined $o && defined $ou;
+
+    foreach my $a (@NIKTO_SSL_APPLIANCES) {
+        next unless $o  =~ $a->{'o'};
+        next unless $ou =~ $a->{'ou'};
+
+        my ($cn) = nikto_ssl_extract_cn($subject);
+        $cn = '' unless defined $cn;
+
+        my $model = '';
+        if (length($cn) && $cn =~ $a->{'serial'}) { $model = uc($1); }
+
+        my $msg = "/: $a->{'vendor'} $a->{'product'} appliance identified from its TLS certificate";
+        $msg .= " (model $model)" if length($model);
+        $msg .= ". The certificate common name '" . nikto_ssl_safe_str($cn) . "' is the hardware serial number,"
+              . " which discloses the appliance model before authentication." if length($cn);
+        add_vulnerability($mark, $msg, "999980",
+                          "https://cwe.mitre.org/data/definitions/200.html");
+
+        if (length($issuer) && $issuer =~ $a->{'factory_ca'}) {
+            add_vulnerability($mark,
+                "/: $a->{'vendor'} $a->{'product'} is presenting its factory certificate, issued by the vendor's"
+              . " internal authority rather than a publicly trusted CA. Clients cannot validate it and will be"
+              . " shown a certificate warning.",
+                "999981", "https://cwe.mitre.org/data/definitions/295.html");
+        }
+        last;
+    }
+}
+
+# Pull a single DN field (O, OU, ...) from an X.509 subject string.
+# Handles OpenSSL oneline (/O=Fortinet/OU=FortiGate/) and comma DNs (O=Fortinet, OU=FortiGate).
+sub nikto_ssl_extract_dn_field {
+    my ($subject, $field) = @_;
+    return undef unless defined $subject && $subject ne '' && defined $field;
+    return undef unless $subject =~ /(?:^|[\/,])\s*\Q$field\E\s*=\s*([^,\/]+)/i;
+    my $v = $1;
+    $v =~ s/^\s+|\s+$//g;
+    return length($v) ? $v : undef;
 }
 
 # Pull CN values from an X.509 subject string.
