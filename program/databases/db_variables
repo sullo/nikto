@@ -59,7 +59,7 @@
 @MSBLOBS=/assets /backup /backups /cdn /config /content /data /documents /files /images /media /public /static /uploads /$web
 
 # LFI variables
-@PLATFORMWIN=Microsoft|IIS|Windows|Win(NT|32|64|System.Web)
+@PLATFORMWIN=Microsoft|IIS|Windows|Win(NT|32|64|System.Web)|Alpha Anywhere
 @PLATFORMNIX=nix|BSD|SunOS|Solaris|AIX|Debian|HP-UX|Tru64
 @LFITGTNIX=/etc/hosts
 @LFITGTWIN=\Windows\win.ini
