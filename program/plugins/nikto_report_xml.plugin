@@ -8,7 +8,6 @@ our $XML_WRITER  = undef;    # XML::Writer instance
 our $XML_HANDLE  = undef;    # File handle
 our $XML_FILE    = undef;    # Output filename for validation
 
-use XML::Writer;
 use Time::Piece;
 use Time::Seconds;
 
@@ -82,6 +81,10 @@ sub xml_open {
     # Store lexical handle reference in package variable
     $XML_HANDLE = $fh;
     $XML_FILE   = $file;
+
+    # Loaded here rather than with "use" so that the plugin still loads, and
+    # non-XML runs stay quiet, when XML::Writer is not installed
+    require XML::Writer;
 
     # Initialize XML writer with proper settings
     $XML_WRITER = XML::Writer->new(OUTPUT      => $fh,

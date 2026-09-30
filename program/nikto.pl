@@ -367,9 +367,12 @@ sub load_modules {
                    "List::Util qw(sum)",                                    "Net::hostent",
                    "POSIX qw(:termios_h)",                                  "Socket",
                    "Time::HiRes qw(sleep ualarm gettimeofday tv_interval)", "Time::Local",
-                   "Time::Piece",                                           "Time::Seconds",
-                   "XML::Writer"
+                   "Time::Piece",                                           "Time::Seconds"
                    );
+
+    # Needed only for some features; a missing one is reported, not fatal.
+    # Whatever needs it checks again and exits when it is actually used.
+    my %optional = ("XML::Writer" => "XML reports (-Format xml)");
 
     foreach my $mod (@modules) {
         eval "use $mod";
@@ -381,6 +384,13 @@ sub load_modules {
             }
             print STDERR "ERROR: Required module not found: $mod\n";
             $errors = 1;
+        }
+    }
+
+    foreach my $mod (sort keys %optional) {
+        eval "use $mod";
+        if ($@) {
+            print STDERR "WARNING: Optional module not found: $mod (needed for $optional{$mod})\n";
         }
     }
 
