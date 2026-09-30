@@ -1040,15 +1040,6 @@ sub general_config {
     # Keep first format for backward compatibility with single-format code paths
     $CLI{'format'} = $formats[0] if @formats > 0;
 
-    # Check XML dependencies (check if xml is in formats)
-    if (grep { $_ eq 'xml' } @formats) {
-        eval "require XML::Writer";
-        if ($@) {
-            nprint("+ ERROR: Module XML::Writer missing. Install with: cpan XML::Writer");
-            exit 1;
-        }
-    }
-
     # port(s)
     if (defined $CLI{'ports'}) {
         $CLI{'ports'} =~ s/^\s+//;
@@ -1083,6 +1074,15 @@ sub general_config {
             $CLI{'format'} = 'none';
             push(@formats, 'none');
             $CLI{'formats'} = \@formats;
+        }
+    }
+
+    # Check XML dependencies, now that -o scan.xml has been inferred as xml too
+    if (grep { $_ eq 'xml' } @formats) {
+        eval "require XML::Writer";
+        if ($@) {
+            nprint("+ ERROR: Module XML::Writer missing. Install with: cpan XML::Writer");
+            exit 1;
         }
     }
 
