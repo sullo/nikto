@@ -3204,8 +3204,11 @@ sub nfetch {
     # Prepend -root option's value if set
     $request{'whisker'}->{'uri'} = $mark->{'root'} . $uri;
 
-    # Remove trailing slash if requested
-    $request{'whisker'}->{'uri'} =~ s/\/$// if ($CLI{'noslash'});
+    # Remove trailing slash if requested (e.g. '/admin/' to '/admin'). The
+    # lookbehind keeps the root '/' intact; a bare s/\/$// would blank it, and
+    # an empty URI only survives because http_fixup_request() rewrites it back
+    # to '/' -- which is skipped on the 'noclean' request path below.
+    $request{'whisker'}->{'uri'} =~ s{(?<=.)/$}{} if ($CLI{'noslash'});
 
     $request{'whisker'}->{'method'} = $method;
 
