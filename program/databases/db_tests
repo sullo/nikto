@@ -6576,7 +6576,7 @@
 "006944","","b1","/Forms/EditForm.aspx?ID=1","GET","CODE:200","FrontPage/Sharepointfile available.","",""
 "006945","","b1","/Forms/Forms/AllItems.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
 "006946","","b1","/Forms/MyItems.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
-"006947","","b1","/Forms/NewForm.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
+"006947","","b1","/Forms/NewForm.aspx","GET","CODE:200&&BODY:ListFormWebPart","FrontPage/Sharepointfile available.","",""
 "006948","","b1","/Pages/default.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
 "006949","","b1","/Pages/Forms/AllItems.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
 "006950","","b1","/_catalogs/masterpage/Forms/AllItems.aspx","GET","CODE:200","FrontPage/Sharepointfile available.","",""
