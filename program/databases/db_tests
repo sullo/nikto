@@ -242,7 +242,7 @@
 "000198","","d","@CGIDIRSwebplus.exe?about","GET","BODY:Product Information","Webplus may divulge product information, including version numbers. Version 4.X and below have a file read vulnerability. Versions prior to 4.6 build 561 and 5.0 build 554 have a buffer overflow.","",""
 "000199","MS00-094","d","/pbserver/pbserver.dll","GET","CODE:200","This may contain a buffer overflow.","",""
 "000200","","0","/administrator/gallery/uploadimage.php","GET","CODE:200","Mambo PHP Portal/Server 4.0.12 BETA and below may allow upload of any file type simply putting '.jpg' before the real file extension.","",""
-"000201","","0","/pafiledb/includes/team/file.php","GET","CODE:200","paFileDB 3.1 and below may allow file upload without authentication.","",""
+"000201","CVE-2005-0780,https://github.com/y3dips/adv-echo/blob/master/adv09-y3dips-2004.txt","0","/pafiledb/includes/team/team.php","GET","CODE:200&&BODY:failed to open stream","paFileDB 3.1 and below reveal file system paths when accessed direclty.","",""
 "000202","","0","/phpEventCalendar/file_upload.php","GET","CODE:200","phpEventCalendar 1.1 and prior are vulnerable to file upload bug.","",""
 "000203","","0","/servlet/com.unify.servletexec.UploadServlet","GET","CODE:200&&BODY:Error Occurred","This servlet allows attackers to upload files to the server.","",""
 "000204","","0","@CGIDIRSuploader.exe","GET","CODE:200","This CGI allows attackers to upload files to the server and then execute them.","",""
