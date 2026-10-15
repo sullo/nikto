@@ -722,7 +722,7 @@
 "600717","SilverStream Server/","3.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600718","SilverStreamServer/","100.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600719","Simple, Secure Web Server ","1.1","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
-"600720","SimpleHTTP/","1.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
+"600720","SimpleHTTP/","0.6","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600721","SimpleWebserver/","2.13","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600722","simwebs/","4.0.6","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
 "600723","SiteScope/","8.0.0.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
