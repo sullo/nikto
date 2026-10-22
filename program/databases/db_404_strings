@@ -52,3 +52,4 @@ no valid destination server available for		# SAP web server
 unauthorized public IP address				# BigIP
 <TITLE>Invalid URL</TITLE>                              # AkamaiGhost
 WebContentNotFound
+Endpoint not found
