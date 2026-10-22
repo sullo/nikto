@@ -271,3 +271,4 @@
 "800263","PHP\/7\.1","","PHP 7.1 is End of Life and only receives security updates. It will be unsupported after 2019-12-01."
 "800264","Cloudflare","https://github.com/sullo/nikto/wiki/Using-a-Proxy","Cloudflare detected via banner. Recommend proxying via Burp or mitmproxy to avoid TLS fingerprint blocks if not already proxying."
 "800265","railway-edge","https://railway.com/","Application server running on Railway.com cloud platform."
+"800266","(?i)(?:^|[^A-Za-z0-9_.-])PHP/(?:(?:8\.5\.(?:[0-9]|1[01])|8\.4\.(?:[0-9]|1[0-9]|2[0-6])|8\.3\.(?:[0-9]|[12][0-9]|3[0-5])|8\.2\.(?:[0-9]|[12][0-9]|3[0-4]))(?:[^0-9]|$)|8\.[01]\.|[0-7]\.)","https://www.php.net/archive/2026.php#2026-10-21-5","PHP is vulnerable to \"php2shell\" issue which can lead to RCE. This was checked by version number."
