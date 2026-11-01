@@ -4733,11 +4733,25 @@ sub compile_regex {
 sub parse_csv {
     my $text = $_[0] || return;
     my @new  = ();
-    push(@new, $+) while $text =~ m{
+    while (
+        $text =~ m{
       "([^\"\\]*(?:\\.[^\"\\]*)*)",?
        |  ([^,]+),?
        | ,
-   }gx;
+   }gx
+      ) {
+        my $field = $+;
+
+        # A quoted field escapes embedded quotes as \" -- unescape them so the
+        # value is the literal text (URIs, POST data, headers and messages were
+        # previously sent/printed with the backslash). Scan pairwise so an
+        # escaped backslash (\\) is kept intact and \\" is not misread as \".
+        # Other backslash sequences are left alone: regex fields depend on them.
+        if (defined $1) {
+            $field =~ s/(\\\\)|\\"/defined $1 ? $1 : '"'/ge;
+        }
+        push(@new, $field);
+    }
     push(@new, undef) if substr($text, -1, 1) eq ',';
     return @new;
 }
