@@ -226,7 +226,8 @@ sub lfi_function {
 
 ###############################################################################
 sub unslash {
-    my $line = $_[0] || return;    # $line is the slash-escaped variable
+    my $line = $_[0];              # $line is the slash-escaped variable
+    return unless defined $line;
     my %esc = ('a' => "\a",
                'b' => "\b",
                'e' => "\e",
@@ -3269,9 +3270,9 @@ sub nfetch {
 
     $request{'whisker'}->{'method'} = $method;
 
-    # POST/body data: unescape DB-style \" before measuring or sending
+    # POST/body data is already decoded by parse_csv. Keep it byte-for-byte
+    # intact here so literal backslashes before quotes are not removed.
     if (length($data)) {
-        $data =~ s/\\\"/\"/g;
         $request{'whisker'}->{'data'} = $data;
     }
 
