@@ -134,7 +134,7 @@
 "800122","mathopd","","http://mathop.diva.nl/"
 "800123","MegaTime Chart Server","","Server returns a .png file for all requests, all results should be validated as false-positives are likely."
 "800124","micro-http/","","Probably a printer (Tektronix?)."
-"800125","MiniServ","","This is the Webmin Unix administrator. It should not be running unless required."
+"800125","MiniServ","https://webmin.com/","This is the Webmin Unix administrator."
 "800126","mod_auth_mysql\/((0\..*)|(1\.[0-9]$))","","This version allows an SQL insertion attack that could allow attackers to execute arbitrary SQL commands."
 "800127","mod_auth_oracle\/0\.(([0-4].*)|(5\.[0-1].*))","","This version allows an SQL insertion attack that could allow attackers to execute arbitrary SQL commands."
 "800128","mod_auth_pgsql_sys\/0\.(([0-8]\..*)|(9\.[0-4].*))","","This version allows an SQL insertion attack that could allow attackers to execute arbitrary SQL commands."
