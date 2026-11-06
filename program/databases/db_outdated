@@ -1313,3 +1313,4 @@
 "601324","mod_asp/","3.4.5","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601325","proxy/","0.2.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
 "601326","Undertow/","2.4.0","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)."
+"601371","Jenkins","2.580.2","@RUNNING_VER appears to be outdated (current is at least @CURRENT_VER)"
