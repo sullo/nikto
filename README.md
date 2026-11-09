@@ -107,7 +107,6 @@ Basic usage:
        -nolookup          Disables DNS lookups
        -noslash           Strip trailing slash from URL (e.g., '/admin/' to '/admin')
        -nossl             Disables the use of SSL
-       -no404             Disables nikto attempting to guess a 404 page
        -Option            Over-ride an option in nikto.conf, can be issued multiple times
        -output+           Write output to this file ('.' for auto-name)
        -Pause+            Pause between tests (seconds)
