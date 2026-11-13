@@ -1159,9 +1159,14 @@ sub general_config {
                 next;
             }
 
-            # Append format extension to prefix only if not already present
+            # Append format extension to prefix only if not already present.
+            # Accept known extension aliases ('html' for htm, 'text' for txt)
+            # so e.g. "-o report.html" does not become "report.html.htm".
+            my %ext_alias = (htm => qr/\.html?$/i,
+                             txt => qr/\.te?xt$/i,);
+            my $has_ext = $ext_alias{$fmt} || qr/\.\Q$fmt\E$/i;
             my $file_name;
-            if ($prefix =~ /\.\Q$fmt\E$/i) {
+            if ($prefix =~ $has_ext) {
                 $file_name = $prefix;
             }
             else {
